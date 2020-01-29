@@ -1,0 +1,88 @@
+{
+  "name": "@rsksmart/rif-martketplace-cache",
+  "version": "0.1.0",
+  "description": "Caching server for RIF Marketplace",
+  "keywords": [
+    "RIF",
+    "RSK"
+  ],
+  "author": {
+    "name": "Adam Uhlíř",
+    "email": "adam@uhlir.dev"
+  },
+  "homepage": "https://github.com/rsksmart/rif-martketplace-cache",
+  "bugs": {
+    "url": "https://github.com/rsksmart/rif-martketplace-cache/issues/"
+  },
+  "license": "MIT",
+  "files": [
+    "types",
+    "lib"
+  ],
+  "main": "lib/index.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/rsksmart/rif-martketplace-cache.git"
+  },
+  "scripts": {
+    "compile": "tasegir compile",
+    "compile:watch": "tasegir compile -- --watch",
+    "docs": "typedoc --mode modules --excludeNotExported --readme none --excludePrivate  --tsconfig ./node_modules/tasegir/src/config/tsconfig.json --exclude 'src/providers/*,test/**/*' --out docs src",
+    "types-check": "tasegir types-check",
+    "exec": "tasegir run",
+    "lint": "tasegir lint",
+    "release": "tasegir release",
+    "build": "tasegir build",
+    "test": "tasegir test --target node",
+    "start": "tasegir run --watch ./src/index.ts"
+  },
+  "dependencies": {
+    "@feathersjs/configuration": "^4.5.1",
+    "@feathersjs/errors": "^4.5.1",
+    "@feathersjs/express": "^4.5.1",
+    "@feathersjs/feathers": "^4.5.1",
+    "@feathersjs/socketio": "^4.5.1",
+    "@feathersjs/transport-commons": "^4.5.1",
+    "compression": "^1.7.4",
+    "cors": "^2.8.5",
+    "helmet": "^3.21.2",
+    "pg": "^7.17.1",
+    "pg-hstore": "^2.3.3",
+    "sequelize": "^5.21.3",
+    "serve-favicon": "^2.5.0",
+    "web3": "^1.2.5",
+    "winston": "^3.2.1"
+  },
+  "devDependencies": {
+    "@feathersjs/cli": "^4.2.5",
+    "@types/chai": "^4.2.7",
+    "@types/chai-as-promised": "^7.1.2",
+    "@types/compression": "^1.0.1",
+    "@types/cors": "^2.8.6",
+    "@types/debug": "^4.1.5",
+    "@types/dirty-chai": "^2.0.2",
+    "@types/helmet": "0.0.45",
+    "@types/mocha": "^5.2.7",
+    "@types/node": "^13.5.0",
+    "@types/node-fetch": "^2.5.4",
+    "@types/serve-favicon": "^2.5.0",
+    "chai": "^4.2.0",
+    "chai-as-promised": "^7.1.1",
+    "dirty-chai": "^2.0.1",
+    "merge-options": "^2.0.0",
+    "sinon": "^8.1.1",
+    "sqlite3": "^4.1.1",
+    "tasegir": "^1.6.0",
+    "typedoc": "^0.16.8",
+    "typedoc-plugin-markdown": "^2.2.16"
+  },
+  "engines": {
+    "node": "^12.0.0",
+    "npm": ">= 3.0.0"
+  },
+  "types": "types/index.d.ts",
+  "contributors": [
+    "Adam Uhlíř <adam@uhlir.dev>",
+    "dependabot-preview[bot] <27856297+dependabot-preview[bot]@users.noreply.github.com>"
+  ]
+}
