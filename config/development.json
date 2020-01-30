@@ -1,0 +1,8 @@
+{
+  "host": "localhost",
+  "port": 3030,
+  "db": {
+    "dialect": "sqlite",
+    "storage": "../db.sqlite"
+  }
+}

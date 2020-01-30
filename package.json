@@ -19,6 +19,11 @@
     "types",
     "lib"
   ],
+  "directories": {
+    "lib": "src",
+    "test": "test/",
+    "config": "config/"
+  },
   "main": "lib/index.js",
   "repository": {
     "type": "git",
@@ -45,16 +50,19 @@
     "@feathersjs/transport-commons": "^4.5.1",
     "compression": "^1.7.4",
     "cors": "^2.8.5",
+    "feathers-sequelize": "^6.1.0",
     "helmet": "^3.21.2",
     "pg": "^7.17.1",
     "pg-hstore": "^2.3.3",
     "sequelize": "^5.21.3",
+    "sequelize-typescript": "^1.1.0",
     "serve-favicon": "^2.5.0",
     "web3": "^1.2.5",
     "winston": "^3.2.1"
   },
   "devDependencies": {
     "@feathersjs/cli": "^4.2.5",
+    "@types/bluebird": "^3.5.29",
     "@types/chai": "^4.2.7",
     "@types/chai-as-promised": "^7.1.2",
     "@types/compression": "^1.0.1",
@@ -63,9 +71,10 @@
     "@types/dirty-chai": "^2.0.2",
     "@types/helmet": "0.0.45",
     "@types/mocha": "^5.2.7",
-    "@types/node": "^13.5.0",
+    "@types/node": "^13.5.1",
     "@types/node-fetch": "^2.5.4",
     "@types/serve-favicon": "^2.5.0",
+    "@types/validator": "^10.11.3",
     "chai": "^4.2.0",
     "chai-as-promised": "^7.1.1",
     "dirty-chai": "^2.0.1",
