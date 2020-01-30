@@ -15,7 +15,6 @@ import logger from './logger';
 import middleware from './middleware';
 import services from './services';
 import appHooks from './app.hooks';
-import channels from './channels';
 import sequelize from './sequelize';
 // Don't remove this comment. It's needed to format import lines nicely.
 
@@ -43,8 +42,6 @@ app.configure(sequelize);
 app.configure(middleware);
 // Set up our services (see `services/index.js`)
 app.configure(services);
-// Set up event channels (see channels.js)
-app.configure(channels);
 
 // Configure a middleware for 404s and the error handler
 app.use(express.notFound());
