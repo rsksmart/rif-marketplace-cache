@@ -1,5 +1,7 @@
 import { Application } from '../declarations'
+import storageOffer from './storage-offer/storage-offer.service'
 // Don't remove this comment. It's needed to format import lines nicely.
 
 export default function (app: Application) {
+  app.configure(storageOffer)
 }
