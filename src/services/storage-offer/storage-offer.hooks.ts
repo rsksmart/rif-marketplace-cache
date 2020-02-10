@@ -4,7 +4,21 @@ import Price from '../../models/price.model'
 
 export default {
   before: {
-    all: [(context: HookContext) => { context.params.sequelize = { raw: false, include: [Price], nest: true } }],
+    all: [
+      (context: HookContext) => {
+        context.params.sequelize = {
+          raw: false,
+          include: [Price],
+          nest: true
+        }
+
+        if (!context.params.query || !context.params.query['not-completed']) {
+          context.params.sequelize.scope = 'active'
+        } else {
+          delete context.params.query['not-completed']
+        }
+      }
+    ],
     find: [],
     get: [],
     create: disallow(),

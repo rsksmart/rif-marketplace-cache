@@ -14,7 +14,7 @@ const DEFAULT_POLLING_INTERVAL = 5000
 const VALID_EVENTS = ['CapacitySet', 'MaximumDurationSet', 'PriceSet']
 
 function updatePrices (offer: StorageOffer, period: number, price: number): Promise<Price> {
-  const priceEntity = offer.prices.find(value => value.period === period)
+  const priceEntity = offer.prices && offer.prices.find(value => value.period === period)
   logger.info(`Updating offer ID ${offer.address} period ${period} to price ${price}`)
 
   if (priceEntity) {
@@ -60,10 +60,12 @@ export class PinningWatcher {
 
       logger.info(`Checking new events between blocks ${lastProcessedBlock}-${latestBlockNum}`)
       const events = await this.fetchEvents(lastProcessedBlock, latestBlockNum)
-      await Promise.all(events.map(this.newEvent.bind(this)))
+      for (const event of events) {
+        await this.newEvent(event)
+      }
       this.setLastProcessedBlock(latestBlockNum)
     } catch (e) {
-      logger.error('Error in the processing loop', e)
+      logger.error('Error in the processing loop:\n' + JSON.stringify(e, undefined, 2))
     }
   }
 
