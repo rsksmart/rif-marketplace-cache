@@ -15,6 +15,7 @@ import middleware from './middleware'
 import services from './services'
 import appHooks from './app.hooks'
 import sequelize from './sequelize'
+import blockchain from './blockchain/'
 // Don't remove this comment. It's needed to format import lines nicely.
 
 const app: Application = express(feathers())
@@ -47,5 +48,8 @@ app.use(express.notFound())
 app.use(express.errorHandler({ logger } as any))
 
 app.hooks(appHooks)
+
+// Blockchain watcher
+app.configure(blockchain)
 
 export default app

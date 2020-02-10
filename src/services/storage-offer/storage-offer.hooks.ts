@@ -1,8 +1,10 @@
 import { disallow } from 'feathers-hooks-common'
+import { HookContext } from '@feathersjs/feathers'
+import Price from '../../models/price.model'
 
 export default {
   before: {
-    all: [],
+    all: [(context: HookContext) => { context.params.sequelize = { raw: false, include: [Price], nest: true } }],
     find: [],
     get: [],
     create: disallow(),
@@ -30,4 +32,4 @@ export default {
     patch: [],
     remove: []
   }
-};
+}

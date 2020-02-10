@@ -25,6 +25,7 @@ export default function (app: Application): void {
         (models[name] as any).associate(models)
       }
     })
+    sequelize.sync({ force: true })
 
     // Sync to the database
     app.set('sequelizeSync', sequelize.sync())
