@@ -1,13 +1,17 @@
-import { Sequelize } from 'sequelize-typescript'
+import { Sequelize, SequelizeOptions } from 'sequelize-typescript'
 import { Application } from './declarations'
+import { factory } from './logger'
 import path from 'path'
 
+const logger = factory('db')
+
 export default function (app: Application): void {
-  const dbSettings = Object.assign({
+  const dbSettings: SequelizeOptions = Object.assign({
     models: [path.join(__dirname, '/models/**/*.model.ts')],
     modelMatch: (filename: string, member: string): boolean => {
       return filename.substring(0, filename.indexOf('.model')) === member.toLowerCase()
-    }
+    },
+    logging: (sql: string) => logger.debug(sql)
   }, app.get('db'))
 
   const sequelize = new Sequelize(dbSettings)

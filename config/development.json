@@ -7,6 +7,6 @@
   },
   "blockchain": {
     "provider": "ws://localhost:8545",
-    "pinningContractAddress": "CONTRACT_ADDR"
+    "pinningContractAddress": ""
   }
 }

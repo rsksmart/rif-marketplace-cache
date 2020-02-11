@@ -4,12 +4,12 @@ import { EventData } from 'web3-eth-contract'
 import { Application } from '../declarations'
 import { getPinningContract } from './utils'
 import { PinningManager } from '@rsksmart/rif-martketplace-storage-pinning/types/web3-v1-contracts/PinningManager'
-import logger from '../logger'
+import { factory } from '../logger'
 import StorageOffer from '../models/storage-offer.model'
 import Price from '../models/price.model'
-
 // Don't remove this comment. It's needed to format import lines nicely.
 
+const logger = factory('watcher')
 const DEFAULT_POLLING_INTERVAL = 5000
 const VALID_EVENTS = ['CapacitySet', 'MaximumDurationSet', 'PriceSet']
 

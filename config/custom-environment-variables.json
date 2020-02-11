@@ -1,0 +1,11 @@
+{
+  "blockchain": {
+    "provider": "RDS_PROVIDER",
+    "pinningContractAddress": "RDS_CONTRACT_ADDR"
+  },
+  "log": {
+    "level": "LOG_LEVEL",
+    "filter": "LOG_FILTER",
+    "path": "LOG_PATH"
+  }
+}
