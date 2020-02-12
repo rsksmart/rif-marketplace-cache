@@ -15,7 +15,7 @@ const VALID_EVENTS = ['CapacitySet', 'MaximumDurationSet', 'PriceSet']
 
 function updatePrices (offer: StorageOffer, period: number, price: number): Promise<Price> {
   const priceEntity = offer.prices && offer.prices.find(value => value.period === period)
-  logger.info(`Updating offer ID ${offer.address} period ${period} to price ${price}`)
+  logger.info(`Updating period ${period} to price ${price} (ID: ${offer.address}`)
 
   if (priceEntity) {
     priceEntity.amount = price
@@ -33,6 +33,7 @@ export interface PinningWatcherOptions {
 
 export class PinningWatcher {
   pollingInterval: number
+  startingBlock: number | string
   lastProcessedBlock?: number
   contract: PinningManager
   intervalId?: NodeJS.Timeout
@@ -40,6 +41,7 @@ export class PinningWatcher {
 
   constructor (app: Application, { lastProcessedBlock, pollingInterval }: PinningWatcherOptions = {}) {
     this.eth = app.get('eth') as Eth
+    this.startingBlock = app.get('blockchain').startingBlock
 
     const pinningContractAddr = app.get('blockchain').pinningContractAddress
     this.contract = getPinningContract(this.eth, pinningContractAddr)
@@ -92,11 +94,11 @@ export class PinningWatcher {
     switch (event.event) {
       case 'CapacitySet':
         offer.capacity = event.returnValues.capacity
-        logger.info(`Updating offer ID ${offer.address} with capacity ${offer.capacity}`)
+        logger.info(`Updating capacity ${offer.capacity} (ID: ${offer.address}`)
         break
       case 'MaximumDurationSet':
         offer.maximumDuration = event.returnValues.maximumDuration
-        logger.info(`Updating offer ID ${offer.address} with maximum duration ${offer.maximumDuration}`)
+        logger.info(`Updating maximum duration ${offer.maximumDuration} (ID: ${offer.address}`)
         break
       case 'PriceSet':
         await updatePrices(offer, event.returnValues.period, event.returnValues.price)
@@ -119,7 +121,7 @@ export class PinningWatcher {
 
   private getLastProcessedBlock (): string | number {
     if (!this.lastProcessedBlock) {
-      return 'genesis'
+      return this.startingBlock
     }
 
     return this.lastProcessedBlock

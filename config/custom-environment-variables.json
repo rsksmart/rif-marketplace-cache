@@ -1,7 +1,8 @@
 {
   "blockchain": {
     "provider": "RDS_PROVIDER",
-    "pinningContractAddress": "RDS_CONTRACT_ADDR"
+    "pinningContractAddress": "RDS_CONTRACT_ADDR",
+    "startingBlock": "RDS_STARTING_BLOCK"
   },
   "log": {
     "level": "LOG_LEVEL",

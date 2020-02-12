@@ -7,5 +7,10 @@
   "log": {
     "level": "info",
     "filter": null
+  },
+  "blockchain": {
+    "provider": "",
+    "pinningContractAddress": "",
+    "startingBlock": "genesis"
   }
 }
