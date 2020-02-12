@@ -5,9 +5,15 @@ import { Op } from 'sequelize'
 @Scopes(() => ({
   active: {
     where: {
-      capacity: { [Op.ne]: null },
+      capacity: { [Op.and]: [{ [Op.ne]: null }, { [Op.gt]: 0 }] },
       maximumDuration: { [Op.ne]: null }
-    }
+    },
+    include: [
+      {
+        model: Price,
+        required: true
+      }
+    ]
   }
 }))
 @Table

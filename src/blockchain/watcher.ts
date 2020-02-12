@@ -21,7 +21,7 @@ function updatePrices (offer: StorageOffer, period: number, price: number): Prom
     priceEntity.amount = price
     return priceEntity.save()
   } else {
-    const newPriceEntity = new Price({ period, price, offerId: offer.address })
+    const newPriceEntity = new Price({ period, amount: price, offerId: offer.address })
     return newPriceEntity.save()
   }
 }
