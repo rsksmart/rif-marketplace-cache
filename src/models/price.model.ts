@@ -1,4 +1,4 @@
-import { Table, DataType, Column, Model, ForeignKey, BelongsTo } from 'sequelize-typescript'
+import { Table, Column, Model, ForeignKey, BelongsTo } from 'sequelize-typescript'
 import StorageOffer from './storage-offer.model'
 
 @Table
