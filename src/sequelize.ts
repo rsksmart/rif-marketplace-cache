@@ -2,6 +2,7 @@ import { Sequelize, SequelizeOptions } from 'sequelize-typescript'
 import { Application } from './declarations'
 import { factory } from './logger'
 import path from 'path'
+import config from 'config'
 
 const logger = factory('db')
 
@@ -12,7 +13,7 @@ export default function (app: Application): void {
       return filename.substring(0, filename.indexOf('.model')) === member.toLowerCase()
     },
     logging: (sql: string) => logger.debug(sql)
-  }, app.get('db'))
+  }, config.get('db'))
 
   const sequelize = new Sequelize(dbSettings)
   const oldSetup = app.setup
