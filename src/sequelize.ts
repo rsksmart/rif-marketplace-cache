@@ -12,7 +12,11 @@ export default function (app: Application): void {
     modelMatch: (filename: string, member: string): boolean => {
       return filename.substring(0, filename.indexOf('.model')) === member.toLowerCase()
     },
-    logging: (sql: string) => logger.debug(sql)
+    logging: (sql: string) => logger.debug(sql),
+    // transactionType: 'IMMEDIATE',
+    // retry: {
+    //   max: 10
+    // }
   }, config.get('db'))
 
   const sequelize = new Sequelize(dbSettings)
@@ -30,8 +34,6 @@ export default function (app: Application): void {
         (models[name] as any).associate(models)
       }
     })
-    sequelize.sync({ force: true })
-
     // Sync to the database
     app.set('sequelizeSync', sequelize.sync())
 

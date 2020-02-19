@@ -1,10 +1,10 @@
-import { Table, Column, Model } from 'sequelize-typescript'
+import { Table, Column, Model, DataType } from 'sequelize-typescript'
 
-@Table
+@Table({ freezeTableName: true, tableName: 'event' })
 export default class Event extends Model {
   @Column
   blockNumber!: number
 
-  @Column
+  @Column(DataType.TEXT)
   content!: string
 }

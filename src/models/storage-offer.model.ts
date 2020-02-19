@@ -16,7 +16,7 @@ import { Op } from 'sequelize'
     ]
   }
 }))
-@Table
+@Table({ freezeTableName: true, tableName: 'storage-offer' })
 export default class StorageOffer extends Model {
   @Column({ primaryKey: true, type: DataType.STRING(64) })
   address!: string

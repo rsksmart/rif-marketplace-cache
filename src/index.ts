@@ -6,7 +6,7 @@ const port = config.get('port')
 const server = app.listen(port)
 
 process.on('unhandledRejection', (reason, p) =>
-  logger.error(`Unhandled Rejection at: ${p}\n${reason}`)
+  logger.error(`Unhandled Rejection at: ${reason}`)
 )
 
 server.on('listening', () =>

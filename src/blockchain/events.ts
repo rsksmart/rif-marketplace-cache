@@ -38,7 +38,7 @@ export class BlockTracker {
 
   constructor (store: Store) {
     this.store = store
-    this.lastProcessedBlock = this.store.get(CONF_LAST_PROCESSED_BLOCK_KEY) || config.get<number>('blockchain.startingBlock')
+    this.lastProcessedBlock = this.store.get(CONF_LAST_PROCESSED_BLOCK_KEY)
   }
 
   setLastProcessedBlock (block: number): void {
@@ -46,7 +46,7 @@ export class BlockTracker {
     this.store.set(CONF_LAST_PROCESSED_BLOCK_KEY, block)
   }
 
-  getLastProcessedBlock (): string | number {
+  getLastProcessedBlock (): number | undefined {
     return this.lastProcessedBlock
   }
 }
@@ -67,8 +67,8 @@ abstract class AutoStartStopEventEmitter extends EventEmitter {
     this.logger = logger
     this.triggerEventName = triggerEventName
 
-    this.on('newListener', () => {
-      if (this.listenerCount(this.triggerEventName) === 1) {
+    this.on('newListener', (event) => {
+      if (event === this.triggerEventName && this.listenerCount(this.triggerEventName) === 0) {
         this.logger.info('Listener attached, starting processing events.')
         this.start()
       }
@@ -142,6 +142,7 @@ export class ListeningNewBlockEmitter extends AutoStartStopEventEmitter {
         this.logger.error(error)
       }
 
+      this.logger.info(`New block ${blockHeader.number}`)
       this.emit(NEW_BLOCK_EVENT_NAME, blockHeader.number)
     })
   }
@@ -163,15 +164,16 @@ abstract class BaseEventsEmitter extends AutoStartStopEventEmitter {
   protected readonly contract: Contract
   protected readonly eth: Eth
   private readonly confirmations: number
+  private isInitialized = false
 
-  protected constructor (eth: Eth, contract: Contract, events: string[], logger: Logger, options: EventsEmitterOptions) {
+  protected constructor (eth: Eth, contract: Contract, events: string[], logger: Logger, options?: EventsEmitterOptions) {
     super(logger, DATA_EVENT_NAME)
     this.eth = eth
     this.contract = contract
     this.events = events
-    this.confirmations = options.confirmations || 0
+    this.confirmations = options?.confirmations || 0
 
-    if (options.blockTracker) {
+    if (options?.blockTracker) {
       if (options.blockTracker instanceof BlockTracker) {
         this.blockTracker = options.blockTracker
       } else {
@@ -182,7 +184,7 @@ abstract class BaseEventsEmitter extends AutoStartStopEventEmitter {
       this.blockTracker = new BlockTracker(new Conf())
     }
 
-    if (options.newBlockEmitter) {
+    if (options?.newBlockEmitter) {
       if (options.newBlockEmitter instanceof EventEmitter) {
         this.newBlockEmitter = options.newBlockEmitter
       } else {
@@ -197,7 +199,20 @@ abstract class BaseEventsEmitter extends AutoStartStopEventEmitter {
     }
   }
 
-  start (): void {
+  async init (): Promise<void> {
+    if (this.blockTracker.getLastProcessedBlock() === undefined) {
+      const from = config.get<number>('blockchain.startingBlock')
+      await this.processPreviousEvents(from, 'latest').catch(e => this.logger.error(e))
+    }
+
+    this.isInitialized = true
+  }
+
+  async start (): Promise<void> {
+    if (!this.isInitialized) {
+      await this.init()
+    }
+
     this.startEvents()
     this.newBlockEmitter.on(NEW_BLOCK_EVENT_NAME, this.confirmEvents.bind(this))
   }
@@ -222,13 +237,26 @@ abstract class BaseEventsEmitter extends AutoStartStopEventEmitter {
    *
    * @param currentBlockNumber
    */
-  private async confirmEvents (currentBlockNumber: number): Promise<void> {
+  private async confirmEvents (currentBlockNumber: number): Promise<void[]> {
     const events = await Event.findAll({ where: { blockNumber: { [Op.gte]: currentBlockNumber - this.confirmations } } })
     this.logger.info(`Confirmed ${events.length} events.`)
 
     events
       .map(event => JSON.parse(event.content))
       .forEach(event => this.emit(DATA_EVENT_NAME, event))
+
+    return Promise.all(events.map(event => event.destroy()))
+  }
+
+  protected emitEvent (data: EventData): void {
+    this.emit(DATA_EVENT_NAME, data)
+  }
+
+  protected serializeEvent (data: EventData): object {
+    this.logger.info(`New ${data.event} event. Waiting for block ${data.blockNumber + this.confirmations}`)
+    return {
+      blockNumber: data.blockNumber, content: JSON.stringify(data)
+    }
   }
 
   /**
@@ -236,19 +264,20 @@ abstract class BaseEventsEmitter extends AutoStartStopEventEmitter {
    *
    * @param data
    */
-  protected async newEvent (data: EventData): Promise<void> {
-    if (!this.events.includes(data.event)) {
+  protected async newEvent (data: EventData | EventData[]): Promise<void> {
+    if (!Array.isArray(data)) {
+      data = [data]
+    }
+    const events = data.filter(event => this.events.includes(event.event))
+
+    if (this.confirmations === 0) {
+      events.forEach(this.emitEvent.bind(this))
       return
     }
 
-    if (!this.confirmations) {
-      this.emit(DATA_EVENT_NAME, data)
-      return
-    }
-
-    this.logger.debug(`New event ${data.event}. Waiting for confirmation.`)
-    const event = new Event({ blockNumber: data.blockNumber, content: JSON.stringify(data) })
-    await event.save()
+    this.logger.info('New events have to wait for confirmation')
+    const sequelizeEvents = events.map(this.serializeEvent.bind(this))
+    await Event.bulkCreate(sequelizeEvents)
   }
 
   /**
@@ -257,14 +286,40 @@ abstract class BaseEventsEmitter extends AutoStartStopEventEmitter {
    * @param from
    * @param to
    */
-  async fetchPreviousEvents (from?: number | string, to?: number | string): Promise<EventData[]> {
-    from = from || config.get<number>('blockchain.startingBlock')
-    to = to || 'latest'
+  async processPreviousEvents (from: number | string, to: number | string): Promise<void> {
+    const currentBlock = await this.eth.getBlockNumber()
 
-    return (await this.contract.getPastEvents('allEvents', {
+    if (to === 'latest') {
+      to = currentBlock
+    }
+
+    this.logger.info(`Processing past events from ${from} to ${to}`)
+    const events = (await this.contract.getPastEvents('allEvents', {
       fromBlock: from,
       toBlock: to
     })).filter(data => this.events.includes(data.event))
+
+    if (this.confirmations === 0) {
+      events.forEach(this.emitEvent.bind(this))
+      this.blockTracker.setLastProcessedBlock(currentBlock)
+      return
+    }
+
+    const thresholdBlock = currentBlock - this.confirmations
+    this.logger.info(`Threshold block ${thresholdBlock}`)
+
+    const eventsToBeConfirmed = events
+      .filter(event => event.blockNumber >= thresholdBlock)
+      .map(this.serializeEvent.bind(this))
+    this.logger.info(`${eventsToBeConfirmed.length} events to be confirmed.`)
+    await Event.bulkCreate(eventsToBeConfirmed)
+
+    const eventsToBeEmitted = events
+      .filter(event => event.blockNumber < thresholdBlock)
+    this.logger.info(`${eventsToBeEmitted.length} events to be emitted.`)
+
+    eventsToBeEmitted.forEach(this.emitEvent.bind(this))
+    this.blockTracker.setLastProcessedBlock(currentBlock)
   }
 }
 
@@ -275,10 +330,10 @@ export class PollingEventsEmitter extends BaseEventsEmitter {
   intervalId: NodeJS.Timeout | undefined
   private readonly pollingInterval: number
 
-  constructor (eth: Eth, contract: Contract, events: string[], options: EventsEmitterOptions) {
-    const logger = factory('block:events:polling')
+  constructor (eth: Eth, contract: Contract, events: string[], options?: EventsEmitterOptions) {
+    const logger = factory('blockchain:events:polling')
     super(eth, contract, events, logger, options)
-    this.pollingInterval = options.pollingInterval || DEFAULT_POLLING_INTERVAL
+    this.pollingInterval = options?.pollingInterval || DEFAULT_POLLING_INTERVAL
   }
 
   async poll (): Promise<void> {
@@ -297,9 +352,8 @@ export class PollingEventsEmitter extends BaseEventsEmitter {
         fromBlock: lastProcessedBlock,
         toBlock: latestBlockNum
       })
-      for (const event of events) {
-        await this.newEvent(event)
-      }
+
+      await this.newEvent(events)
       this.blockTracker.setLastProcessedBlock(latestBlockNum)
     } catch (e) {
       this.logger.error('Error in the processing loop:\n' + JSON.stringify(e, undefined, 2))
@@ -324,7 +378,7 @@ export class PollingEventsEmitter extends BaseEventsEmitter {
  */
 export class ListeningEventsEmitter extends BaseEventsEmitter {
   constructor (eth: Eth, contract: Contract, events: string[], options: EventsEmitterOptions) {
-    const logger = factory('block:events:listening')
+    const logger = factory('blockchain:events:listening')
     super(eth, contract, events, logger, options)
   }
 
@@ -337,8 +391,8 @@ export class ListeningEventsEmitter extends BaseEventsEmitter {
   }
 }
 
-export default function eventsRepoFactory (eth: Eth, contract: Contract, events: string[], options: EventsEmitterOptions): BaseEventsEmitter {
-  if (options.polling === true) {
+export default function eventsEmitterFactory (eth: Eth, contract: Contract, events: string[], options?: EventsEmitterOptions): BaseEventsEmitter {
+  if (options?.polling === true) {
     return new PollingEventsEmitter(eth, contract, events, options)
   }
 

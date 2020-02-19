@@ -1,12 +1,19 @@
 {
-  "host": "localhost",
-  "port": 3030,
-  "db": {
-    "dialect": "sqlite",
-    "storage": "../db.sqlite"
+  host: "localhost",
+  port: 3030,
+  persistConf: false,
+  db: {
+    dialect: "postgres",
+    host: "localhost",
+    database: "rif_marketplace_cache",
+    username: "dev",
+    password: "dev"
   },
-  "blockchain": {
-    "provider": "ws://localhost:8545",
-    "pinningContractAddress": ""
+  blockchain: {
+    provider: "ws://localhost:8545",
+    pinningContractAddress: "",
+    eventsEmitter: {
+      confirmations: 1
+    }
   }
 }

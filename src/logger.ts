@@ -92,7 +92,7 @@ loadFilter(config.get('log.filter') || '*')
 
 const transportsSet: Transport[] = [new transports.Console()]
 
-if (config.has('log.path')) {
+if (config.get('log.path')) {
   transportsSet.push(new transports.File({
     filename: config.get('log.path'),
     maxsize: 5000000,

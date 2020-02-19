@@ -1,7 +1,7 @@
 import { Table, Column, Model, ForeignKey, BelongsTo } from 'sequelize-typescript'
 import StorageOffer from './storage-offer.model'
 
-@Table
+@Table({ freezeTableName: true, tableName: 'price' })
 export default class Price extends Model {
   @Column
   period!: number
@@ -11,7 +11,7 @@ export default class Price extends Model {
 
   @ForeignKey(() => StorageOffer)
   @Column
-  offerId!: number
+  offerId!: string
 
   @BelongsTo(() => StorageOffer)
   offer!: StorageOffer

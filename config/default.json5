@@ -7,6 +7,9 @@
     path: null
   },
 
+  // Specifies if configuration using Conf() should be persisted between restarts
+  persistConf: true,
+
   // Settings for blockchain related function
   blockchain: {
 
