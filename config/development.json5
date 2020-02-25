@@ -1,7 +1,10 @@
 {
   host: "localhost",
   port: 3030,
-  persistConf: false,
+  conf: {
+    name: 'dev-config',
+    persist: true
+  },
   db: {
     dialect: "postgres",
     host: "localhost",

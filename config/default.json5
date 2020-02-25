@@ -6,9 +6,11 @@
     filter: null,
     path: null
   },
-
-  // Specifies if configuration using Conf() should be persisted between restarts
-  persistConf: true,
+  conf: {
+    name: 'config',
+    // Specifies if configuration using Conf() should be persisted between restarts
+    persist: true
+  },
 
   // Settings for blockchain related function
   blockchain: {

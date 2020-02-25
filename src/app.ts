@@ -13,7 +13,7 @@ import services from './services'
 import appHooks from './app.hooks'
 import sequelize from './sequelize'
 import blockchain from './blockchain/'
-import conf from './conf'
+import { configure as confConfigure } from './conf'
 // Don't remove this comment. It's needed to format import lines nicely.
 
 const app: Application = express(feathers())
@@ -30,7 +30,7 @@ app.configure(express.rest())
 app.configure(socketio())
 
 app.configure(sequelize)
-app.configure(conf)
+app.configure(confConfigure)
 
 // Configure other middleware (see `middleware/index.js`)
 app.configure(middleware)

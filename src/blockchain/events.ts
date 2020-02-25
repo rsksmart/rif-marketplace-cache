@@ -1,7 +1,7 @@
 import { Contract, EventData } from 'web3-eth-contract'
 import { BlockHeader, Eth } from 'web3-eth'
 import { Subscription } from 'web3-core-subscriptions'
-import Conf from 'conf'
+import confFactory from '../conf'
 import config from 'config'
 import { EventEmitter } from 'events'
 import { NotImplemented } from '@feathersjs/errors'
@@ -177,11 +177,11 @@ abstract class BaseEventsEmitter extends AutoStartStopEventEmitter {
       if (options.blockTracker instanceof BlockTracker) {
         this.blockTracker = options.blockTracker
       } else {
-        const confStore = options.blockTracker.store || new Conf()
+        const confStore = options.blockTracker.store || confFactory()
         this.blockTracker = new BlockTracker(confStore)
       }
     } else {
-      this.blockTracker = new BlockTracker(new Conf())
+      this.blockTracker = new BlockTracker(confFactory())
     }
 
     if (options?.newBlockEmitter) {

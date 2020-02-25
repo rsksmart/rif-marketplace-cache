@@ -1,13 +1,44 @@
 import { Application } from './declarations'
 import config from 'config'
 import Conf from 'conf'
-import { factory } from './logger'
+import { factory as logFactory } from './logger'
 
-const logger = factory('conf')
+const logger = logFactory('conf')
 
-export default function conf (app: Application): void {
-  if (!config.get('persistConf')) {
+export interface ConfOptions {
+  host: string
+  port: number
+  log?: {
+    level?: string
+    filter?: string
+    path?: string
+  }
+  blockchain: {
+    provider: string
+    pinningContractAddress: string
+    startingBlock: string | number
+    eventsEmitter?: {
+      polling: boolean
+      pollingInterval?: number
+      confirmations?: number
+    }
+  }
+  newBlockEmitter: {
+    polling: boolean
+    pollingInterval?: number
+  }
+}
+
+export default function factory (): Conf {
+  const configName = config.get<string>('conf.name')
+
+  return new Conf<ConfOptions>({ configName })
+}
+
+export function configure (app: Application): void {
+  if (!config.get('conf.persist')) {
     logger.info('Clearing all persisted configuration.')
-    new Conf().clear()
+
+    factory().clear()
   }
 }
