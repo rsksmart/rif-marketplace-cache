@@ -9,7 +9,7 @@ import { Op } from 'sequelize'
 import { Logger } from 'winston'
 
 import { factory } from '../logger'
-import Event from '../models/event.model'
+import Event, { EventInterface } from '../models/event.model'
 import { Store } from '../types'
 
 const DEFAULT_POLLING_INTERVAL = 5000
@@ -22,10 +22,16 @@ export interface PollingOptions {
   pollingInterval?: number
 }
 
-export interface EventsEmitterOptions extends PollingOptions {
+export enum EventsEmitterStrategy {
+  POLLING= 1,
+  LISTENING,
+}
+
+export interface EventsEmitterOptions {
   confirmations?: number
   blockTracker?: BlockTracker | { store?: Store }
   newBlockEmitter?: EventEmitter | PollingOptions
+  strategy?: EventsEmitterStrategy
 }
 
 /**
@@ -108,11 +114,14 @@ export class PollingNewBlockEmitter extends AutoStartStopEventEmitter {
 
     if (this.lastBlockNumber !== currentLastBlockNumber) {
       this.lastBlockNumber = currentLastBlockNumber
+      this.logger.info(`New block ${currentLastBlockNumber}`)
       this.emit(NEW_BLOCK_EVENT_NAME, currentLastBlockNumber)
     }
   }
 
   start (): void {
+    // Fetch last block right away
+    this.fetchLastBlockNumber().catch(this.logger.error)
     this.intervalId = setInterval(this.fetchLastBlockNumber.bind(this), this.pollingInterval)
   }
 
@@ -136,10 +145,16 @@ export class ListeningNewBlockEmitter extends AutoStartStopEventEmitter {
     this.eth = eth
   }
 
-  start (): void {
+  async start (): Promise<void> {
+    // Emit block number right away
+    const currentLastBlockNumber = await this.eth.getBlockNumber()
+    this.logger.info(`Current block ${currentLastBlockNumber}`)
+    this.emit(NEW_BLOCK_EVENT_NAME, currentLastBlockNumber)
+
     this.subscription = this.eth.subscribe('newBlockHeaders', (error, blockHeader) => {
       if (error) {
         this.logger.error(error)
+        return
       }
 
       this.logger.info(`New block ${blockHeader.number}`)
@@ -157,7 +172,7 @@ export class ListeningNewBlockEmitter extends AutoStartStopEventEmitter {
  * It supports block's confirmation, where new events are stored to DB and only after configured number of new
  * blocks are emitted to consumers for further processing.
  */
-abstract class BaseEventsEmitter extends AutoStartStopEventEmitter {
+export abstract class BaseEventsEmitter extends AutoStartStopEventEmitter {
   protected readonly blockTracker: BlockTracker
   protected readonly newBlockEmitter: EventEmitter
   protected readonly events: string[]
@@ -199,10 +214,14 @@ abstract class BaseEventsEmitter extends AutoStartStopEventEmitter {
     }
   }
 
+  /**
+   * Serves for initialization of the EventsEmitter.
+   * Specifically when this caching service is first launched this it will process past events.
+   */
   async init (): Promise<void> {
     if (this.blockTracker.getLastProcessedBlock() === undefined) {
       const from = config.get<number>('blockchain.startingBlock')
-      await this.processPreviousEvents(from, 'latest').catch(e => this.logger.error(e))
+      await this.processPastEvents(from, 'latest').catch(e => this.logger.error(e))
     }
 
     this.isInitialized = true
@@ -238,7 +257,7 @@ abstract class BaseEventsEmitter extends AutoStartStopEventEmitter {
    * @param currentBlockNumber
    */
   private async confirmEvents (currentBlockNumber: number): Promise<void[]> {
-    const events = await Event.findAll({ where: { blockNumber: { [Op.gte]: currentBlockNumber - this.confirmations } } })
+    const events = await Event.findAll({ where: { blockNumber: { [Op.lte]: currentBlockNumber - this.confirmations } } })
     this.logger.info(`Confirmed ${events.length} events.`)
 
     events
@@ -252,129 +271,169 @@ abstract class BaseEventsEmitter extends AutoStartStopEventEmitter {
     this.emit(DATA_EVENT_NAME, data)
   }
 
-  protected serializeEvent (data: EventData): object {
-    this.logger.info(`New ${data.event} event. Waiting for block ${data.blockNumber + this.confirmations}`)
+  protected serializeEvent (data: EventData): EventInterface {
+    this.logger.debug(`New ${data.event} event to be confirmed. Transaction ${data.transactionHash}.${data.logIndex}`)
     return {
-      blockNumber: data.blockNumber, content: JSON.stringify(data)
+      blockNumber: data.blockNumber,
+      transactionHash: data.transactionHash,
+      logIndex: data.logIndex,
+      content: JSON.stringify(data)
     }
   }
 
   /**
-   * Will either emit the event (if no confirmations are set) or save the event to database, for awaiting confirmation.
    *
-   * @param data
+   * @param events
    */
-  protected async newEvent (data: EventData | EventData[]): Promise<void> {
-    if (!Array.isArray(data)) {
-      data = [data]
+  private async processEventsToBeConfirmed (events: EventData[]): Promise<void> {
+    const sequelizeEvents = events.map(this.serializeEvent.bind(this))
+
+    const transactionHash = sequelizeEvents.map(value => value.transactionHash)
+    const existingEvents = await Event.findAll({
+      where: {
+        transactionHash: { [Op.in]: transactionHash }
+      }
+    })
+
+    if (existingEvents.length === 0) {
+      await Event.bulkCreate(sequelizeEvents)
+      return // No (potential) conflicts ==> only add events
     }
-    const events = data.filter(event => this.events.includes(event.event))
+
+    // Optimization lookup table for identification of good transactionHash&logIndex tuple
+    const transactionLookupTable = sequelizeEvents.reduce<Record<string, number[]>>((previousValue, currentValue) => {
+      if (!previousValue[currentValue.transactionHash]) {
+        previousValue[currentValue.transactionHash] = [currentValue.logIndex]
+      } else {
+        previousValue[currentValue.transactionHash].push(currentValue.logIndex)
+      }
+
+      return previousValue
+    }, {})
+
+    // Remove old events from DB
+    const eventsForDeletion = existingEvents.filter(event => transactionLookupTable[event.transactionHash].includes(event.logIndex))
+    this.logger.warn(`Found ${eventsForDeletion.length} re-emitted events! Removing old ones!`)
+    await Promise.all(eventsForDeletion.map(event => event.destroy()))
+
+    await Event.bulkCreate(sequelizeEvents)
+  }
+
+  protected async processEvents (events: EventData | EventData[], currentBlock?: number): Promise<void> {
+    currentBlock = currentBlock || await this.eth.getBlockNumber()
+
+    if (!Array.isArray(events)) {
+      events = [events]
+    }
+
+    events = events.filter(data => this.events.includes(data.event))
+
+    if (events.length === 0) {
+      this.logger.info('No events to be processed.')
+      return
+    } else {
+      this.logger.info(`New events! Processing ${events.length} events.`)
+    }
 
     if (this.confirmations === 0) {
       events.forEach(this.emitEvent.bind(this))
       return
     }
 
-    this.logger.info('New events have to wait for confirmation')
-    const sequelizeEvents = events.map(this.serializeEvent.bind(this))
-    await Event.bulkCreate(sequelizeEvents)
+    const thresholdBlock = currentBlock - this.confirmations
+    this.logger.info(`Threshold block ${thresholdBlock},`)
+
+    const eventsToBeConfirmed = events
+      .filter(event => event.blockNumber > thresholdBlock)
+    this.logger.info(`${eventsToBeConfirmed.length} events to be confirmed.`)
+    await this.processEventsToBeConfirmed(eventsToBeConfirmed)
+
+    const eventsToBeEmitted = events
+      .filter(event => event.blockNumber <= thresholdBlock)
+    this.logger.info(`${eventsToBeEmitted.length} events to be emitted.`)
+
+    eventsToBeEmitted.forEach(this.emitEvent.bind(this))
   }
 
   /**
-   * Retrieves past events filtered out based on events passed to constructor.
+   * Retrieves past events filtered out based on event's names passed to constructor.
    *
    * @param from
    * @param to
    */
-  async processPreviousEvents (from: number | string, to: number | string): Promise<void> {
+  async processPastEvents (from: number | string, to: number | string): Promise<void> {
     const currentBlock = await this.eth.getBlockNumber()
 
     if (to === 'latest') {
       to = currentBlock
     }
 
-    this.logger.info(`Processing past events from ${from} to ${to}`)
+    this.logger.info(`=> Processing past events from ${from} to ${to}`)
+    const startTime = process.hrtime()
     const events = (await this.contract.getPastEvents('allEvents', {
       fromBlock: from,
       toBlock: to
-    })).filter(data => this.events.includes(data.event))
+    }))
 
-    if (this.confirmations === 0) {
-      events.forEach(this.emitEvent.bind(this))
-      this.blockTracker.setLastProcessedBlock(currentBlock)
-      return
-    }
-
-    const thresholdBlock = currentBlock - this.confirmations
-    this.logger.info(`Threshold block ${thresholdBlock}`)
-
-    const eventsToBeConfirmed = events
-      .filter(event => event.blockNumber >= thresholdBlock)
-      .map(this.serializeEvent.bind(this))
-    this.logger.info(`${eventsToBeConfirmed.length} events to be confirmed.`)
-    await Event.bulkCreate(eventsToBeConfirmed)
-
-    const eventsToBeEmitted = events
-      .filter(event => event.blockNumber < thresholdBlock)
-    this.logger.info(`${eventsToBeEmitted.length} events to be emitted.`)
-
-    eventsToBeEmitted.forEach(this.emitEvent.bind(this))
+    await this.processEvents(events, currentBlock)
     this.blockTracker.setLastProcessedBlock(currentBlock)
+
+    const [secondsLapsed] = process.hrtime(startTime)
+    this.logger.info(`=> Finished processing past events in ${secondsLapsed}s`)
   }
 }
 
 /**
- * EventsEmitter implementation that uses polling for fetching new events.
+ * EventsEmitter implementation that uses polling for fetching new events from the blockchain.
+ *
+ * Polling is triggered using the NewBlockEmitter and is therefore up to the user
+ * to chose what new-block strategy will employ.
+ * He has choice from using listening or polling versions of the emitter.
+ *
+ * @see PollingNewBlockEmitter
+ * @see ListeningNewBlockEmitter
  */
 export class PollingEventsEmitter extends BaseEventsEmitter {
-  intervalId: NodeJS.Timeout | undefined
-  private readonly pollingInterval: number
-
   constructor (eth: Eth, contract: Contract, events: string[], options?: EventsEmitterOptions) {
     const logger = factory('blockchain:events:polling')
     super(eth, contract, events, logger, options)
-    this.pollingInterval = options?.pollingInterval || DEFAULT_POLLING_INTERVAL
   }
 
-  async poll (): Promise<void> {
+  async poll (currentBlock: number): Promise<void> {
     try {
-      const latestBlockNum = await this.eth.getBlockNumber()
       const lastProcessedBlock = this.blockTracker.getLastProcessedBlock()
 
       // Nothing new, lets fast-forward
-      if (lastProcessedBlock === latestBlockNum) {
+      if (lastProcessedBlock === currentBlock) {
         return
       }
 
-      this.logger.info(`Checking new events between blocks ${lastProcessedBlock}-${latestBlockNum}`)
+      this.logger.info(`Checking new events between blocks ${lastProcessedBlock}-${currentBlock}`)
       // TODO: Possible to filter-out the events with "topics" property directly from the node
       const events = await this.contract.getPastEvents('allEvents', {
         fromBlock: lastProcessedBlock,
-        toBlock: latestBlockNum
+        toBlock: currentBlock
       })
 
-      await this.newEvent(events)
-      this.blockTracker.setLastProcessedBlock(latestBlockNum)
+      await this.processEvents(events, currentBlock)
+      this.blockTracker.setLastProcessedBlock(currentBlock)
     } catch (e) {
       this.logger.error('Error in the processing loop:\n' + JSON.stringify(e, undefined, 2))
     }
   }
 
   startEvents (): void {
-    this.intervalId = setInterval(this.poll.bind(this), this.pollingInterval)
+    this.newBlockEmitter.on(NEW_BLOCK_EVENT_NAME, this.poll.bind(this))
   }
 
   stopEvents (): void {
-    if (this.intervalId) {
-      clearInterval(this.intervalId)
-      this.intervalId = undefined
-    }
+    this.newBlockEmitter.off(NEW_BLOCK_EVENT_NAME, this.poll.bind(this))
   }
 }
 
-// TODO: Should analyze previous events, not only listen for new ones
 /**
  * EventsEmitter implementation that uses blockchain listening for fetching new events.
+ * TODO: Yep, finish this :'-)
  */
 export class ListeningEventsEmitter extends BaseEventsEmitter {
   constructor (eth: Eth, contract: Contract, events: string[], options: EventsEmitterOptions) {
@@ -392,7 +451,7 @@ export class ListeningEventsEmitter extends BaseEventsEmitter {
 }
 
 export default function eventsEmitterFactory (eth: Eth, contract: Contract, events: string[], options?: EventsEmitterOptions): BaseEventsEmitter {
-  if (options?.polling === true) {
+  if (!options?.strategy || options?.strategy === EventsEmitterStrategy.POLLING) {
     return new PollingEventsEmitter(eth, contract, events, options)
   }
 
