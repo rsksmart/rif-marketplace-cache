@@ -1,1 +1,19 @@
-{}
+{
+  host: 'localhost',
+  port: 3030,
+  conf: {
+    name: 'test-config',
+    persist: false
+  },
+  db: {
+    dialect: 'sqlite',
+    storage: ':memory:'
+  },
+  blockchain: {
+    provider: 'ws://localhost:8545',
+    pinningContractAddress: '',
+    eventsEmitter: {
+      confirmations: 1
+    }
+  }
+}

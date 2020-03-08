@@ -6,20 +6,20 @@ import config from 'config'
 
 const logger = factory('db')
 
-export default function (app: Application): void {
+export function sequelizeFactory (): Sequelize {
   const dbSettings: SequelizeOptions = Object.assign({
     models: [path.join(__dirname, '/models/**/*.model.ts')],
     modelMatch: (filename: string, member: string): boolean => {
       return filename.substring(0, filename.indexOf('.model')) === member.toLowerCase()
     },
-    logging: (sql: string) => logger.debug(sql),
-    // transactionType: 'IMMEDIATE',
-    // retry: {
-    //   max: 10
-    // }
+    logging: (sql: string) => logger.debug(sql)
   }, config.get('db'))
 
-  const sequelize = new Sequelize(dbSettings)
+  return new Sequelize(dbSettings)
+}
+
+export default function (app: Application): void {
+  const sequelize = sequelizeFactory()
   const oldSetup = app.setup
 
   app.set('sequelizeClient', sequelize)

@@ -48,6 +48,7 @@
     "@feathersjs/socketio": "^4.5.1",
     "@feathersjs/transport-commons": "^4.5.1",
     "@rsksmart/rif-martketplace-storage-pinning": "github:rsksmart/rif-martketplace-storage-pinning#feat/npm_package_preparations",
+    "async-sema": "^3.1.0",
     "bignumber.js": "^9.0.0",
     "colors": "^1.4.0",
     "compression": "^1.7.4",
@@ -71,6 +72,7 @@
   },
   "devDependencies": {
     "@feathersjs/cli": "^4.2.5",
+    "@fluffy-spoon/substitute": "^1.113.0",
     "@types/bluebird": "^3.5.29",
     "@types/chai": "^4.2.7",
     "@types/chai-as-promised": "^7.1.2",
@@ -84,6 +86,7 @@
     "@types/node": "^13.5.1",
     "@types/node-fetch": "^2.5.4",
     "@types/serve-favicon": "^2.5.0",
+    "@types/sinon": "^7.5.2",
     "@types/validator": "^10.11.3",
     "chai": "^4.2.0",
     "chai-as-promised": "^7.1.1",
@@ -91,7 +94,7 @@
     "merge-options": "^2.0.0",
     "sinon": "^8.1.1",
     "sqlite3": "^4.1.1",
-    "tasegir": "^1.6.0",
+    "tasegir": "^1.7.0",
     "typedoc": "^0.16.8",
     "typedoc-plugin-markdown": "^2.2.16"
   },
