@@ -8,7 +8,6 @@ import socketio from '@feathersjs/socketio'
 
 import { Application } from './declarations'
 import logger from './logger'
-import middleware from './middleware'
 import services from './services'
 import appHooks from './app.hooks'
 import sequelize from './sequelize'
@@ -32,8 +31,6 @@ app.configure(socketio())
 app.configure(sequelize)
 app.configure(confConfigure)
 
-// Configure other middleware (see `middleware/index.js`)
-app.configure(middleware)
 // Set up our services (see `services/index.js`)
 app.configure(services)
 

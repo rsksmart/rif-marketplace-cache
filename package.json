@@ -6,15 +6,15 @@
     "RIF",
     "RSK"
   ],
-  "author": {
-    "name": "Adam Uhlíř",
-    "email": "adam@uhlir.dev"
-  },
   "homepage": "https://github.com/rsksmart/rif-martketplace-cache",
   "bugs": {
     "url": "https://github.com/rsksmart/rif-martketplace-cache/issues/"
   },
   "license": "MIT",
+  "author": {
+    "name": "Adam Uhlíř",
+    "email": "adam@uhlir.dev"
+  },
   "files": [
     "types",
     "lib"
@@ -99,8 +99,8 @@
     "typedoc-plugin-markdown": "^2.2.16"
   },
   "engines": {
-    "node": "^12.0.0",
-    "npm": ">= 3.0.0"
+    "node": ">=10.0.0",
+    "npm": ">=6.0.0"
   },
   "types": "types/index.d.ts",
   "contributors": [

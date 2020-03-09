@@ -1,5 +1,5 @@
 import { createLogger, format, transports, addColors, Logger } from 'winston'
-import * as Transport from 'winston-transport';
+import * as Transport from 'winston-transport'
 
 import colors from 'colors'
 import config from 'config'

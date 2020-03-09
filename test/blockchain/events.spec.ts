@@ -79,7 +79,7 @@ function eventMock (options?: Partial<EventData>): EventData {
     testEvent[key].returns!(value)
   }
 
-  if (!options['event']) {
+  if (!options.event) {
     testEvent.event.returns!('testEvent')
   }
 

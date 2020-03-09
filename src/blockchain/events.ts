@@ -400,11 +400,13 @@ export class PollingEventsEmitter extends BaseEventsEmitter {
   }
 
   async poll (currentBlock: number): Promise<void> {
+    this.logger.info(`Received new block number ${currentBlock}`)
     try {
       const lastProcessedBlock = this.blockTracker.getLastProcessedBlock()
 
       // Nothing new, lets fast-forward
       if (lastProcessedBlock === currentBlock) {
+        this.logger.info('Nothing new to process')
         return
       }
 
