@@ -47,6 +47,9 @@ jobs:
             - node-v1-{{ .Branch }}-
             - node-v1-
       - run:
+          name: "Install sqlite"
+          command: npm install sqlite3
+      - run:
           name: "Node tests"
           command: npx tasegir test --target node --reporter lcovonly -- --bail
 #      - sonarcloud/scan
