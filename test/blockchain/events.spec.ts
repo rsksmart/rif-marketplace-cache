@@ -495,7 +495,7 @@ describe('PollingEventsEmitter', function () {
 
     contract.received(2).getPastEvents(Arg.all())
     expect(blockTracker.getLastProcessedBlock()).to.eql(12)
-    expect(spy.getCalls().length).to.eql(2, 'Expected two emitted events')
+    expect(spy.getCalls().length).to.eql(1)
   })
 
   it('should ignore same blocks', async function () {

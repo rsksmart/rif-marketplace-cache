@@ -1,4 +1,4 @@
-import { Application } from './declarations'
+import { Application } from './types'
 import config from 'config'
 import Conf from 'conf'
 import { factory as logFactory } from './logger'

@@ -1,4 +1,4 @@
-import { Application } from '../declarations'
+import { Application } from '../types'
 import storageOffer from './storage-offer/storage-offer.service'
 // Don't remove this comment. It's needed to format import lines nicely.
 

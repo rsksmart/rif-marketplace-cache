@@ -1,4 +1,4 @@
-import { Application } from '../declarations'
+import { Application } from '../types'
 import Eth from 'web3-eth'
 import { EventData } from 'web3-eth-contract'
 import StorageOffer from '../models/storage-offer.model'

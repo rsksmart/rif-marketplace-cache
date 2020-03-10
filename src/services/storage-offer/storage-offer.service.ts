@@ -2,8 +2,7 @@
 import StorageOffer from '../../models/storage-offer.model'
 import hooks from './storage-offer.hooks'
 import { Service, SequelizeServiceOptions } from 'feathers-sequelize'
-import { Application } from '../../declarations'
-
+import { Application } from '../../types'
 export class StorageOfferService extends Service {
   constructor (options: Partial<SequelizeServiceOptions>, app: Application) {
     super(options)

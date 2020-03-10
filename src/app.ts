@@ -6,7 +6,7 @@ import feathers from '@feathersjs/feathers'
 import express from '@feathersjs/express'
 import socketio from '@feathersjs/socketio'
 
-import { Application } from './declarations'
+import { Application } from './types'
 import logger from './logger'
 import services from './services'
 import appHooks from './app.hooks'
