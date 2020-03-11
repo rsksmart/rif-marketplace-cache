@@ -44,8 +44,8 @@ class StoreMock implements Store {
   }
 }
 
-function sleep (ms: number): Promise<void> {
-  return new Promise(resolve => setTimeout(resolve, ms))
+function sleep<T> (ms: number, ...args: T[]): Promise<T> {
+  return new Promise(resolve => setTimeout(() => resolve(...args), ms))
 }
 
 function subscribeMock (sequence: Array<Error | BlockHeader>, interval = 100): (event: string, cb: (err?: Error, blockHeader?: BlockHeader) => void) => void {
@@ -95,8 +95,13 @@ export class DummyEventsEmitter extends BaseEventsEmitter {
     super(eth, contract, events, logger, options)
   }
 
-  createEvent (data: EventData | EventData[]): Promise<void> {
-    return this.processEvents(data)
+  async createEvent (data: EventData | EventData[]): Promise<void> {
+    await this.semaphore.acquire()
+    try {
+      return this.processEvents(data)
+    } finally {
+      this.semaphore.release()
+    }
   }
 
   startEvents (): void {
@@ -244,6 +249,37 @@ describe('BaseEventsEmitter', () => {
 
   beforeEach(async () => {
     await sequelize.sync({ force: true })
+  })
+
+  it('should wait for previous processing finished', async function () {
+    const events = [
+      eventMock({ blockNumber: 4, transactionHash: '1', logIndex: 1 }),
+      eventMock({ blockNumber: 8, transactionHash: '2', logIndex: 1 }),
+      eventMock({ blockNumber: 9, transactionHash: '3', logIndex: 1 }),
+      eventMock({ blockNumber: 10, transactionHash: '4', logIndex: 1 })
+    ]
+
+    const eth = Substitute.for<Eth>()
+    eth.getBlockNumber().returns(Promise.resolve(10), Promise.resolve(11))
+
+    const contract = Substitute.for<Contract>()
+    contract.getPastEvents(Arg.all()).returns(sleep(200, events))
+
+    const blockTracker = new BlockTracker(new StoreMock())
+    const newBlockEmitter = new EventEmitter()
+    const options = { blockTracker, newBlockEmitter }
+    const spy = sinon.spy()
+    const eventsEmitter = new DummyEventsEmitter(eth, contract, ['testEvent'], options)
+    eventsEmitter.on(DATA_EVENT_NAME, spy) // Will start processingPastEvents() which will be delayed
+
+    // Directly calling processEvents(), which should be blocked by the processingPastEvents()
+    const createEventPromise = eventsEmitter.createEvent(events)
+    await sleep(50)
+    eth.received(1).getBlockNumber()
+
+    // After the processingEvents() is finished
+    await createEventPromise
+    eth.received(2).getBlockNumber()
   })
 
   describe('with confirmations', () => {
@@ -524,5 +560,36 @@ describe('PollingEventsEmitter', function () {
     contract.received(1).getPastEvents(Arg.all())
     expect(blockTracker.getLastProcessedBlock()).to.eql(11)
     expect(spy.getCalls().length).to.eql(1, 'Expected only one emitted event')
+  })
+
+  it('should wait for previous processing finished', async function () {
+    const events = [
+      eventMock({ blockNumber: 4, transactionHash: '1', logIndex: 1 }),
+      eventMock({ blockNumber: 8, transactionHash: '2', logIndex: 1 }),
+      eventMock({ blockNumber: 9, transactionHash: '3', logIndex: 1 }),
+      eventMock({ blockNumber: 10, transactionHash: '4', logIndex: 1 })
+    ]
+
+    const eth = Substitute.for<Eth>()
+    eth.getBlockNumber().returns(Promise.resolve(10))
+
+    const contract = Substitute.for<Contract>()
+    contract.getPastEvents(Arg.all()).returns(sleep(200, events), Promise.resolve(events))
+
+    const blockTracker = new BlockTracker(new StoreMock())
+    const newBlockEmitter = new EventEmitter()
+    const options = { blockTracker, newBlockEmitter }
+    const spy = sinon.spy()
+    const eventsEmitter = new PollingEventsEmitter(eth, contract, ['testEvent'], options)
+    eventsEmitter.on(DATA_EVENT_NAME, spy) // Will start processingPastEvents() which will be delayed
+
+    // Directly calling processEvents(), which should be blocked by the processingPastEvents()
+    newBlockEmitter.emit(NEW_BLOCK_EVENT, 11)
+    await sleep(50)
+    contract.received(1).getPastEvents(Arg.all())
+
+    // After the processingEvents() is finished
+    await sleep(500)
+    contract.received(2).getPastEvents(Arg.all())
   })
 })

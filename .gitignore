@@ -21,6 +21,3 @@ coverage
 
 # Dependency directory
 node_modules
-
-# Local dev DB
-db.sqlite
