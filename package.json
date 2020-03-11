@@ -47,6 +47,7 @@
     "@feathersjs/feathers": "^4.5.1",
     "@feathersjs/socketio": "^4.5.1",
     "@rsksmart/rif-martketplace-storage-pinning": "github:rsksmart/rif-martketplace-storage-pinning#feat/npm_package_preparations",
+    "async-sema": "^3.1.0",
     "colors": "^1.4.0",
     "compression": "^1.7.4",
     "conf": "^6.2.0",

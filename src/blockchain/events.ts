@@ -7,6 +7,7 @@ import { EventEmitter } from 'events'
 import { NotImplemented } from '@feathersjs/errors'
 import { Op } from 'sequelize'
 import { Logger } from 'winston'
+import { Sema } from 'async-sema'
 
 import { factory } from '../logger'
 import Event, { EventInterface } from '../models/event.model'
@@ -23,7 +24,7 @@ export interface PollingOptions {
 }
 
 export enum EventsEmitterStrategy {
-  POLLING= 1,
+  POLLING = 1,
   LISTENING,
 }
 
@@ -178,6 +179,7 @@ export abstract class BaseEventsEmitter extends AutoStartStopEventEmitter {
   protected readonly events: string[]
   protected readonly contract: Contract
   protected readonly eth: Eth
+  protected readonly semaphore: Sema
   private readonly confirmations: number
   private isInitialized = false
 
@@ -187,6 +189,7 @@ export abstract class BaseEventsEmitter extends AutoStartStopEventEmitter {
     this.contract = contract
     this.events = events
     this.confirmations = options?.confirmations || 0
+    this.semaphore = new Sema(1) // Allow only one caller
 
     if (options?.blockTracker) {
       if (options.blockTracker instanceof BlockTracker) {
@@ -227,9 +230,9 @@ export abstract class BaseEventsEmitter extends AutoStartStopEventEmitter {
     this.isInitialized = true
   }
 
-  async start (): Promise<void> {
+  start (): void {
     if (!this.isInitialized) {
-      await this.init()
+      this.init()
     }
 
     this.startEvents()
@@ -362,24 +365,29 @@ export abstract class BaseEventsEmitter extends AutoStartStopEventEmitter {
    * @param to
    */
   async processPastEvents (from: number | string, to: number | string): Promise<void> {
-    const currentBlock = await this.eth.getBlockNumber()
+    await this.semaphore.acquire()
+    try {
+      const currentBlock = await this.eth.getBlockNumber()
 
-    if (to === 'latest') {
-      to = currentBlock
+      if (to === 'latest') {
+        to = currentBlock
+      }
+
+      this.logger.info(`=> Processing past events from ${from} to ${to}`)
+      const startTime = process.hrtime()
+      const events = (await this.contract.getPastEvents('allEvents', {
+        fromBlock: from,
+        toBlock: to
+      }))
+
+      await this.processEvents(events, currentBlock)
+      this.blockTracker.setLastProcessedBlock(currentBlock)
+
+      const [secondsLapsed] = process.hrtime(startTime)
+      this.logger.info(`=> Finished processing past events in ${secondsLapsed}s`)
+    } finally {
+      this.semaphore.release()
     }
-
-    this.logger.info(`=> Processing past events from ${from} to ${to}`)
-    const startTime = process.hrtime()
-    const events = (await this.contract.getPastEvents('allEvents', {
-      fromBlock: from,
-      toBlock: to
-    }))
-
-    await this.processEvents(events, currentBlock)
-    this.blockTracker.setLastProcessedBlock(currentBlock)
-
-    const [secondsLapsed] = process.hrtime(startTime)
-    this.logger.info(`=> Finished processing past events in ${secondsLapsed}s`)
   }
 }
 
@@ -400,6 +408,7 @@ export class PollingEventsEmitter extends BaseEventsEmitter {
   }
 
   async poll (currentBlock: number): Promise<void> {
+    await this.semaphore.acquire()
     this.logger.info(`Received new block number ${currentBlock}`)
     try {
       const lastProcessedBlock = this.blockTracker.getLastProcessedBlock()
@@ -421,6 +430,8 @@ export class PollingEventsEmitter extends BaseEventsEmitter {
       this.blockTracker.setLastProcessedBlock(currentBlock)
     } catch (e) {
       this.logger.error('Error in the processing loop:\n' + JSON.stringify(e, undefined, 2))
+    } finally {
+      this.semaphore.release()
     }
   }
 
