@@ -35,6 +35,11 @@ export interface EventsEmitterOptions {
   strategy?: EventsEmitterStrategy
 }
 
+async function filter<T> (arr: Array<T>, callback: (elem: T) => Promise<boolean>): Promise<Array<T>> {
+  const fail = Symbol('async-filter-fail')
+  const mappedArray = await Promise.all(arr.map(async item => (await callback(item)) ? item : fail))
+  return mappedArray.filter(i => i !== fail) as T[]
+}
 /**
  * Simple class for persistence of last processed block in order to now crawl the whole blockchain upon every restart
  * of the service.
@@ -260,14 +265,25 @@ export abstract class BaseEventsEmitter extends AutoStartStopEventEmitter {
    * @param currentBlockNumber
    */
   private async confirmEvents (currentBlockNumber: number): Promise<void[]> {
-    const events = await Event.findAll({ where: { blockNumber: { [Op.lte]: currentBlockNumber - this.confirmations } } })
-    this.logger.info(`Confirmed ${events.length} events.`)
+    const dbEvents = await Event.findAll({ where: { blockNumber: { [Op.lte]: currentBlockNumber - this.confirmations } } })
 
-    events
-      .map(event => JSON.parse(event.content))
-      .forEach(event => this.emit(DATA_EVENT_NAME, event))
+    const ethEvents = dbEvents.map(event => JSON.parse(event.content)) as EventData[]
+    const validEthEvents = await filter(ethEvents, this.eventHasValidReceipt.bind(this))
+    validEthEvents.forEach(event => this.emit(DATA_EVENT_NAME, event))
+    this.logger.info(`Confirmed ${validEthEvents.length} events.`)
 
-    return Promise.all(events.map(event => event.destroy()))
+    if (dbEvents.length !== validEthEvents.length) {
+      this.logger.warn(`${dbEvents.length - validEthEvents.length} events dropped because
+      no valid reciept.`)
+    }
+
+    // We will remove all events even the invalid ones
+    return Promise.all(dbEvents.map(event => event.destroy()))
+  }
+
+  private async eventHasValidReceipt (event: EventData): Promise<boolean> {
+    const reciept = await this.eth.getTransactionReceipt(event.transactionHash)
+    return reciept.status && reciept.blockNumber === event.blockNumber
   }
 
   protected emitEvent (data: EventData): void {
