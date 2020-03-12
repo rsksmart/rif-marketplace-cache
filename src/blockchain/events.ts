@@ -40,6 +40,7 @@ async function filter<T> (arr: Array<T>, callback: (elem: T) => Promise<boolean>
   const mappedArray = await Promise.all(arr.map(async item => (await callback(item)) ? item : fail))
   return mappedArray.filter(i => i !== fail) as T[]
 }
+
 /**
  * Simple class for persistence of last processed block in order to now crawl the whole blockchain upon every restart
  * of the service.
@@ -116,12 +117,17 @@ export class PollingNewBlockEmitter extends AutoStartStopEventEmitter {
   }
 
   private async fetchLastBlockNumber (): Promise<void> {
-    const currentLastBlockNumber = await this.eth.getBlockNumber()
+    try {
+      const currentLastBlockNumber = await this.eth.getBlockNumber()
 
-    if (this.lastBlockNumber !== currentLastBlockNumber) {
-      this.lastBlockNumber = currentLastBlockNumber
-      this.logger.info(`New block ${currentLastBlockNumber}`)
-      this.emit(NEW_BLOCK_EVENT_NAME, currentLastBlockNumber)
+      if (this.lastBlockNumber !== currentLastBlockNumber) {
+        this.lastBlockNumber = currentLastBlockNumber
+        this.logger.info(`New block ${currentLastBlockNumber}`)
+        this.emit(NEW_BLOCK_EVENT_NAME, currentLastBlockNumber)
+      }
+    } catch (e) {
+      this.logger.error(`While fetching latest block error happend: ${e}`)
+      this.emit('error', e)
     }
   }
 
@@ -152,20 +158,26 @@ export class ListeningNewBlockEmitter extends AutoStartStopEventEmitter {
   }
 
   async start (): Promise<void> {
-    // Emit block number right away
-    const currentLastBlockNumber = await this.eth.getBlockNumber()
-    this.logger.info(`Current block ${currentLastBlockNumber}`)
-    this.emit(NEW_BLOCK_EVENT_NAME, currentLastBlockNumber)
+    try {
+      // Emit block number right away
+      const currentLastBlockNumber = await this.eth.getBlockNumber()
+      this.logger.info(`Current block ${currentLastBlockNumber}`)
+      this.emit(NEW_BLOCK_EVENT_NAME, currentLastBlockNumber)
 
-    this.subscription = this.eth.subscribe('newBlockHeaders', (error, blockHeader) => {
-      if (error) {
-        this.logger.error(error)
-        return
-      }
+      this.subscription = this.eth.subscribe('newBlockHeaders', (error, blockHeader) => {
+        if (error) {
+          this.logger.error(error)
+          this.emit('error', error)
+          return
+        }
 
-      this.logger.info(`New block ${blockHeader.number}`)
-      this.emit(NEW_BLOCK_EVENT_NAME, blockHeader.number)
-    })
+        this.logger.info(`New block ${blockHeader.number}`)
+        this.emit(NEW_BLOCK_EVENT_NAME, blockHeader.number)
+      })
+    } catch (e) {
+      this.logger.error(e)
+      this.emit('error', e)
+    }
   }
 
   stop (): void {
@@ -220,6 +232,8 @@ export abstract class BaseEventsEmitter extends AutoStartStopEventEmitter {
     } else {
       this.newBlockEmitter = new ListeningNewBlockEmitter(this.eth)
     }
+
+    this.newBlockEmitter.on('error', (e) => this.emit('error', e))
   }
 
   /**
@@ -237,7 +251,7 @@ export abstract class BaseEventsEmitter extends AutoStartStopEventEmitter {
 
   start (): void {
     if (!this.isInitialized) {
-      this.init()
+      this.init().catch(error => this.emit('error', error))
     }
 
     this.startEvents()
@@ -264,21 +278,26 @@ export abstract class BaseEventsEmitter extends AutoStartStopEventEmitter {
    *
    * @param currentBlockNumber
    */
-  private async confirmEvents (currentBlockNumber: number): Promise<void[]> {
-    const dbEvents = await Event.findAll({ where: { blockNumber: { [Op.lte]: currentBlockNumber - this.confirmations } } })
+  private async confirmEvents (currentBlockNumber: number): Promise<void> {
+    try {
+      const dbEvents = await Event.findAll({ where: { blockNumber: { [Op.lte]: currentBlockNumber - this.confirmations } } })
 
-    const ethEvents = dbEvents.map(event => JSON.parse(event.content)) as EventData[]
-    const validEthEvents = await filter(ethEvents, this.eventHasValidReceipt.bind(this))
-    validEthEvents.forEach(event => this.emit(DATA_EVENT_NAME, event))
-    this.logger.info(`Confirmed ${validEthEvents.length} events.`)
+      const ethEvents = dbEvents.map(event => JSON.parse(event.content)) as EventData[]
+      const validEthEvents = await filter(ethEvents, this.eventHasValidReceipt.bind(this))
+      validEthEvents.forEach(event => this.emit(DATA_EVENT_NAME, event))
+      this.logger.info(`Confirmed ${validEthEvents.length} events.`)
 
-    if (dbEvents.length !== validEthEvents.length) {
-      this.logger.warn(`${dbEvents.length - validEthEvents.length} events dropped because
+      if (dbEvents.length !== validEthEvents.length) {
+        this.logger.warn(`${dbEvents.length - validEthEvents.length} events dropped because
       no valid reciept.`)
-    }
+      }
 
-    // We will remove all events even the invalid ones
-    return Promise.all(dbEvents.map(event => event.destroy()))
+      // We will remove all events even the invalid ones
+      await Promise.all(dbEvents.map(event => event.destroy()))
+    } catch (e) {
+      this.logger.error(`During confirmation error was raised: ${e}`)
+      this.emit('error', e)
+    }
   }
 
   private async eventHasValidReceipt (event: EventData): Promise<boolean> {
