@@ -6,7 +6,7 @@ import {
   PollingNewBlockEmitter
 } from '../../src/blockchain/events'
 import { Store } from '../../src/types'
-import { BlockHeader, Eth } from 'web3-eth'
+import { BlockHeader, Eth, TransactionReceipt } from 'web3-eth'
 
 import { Arg, Substitute } from '@fluffy-spoon/substitute'
 import sinon from 'sinon'
@@ -84,6 +84,20 @@ function eventMock (options?: Partial<EventData>): EventData {
   }
 
   return testEvent
+}
+
+function receiptMock (blockNumber?: number, status = true): TransactionReceipt {
+  const receipt = Substitute.for<TransactionReceipt>()
+
+  if (blockNumber !== undefined) {
+    receipt.blockNumber.returns!(blockNumber)
+  }
+
+  if (status !== undefined) {
+    receipt.status.returns!(status)
+  }
+
+  return receipt
 }
 
 /**
@@ -384,6 +398,11 @@ describe('BaseEventsEmitter', () => {
       const eth = Substitute.for<Eth>()
       eth.getBlockNumber().returns(Promise.resolve(10))
 
+      eth.getTransactionReceipt('1').returns(Promise.resolve(receiptMock(7)))
+      eth.getTransactionReceipt('2').returns(Promise.resolve(receiptMock(8)))
+      eth.getTransactionReceipt('3').returns(Promise.resolve(receiptMock(9)))
+      eth.getTransactionReceipt('4').returns(Promise.resolve(receiptMock(9))) // Incorrect block number
+
       const contract = Substitute.for<Contract>()
       contract.getPastEvents(Arg.all()).returns(Promise.resolve([]))
 
@@ -396,20 +415,58 @@ describe('BaseEventsEmitter', () => {
 
       // Create events to be confirmed
       const events = [
-        { blockNumber: 7, transactionHash: '1', logIndex: 1, content: '{"transactionIndex": 1}' },
-        { blockNumber: 8, transactionHash: '2', logIndex: 1, content: '{"transactionIndex": 2}' },
-        { blockNumber: 9, transactionHash: '3', logIndex: 1, content: '{"transactionIndex": 3}' },
-        { blockNumber: 9, transactionHash: '4', logIndex: 1, content: '{"transactionIndex": 4}' },
-        { blockNumber: 10, transactionHash: '5', logIndex: 1, content: '{"transactionIndex": 5}' },
-        { blockNumber: 11, transactionHash: '6', logIndex: 1, content: '{"transactionIndex": 5}' }
+        { blockNumber: 7, transactionHash: '1', logIndex: 1, content: '{"transactionHash": "1", "blockNumber": 7}' },
+        { blockNumber: 8, transactionHash: '2', logIndex: 1, content: '{"transactionHash": "2", "blockNumber": 8}' },
+        { blockNumber: 9, transactionHash: '3', logIndex: 1, content: '{"transactionHash": "3", "blockNumber": 9}' },
+        { blockNumber: 9, transactionHash: '4', logIndex: 1, content: '{"transactionHash": "4", "blockNumber": 9}' },
+        { blockNumber: 10, transactionHash: '5', logIndex: 1, content: '{"transactionHash": "5", "blockNumber": 10}' },
+        { blockNumber: 11, transactionHash: '6', logIndex: 1, content: '{"transactionHash": "6",  "blockNumber": 11}' }
       ]
       await Event.bulkCreate(events)
 
       // Start confirmations process
       newBlockEmitter.emit(NEW_BLOCK_EVENT, 11)
-      await sleep(100)
+      await sleep(500)
 
-      expect(emitterSpy.getCalls().length).to.be.eql(4, 'Expected two events emitted.')
+      expect(emitterSpy.getCalls().length).to.be.eql(4, 'Expected four events emitted.')
+      expect(await Event.count()).to.eql(2)
+    })
+
+    it('should confirm events using receipts for correct blocks', async function () {
+      const eth = Substitute.for<Eth>()
+      eth.getBlockNumber().returns(Promise.resolve(10))
+
+      eth.getTransactionReceipt('1').returns(Promise.resolve(receiptMock(7)))
+      eth.getTransactionReceipt('2').returns(Promise.resolve(receiptMock(8)))
+      eth.getTransactionReceipt('3').returns(Promise.resolve(receiptMock(9)))
+      eth.getTransactionReceipt('4').returns(Promise.resolve(receiptMock(10))) // Incorrect block number
+
+      const contract = Substitute.for<Contract>()
+      contract.getPastEvents(Arg.all()).returns(Promise.resolve([]))
+
+      const blockTracker = new BlockTracker(new StoreMock())
+      const newBlockEmitter = new EventEmitter()
+      const options: EventsEmitterOptions = { confirmations: 2, blockTracker, newBlockEmitter }
+      const emitterSpy = sinon.spy()
+      const eventsEmitter = new DummyEventsEmitter(eth, contract, ['testEvent'], options)
+      eventsEmitter.on(DATA_EVENT_NAME, emitterSpy)
+
+      // Create events to be confirmed
+      const events = [
+        { blockNumber: 7, transactionHash: '1', logIndex: 1, content: '{"transactionHash": "1", "blockNumber": 7}' },
+        { blockNumber: 8, transactionHash: '2', logIndex: 1, content: '{"transactionHash": "2", "blockNumber": 8}' },
+        { blockNumber: 9, transactionHash: '3', logIndex: 1, content: '{"transactionHash": "3", "blockNumber": 9}' },
+        { blockNumber: 9, transactionHash: '4', logIndex: 1, content: '{"transactionHash": "4", "blockNumber": 9}' },
+        { blockNumber: 10, transactionHash: '5', logIndex: 1, content: '{"transactionHash": "5", "blockNumber": 10}' },
+        { blockNumber: 11, transactionHash: '6', logIndex: 1, content: '{"transactionHash": "6",  "blockNumber": 11}' }
+      ]
+      await Event.bulkCreate(events)
+
+      // Start confirmations process
+      newBlockEmitter.emit(NEW_BLOCK_EVENT, 11)
+      await sleep(500)
+
+      expect(emitterSpy.getCalls().length).to.be.eql(3, 'Expected three events emitted.')
       expect(await Event.count()).to.eql(2)
     })
   })
