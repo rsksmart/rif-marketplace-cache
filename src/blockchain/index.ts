@@ -72,4 +72,7 @@ export default async function (app: Application): Promise<void> {
 
   const eventsEmitter = eventsEmitterFactory(eth, contract, VALID_EVENTS, options)
   eventsEmitter.on('newEvent', processEventClosure(sequelize))
+  eventsEmitter.on('eventsEmitter', (e) => {
+    logger.error(`There was unknown error in Events Emitter! ${e}`)
+  })
 }
