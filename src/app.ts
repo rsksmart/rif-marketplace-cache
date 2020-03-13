@@ -8,16 +8,15 @@ import socketio from '@feathersjs/socketio'
 
 import { Application } from './types'
 import logger from './logger'
-import services from './services'
-import appHooks from './app.hooks'
 import sequelize from './sequelize'
-import blockchain from './blockchain/'
+import blockchain from './blockchain'
 import { configure as confConfigure } from './conf'
-// Don't remove this comment. It's needed to format import lines nicely.
+
+import storage from './storage'
 
 const app: Application = express(feathers())
 
-// Enable security, CORS, compression, favicon and body parsing
+// Enable security, CORS, compression and body parsing
 app.use(helmet())
 app.use(cors())
 app.use(compress())
@@ -28,19 +27,18 @@ app.use(express.urlencoded({ extended: true }))
 app.configure(express.rest())
 app.configure(socketio())
 
+// Custom general services
 app.configure(sequelize)
+app.configure(blockchain)
 app.configure(confConfigure)
 
-// Set up our services (see `services/index.js`)
-app.configure(services)
+/**********************************************************/
+// Configure each services
+
+// Storage
+app.configure(storage)
 
 // Configure a middleware for 404s and the error handler
 app.use(express.notFound())
-app.use(express.errorHandler({ logger } as any))
-
-app.hooks(appHooks)
-
-// Blockchain watcher
-app.configure(blockchain)
-
+app.use(express.errorHandler({ logger }))
 export default app

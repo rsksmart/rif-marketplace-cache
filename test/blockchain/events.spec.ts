@@ -19,7 +19,7 @@ import { EventEmitter } from 'events'
 import { factory } from '../../src/logger'
 import { Sequelize } from 'sequelize-typescript'
 import { sequelizeFactory } from '../../src/sequelize'
-import Event from '../../src/models/event.model'
+import Event from '../../src/blockchain/event.model'
 
 chai.use(chaiAsPromised)
 chai.use(dirtyChai)
@@ -51,7 +51,7 @@ function sleep<T> (ms: number, ...args: T[]): Promise<T> {
 function subscribeMock (sequence: Array<Error | BlockHeader>, interval = 100): (event: string, cb: (err?: Error, blockHeader?: BlockHeader) => void) => void {
   let counter = 0
   let intervalId: NodeJS.Timeout
-  return (event: string, cb: (err?: Error, blockHeader?: BlockHeader) => void) => {
+  return (event: string, cb: (err?: Error, blockHeader?: BlockHeader) => void): void => {
     intervalId = setInterval(() => {
       if (counter >= sequence.length) {
         clearInterval(intervalId)
@@ -129,7 +129,7 @@ export class DummyEventsEmitter extends BaseEventsEmitter {
 
 // TODO: More focused assertions of expected calls.
 describe('BlockTracker', () => {
-  const STORE_LAST_PROCESSED_BLOCK_KEY = 'blockchain.lastProcessedBlock'
+  const STORE_LAST_PROCESSED_BLOCK_KEY = 'lastProcessedBlock'
 
   it('read initial block from store', function () {
     const store = new StoreMock()

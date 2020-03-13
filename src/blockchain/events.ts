@@ -1,22 +1,23 @@
 import { Contract, EventData } from 'web3-eth-contract'
 import { BlockHeader, Eth } from 'web3-eth'
 import { Subscription } from 'web3-core-subscriptions'
-import confFactory from '../conf'
-import config from 'config'
 import { EventEmitter } from 'events'
 import { NotImplemented } from '@feathersjs/errors'
 import { Op } from 'sequelize'
 import { Logger } from 'winston'
 import { Sema } from 'async-sema'
 
+import { asyncFilter, scopeStore } from '../utils'
+import confFactory from '../conf'
 import { factory } from '../logger'
-import Event, { EventInterface } from '../models/event.model'
+import Event, { EventInterface } from './event.model'
 import { Store } from '../types'
 
+// Constant number that defines default interval of all polling mechanisms.
 const DEFAULT_POLLING_INTERVAL = 5000
 const DATA_EVENT_NAME = 'newEvent'
 const NEW_BLOCK_EVENT_NAME = 'newBlock'
-const CONF_LAST_PROCESSED_BLOCK_KEY = 'blockchain.lastProcessedBlock'
+const PROCESSED_BLOCK_KEY = 'lastProcessedBlock'
 
 export interface PollingOptions {
   polling?: boolean
@@ -29,34 +30,44 @@ export enum EventsEmitterStrategy {
 }
 
 export interface EventsEmitterOptions {
+  // Defines how many blocks will be an event awaited before declared as confirmed
   confirmations?: number
-  blockTracker?: BlockTracker | { store?: Store }
+
+  // Specifies full name to use in logging output
+  loggerName?: string
+
+  // Specifies base name of the logging name
+  loggerBaseName?: string
+
+  // Specifies the starting block to process events (especially the past ones) on blockchain
+  startingBlock?: number | string
+
+  // Defines BlockTracker or its configuration
+  blockTracker?: BlockTracker | { store?: Store, keyPrefix?: string }
+
+  // Defines the NewBlockEmitter or its configuration
   newBlockEmitter?: EventEmitter | PollingOptions
+
+  // Defines what strategy should emitter use to get events
   strategy?: EventsEmitterStrategy
 }
 
-async function filter<T> (arr: Array<T>, callback: (elem: T) => Promise<boolean>): Promise<Array<T>> {
-  const fail = Symbol('async-filter-fail')
-  const mappedArray = await Promise.all(arr.map(async item => (await callback(item)) ? item : fail))
-  return mappedArray.filter(i => i !== fail) as T[]
-}
-
 /**
- * Simple class for persistence of last processed block in order to now crawl the whole blockchain upon every restart
- * of the service.
+ * Simple class for persistence of last processed block in order to not crawl the whole blockchain upon every restart
+ * of the server.
  */
 export class BlockTracker {
-  store: Store
-  lastProcessedBlock: number
+  private store: Store
+  private lastProcessedBlock: number
 
   constructor (store: Store) {
     this.store = store
-    this.lastProcessedBlock = this.store.get(CONF_LAST_PROCESSED_BLOCK_KEY)
+    this.lastProcessedBlock = this.store.get(PROCESSED_BLOCK_KEY)
   }
 
   setLastProcessedBlock (block: number): void {
     this.lastProcessedBlock = block
-    this.store.set(CONF_LAST_PROCESSED_BLOCK_KEY, block)
+    this.store.set(PROCESSED_BLOCK_KEY, block)
   }
 
   getLastProcessedBlock (): number | undefined {
@@ -66,7 +77,7 @@ export class BlockTracker {
 
 /**
  * Abstract EventEmitter that automatically start (what ever task defined in abstract start() method) when first listener is
- * attached and simillarly stops (what ever task defined in abstract stop() method) when last listener is removed.
+ * attached and similarly stops (what ever task defined in abstract stop() method) when last listener is removed.
  */
 abstract class AutoStartStopEventEmitter extends EventEmitter {
   /**
@@ -193,6 +204,7 @@ export class ListeningNewBlockEmitter extends AutoStartStopEventEmitter {
 export abstract class BaseEventsEmitter extends AutoStartStopEventEmitter {
   protected readonly blockTracker: BlockTracker
   protected readonly newBlockEmitter: EventEmitter
+  protected readonly startingBlock: string | number
   protected readonly events: string[]
   protected readonly contract: Contract
   protected readonly eth: Eth
@@ -205,6 +217,7 @@ export abstract class BaseEventsEmitter extends AutoStartStopEventEmitter {
     this.eth = eth
     this.contract = contract
     this.events = events
+    this.startingBlock = options?.startingBlock || 'genesis'
     this.confirmations = options?.confirmations || 0
     this.semaphore = new Sema(1) // Allow only one caller
 
@@ -212,7 +225,12 @@ export abstract class BaseEventsEmitter extends AutoStartStopEventEmitter {
       if (options.blockTracker instanceof BlockTracker) {
         this.blockTracker = options.blockTracker
       } else {
-        const confStore = options.blockTracker.store || confFactory()
+        let confStore = options.blockTracker.store || confFactory()
+
+        if (options.blockTracker.keyPrefix) {
+          confStore = scopeStore(confStore, options.blockTracker.keyPrefix)
+        }
+
         this.blockTracker = new BlockTracker(confStore)
       }
     } else {
@@ -242,7 +260,7 @@ export abstract class BaseEventsEmitter extends AutoStartStopEventEmitter {
    */
   async init (): Promise<void> {
     if (this.blockTracker.getLastProcessedBlock() === undefined) {
-      const from = config.get<number>('blockchain.startingBlock')
+      const from = this.startingBlock
       await this.processPastEvents(from, 'latest').catch(e => this.logger.error(e))
     }
 
@@ -276,6 +294,8 @@ export abstract class BaseEventsEmitter extends AutoStartStopEventEmitter {
   /**
    * Retrieves confirmed events and emits them.
    *
+   * Before emitting it validates that the Event is still valid on blockchain using the transaction's receipt.
+   *
    * @param currentBlockNumber
    */
   private async confirmEvents (currentBlockNumber: number): Promise<void> {
@@ -283,7 +303,7 @@ export abstract class BaseEventsEmitter extends AutoStartStopEventEmitter {
       const dbEvents = await Event.findAll({ where: { blockNumber: { [Op.lte]: currentBlockNumber - this.confirmations } } })
 
       const ethEvents = dbEvents.map(event => JSON.parse(event.content)) as EventData[]
-      const validEthEvents = await filter(ethEvents, this.eventHasValidReceipt.bind(this))
+      const validEthEvents = await asyncFilter(ethEvents, this.eventHasValidReceipt.bind(this))
       validEthEvents.forEach(event => this.emit(DATA_EVENT_NAME, event))
       this.logger.info(`Confirmed ${validEthEvents.length} events.`)
 
@@ -320,6 +340,10 @@ export abstract class BaseEventsEmitter extends AutoStartStopEventEmitter {
   }
 
   /**
+   * Adds the events to database for later on confirmation.
+   *
+   * Before adding the event it validates that there is no same Event already present in the database. It
+   * identifies "same Event" using transaction hash and log index.
    *
    * @param events
    */
@@ -357,6 +381,12 @@ export abstract class BaseEventsEmitter extends AutoStartStopEventEmitter {
     await Event.bulkCreate(sequelizeEvents)
   }
 
+  /**
+   * Main method for processing events. It should be called after retrieving Events from blockchain.
+   *
+   * @param events
+   * @param currentBlock
+   */
   protected async processEvents (events: EventData | EventData[], currentBlock?: number): Promise<void> {
     currentBlock = currentBlock || await this.eth.getBlockNumber()
 
@@ -438,7 +468,8 @@ export abstract class BaseEventsEmitter extends AutoStartStopEventEmitter {
  */
 export class PollingEventsEmitter extends BaseEventsEmitter {
   constructor (eth: Eth, contract: Contract, events: string[], options?: EventsEmitterOptions) {
-    const logger = factory('blockchain:events:polling')
+    const loggerName = options?.loggerName || (options?.loggerBaseName ? `${options.loggerBaseName}:events:polling` : 'blockchain:events:polling')
+    const logger = factory(loggerName)
     super(eth, contract, events, logger, options)
   }
 
