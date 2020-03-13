@@ -1,15 +1,26 @@
-import { ContractOptions } from 'web3-eth-contract'
 import { AbiItem } from 'web3-utils'
-
 import Eth from 'web3-eth'
+import { EventEmitter } from 'events'
+import config from 'config'
 
-import { PinningManager } from '@rsksmart/rif-martketplace-storage-pinning/types/web3-v1-contracts/PinningManager'
-import pinningContractAbi from '@rsksmart/rif-martketplace-storage-pinning/build/contracts/PinningManager.json'
+import eventsEmitterFactory, { EventsEmitterOptions, PollingOptions } from './events'
 
-export function getPinningContract (eth: Eth, addr: string, options?: ContractOptions): PinningManager {
-  if (!addr) {
-    throw new Error('No contract address!')
-  }
+export function getEventsEmitterForService (serviceName: string, eth: Eth, contractAbi: AbiItem[]): EventEmitter {
+  const contractAddresses = config.get<string>(`${serviceName}.contractAddress`)
+  const contract = new eth.Contract(contractAbi, contractAddresses)
 
-  return new eth.Contract(pinningContractAbi.abi as AbiItem[], addr, Object.assign({ gas: 100000 }, options))
+  const eventsToListen = config.get<string[]>(`${serviceName}.events`)
+  const eventsEmitterOptions = config.get<EventsEmitterOptions>(`${serviceName}.eventsEmitter`)
+  const newBlockEmitterOptions = config.get<PollingOptions>(`${serviceName}.newBlockEmitter`)
+  const options = Object.assign(
+    {},
+    eventsEmitterOptions,
+    {
+      newBlockEmitter: newBlockEmitterOptions,
+      loggerBaseName: serviceName,
+      blockTracker: { keyPrefix: serviceName }
+    } as EventsEmitterOptions
+  )
+
+  return eventsEmitterFactory(eth, contract, eventsToListen, options)
 }

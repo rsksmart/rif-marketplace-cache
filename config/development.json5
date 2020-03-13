@@ -14,7 +14,9 @@
   },
   blockchain: {
     provider: "ws://localhost:8545",
-    pinningContractAddress: "",
+  },
+  storage: {
+    contractAddress: "",
     eventsEmitter: {
       confirmations: 1
     }

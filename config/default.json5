@@ -1,13 +1,16 @@
 {
   host: null,
   port: null,
+
   log: {
     level: "info",
     filter: null,
     path: null
   },
+
   conf: {
     name: 'config',
+
     // Specifies if configuration using Conf() should be persisted between restarts
     persist: true
   },
@@ -17,12 +20,18 @@
 
     // Address to where web3js should connect to. Should be WS endpoint.
     provider: null,
+  },
+
+  // Settings for Storage service related function
+  storage: {
+    // Sets if Storage service should be enabled
+    enabled: true,
 
     // Address of deployed pinning contract
-    pinningContractAddress: null,
+    contractAddress: null,
 
-    // Starting block that upon first start of the service, will the blockchain be crawled for the past events.
-    startingBlock: "genesis",
+    // Events that will be listened to
+    events: ['CapacitySet', 'MaximumDurationSet', 'PriceSet'],
 
     // Specify behavior of EventsEmitter, that retrieves events from blockchain and pass them onwards for further processing.
     eventsEmitter: {
@@ -31,6 +40,9 @@
 
       // Interval in milliseconds, how often is blockchain checked.
       pollingInterval: null,
+
+      // Starting block that upon first start of the service, will the blockchain be crawled for the past events.
+      startingBlock: "genesis",
 
       // Number of blocks that will be waited before passing an event for further processing.
       confirmations: 0
