@@ -1,6 +1,6 @@
-import { disallow } from 'feathers-hooks-common'
 import { HookContext } from '@feathersjs/feathers'
-import Price from '../../models/price.model'
+import Price from './models/price.model'
+import { disallow } from 'feathers-hooks-common'
 
 export default {
   before: {

@@ -1,4 +1,4 @@
-import { Table, Column, Model, DataType, Unique } from 'sequelize-typescript'
+import { Table, Column, Model, DataType } from 'sequelize-typescript'
 
 @Table({
   freezeTableName: true,

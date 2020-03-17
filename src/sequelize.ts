@@ -8,7 +8,7 @@ const logger = factory('db')
 
 export function sequelizeFactory (): Sequelize {
   const dbSettings: SequelizeOptions = Object.assign({
-    models: [path.join(__dirname, '/models/**/*.model.ts')],
+    models: [path.join(__dirname, '/**/*.model.ts')],
     modelMatch: (filename: string, member: string): boolean => {
       return filename.substring(0, filename.indexOf('.model')) === member.toLowerCase()
     },
@@ -22,7 +22,7 @@ export default function (app: Application): void {
   const sequelize = sequelizeFactory()
   const oldSetup = app.setup
 
-  app.set('sequelizeClient', sequelize)
+  app.set('sequelize', sequelize)
 
   app.setup = function (...args): ReturnType<Application['setup']> {
     const result = oldSetup.apply(this, args)
