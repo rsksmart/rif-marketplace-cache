@@ -4,12 +4,11 @@ import { Subscription } from 'web3-core-subscriptions'
 import { EventEmitter } from 'events'
 import { NotImplemented } from '@feathersjs/errors'
 import { Op } from 'sequelize'
-import { Logger } from 'winston'
 import { Sema } from 'async-sema'
 
 import { asyncFilter, scopeStore } from '../utils'
 import confFactory from '../conf'
-import { factory } from '../logger'
+import { loggingFactory, Logger } from '../logger'
 import Event, { EventInterface } from './event.model'
 import { Store } from '../types'
 
@@ -122,7 +121,7 @@ export class PollingNewBlockEmitter extends AutoStartStopEventEmitter {
   private lastBlockNumber = 0
 
   constructor (eth: Eth, pollingInterval: number = DEFAULT_POLLING_INTERVAL) {
-    super(factory('blockchain:block-emitter:polling'), NEW_BLOCK_EVENT_NAME)
+    super(loggingFactory('blockchain:block-emitter:polling'), NEW_BLOCK_EVENT_NAME)
     this.eth = eth
     this.pollingInterval = pollingInterval
   }
@@ -164,7 +163,7 @@ export class ListeningNewBlockEmitter extends AutoStartStopEventEmitter {
   private subscription?: Subscription<BlockHeader>
 
   constructor (eth: Eth) {
-    super(factory('blockchain:block-emitter:listening'), NEW_BLOCK_EVENT_NAME)
+    super(loggingFactory('blockchain:block-emitter:listening'), NEW_BLOCK_EVENT_NAME)
     this.eth = eth
   }
 
@@ -469,7 +468,7 @@ export abstract class BaseEventsEmitter extends AutoStartStopEventEmitter {
 export class PollingEventsEmitter extends BaseEventsEmitter {
   constructor (eth: Eth, contract: Contract, events: string[], options?: EventsEmitterOptions) {
     const loggerName = options?.loggerName || (options?.loggerBaseName ? `${options.loggerBaseName}:events:polling` : 'blockchain:events:polling')
-    const logger = factory(loggerName)
+    const logger = loggingFactory(loggerName)
     super(eth, contract, events, logger, options)
   }
 
@@ -516,7 +515,7 @@ export class PollingEventsEmitter extends BaseEventsEmitter {
  */
 export class ListeningEventsEmitter extends BaseEventsEmitter {
   constructor (eth: Eth, contract: Contract, events: string[], options: EventsEmitterOptions) {
-    const logger = factory('blockchain:events:listening')
+    const logger = loggingFactory('blockchain:events:listening')
     super(eth, contract, events, logger, options)
   }
 

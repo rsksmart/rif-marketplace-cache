@@ -7,11 +7,13 @@ import express from '@feathersjs/express'
 import socketio from '@feathersjs/socketio'
 
 import { Application } from './types'
-import logger from './logger'
+import { loggingFactory } from './logger'
 import sequelize from './sequelize'
 import blockchain from './blockchain'
 import { configure as confConfigure } from './conf'
 import storage from './storage'
+
+const logger = loggingFactory()
 
 export function appFactory (): Application {
   const app: Application = express(feathers())

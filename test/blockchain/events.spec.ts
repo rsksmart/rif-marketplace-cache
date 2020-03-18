@@ -16,7 +16,7 @@ import chaiAsPromised from 'chai-as-promised'
 import util from 'util'
 import { Contract, EventData } from 'web3-eth-contract'
 import { EventEmitter } from 'events'
-import { factory } from '../../src/logger'
+import { loggingFactory } from '../../src/logger'
 import { Sequelize } from 'sequelize-typescript'
 import { sequelizeFactory } from '../../src/sequelize'
 import Event from '../../src/blockchain/event.model'
@@ -105,7 +105,7 @@ function receiptMock (blockNumber?: number, status = true): TransactionReceipt {
  */
 export class DummyEventsEmitter extends BaseEventsEmitter {
   constructor (eth: Eth, contract: Contract, events: string[], options?: EventsEmitterOptions) {
-    const logger = factory('blockchain:events:dummy')
+    const logger = loggingFactory('blockchain:events:dummy')
     super(eth, contract, events, logger, options)
   }
 

@@ -1,10 +1,10 @@
 import { Sequelize, SequelizeOptions } from 'sequelize-typescript'
 import { Application } from './types'
-import { factory } from './logger'
+import { loggingFactory } from './logger'
 import path from 'path'
 import config from 'config'
 
-const logger = factory('db')
+const logger = loggingFactory('db')
 
 export function sequelizeFactory (): Sequelize {
   const dbSettings: SequelizeOptions = Object.assign({
