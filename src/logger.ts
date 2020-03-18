@@ -1,8 +1,22 @@
-import { createLogger, format, transports, addColors, Logger } from 'winston'
+import { createLogger, format, transports, addColors, Logger as RealLogger } from 'winston'
 import * as Transport from 'winston-transport'
 
 import colors from 'colors'
 import config from 'config'
+
+export interface Logger {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  error (message: string | Error, ...meta: any[]): void
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  debug (message: string, ...meta: any[]): void
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  warn (message: string, ...meta: any[]): void
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  info (message: string, ...meta: any[]): void
+}
 
 // Inspired from https://github.com/visionmedia/debug
 const names: RegExp[] = []
@@ -88,45 +102,74 @@ addColors({
   info: 'blue'
 })
 
-loadFilter(config.get('log.filter') || '*')
+let mainLogger: RealLogger
+const loggers: Record<string, RealLogger> = {}
 
-const transportsSet: Transport[] = [new transports.Console()]
+function initLogging (): void {
+  loadFilter(config.get('log.filter') || '*')
 
-if (config.get('log.path')) {
-  transportsSet.push(new transports.File({
-    filename: config.get('log.path'),
-    maxsize: 5000000,
-    maxFiles: 5,
-    tailable: true,
-    format: format.uncolorize()
-  }))
+  const transportsSet: Transport[] = [new transports.Console()]
+
+  if (config.get('log.path')) {
+    transportsSet.push(new transports.File({
+      filename: config.get('log.path'),
+      maxsize: 5000000,
+      maxFiles: 5,
+      tailable: true,
+      format: format.uncolorize()
+    }))
+  }
+
+  mainLogger = createLogger({
+    // To see more detailed errors, change this to 'debug'
+    level: config.get('log.level') || 'info',
+    format: format.combine(
+      format.splat(),
+      format.metadata(),
+      filterServices(),
+      upperCaseLevel(),
+      format.errors({ stack: true }),
+      // format.padLevels(),
+      format.timestamp({ format: 'DD/MM hh:mm:ss' }),
+      format.colorize(),
+      format.printf(info => {
+        if (info.metadata.service) {
+          return `[${info.level}] ${colors.grey(info.timestamp)} (${info.metadata.service}): ${info.message}`
+        } else {
+          return `[${info.level}] ${colors.grey(info.timestamp)}: ${info.message}`
+        }
+      })
+    ),
+    transports: transportsSet
+  })
 }
 
-const logger = createLogger({
-  // To see more detailed errors, change this to 'debug'
-  level: config.get('log.level') || 'info',
-  format: format.combine(
-    format.splat(),
-    format.metadata(),
-    filterServices(),
-    upperCaseLevel(),
-    format.errors({ stack: true }),
-    // format.padLevels(),
-    format.timestamp({ format: 'DD/MM hh:mm:ss' }),
-    format.colorize(),
-    format.printf(info => {
-      if (info.metadata.service) {
-        return `[${info.level}] ${colors.grey(info.timestamp)} (${info.metadata.service}): ${info.message}`
-      } else {
-        return `[${info.level}] ${colors.grey(info.timestamp)}: ${info.message}`
+type SupportedLevels = 'error' | 'warn' | 'info' | 'debug'
+
+function delayedLoggingMethod (level: SupportedLevels, name?: string): (message: string, ...meta: any[]) => void {
+  return function (message: string, ...meta: any[]): void {
+    // First logging call, lets setup logging
+    if (!mainLogger) {
+      initLogging()
+    }
+
+    if (name) {
+      if (!loggers[name]) {
+        loggers[name] = mainLogger.child({ service: name })
       }
-    })
-  ),
-  transports: transportsSet
-})
 
-export function factory (name: string): Logger {
-  return logger.child({ service: name })
+      loggers[name][level](message, ...meta)
+    } else {
+      mainLogger[level](message, ...meta)
+    }
+  }
 }
 
-export default logger
+export function loggingFactory (name?: string): Logger {
+  return {
+    error: delayedLoggingMethod('error', name),
+    warn: delayedLoggingMethod('warn', name),
+    info: delayedLoggingMethod('info', name),
+    debug: delayedLoggingMethod('debug', name)
+  }
+}

@@ -4,14 +4,14 @@ import { AbiItem } from 'web3-utils'
 import config from 'config'
 import StorageOffer from './models/storage-offer.model'
 import { Application } from '../types'
-import { factory } from '../logger'
+import { loggingFactory } from '../logger'
 import { getEventsEmitterForService } from '../blockchain/utils'
 
 import hooks from './storage.hooks'
 import eventProcessor from './storage.blockchain'
 import pinningContractAbi from '@rsksmart/rif-martketplace-storage-pinning/build/contracts/PinningManager.json'
 
-const logger = factory('storage')
+const logger = loggingFactory('storage')
 
 export class StorageOfferService extends Service {
 }

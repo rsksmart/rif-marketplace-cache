@@ -1,9 +1,9 @@
 import StorageOffer from './models/storage-offer.model'
 import Price from './models/price.model'
 import { EventData } from 'web3-eth-contract'
-import { factory } from '../logger'
+import { loggingFactory } from '../logger'
 
-const logger = factory('storage:blockchain')
+const logger = loggingFactory('storage:blockchain')
 
 function updatePrices (offer: StorageOffer, period: number, price: number): Promise<Price> {
   const priceEntity = offer.prices && offer.prices.find(value => value.period === period)

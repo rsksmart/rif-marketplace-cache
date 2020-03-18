@@ -1,7 +1,6 @@
-import { Application } from './types'
 import config from 'config'
 import Conf from 'conf'
-import { factory as logFactory } from './logger'
+import { loggingFactory as logFactory } from './logger'
 
 const logger = logFactory('conf')
 
