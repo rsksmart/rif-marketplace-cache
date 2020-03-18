@@ -11,34 +11,36 @@ import logger from './logger'
 import sequelize from './sequelize'
 import blockchain from './blockchain'
 import { configure as confConfigure } from './conf'
-
 import storage from './storage'
 
-const app: Application = express(feathers())
+export function appFactory (): Application {
+  const app: Application = express(feathers())
 
-// Enable security, CORS, compression and body parsing
-app.use(helmet())
-app.use(cors())
-app.use(compress())
-app.use(express.json())
-app.use(express.urlencoded({ extended: true }))
+  // Enable security, CORS, compression and body parsing
+  app.use(helmet())
+  app.use(cors())
+  app.use(compress())
+  app.use(express.json())
+  app.use(express.urlencoded({ extended: true }))
 
-// Set up Plugins and providers
-app.configure(express.rest())
-app.configure(socketio())
+  // Set up Plugins and providers
+  app.configure(express.rest())
+  app.configure(socketio())
 
-// Custom general services
-app.configure(sequelize)
-app.configure(blockchain)
-app.configure(confConfigure)
+  // Custom general services
+  app.configure(sequelize)
+  app.configure(blockchain)
+  app.configure(confConfigure)
 
-/**********************************************************/
-// Configure each services
+  /**********************************************************/
+  // Configure each services
 
-// Storage
-app.configure(storage)
+  // Storage
+  app.configure(storage)
 
-// Configure a middleware for 404s and the error handler
-app.use(express.notFound())
-app.use(express.errorHandler({ logger }))
-export default app
+  // Configure a middleware for 404s and the error handler
+  app.use(express.notFound())
+  app.use(express.errorHandler({ logger }))
+
+  return app
+}

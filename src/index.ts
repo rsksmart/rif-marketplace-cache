@@ -1,7 +1,8 @@
 import logger from './logger'
-import app from './app'
+import { appFactory } from './app'
 import config from 'config'
 
+const app = appFactory()
 const port = config.get('port')
 const server = app.listen(port)
 
