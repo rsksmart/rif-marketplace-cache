@@ -15,6 +15,18 @@ import storage from './storage'
 
 const logger = loggingFactory()
 
+export enum SupportedServices {
+  STORAGE = 'storage'
+}
+
+export const services = {
+  [SupportedServices.STORAGE]: storage
+}
+
+export function isSupportedServices (value: any): value is SupportedServices {
+  return Object.values(SupportedServices).includes(value)
+}
+
 export function appFactory (): Application {
   const app: Application = express(feathers())
 
@@ -37,8 +49,9 @@ export function appFactory (): Application {
   /**********************************************************/
   // Configure each services
 
-  // Storage
-  app.configure(storage)
+  for (const service of Object.values(services)) {
+    app.configure(service.initialize)
+  }
 
   // Configure a middleware for 404s and the error handler
   app.use(express.notFound())

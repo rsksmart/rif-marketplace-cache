@@ -1,14 +1,14 @@
 {
-  "name": "@rsksmart/rif-martketplace-cache",
+  "name": "@rsksmart/rif-marketplace-cache",
   "version": "0.1.0",
   "description": "Caching server for RIF Marketplace",
   "keywords": [
     "RIF",
     "RSK"
   ],
-  "homepage": "https://github.com/rsksmart/rif-martketplace-cache",
+  "homepage": "https://github.com/rsksmart/rif-marketplace-cache",
   "bugs": {
-    "url": "https://github.com/rsksmart/rif-martketplace-cache/issues/"
+    "url": "https://github.com/rsksmart/rif-marketplace-cache/issues/"
   },
   "license": "MIT",
   "author": {
@@ -25,19 +25,20 @@
     "config": "config/"
   },
   "main": "lib/index.js",
+  "bin": {
+    "rif-marketplace-cache": "./bin/run"
+  },
   "repository": {
     "type": "git",
-    "url": "https://github.com/rsksmart/rif-martketplace-cache.git"
+    "url": "https://github.com/rsksmart/rif-marketplace-cache.git"
   },
   "scripts": {
+    "bin": "tasegir run --watch ./bin/run -- ",
     "compile": "tasegir compile",
-    "compile:watch": "tasegir compile -- --watch",
     "docs": "typedoc --mode modules --excludeNotExported --readme none --excludePrivate  --tsconfig ./node_modules/tasegir/src/config/tsconfig.json --exclude 'src/providers/*,test/**/*' --out docs src",
     "types-check": "tasegir types-check",
-    "exec": "tasegir run",
     "lint": "tasegir lint",
     "release": "tasegir release",
-    "build": "tasegir build",
     "test": "tasegir test --target node",
     "start": "tasegir run --watch ./src/index.ts"
   },
@@ -46,7 +47,12 @@
     "@feathersjs/express": "^4.5.1",
     "@feathersjs/feathers": "^4.5.1",
     "@feathersjs/socketio": "^4.5.1",
-    "@rsksmart/rif-martketplace-storage-pinning": "github:rsksmart/rif-martketplace-storage-pinning#feat/npm_package_preparations",
+    "@oclif/command": "^1.5.19",
+    "@oclif/config": "^1.14.0",
+    "@oclif/errors": "^1.2.2",
+    "@oclif/parser": "^3.8.4",
+    "@oclif/plugin-help": "^2.2.3",
+    "@rsksmart/rif-marketplace-storage-pinning": "github:rsksmart/rif-marketplace-storage-pinning#feat/npm_package_preparations",
     "async-sema": "^3.1.0",
     "colors": "^1.4.0",
     "compression": "^1.7.4",
@@ -56,6 +62,7 @@
     "feathers-hooks-common": "^5.0.2",
     "feathers-sequelize": "^6.1.0",
     "helmet": "^3.21.2",
+    "listr": "^0.14.3",
     "pg": "^7.17.1",
     "pg-hstore": "^2.3.3",
     "reflect-metadata": "^0.1.13",
@@ -70,6 +77,8 @@
   },
   "devDependencies": {
     "@fluffy-spoon/substitute": "^1.116.0",
+    "@oclif/dev-cli": "^1.22.2",
+    "@oclif/test": "^1.2.5",
     "@types/bluebird": "^3.5.29",
     "@types/chai": "^4.2.11",
     "@types/chai-as-promised": "^7.1.2",
@@ -79,18 +88,20 @@
     "@types/debug": "^4.1.5",
     "@types/dirty-chai": "^2.0.2",
     "@types/helmet": "0.0.45",
+    "@types/listr": "^0.14.2",
     "@types/mocha": "^5.2.7",
     "@types/node": "^13.9.1",
     "@types/node-fetch": "^2.5.4",
     "@types/serve-favicon": "^2.5.0",
     "@types/sinon": "^7.5.2",
     "@types/validator": "^12.0.1",
+    "bignumber.js": "^9.0.0",
     "chai": "^4.2.0",
     "chai-as-promised": "^7.1.1",
     "dirty-chai": "^2.0.1",
     "sinon": "^9.0.1",
     "sqlite3": "^4.1.1",
-    "tasegir": "^1.7.0"
+    "tasegir": "^1.7.1"
   },
   "engines": {
     "node": ">=10.0.0",
@@ -100,5 +111,12 @@
   "contributors": [
     "Adam Uhlíř <adam@uhlir.dev>",
     "dependabot-preview[bot] <27856297+dependabot-preview[bot]@users.noreply.github.com>"
-  ]
+  ],
+  "oclif": {
+    "commands": "./src/cli",
+    "bin": "rif-marketplace-cache",
+    "plugins": [
+      "@oclif/plugin-help"
+    ]
+  }
 }
