@@ -1,22 +1,14 @@
 {
-  host: "localhost",
   port: 3030,
   conf: {
     name: 'dev-config',
     persist: true
   },
-  db: {
-    dialect: "postgres",
-    host: "localhost",
-    database: "rif_marketplace_cache",
-    username: "dev",
-    password: "dev"
-  },
+  db: 'postgres://dev:dev@localhost/rif_marketplace_cache',
   blockchain: {
     provider: "ws://localhost:8545",
   },
   storage: {
-    contractAddress: "",
     eventsEmitter: {
       confirmations: 1
     }

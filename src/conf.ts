@@ -10,7 +10,7 @@ export interface ConfOptions {
   }
 }
 
-export default function factory (): Conf {
+export default function confFactory (): Conf {
   const configName = config.get<string>('conf.name')
 
   return new Conf<ConfOptions>({ configName })
@@ -20,6 +20,6 @@ export function configure (): void {
   if (!config.get('conf.persist')) {
     logger.info('Clearing all persisted configuration.')
 
-    factory().clear()
+    confFactory().clear()
   }
 }

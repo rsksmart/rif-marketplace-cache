@@ -19,11 +19,15 @@
 - [Supported services](#supported-services)
     - [RIF Storage](#rif-storage)
 - [Configuration](#configuration)
+    - [Environment variables overview](#environment-variables-overview)
+    - [Database](#database)
+    - [Blockchain](#blockchain)
     - [Logging](#logging)
-- [Installation](#Installation)
 - [Usage](#usage)
+    - [Commands](#commands)
 - [Internal architecture](#internal-architecture)
 - [Contribute](#contribute)
+    - [Development](#development)
 - [License](#license)
 
 ## Supported services
@@ -65,16 +69,61 @@ It has following schema:
 
 ## Configuration
 
+There are several ways how to configure this application:
+
+ 1. Using JSON file
+ 1. Using Environmental variables
+ 1. Using CLI parameters
+
+To run this caching server there is minimum configuration needed, which is supported with all the configuration ways mentioned above:
+
+ - Database connection
+ - Blockchain connection
+
+For general overview of complete configuration options see [Config interface](https://github.com/rsksmart/rif-marketplace-cache/blob/master/src/types.ts)
+that describe configuration object's properties. If you need advanced configuration you can build your own JSON configuration
+file and load that either using the `--config` CLI parameter or using environment variable `RIFM_CONFIG`.
+
+### Environment variables overview
+
+ - `RIFM_PORT` (number): port on which the server should listen to
+ - `RIFM_DB` (string): database connection URI
+ - `RIFM_PROVIDER` (string): blockchain connection URI
+ - Storage related:
+    - `RIFM_STORAGE_CONTRACT_ADDR` (string): address of deployed storage contract
+    - `RIFM_STORAGE_STARTING_BLOCK` (number | string): block from which the caching service should process events
+ - Logging related (see bellow):
+    - `LOG_LEVEL` (string)
+    - `LOG_FILTER` (string)
+    - `LOG_PATH` (string)
+
+### Database
+
+As the database layer is written using Sequelize it is pretty much database agnostic.
+You can choose your own particular database engine from the [supported Sequelize engines](https://sequelize.org/v5/manual/dialects.html) yet be aware that currently tested engines are
+PostgreSQL and SQLite (not recommended for production deployments).
+
+You can configure the database connection using either CLI flag `--db` or environment variable `RIFM_DB`.
+
+For specification of the database connection use URI connection string in format: `<dialect>://<username>:<password>@<host>:<port>/<database_name>`
+
+### Blockchain
+
+Connection to RSK blockchain is needed, therefore you have to configure provider so the caching server can listen
+for the events. You can configure this connection either using CLI flag `--provider`or environment variable `RIFM_PROVIDER`.
+
+Preferable it should be web-socket enabled connection.
+
 ### Logging
 
 There is support for extensive logging inside of the application. By default the logs are outputted to `stdout`.
 
-You can configure logging using configs placed in `config/`. Configuration is placed in property `log` which supports
-following properties:
+You can configure logging using configs placed in `config/`, using CLI parameters or environment variables.
+Configuration is placed in property `log` which supports following properties:
 
- - `log.level` (string) - sets minimal logging level that will be output to logs. Default: 'info'
- - `log.filter` (string) - sets filtering based on components. See bellow for syntax. Default: '*'
- - `log.path` (string) - sets path to log file where logs will be written to. Default: undefined
+ - `log.level` (string; ENV: `LOG_LEVEL`) - sets minimal logging level that will be output to logs. Default: 'info'
+ - `log.filter` (string; ENV: `LOG_FILTER`) - sets filtering based on components. See bellow for syntax. Default: '*'
+ - `log.path` (string; ENV: `LOG_PATH`) - sets path to log file where logs will be written to. Default: undefined
 
 #### Filter syntax
 
@@ -87,9 +136,125 @@ Best to explain with examples:
  - `watcher, db`: log entries of only services `watcher` and `db`.
  - `watcher*, -watcher:fs`: log every entry of `watcher` only except of those starting with `watcher:fs`.
 
-## Installation
-
 ## Usage
+
+```sh-session
+$ npm install -g @rsksmart/rif-marketplace-cache
+
+// Connection to your database
+$ export RIFM_DB=postgres://user:pass@localhost/db
+
+// Sync the schema of database
+$ rif-marketplace-cache db-sync
+
+// Connection to your blockchain provider
+$ export RIFM_PROVIDER=ws://localhost:8545
+
+// Start the server
+$ rif-marketplace-cache start
+```
+
+### Commands
+<!-- commands -->
+* [`rif-marketplace-cache db-sync`](#rif-marketplace-cache-db-sync)
+* [`rif-marketplace-cache precache [SERVICE]`](#rif-marketplace-cache-precache-service)
+* [`rif-marketplace-cache purge [SERVICE]`](#rif-marketplace-cache-purge-service)
+* [`rif-marketplace-cache start`](#rif-marketplace-cache-start)
+
+#### `rif-marketplace-cache db-sync`
+
+synchronize database schema
+
+```
+USAGE
+  $ rif-marketplace-cache db-sync
+
+OPTIONS
+  --config=config              path to JSON config file to load
+  --db=db                      database connection URI
+  --force                      removes all tables and recreates them
+  --log=error|warn|info|debug  [default: error] what level of information to log
+  --log-filter=log-filter      what components should be logged (+-, chars allowed)
+  --log-path=log-path          log to file, default is STDOUT
+```
+
+#### `rif-marketplace-cache precache [SERVICE]`
+
+precache past data for a service
+
+```
+USAGE
+  $ rif-marketplace-cache precache [SERVICE]
+
+OPTIONS
+  --config=config              path to JSON config file to load
+  --log=error|warn|info|debug  [default: error] what level of information to log
+  --log-filter=log-filter      what components should be logged (+-, chars allowed)
+  --log-path=log-path          log to file, default is STDOUT
+
+DESCRIPTION
+  Command will fetch data from blockchain and process them prior turning on the API server.
+  Currently supported services:
+    - all
+    - storage
+
+EXAMPLES
+  $ rif-marketplace-cache precache all
+  $ rif-marketplace-cache precache storage rns
+```
+
+#### `rif-marketplace-cache purge [SERVICE]`
+
+purge cached data
+
+```
+USAGE
+  $ rif-marketplace-cache purge [SERVICE]
+
+OPTIONS
+  --config=config              path to JSON config file to load
+  --log=error|warn|info|debug  [default: error] what level of information to log
+  --log-filter=log-filter      what components should be logged (+-, chars allowed)
+  --log-path=log-path          log to file, default is STDOUT
+
+DESCRIPTION
+  Can purge all data or for specific service.
+  Currently supported services:
+    - all
+    - storage
+
+EXAMPLES
+  $ rif-marketplace-cache purge all
+  $ rif-marketplace-cache purge storage rns
+```
+
+#### `rif-marketplace-cache start`
+
+start the caching server
+
+```
+USAGE
+  $ rif-marketplace-cache start
+
+OPTIONS
+  -d, --disable=disable        disable specific service
+  -e, --enable=enable          enable specific service
+  -p, --port=port              port to attach the server to
+  --config=config              path to JSON config file to load
+  --db=db                      database connection URI
+  --log=error|warn|info|debug  [default: error] what level of information to log
+  --log-filter=log-filter      what components should be logged (+-, chars allowed)
+  --log-path=log-path          log to file, default is STDOUT
+  --provider=provider          blockchain provider connection URI
+
+DESCRIPTION
+  Currently supported services:
+    - storage
+
+EXAMPLE
+  $ rif-marketplace-cache start --disable service1 --disable service2 --enable service3
+```
+<!-- commandsstop -->
 
 ## Internal architecture
 
@@ -111,6 +276,12 @@ There are some ways you can make this module better:
 
 - Consult our [open issues](https://github.com/rsksmart/rif-marketplace-cache/issues) and take on one of them
 - Help our tests reach 100% coverage!
+
+### Development
+
+Some tips for development:
+
+ - to use the CLI commands from the cloned repo use `npm run bin -- <cmd> <...args/flags>`
 
 ## License
 

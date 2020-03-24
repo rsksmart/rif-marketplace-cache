@@ -14,7 +14,8 @@ import { Store } from '../types'
 
 // Constant number that defines default interval of all polling mechanisms.
 const DEFAULT_POLLING_INTERVAL = 5000
-const DATA_EVENT_NAME = 'newEvent'
+const NEW_EVENT_EVENT_NAME = 'newEvent'
+const INIT_FINISHED_EVENT_NAME = 'initFinished'
 const NEW_BLOCK_EVENT_NAME = 'newBlock'
 const PROCESSED_BLOCK_KEY = 'lastProcessedBlock'
 
@@ -212,7 +213,7 @@ export abstract class BaseEventsEmitter extends AutoStartStopEventEmitter {
   private isInitialized = false
 
   protected constructor (eth: Eth, contract: Contract, events: string[], logger: Logger, options?: EventsEmitterOptions) {
-    super(logger, DATA_EVENT_NAME)
+    super(logger, NEW_EVENT_EVENT_NAME)
     this.eth = eth
     this.contract = contract
     this.events = events
@@ -260,10 +261,11 @@ export abstract class BaseEventsEmitter extends AutoStartStopEventEmitter {
   async init (): Promise<void> {
     if (this.blockTracker.getLastProcessedBlock() === undefined) {
       const from = this.startingBlock
-      await this.processPastEvents(from, 'latest').catch(e => this.logger.error(e))
+      await this.processPastEvents(from, 'latest')
     }
 
     this.isInitialized = true
+    this.emit(INIT_FINISHED_EVENT_NAME)
   }
 
   start (): void {
@@ -303,12 +305,11 @@ export abstract class BaseEventsEmitter extends AutoStartStopEventEmitter {
 
       const ethEvents = dbEvents.map(event => JSON.parse(event.content)) as EventData[]
       const validEthEvents = await asyncFilter(ethEvents, this.eventHasValidReceipt.bind(this))
-      validEthEvents.forEach(event => this.emit(DATA_EVENT_NAME, event))
+      validEthEvents.forEach(event => this.emit(NEW_EVENT_EVENT_NAME, event))
       this.logger.info(`Confirmed ${validEthEvents.length} events.`)
 
       if (dbEvents.length !== validEthEvents.length) {
-        this.logger.warn(`${dbEvents.length - validEthEvents.length} events dropped because
-      no valid reciept.`)
+        this.logger.warn(`${dbEvents.length - validEthEvents.length} events dropped because of no valid reciept.`)
       }
 
       // We will remove all events even the invalid ones
@@ -321,11 +322,18 @@ export abstract class BaseEventsEmitter extends AutoStartStopEventEmitter {
 
   private async eventHasValidReceipt (event: EventData): Promise<boolean> {
     const reciept = await this.eth.getTransactionReceipt(event.transactionHash)
-    return reciept.status && reciept.blockNumber === event.blockNumber
+
+    if (reciept.status && reciept.blockNumber === event.blockNumber) {
+      return true
+    } else {
+      this.logger.warn(`Event ${event.event} of transaction ${event.transactionHash} does not have valid receipt!
+      Block numbers: ${event.blockNumber} (event) vs ${reciept.blockNumber} (receipt) and receipt status: ${reciept.status} `)
+      return false
+    }
   }
 
   protected emitEvent (data: EventData): void {
-    this.emit(DATA_EVENT_NAME, data)
+    this.emit(NEW_EVENT_EVENT_NAME, data)
   }
 
   protected serializeEvent (data: EventData): EventInterface {
@@ -375,7 +383,10 @@ export abstract class BaseEventsEmitter extends AutoStartStopEventEmitter {
     // Remove old events from DB
     const eventsForDeletion = existingEvents.filter(event => transactionLookupTable[event.transactionHash].includes(event.logIndex))
     this.logger.warn(`Found ${eventsForDeletion.length} re-emitted events! Removing old ones!`)
-    await Promise.all(eventsForDeletion.map(event => event.destroy()))
+    await Promise.all(eventsForDeletion.map(event => {
+      this.logger.warn(`Detected duplicate event of block ${event.blockNumber} and transaction ${event.transactionHash}`)
+      return event.destroy()
+    }))
 
     await Event.bulkCreate(sequelizeEvents)
   }

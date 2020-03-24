@@ -7,15 +7,15 @@ import config from 'config'
 const logger = loggingFactory('db')
 
 export function sequelizeFactory (): Sequelize {
-  const dbSettings: SequelizeOptions = Object.assign({
+  const dbSettings: SequelizeOptions = {
     models: [path.join(__dirname, '/**/*.model.ts')],
     modelMatch: (filename: string, member: string): boolean => {
       return filename.substring(0, filename.indexOf('.model')) === member.toLowerCase()
     },
-    logging: (sql: string) => logger.debug(sql)
-  }, config.get('db'))
+    logging: logger.debug
+  }
 
-  return new Sequelize(dbSettings)
+  return new Sequelize(config.get('db'), dbSettings)
 }
 
 export default function (app: Application): void {

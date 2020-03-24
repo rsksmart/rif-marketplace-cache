@@ -1,10 +1,13 @@
 {
+  port: 'RIFM_PORT',
+  db: 'RIFM_DB',
+
   blockchain: {
-    provider: "RDS_PROVIDER",
+    provider: "RIFM_PROVIDER",
   },
   storage: {
-    contractAddress: "RDS_STORAGE_CONTRACT_ADDR",
-    startingBlock: "RDS_STORAGE_STARTING_BLOCK"
+    contractAddress: "RIFM_STORAGE_CONTRACT_ADDR",
+    startingBlock: "RIFM_STORAGE_STARTING_BLOCK"
   },
   log: {
     level: "LOG_LEVEL",
