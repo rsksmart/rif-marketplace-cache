@@ -90,7 +90,7 @@
     "@types/helmet": "0.0.45",
     "@types/listr": "^0.14.2",
     "@types/mocha": "^5.2.7",
-    "@types/node": "^13.9.1",
+    "@types/node": "^13.9.4",
     "@types/node-fetch": "^2.5.4",
     "@types/serve-favicon": "^2.5.0",
     "@types/sinon": "^7.5.2",
