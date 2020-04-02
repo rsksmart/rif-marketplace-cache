@@ -8,23 +8,35 @@ import { Op } from 'sequelize'
     }
   }
 }))
-@Table({ freezeTableName: true, tableName: 'domain-offer' })
+@Table({ freezeTableName: true, tableName: 'rns_domain-offer', timestamps: false })
 export default class DomainOffer extends Model {
   @Column({ primaryKey: true, type: DataType.STRING })
-  domain!: string
+  offerId!: string
 
   @Column
-  seller!: string
-
-  @Column({ type: DataType.DATE })
-  expirationDate!: date
+  tokenId!: string
 
   @Column
-  tokenId!: number
+  sellerAddress!: string
+
+  @Column
+  sellerDomain: string
 
   @Column
   paymentToken!: number
 
   @Column
-  cost!: number
+  price!: number
+
+  @Column({ type: DataType.DATE })
+  expirationDate!: date
+
+  @Column
+  newOwnerAddress: string
+
+  @Column({ type: DataType.DATE })
+  creationDate: date
+
+  @Column({ type: DataType.DATE })
+  soldDate: date
 }
