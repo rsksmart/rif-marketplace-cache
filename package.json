@@ -57,7 +57,7 @@
     "colors": "^1.4.0",
     "compression": "^1.7.4",
     "conf": "^6.2.0",
-    "config": "^3.2.5",
+    "config": "^3.3.1",
     "cors": "^2.8.5",
     "feathers-hooks-common": "^5.0.2",
     "feathers-sequelize": "^6.1.0",
