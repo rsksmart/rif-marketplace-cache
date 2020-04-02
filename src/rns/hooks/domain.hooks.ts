@@ -1,8 +1,6 @@
 import { HookContext } from '@feathersjs/feathers'
 import { disallow } from 'feathers-hooks-common'
 
-const intAttributes = ['tokenId', 'paymentToken', 'cost']
-
 export default {
   before: {
     all: [
@@ -12,12 +10,6 @@ export default {
           nest: true
         }
 
-        intAttributes.forEach( value => {
-          if (context.params.query[value]) {
-            context.params.query[value] = parseInt(context.params.query[value], 10);
-          }    
-        })
-
         if (!context.params.query || !context.params.query['not-completed']) {
           context.params.sequelize.scope = 'active'
         } else {
@@ -25,7 +17,11 @@ export default {
         }
       }
     ],
-    find: [],
+    find: [
+      (context: HookContext) => {
+        context.params.query.ownerAddress = context.params.route.ownerAddress
+      }
+    ],
     get: [],
     create: disallow(),
     update: disallow(),
