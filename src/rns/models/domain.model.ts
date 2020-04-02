@@ -11,14 +11,14 @@ import { Op } from 'sequelize'
 @Table({ freezeTableName: true, tableName: 'rns_domain', timestamps: false })
 export default class Domain extends Model {
   @Column({ primaryKey: true, type: DataType.STRING })
+  ownerAddress!: string
+
+  @Column
   tokenId!: string
 
   @Column
-  ownerAddress: string
-
-  @Column
-  name: string
+  name!: string
 
   @Column({ type: DataType.DATE })
-  expirationDate: date
+  expirationDate!: date
 }
