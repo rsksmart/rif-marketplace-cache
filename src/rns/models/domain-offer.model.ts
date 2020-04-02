@@ -16,14 +16,14 @@ import Domain from './domain.model'
     ]
   }
 }))
-@Table({ freezeTableName: true, tableName: 'domain-offer' })
+@Table({ freezeTableName: true, tableName: 'rns_domain-offer', timestamps: false })
 export default class DomainOffer extends Model {
   @Column({ primaryKey: true, type: DataType.STRING })
-  domain!: string
+  offerId!: string
 
   @ForeignKey(() => Domain)
   @Column
-  seller!: string
+  tokenId!: string
 
   @BelongsTo(() => Domain)
   domain: Domain
