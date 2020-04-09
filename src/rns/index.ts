@@ -10,8 +10,10 @@ import { getEventsEmitterForService } from '../blockchain/utils'
 
 import domainHooks from './hooks/domain.hooks'
 import domainOfferHooks from './hooks/domain-offer.hooks'
-// import eventProcessor from './rns.blockchain'
-// import contractAbi from '@rsksmart/_.json'
+import eventProcessor from './rns.blockchain'
+
+import rnsContractAbi from '@rsksmart/rns-rskregistrar/RSKOwnerData.json'
+import rnsReverseContractAbi from '@rsksmart/rns-reverse/NameResolverData.json'
 
 const logger = loggingFactory('rns')
 
@@ -37,12 +39,19 @@ const rns: RNSService = {
     app.service('rns/v0/offers').hooks(domainOfferHooks)
 
     // Initialize blockchain watcher
-    /* const eth = app.get('eth') as Eth
-    const eventsEmitter = getEventsEmitterForService('rns', eth, contractAbi.abi as AbiItem[])
-    eventsEmitter.on('newEvent', eventProcessor)
-    eventsEmitter.on('error', (e: Error) => {
+    const eth = app.get('eth') as Eth
+    const rnsEventsEmitter = getEventsEmitterForService('rns', eth, rnsContractAbi.abi as AbiItem[])
+    rnsEventsEmitter.on('newEvent', eventProcessor)
+    rnsEventsEmitter.on('error', (e: Error) => {
       logger.error(`There was unknown error in Events Emitter! ${e}`)
-    }) */
+    })
+
+    const rnsReverseEventsEmitter = getEventsEmitterForService('rns-reverse', eth, rnsReverseContractAbi.abi as AbiItem[])
+    rnsReverseEventsEmitter.on('newEvent', eventProcessor)
+    rnsReverseEventsEmitter.on('error', (e: Error) => {
+      logger.error(`There was unknown error in Events Emitter! ${e}`)
+    })
+
   }
 }
 
