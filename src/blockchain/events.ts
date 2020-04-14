@@ -274,12 +274,18 @@ export abstract class BaseEventsEmitter extends AutoStartStopEventEmitter {
     }
 
     this.startEvents()
-    this.newBlockEmitter.on(NEW_BLOCK_EVENT_NAME, this.confirmEvents.bind(this))
+
+    if (this.confirmations > 0) {
+      this.newBlockEmitter.on(NEW_BLOCK_EVENT_NAME, this.confirmEvents.bind(this))
+    }
   }
 
   stop (): void {
     this.stopEvents()
-    this.newBlockEmitter.off(NEW_BLOCK_EVENT_NAME, this.confirmEvents.bind(this))
+
+    if (this.confirmations > 0) {
+      this.newBlockEmitter.off(NEW_BLOCK_EVENT_NAME, this.confirmEvents.bind(this))
+    }
   }
 
   /**
