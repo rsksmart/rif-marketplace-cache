@@ -6,6 +6,7 @@ import config from 'config'
 
 import { Config, Store, Logger } from './types'
 import { isSupportedServices, SupportedServices } from './app'
+import { EventData } from 'web3-eth-contract'
 
 const readFile = promisify(readFileCb)
 
@@ -64,6 +65,12 @@ export function validateServices (args: string[]): SupportedServices[] {
   }
 
   return args as SupportedServices[]
+}
+
+export function errorHandler (fn: (event: EventData) => Promise<void>, logger: Logger): (event: EventData) => void {
+  return (event): void => {
+    fn(event).catch(err => logger.error(err))
+  }
 }
 
 export abstract class BaseCLICommand extends Command {

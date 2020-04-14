@@ -13,6 +13,7 @@ import eventProcessor from './storage.blockchain'
 import Price from './models/price.model'
 import confFactory from '../conf'
 import { ethFactory } from '../blockchain'
+import { errorHandler } from '../utils'
 
 import pinningContractAbi from '@rsksmart/rif-marketplace-storage-pinning/build/contracts/PinningManager.json'
 
@@ -37,7 +38,7 @@ const storage: CachedService = {
     // Initialize blockchain watcher
     const eth = app.get('eth') as Eth
     const eventsEmitter = getEventsEmitterForService('storage', eth, pinningContractAbi.abi as AbiItem[])
-    eventsEmitter.on('newEvent', eventProcessor)
+    eventsEmitter.on('newEvent', errorHandler(eventProcessor, logger))
     eventsEmitter.on('error', (e: Error) => {
       logger.error(`There was unknown error in Events Emitter! ${e}`)
     })
