@@ -2,11 +2,14 @@ import { Application as ExpressFeathers } from '@feathersjs/express'
 import { StorageOfferService } from './storage'
 import { ServiceAddons } from '@feathersjs/feathers'
 import * as Parser from '@oclif/parser'
+import { ContractEvent } from '@rsksmart/rif-marketplace-storage-pinning/types/web3-v2-contracts/types'
+import { EventData } from 'web3-eth-contract'
 
 // A mapping of service names to types. Will be extended in service files.
 interface ServiceTypes {
   'storage/v0/offers': StorageOfferService & ServiceAddons<any>
 }
+
 // The application instance type that will be used everywhere else
 export type Application = ExpressFeathers<ServiceTypes>;
 
@@ -93,3 +96,28 @@ type Options<T> = T extends Parser.Input<infer R>
   : any
 
 export type Flags<T> = Options<T>['flags']
+
+/**
+ * Basic logger interface used around the application.
+ */
+export interface Logger {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  error (message: string | Error, ...meta: any[]): void
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  debug (message: string, ...meta: any[]): void
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  warn (message: string, ...meta: any[]): void
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  info (message: string, ...meta: any[]): void
+}
+
+/**
+ * Interface for more complex handling of events.
+ */
+export interface Handler {
+  events: string[]
+  handler: (event: EventData) => Promise<void>
+}
