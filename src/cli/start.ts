@@ -5,6 +5,7 @@ import { appFactory, isSupportedServices, services, SupportedServices } from '..
 import { loggingFactory } from '../logger'
 import { Flags, Config } from '../types'
 import { BaseCLICommand } from '../utils'
+import { sequelizeFactory } from '../sequelize'
 
 const logger = loggingFactory('cli:start')
 
@@ -101,12 +102,12 @@ ${formattedServices}`
     const configOverrides = this.buildConfigObject(flags)
     config.util.extendDeep(config, configOverrides)
 
-    const app = appFactory()
-
     if (flags.purge) {
+      sequelizeFactory()
       await this.purge()
     }
 
+    const app = appFactory()
     const port = config.get('port')
     const server = app.listen(port)
 
