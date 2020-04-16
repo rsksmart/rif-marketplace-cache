@@ -4,7 +4,25 @@ import { EventEmitter } from 'events'
 import config from 'config'
 
 import { loggingFactory } from '../logger'
-import eventsEmitterFactory, { EventsEmitterOptions, PollingOptions } from './events'
+import eventsEmitterFactory, { BlockTracker, EventsEmitterOptions, PollingOptions } from './events'
+import confFactory from '../conf'
+import { scopeStore } from '../utils'
+import { Store } from '../types'
+
+function getBlockTracker (keyPrefix?: string): BlockTracker {
+  let confStore: Store = confFactory()
+
+  if (keyPrefix) {
+    confStore = scopeStore(confStore, keyPrefix)
+  }
+
+  return new BlockTracker(confStore)
+}
+
+export function isServiceInitialized (serviceName: string): boolean {
+  const blockTracker = getBlockTracker(serviceName)
+  return blockTracker.getLastProcessedBlock() !== undefined
+}
 
 export function getEventsEmitterForService (serviceName: string, eth: Eth, contractAbi: AbiItem[]): EventEmitter {
   const contractAddresses = config.get<string>(`${serviceName}.contractAddress`)

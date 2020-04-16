@@ -7,7 +7,7 @@ import { EventData } from 'web3-eth-contract'
 import StorageOffer from './models/storage-offer.model'
 import { Application, CachedService } from '../types'
 import { loggingFactory } from '../logger'
-import { getEventsEmitterForService } from '../blockchain/utils'
+import { getEventsEmitterForService, isServiceInitialized } from '../blockchain/utils'
 import hooks from './storage.hooks'
 import eventProcessor from './storage.blockchain'
 import Price from './models/price.model'
@@ -17,13 +17,43 @@ import { errorHandler } from '../utils'
 
 import pinningContractAbi from '@rsksmart/rif-marketplace-storage-pinning/build/contracts/PinningManager.json'
 
-const logger = loggingFactory('storage')
-
 export class StorageOfferService extends Service {
 }
 
+const SERVICE_NAME = 'storage'
+
+const logger = loggingFactory(SERVICE_NAME)
+
+function precache (eth?: Eth): Promise<void> {
+  return new Promise<void>((resolve, reject) => {
+    eth = eth || ethFactory()
+    const eventsEmitter = getEventsEmitterForService(SERVICE_NAME, eth, pinningContractAbi.abi as AbiItem[])
+
+    const dataQueue: EventData[] = []
+    const dataQueuePusher = (event: EventData): void => { dataQueue.push(event) }
+
+    eventsEmitter.on('initFinished', async () => {
+      eventsEmitter.off('newEvent', dataQueuePusher)
+
+      // Needs to be sequentially processed
+      try {
+        for (const event of dataQueue) {
+          await eventProcessor(event)
+        }
+        resolve()
+      } catch (e) {
+        reject(e)
+      }
+    })
+    eventsEmitter.on('newEvent', dataQueuePusher)
+    eventsEmitter.on('error', (e: Error) => {
+      logger.error(`There was unknown error in Events Emitter! ${e}`)
+    })
+  })
+}
+
 const storage: CachedService = {
-  initialize (app: Application): void {
+  async initialize (app: Application): Promise<void> {
     if (!config.get<boolean>('storage.enabled')) {
       logger.info('Storage service: disabled')
       return
@@ -37,7 +67,14 @@ const storage: CachedService = {
 
     // Initialize blockchain watcher
     const eth = app.get('eth') as Eth
-    const eventsEmitter = getEventsEmitterForService('storage', eth, pinningContractAbi.abi as AbiItem[])
+
+    if (!isServiceInitialized(SERVICE_NAME)) {
+      logger.info('Precaching service')
+      await precache(eth)
+      logger.info('Precaching finished service')
+    }
+
+    const eventsEmitter = getEventsEmitterForService(SERVICE_NAME, eth, pinningContractAbi.abi as AbiItem[])
     eventsEmitter.on('newEvent', errorHandler(eventProcessor, logger))
     eventsEmitter.on('error', (e: Error) => {
       logger.error(`There was unknown error in Events Emitter! ${e}`)
@@ -49,28 +86,10 @@ const storage: CachedService = {
     const offersCount = await StorageOffer.destroy({ where: {}, truncate: true, cascade: true })
     logger.info(`Removed ${priceCount} price entries and ${offersCount} storage offers`)
 
-    confFactory().delete('storage')
+    confFactory().delete(SERVICE_NAME)
   },
 
-  precache (): Promise<void> {
-    return new Promise<void>((resolve, reject) => {
-      const eth = ethFactory()
-      const eventsEmitter = getEventsEmitterForService('storage', eth, pinningContractAbi.abi as AbiItem[])
-
-      const dataQueue: EventData[] = []
-      const dataQueuePusher = (event: EventData) => { dataQueue.push(event) }
-
-      eventsEmitter.on('initFinished', () => {
-        eventsEmitter.off('newEvent', dataQueuePusher)
-
-        Promise.all(dataQueue.map(eventProcessor)).then(() => resolve()).catch(err => reject(err))
-      })
-      eventsEmitter.on('newEvent', dataQueuePusher)
-      eventsEmitter.on('error', (e: Error) => {
-        logger.error(`There was unknown error in Events Emitter! ${e}`)
-      })
-    })
-  }
+  precache
 }
 
 export default storage
