@@ -2,8 +2,8 @@ import { Application as ExpressFeathers } from '@feathersjs/express'
 import { StorageOfferService } from './storage'
 import { ServiceAddons } from '@feathersjs/feathers'
 import * as Parser from '@oclif/parser'
-import { ContractEvent } from '@rsksmart/rif-marketplace-storage-pinning/types/web3-v2-contracts/types'
 import { EventData } from 'web3-eth-contract'
+import { Eth } from 'web3-eth'
 
 // A mapping of service names to types. Will be extended in service files.
 interface ServiceTypes {
@@ -19,7 +19,7 @@ export interface Store {
 }
 
 export interface CachedService {
-  precache (): Promise<void>
+  precache (eth?: Eth): Promise<void>
   purge (): Promise<void>
   initialize (app: Application): void
 }
