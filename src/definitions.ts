@@ -7,7 +7,8 @@ import { Eth } from 'web3-eth'
 
 // A mapping of service names to types. Will be extended in service files.
 interface ServiceTypes {
-  'storage/v0/offers': StorageOfferService & ServiceAddons<any>
+  '/storage/v0/offers': StorageOfferService & ServiceAddons<any>
+  '/rates/v0/': RatesService & ServiceAddons<any>
 }
 
 // The application instance type that will be used everywhere else

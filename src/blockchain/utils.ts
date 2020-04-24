@@ -5,9 +5,9 @@ import config from 'config'
 
 import { loggingFactory } from '../logger'
 import eventsEmitterFactory, { BlockTracker, EventsEmitterOptions, PollingOptions } from './events'
-import confFactory from '../conf'
+import { confFactory } from '../conf'
 import { scopeStore } from '../utils'
-import { Store } from '../types'
+import { Store } from '../definitions'
 
 function getBlockTracker (keyPrefix?: string): BlockTracker {
   let confStore: Store = confFactory()

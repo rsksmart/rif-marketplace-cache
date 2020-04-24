@@ -2,7 +2,7 @@ import { EventData } from 'web3-eth-contract'
 
 import offer from './handlers/storage-offer'
 import request from './handlers/request'
-import { Handler } from '../types'
+import { Handler } from '../definitions'
 
 const HANDLERS: Handler[] = [offer, request]
 

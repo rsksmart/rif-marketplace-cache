@@ -1,5 +1,5 @@
 import { Sequelize, SequelizeOptions } from 'sequelize-typescript'
-import { Application } from './types'
+import { Application } from './definitions'
 import { loggingFactory } from './logger'
 import path from 'path'
 import config from 'config'
