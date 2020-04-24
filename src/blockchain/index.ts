@@ -1,4 +1,4 @@
-import { Application } from '../types'
+import { Application } from '../definitions'
 import Eth from 'web3-eth'
 import config from 'config'
 

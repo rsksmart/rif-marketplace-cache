@@ -4,7 +4,7 @@ import { readFile as readFileCb } from 'fs'
 import { promisify } from 'util'
 import config from 'config'
 
-import { Config, Store, Logger } from './types'
+import { Config, Store, Logger } from './definitions'
 import { isSupportedServices, SupportedServices } from './app'
 import { EventData } from 'web3-eth-contract'
 

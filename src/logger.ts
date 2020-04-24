@@ -4,7 +4,7 @@ import * as Transport from 'winston-transport'
 import colors from 'colors'
 import config from 'config'
 
-import { Logger } from './types'
+import { Logger } from './definitions'
 
 // Inspired from https://github.com/visionmedia/debug
 const names: RegExp[] = []

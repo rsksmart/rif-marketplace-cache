@@ -5,13 +5,13 @@ import config from 'config'
 import { EventData } from 'web3-eth-contract'
 
 import StorageOffer from './models/storage-offer.model'
-import { Application, CachedService } from '../types'
+import { Application, CachedService } from '../definitions'
 import { loggingFactory } from '../logger'
 import { getEventsEmitterForService, isServiceInitialized } from '../blockchain/utils'
 import hooks from './storage.hooks'
 import eventProcessor from './storage.blockchain'
 import Price from './models/price.model'
-import confFactory from '../conf'
+import { confFactory } from '../conf'
 import { ethFactory } from '../blockchain'
 import { errorHandler } from '../utils'
 
@@ -62,7 +62,7 @@ const storage: CachedService = {
 
     // Initialize feather's service
     app.use('/storage/v0/offers', new StorageOfferService({ Model: StorageOffer }))
-    const service = app.service('storage/v0/offers')
+    const service = app.service('/storage/v0/offers')
     service.hooks(hooks)
 
     // Initialize blockchain watcher

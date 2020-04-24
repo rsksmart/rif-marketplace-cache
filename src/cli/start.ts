@@ -3,7 +3,7 @@ import { flags } from '@oclif/command'
 
 import { appFactory, isSupportedServices, services, SupportedServices } from '../app'
 import { loggingFactory } from '../logger'
-import { Flags, Config } from '../types'
+import { Flags, Config } from '../definitions'
 import { BaseCLICommand } from '../utils'
 import { sequelizeFactory } from '../sequelize'
 
@@ -94,8 +94,6 @@ ${formattedServices}`
     )
   }
 
-  // TODO: DB connnection setting
-  // TODO: Provider connection setting
   async run (): Promise<void> {
     const { flags } = this.parse(StartServer)
 

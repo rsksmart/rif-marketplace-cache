@@ -7,10 +7,10 @@ import { Op } from 'sequelize'
 import { Sema } from 'async-sema'
 
 import { asyncFilter, scopeStore } from '../utils'
-import confFactory from '../conf'
+import { confFactory } from '../conf'
 import { loggingFactory } from '../logger'
 import Event, { EventInterface } from './event.model'
-import { Store, Logger } from '../types'
+import { Store, Logger } from '../definitions'
 
 // Constant number that defines default interval of all polling mechanisms.
 const DEFAULT_POLLING_INTERVAL = 5000
