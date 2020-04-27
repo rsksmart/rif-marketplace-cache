@@ -4,7 +4,6 @@ import cors from 'cors'
 
 import feathers from '@feathersjs/feathers'
 import express from '@feathersjs/express'
-import socketio from '@feathersjs/socketio'
 
 import { Application } from './definitions'
 import { loggingFactory } from './logger'
@@ -43,7 +42,6 @@ export function appFactory (): Application {
 
   // Set up Plugins and providers
   app.configure(express.rest())
-  app.configure(socketio())
 
   // Custom general services
   app.configure(sequelize)
