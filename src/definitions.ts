@@ -1,5 +1,7 @@
 import { Application as ExpressFeathers } from '@feathersjs/express'
 import { StorageOfferService } from './storage'
+import { RatesService } from './rates'
+
 import { ServiceAddons } from '@feathersjs/feathers'
 import * as Parser from '@oclif/parser'
 import { EventData } from 'web3-eth-contract'
@@ -24,6 +26,21 @@ export interface CachedService {
   purge (): Promise<void>
   initialize (app: Application): void
 }
+
+export enum RatesProvider {
+  coingecko = 'coingecko'
+}
+export function isRatesProvider (value: any): value is RatesProvider {
+  return Object.values(RatesProvider).includes(value)
+}
+
+export type ToSymbols = 'usd' | 'eur' | 'btc' | 'ars' | 'cny' | 'krw' | 'jpy'
+export const SupportedToSymbols: ToSymbols[] = ['usd', 'eur', 'btc', 'ars', 'cny', 'krw', 'jpy']
+
+export type FromSymbols = 'rbtc' | 'rif'
+export const SupportedFromSymbols: FromSymbols[] = ['rbtc', 'rif']
+
+export type FetchedRates = Record<FromSymbols, Record<ToSymbols, number>>
 
 export interface Config {
   host?: string
@@ -50,6 +67,24 @@ export interface Config {
 
     // Address to where web3js should connect to. Should be WS endpoint.
     provider?: string
+  }
+
+  rates?: {
+
+    // Sets if Rates service should be enabled
+    enabled?: boolean
+
+    // Which provider to use for fetching the rates
+    provider?: RatesProvider
+
+    // Refresh period in seconds, be aware of rate-limiting of each Provider
+    refresh?: number
+
+    // Tokens that should be fetched
+    fromSymbols?: string[]
+
+    // Fiats that should be used as conversions for fromSymbols
+    toSymbols?: string[]
   }
 
   // Settings for Storage service related function

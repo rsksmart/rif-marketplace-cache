@@ -67,6 +67,45 @@ It has following schema:
 ]
 ```
 
+### Rates
+
+API that caches conversion rates currently for RBTC and RIF Token.
+
+```
+GET: /rates/v0/
+```
+
+Returns
+
+```json
+[
+  {
+    "token": "rif",
+    "usd": 0.053091,
+    "eur": 0.04936646,
+    "btc": 0.00000703,
+    "ars": 3.52,
+    "cny": 0.375896,
+    "krw": 65.56,
+    "jpy": 5.72,
+    "createdAt": "2020-04-24T07:50:06.340Z",
+    "updatedAt": "2020-04-24T09:13:31.370Z"
+  },
+  {
+    "token": "rbtc",
+    "usd": 7436.63,
+    "eur": 6914.89,
+    "btc": 0.98511161,
+    "ars": 492732,
+    "cny": 52653,
+    "krw": 9183042,
+    "jpy": 800942,
+    "createdAt": "2020-04-24T07:50:06.367Z",
+    "updatedAt": "2020-04-24T09:13:31.390Z"
+  }
+]
+```
+
 ## Configuration
 
 There are several ways how to configure this application:
@@ -197,6 +236,7 @@ DESCRIPTION
   Currently supported services:
     - all
     - storage
+    - rates
 
 EXAMPLES
   $ rif-marketplace-cache precache all
@@ -222,6 +262,7 @@ DESCRIPTION
   Currently supported services:
     - all
     - storage
+    - rates
 
 EXAMPLES
   $ rif-marketplace-cache purge all
