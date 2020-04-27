@@ -43,7 +43,7 @@
     "start": "tasegir run --watch ./src/index.ts"
   },
   "dependencies": {
-    "@feathersjs/errors": "^4.5.1",
+    "@feathersjs/errors": "^4.5.3",
     "@feathersjs/express": "^4.5.1",
     "@feathersjs/feathers": "^4.5.1",
     "@feathersjs/socketio": "^4.5.1",
