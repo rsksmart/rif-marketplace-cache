@@ -10,13 +10,21 @@ import Utils from 'web3-utils'
 
 const logger = loggingFactory('rns:blockchain')
 
+<<<<<<< HEAD
 async function transferHandler(eventData: EventData): Promise<void> {
+=======
+async function transferHandler (eventData: EventData): Promise<void> {
+>>>>>>> chore: [WIP] added sold domain listing
   // Transfer(address indexed from, address indexed to, uint256 indexed tokenId)
 
   if (eventData.returnValues.from !== "0x0000000000000000000000000000000000000000") {
     const tokenId = Utils.numberToHex(eventData.returnValues.tokenId)
     const ownerAddress = eventData.returnValues.to.toLowerCase()
+<<<<<<< HEAD
     const [domain, created] = await Domain.findCreateFind({ where: { tokenId }, defaults: { ownerAddress } })
+=======
+    const [domain, created] = await Domain.findCreateFind({where: { tokenId: tokenId }, defaults: {ownerAddress: ownerAddress} })
+>>>>>>> chore: [WIP] added sold domain listing
     // if not exist then create (1 insert), Domain.findCreateFind
     // else create a SoldDomain and update with the new owner the registry (1 insert + update)
     if (created) {
@@ -31,7 +39,11 @@ async function transferHandler(eventData: EventData): Promise<void> {
         sellerAddress: from,
         newOwnerAddress: ownerAddress
       })
+<<<<<<< HEAD
       if (soldDomain) {
+=======
+      if(soldDomain) {
+>>>>>>> chore: [WIP] added sold domain listing
         logger.info(`Transfer event, SoldDomain ${tokenId} created`)
       }
       const [affectedRows, realAffectedRows] = await Domain.update({ ownerAddress: ownerAddress }, { where: { tokenId: tokenId } })
