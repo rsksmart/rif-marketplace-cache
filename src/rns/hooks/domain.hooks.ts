@@ -19,7 +19,7 @@ export default {
     ],
     find: [
       (context: HookContext) => {
-        context.params.query.ownerAddress = context.params.route.ownerAddress
+        context.params.query.ownerAddress = context.params.route.ownerAddress.toLowerCase()
       }
     ],
     get: [],
