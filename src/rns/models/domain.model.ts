@@ -1,5 +1,7 @@
-import { Table, DataType, Column, Model, Scopes } from 'sequelize-typescript'
+import { Table, DataType, Column, Model, Scopes, HasMany } from 'sequelize-typescript'
 import { Op } from 'sequelize'
+
+import SoldDomain from './sold-domain.model'
 
 @Scopes(() => ({
   active: {
@@ -21,4 +23,7 @@ export default class Domain extends Model {
 
   @Column({ type: DataType.DATE })
   expirationDate: date
+
+  @HasMany(() => SoldDomain)
+  sales: SoldDomain[]
 }
