@@ -94,7 +94,7 @@
     "@types/node-fetch": "^2.5.4",
     "@types/serve-favicon": "^2.5.0",
     "@types/sinon": "^7.5.2",
-    "@types/validator": "^12.0.1",
+    "@types/validator": "^13.0.0",
     "bignumber.js": "^9.0.0",
     "chai": "^4.2.0",
     "chai-as-promised": "^7.1.1",
