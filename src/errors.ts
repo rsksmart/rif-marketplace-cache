@@ -14,3 +14,27 @@ export class EventError extends Error {
     this.name = 'EventError'
   }
 }
+
+/**
+ * Error for configuration related issues
+ */
+export class ConfigurationError extends Error {
+  static code = 'CONFIG_ERR'
+
+  constructor (message: string) {
+    super(message)
+    this.name = 'ConfigurationError'
+  }
+}
+
+/**
+ * Error for when fetching new rates does not go as planned
+ */
+export class RatesProviderError extends Error {
+  static code = 'RATES_ERR'
+
+  constructor (message: string) {
+    super(message)
+    this.name = 'RatesProviderError'
+  }
+}

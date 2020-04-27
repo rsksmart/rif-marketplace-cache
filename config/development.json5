@@ -12,5 +12,8 @@
     eventsEmitter: {
       confirmations: 1
     }
+  },
+  rates: {
+    refresh: 1
   }
 }

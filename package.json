@@ -54,6 +54,7 @@
     "@oclif/plugin-help": "^2.2.3",
     "@rsksmart/rif-marketplace-storage-pinning": "github:rsksmart/rif-marketplace-storage-pinning#feat/npm_package_preparations",
     "async-sema": "^3.1.0",
+    "coingecko-api": "^1.0.10",
     "colors": "^1.4.0",
     "compression": "^1.7.4",
     "conf": "^6.2.3",

@@ -8,6 +8,9 @@ export interface ConfOptions {
   storage: {
     lastProcessedBlock: number
   }
+  rates: {
+    lastUpdate: number
+  }
 }
 
 export function confFactory (): Conf {

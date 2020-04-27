@@ -11,16 +11,20 @@ import { loggingFactory } from './logger'
 import sequelize from './sequelize'
 import blockchain from './blockchain'
 import { configure as confConfigure } from './conf'
+
 import storage from './storage'
+import rates from './rates'
 
 const logger = loggingFactory()
 
 export enum SupportedServices {
-  STORAGE = 'storage'
+  STORAGE = 'storage',
+  RATES = 'rates'
 }
 
 export const services = {
-  [SupportedServices.STORAGE]: storage
+  [SupportedServices.STORAGE]: storage,
+  [SupportedServices.RATES]: rates
 }
 
 export function isSupportedServices (value: any): value is SupportedServices {

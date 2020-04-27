@@ -1,3 +1,5 @@
+// For full syntax see /src/types.ts::Config interface
+
 {
   port: null,
 
@@ -12,6 +14,14 @@
 
     // Specifies if configuration using Conf() should be persisted between restarts
     persist: true
+  },
+
+  rates: {
+    enabled: true,
+    provider: 'coingecko',
+    refresh: 300, // 5 minutes
+    fromSymbols: ['rbtc', 'rif'],
+    toSymbols: ['usd', 'eur', 'btc', 'ars', 'cny', 'krw', 'jpy']
   },
 
   // Settings for Storage service related function

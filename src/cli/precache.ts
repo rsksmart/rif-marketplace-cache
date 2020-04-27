@@ -42,7 +42,7 @@ ${formattedServices}`
       serviceName => {
         return {
           title: capitalizeFirstLetter(serviceName),
-          task: services[serviceName].precache
+          task: (): Promise<void> => services[serviceName].precache()
         }
       }
     )
