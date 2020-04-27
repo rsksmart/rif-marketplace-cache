@@ -64,7 +64,7 @@
     "feathers-sequelize": "^6.1.0",
     "helmet": "^3.22.0",
     "listr": "^0.14.3",
-    "pg": "^7.17.1",
+    "pg": "^8.0.3",
     "pg-hstore": "^2.3.3",
     "reflect-metadata": "^0.1.13",
     "sequelize": "^5.21.7",
