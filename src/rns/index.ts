@@ -32,8 +32,8 @@ export class SoldDomainService extends Service {
 const rns: RNSService = {
   initialize (app: Application): void {
     if (!config.get<boolean>('rns.enabled')) {
-     logger.info('RNS service: disabled')
-     return
+      logger.info('RNS service: disabled')
+      return
     }
     logger.info('RNS service: enabled')
 
@@ -65,7 +65,6 @@ const rns: RNSService = {
     rnsPlacementsEventsEmitter.on('error', (e: Error) => {
       logger.error(`There was unknown error in Events Emitter! ${e}`)
     })
-
   }
 }
 

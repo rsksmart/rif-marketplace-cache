@@ -14,7 +14,6 @@ import Domain from './domain.model'
 }))
 @Table({ freezeTableName: true, tableName: 'rns_sold-domain', timestamps: false })
 export default class SoldDomain extends Model {
-
   @Column({ primaryKey: true, type: DataType.STRING })
   id: string
 
@@ -39,5 +38,4 @@ export default class SoldDomain extends Model {
 
   @Column({ type: DataType.DATE })
   soldDate: date // selling date
-
 }
