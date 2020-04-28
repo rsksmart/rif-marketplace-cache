@@ -32,8 +32,8 @@ export class SoldDomainService extends Service {
 const rns: RNSService = {
   initialize (app: Application): void {
     if (!config.get<boolean>('rns.enabled')) {
-     logger.info('RNS service: disabled')
-     return
+      logger.info('RNS service: disabled')
+      return
     }
     logger.info('RNS service: enabled')
 
