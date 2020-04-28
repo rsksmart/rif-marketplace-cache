@@ -18,7 +18,6 @@ const CONFIG_FIATS = 'rates.toSymbols'
 const CONFIG_TOKENS = 'rates.fromSymbols'
 
 const semaphore = new Sema(1)
-let lastUpdate = 0
 
 export async function updater (): Promise<void> {
   logger.debug('Acquiring lock for update')
@@ -70,23 +69,7 @@ export async function updater (): Promise<void> {
 
       await DbRate.save()
     }
-
-    lastUpdate = Date.now()
   } finally {
     semaphore.release()
   }
-}
-
-/**
- * Function to track the last update.
- *
- * We are specifically using in-memory last-update tracking
- * as it is non-critical data that does not need to be persisted
- * between restarts of the server and instead it gives us good
- * performance for read. It leads to trigger of a rates update upon first
- * request to server, but that is something that you want to do most probably
- * anyway.
- */
-export function getLastUpdateTimestamp (): number {
-  return lastUpdate
 }
