@@ -37,12 +37,12 @@ export default class DomainOffer extends Model {
   @Column
   paymentToken!: string
 
-  @Column({ type: DataType.BIGINT })
+  @Column({ type: DataType.DECIMAL })
   price!: number
 
-  @Column({ type: DataType.DATE })
-  creationDate: date
+  @Column({ type: DataType.BIGINT })
+  creationDate: number
 
-  @Column({ type: DataType.ENUM('COMPLETED', 'CANCELED')})
+  @Column({ type: DataType.ENUM('COMPLETED', 'CANCELED') })
   status: string
 }
