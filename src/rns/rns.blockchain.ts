@@ -34,11 +34,11 @@ async function transferHandler(eventData: EventData): Promise<void> {
       if (soldDomain) {
         logger.info(`Transfer event, SoldDomain ${tokenId} created`)
       }
-      const [affectedRows, realAffectedRows] = await Domain.update({ ownerAddress: ownerAddress }, { where: { tokenId: tokenId } })
+      const [affectedRows, realAffectedRows] = await Domain.update({ ownerAddress }, { where: { tokenId } })
       if (affectedRows) {
-        logger.info(`Transfer event, Updated Domain ${name} -> ${tokenId}`)
+        logger.info(`Transfer event, Updated Domain ${domain} -> ${tokenId}`)
       } else {
-        logger.info(`Transfer event, no Domain ${name} updated`)
+        logger.info(`Transfer event, no Domain ${domain} updated`)
       }
     }
   }
