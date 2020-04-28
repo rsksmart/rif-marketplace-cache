@@ -13,16 +13,16 @@ export default class DBSync extends BaseCLICommand {
   }
 
   async run (): Promise<void> {
-    const { args } = this.parse(DBSync)
+    const { flags } = this.parse(DBSync)
 
-    if (args.db) {
-      config.util.extendDeep(config, { db: args.db })
+    if (flags.db) {
+      config.util.extendDeep(config, { db: flags.db })
     }
 
     // Init database connection
     const sequelize = sequelizeFactory()
     this.log('Syncing database')
-    await sequelize.sync({ force: args.force })
+    await sequelize.sync({ force: flags.force })
     this.log('Done')
     this.exit(0)
   }

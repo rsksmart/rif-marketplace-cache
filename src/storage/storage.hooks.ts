@@ -1,5 +1,6 @@
 import { HookContext } from '@feathersjs/feathers'
 import Price from './models/price.model'
+import Request from './models/request.model'
 import { disallow } from 'feathers-hooks-common'
 
 export default {
@@ -8,7 +9,7 @@ export default {
       (context: HookContext) => {
         context.params.sequelize = {
           raw: false,
-          include: [Price],
+          include: [Price, Request],
           nest: true
         }
 

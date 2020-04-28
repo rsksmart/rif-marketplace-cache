@@ -1,10 +1,11 @@
 import config from 'config'
 import { flags } from '@oclif/command'
 
-import { appFactory, isSupportedServices, SupportedServices } from '../app'
+import { appFactory, isSupportedServices, services, SupportedServices } from '../app'
 import { loggingFactory } from '../logger'
-import { Flags, Config } from '../types'
+import { Flags, Config } from '../definitions'
 import { BaseCLICommand } from '../utils'
+import { sequelizeFactory } from '../sequelize'
 
 const logger = loggingFactory('cli:start')
 
@@ -24,11 +25,15 @@ ${formattedServices}`
     port: flags.integer({ char: 'p', description: 'port to attach the server to' }),
     db: flags.string({ description: 'database connection URI', env: 'RIFM_DB' }),
     provider: flags.string({ description: 'blockchain provider connection URI', env: 'RIFM_PROVIDER' }),
+    purge: flags.boolean({
+      char: 'u',
+      description: 'will purge services that should be lunched (eq. enable/disable is applied)'
+    }),
     enable: flags.string({ char: 'e', multiple: true, description: 'enable specific service' }),
     disable: flags.string({ char: 'd', multiple: true, description: 'disable specific service' })
   }
 
-  buildConfigObject (flags: Flags<typeof StartServer>): object {
+  private buildConfigObject (flags: Flags<typeof StartServer>): object {
     const output: Config = {}
 
     if (flags.db) {
@@ -78,16 +83,29 @@ ${formattedServices}`
     return output
   }
 
-  // TODO: DB connnection setting
-  // TODO: Provider connection setting
-  run (): Promise<void> {
+  private async purge (): Promise<void> {
+    const toBePurgedServices = (Object.keys(services) as Array<keyof typeof services>)
+      .filter(service => config.get<boolean>(`${service}.enabled`))
+
+    logger.info(`Purging services: ${toBePurgedServices.join(', ')}`)
+
+    await Promise.all(
+      toBePurgedServices.map((service) => services[service].purge())
+    )
+  }
+
+  async run (): Promise<void> {
     const { flags } = this.parse(StartServer)
 
     const configOverrides = this.buildConfigObject(flags)
     config.util.extendDeep(config, configOverrides)
 
-    const app = appFactory()
+    if (flags.purge) {
+      sequelizeFactory()
+      await this.purge()
+    }
 
+    const app = appFactory()
     const port = config.get('port')
     const server = app.listen(port)
 

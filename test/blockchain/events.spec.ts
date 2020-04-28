@@ -5,7 +5,7 @@ import {
   ListeningNewBlockEmitter, PollingEventsEmitter,
   PollingNewBlockEmitter
 } from '../../src/blockchain/events'
-import { Store } from '../../src/types'
+import { Store } from '../../src/definitions'
 import { BlockHeader, Eth, TransactionReceipt } from 'web3-eth'
 
 import { Arg, Substitute } from '@fluffy-spoon/substitute'

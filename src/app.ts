@@ -6,23 +6,27 @@ import feathers from '@feathersjs/feathers'
 import express from '@feathersjs/express'
 import socketio from '@feathersjs/socketio'
 
-import { Application } from './types'
+import { Application } from './definitions'
 import { loggingFactory } from './logger'
 import sequelize from './sequelize'
 import blockchain from './blockchain'
 import { configure as confConfigure } from './conf'
+
 import storage from './storage'
+import rates from './rates'
 import rns from './rns'
 
 const logger = loggingFactory()
 
 export enum SupportedServices {
   STORAGE = 'storage',
+  RATES = 'rates',
   RNS = 'rns'
 }
 
 export const services = {
   [SupportedServices.STORAGE]: storage,
+  [SupportedServices.RATES]: rates,
   [SupportedServices.RNS]: rns
 }
 

@@ -8,9 +8,12 @@ export interface ConfOptions {
   storage: {
     lastProcessedBlock: number
   }
+  rates: {
+    lastUpdate: number
+  }
 }
 
-export default function confFactory (): Conf {
+export function confFactory (): Conf {
   const configName = config.get<string>('conf.name')
 
   return new Conf<ConfOptions>({ configName })

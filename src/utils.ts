@@ -4,8 +4,9 @@ import { readFile as readFileCb } from 'fs'
 import { promisify } from 'util'
 import config from 'config'
 
-import { Config, Store } from './types'
+import { Config, Store, Logger } from './definitions'
 import { isSupportedServices, SupportedServices } from './app'
+import { EventData } from 'web3-eth-contract'
 
 const readFile = promisify(readFileCb)
 
@@ -15,6 +16,23 @@ export async function asyncFilter<T> (arr: Array<T>, callback: (elem: T) => Prom
   return mappedArray.filter(i => i !== fail) as T[]
 }
 
+/**
+ * Wrap a Store interface into wrapper that scopes all stored values into prefix.
+ *
+ * @example
+ * const originalStore = new Store()
+ * originalStore.put('some.key', 'value')
+ * console.log(originalStore.get('some.key') // Print: 'value'
+ *
+ * const scopedStore = scopeStore(originalStore, 'some')
+ * console.log(scopedStore.get('key')) // Print: 'value'
+ * scopedStore.put('key', 'otherValue')
+ *
+ * console.log(originalStore.get('some.key') // Print: 'otherValue'
+ *
+ * @param store
+ * @param prefix
+ */
 export function scopeStore (store: Store, prefix: string): Store {
   return {
     get (key: string): any {
@@ -47,6 +65,12 @@ export function validateServices (args: string[]): SupportedServices[] {
   }
 
   return args as SupportedServices[]
+}
+
+export function errorHandler (fn: (event: EventData) => Promise<void>, logger: Logger): (event: EventData) => void {
+  return (event): void => {
+    fn(event).catch(err => logger.error(err))
+  }
 }
 
 export abstract class BaseCLICommand extends Command {

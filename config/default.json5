@@ -1,3 +1,5 @@
+// For full syntax see /src/types.ts::Config interface
+
 {
   port: null,
 
@@ -14,13 +16,21 @@
     persist: true
   },
 
+  rates: {
+    enabled: true,
+    provider: 'coingecko',
+    refresh: 300, // 5 minutes
+    fromSymbols: ['rbtc', 'rif'],
+    toSymbols: ['usd', 'eur', 'btc', 'ars', 'cny', 'krw', 'jpy']
+  },
+
   // Settings for Storage service related function
   storage: {
     // Sets if Storage service should be enabled
     enabled: true,
 
     // Events that will be listened to
-    events: ['CapacitySet', 'MaximumDurationSet', 'PriceSet'],
+    events: ['CapacitySet', 'MaximumDurationSet', 'PriceSet', 'RequestMade', 'RequestStopped', 'RequestTopUp', 'EarningsWithdrawn'],
 
     // Specify behavior of EventsEmitter, that retrieves events from blockchain and pass them onwards for further processing.
     eventsEmitter: {

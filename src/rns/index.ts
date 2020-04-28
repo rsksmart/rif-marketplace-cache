@@ -5,7 +5,7 @@ import config from 'config'
 import Domain from './models/domain.model'
 import DomainOffer from './models/domain-offer.model'
 import SoldDomain from './models/sold-domain.model'
-import { Application } from '../types'
+import { Application } from '../definitions'
 import { loggingFactory } from '../logger'
 import { getEventsEmitterForService } from '../blockchain/utils'
 
@@ -31,10 +31,10 @@ export class SoldDomainService extends Service {
 
 const rns: RNSService = {
   initialize (app: Application): void {
-    // if (!config.get<boolean>('rns.enabled')) {
-    // logger.info('RNS service: disabled')
-    // return
-    // }
+    if (!config.get<boolean>('rns.enabled')) {
+     logger.info('RNS service: disabled')
+     return
+    }
     logger.info('RNS service: enabled')
 
     // Initialize feather's service

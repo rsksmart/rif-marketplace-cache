@@ -1,6 +1,7 @@
 import { Table, DataType, Column, Model, Scopes, HasMany } from 'sequelize-typescript'
 import { Op } from 'sequelize'
 
+import DomainOffer from './domain-offer.model'
 import SoldDomain from './sold-domain.model'
 
 @Scopes(() => ({
@@ -16,14 +17,17 @@ export default class Domain extends Model {
   tokenId!: string
 
   @Column
-  ownerAddress: string
+  ownerAddress!: string
 
   @Column
-  name: string
+  name!: string
 
   @Column({ type: DataType.BIGINT })
   expirationDate: number
 
   @HasMany(() => SoldDomain)
   sales: SoldDomain[]
+
+  @HasMany(() => DomainOffer)
+  offers: DomainOffer[]
 }

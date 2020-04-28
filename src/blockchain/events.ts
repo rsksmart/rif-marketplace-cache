@@ -7,10 +7,10 @@ import { Op } from 'sequelize'
 import { Sema } from 'async-sema'
 
 import { asyncFilter, scopeStore } from '../utils'
-import confFactory from '../conf'
-import { loggingFactory, Logger } from '../logger'
+import { confFactory } from '../conf'
+import { loggingFactory } from '../logger'
 import Event, { EventInterface } from './event.model'
-import { Store } from '../types'
+import { Store, Logger } from '../definitions'
 
 // Constant number that defines default interval of all polling mechanisms.
 const DEFAULT_POLLING_INTERVAL = 5000
@@ -274,12 +274,18 @@ export abstract class BaseEventsEmitter extends AutoStartStopEventEmitter {
     }
 
     this.startEvents()
-    this.newBlockEmitter.on(NEW_BLOCK_EVENT_NAME, this.confirmEvents.bind(this))
+
+    if (this.confirmations > 0) {
+      this.newBlockEmitter.on(NEW_BLOCK_EVENT_NAME, this.confirmEvents.bind(this))
+    }
   }
 
   stop (): void {
     this.stopEvents()
-    this.newBlockEmitter.off(NEW_BLOCK_EVENT_NAME, this.confirmEvents.bind(this))
+
+    if (this.confirmations > 0) {
+      this.newBlockEmitter.off(NEW_BLOCK_EVENT_NAME, this.confirmEvents.bind(this))
+    }
   }
 
   /**
