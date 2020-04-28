@@ -34,8 +34,8 @@ export default class SoldDomain extends Model {
   @Column
   paymentToken!: string // currency
 
-  @Column({ type: DataType.BIGINT })
-  price!: number // selling price
+  @Column({ type: DataType.DECIMAL })
+  price!: number// selling price
 
   @Column({ type: DataType.DATE })
   soldDate: date // selling date
