@@ -6,7 +6,7 @@ import SoldDomain from './sold-domain.model'
 @Scopes(() => ({
   active: {
     where: {
-      expirationDate: { [Op.gt]: new Date() }
+      expirationDate: { [Op.gt]: BigInt(Date.now()) }
     }
   }
 }))
@@ -21,8 +21,8 @@ export default class Domain extends Model {
   @Column
   name: string
 
-  @Column({ type: DataType.DATE })
-  expirationDate: date
+  @Column({ type: DataType.BIGINT })
+  expirationDate: number
 
   @HasMany(() => SoldDomain)
   sales: SoldDomain[]
