@@ -14,6 +14,6 @@
     }
   },
   rates: {
-    refresh: 1
+    refresh: 10
   }
 }

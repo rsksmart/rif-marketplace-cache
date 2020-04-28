@@ -11,6 +11,7 @@ export class RatesService extends Service {
 }
 
 const SERVICE_NAME = 'rates'
+const CONFIG_UPDATE_PERIOD = 'rates.refresh'
 const logger = loggingFactory(SERVICE_NAME)
 
 const storage: CachedService = {
@@ -26,6 +27,10 @@ const storage: CachedService = {
     app.use('/rates/v0/', new RatesService({ Model: Rate }))
     const service = app.service('/rates/v0/')
     service.hooks(hooks)
+
+    // Start periodical refresh
+    const updatePeriod = config.get<number>(CONFIG_UPDATE_PERIOD) * 1000 // Converting seconds to ms
+    setInterval(() => updater().catch(logger.error), updatePeriod)
   },
 
   async purge (): Promise<void> {
