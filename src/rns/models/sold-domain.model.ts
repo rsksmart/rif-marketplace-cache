@@ -36,6 +36,6 @@ export default class SoldDomain extends Model {
   @Column({ type: DataType.DECIMAL })
   price!: number// selling price
 
-  @Column({ type: DataType.DATE })
-  soldDate: date // selling date
+  @Column({ type: DataType.BIGINT })
+  soldDate: number // selling date
 }
