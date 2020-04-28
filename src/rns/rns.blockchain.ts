@@ -93,7 +93,7 @@ async function updatePlacementHandler (eventData: EventData): Promise<void> {
       const [affectedRows, realAffectedRows] = await SoldDomain.update({
         price: lastOffer.price,
         paymentToken: lastOffer.paymentToken,
-        soldDate: new Date()
+        soldDate: BigInt(Date.now())
       }, { where: { id: transactionHash } })
 
       if (affectedRows) {
