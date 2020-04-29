@@ -83,7 +83,7 @@ async function updatePlacementHandler (eventData: EventData): Promise<void> {
   if (cost === '0') {
     // Canceled or sold
     logger.info(`Canceled or sold: ${tokenId}`)
-    const lastOffer = await DomainOffer.findOne({ where: { tokenId: tokenId, status: 'COMPLETED' } })
+    const lastOffer = await DomainOffer.findOne({ where: { tokenId: tokenId, status: 'ACTIVE' } })
 
     if (lastOffer) {
       logger.info(`Found last offer for ${tokenId}`)
@@ -114,7 +114,7 @@ async function updatePlacementHandler (eventData: EventData): Promise<void> {
       paymentToken: paymentToken,
       price: price,
       creationDate: BigInt(Date.now()), // TODO: get from block timestamp
-      status: 'COMPLETED'
+      status: 'ACTIVE'
     })
 
     if (domainOffer) {

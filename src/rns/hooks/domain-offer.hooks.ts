@@ -16,7 +16,17 @@ export default {
           delete context.params.query['not-completed']
         }
 
-        context.params.query.status = 'COMPLETED'
+        if(context.params.query.sellerAddress) {
+          if(typeof context.params.query.sellerAddress === 'object') {
+            Object.keys(context.params.query.sellerAddress).map(key => {
+              context.params.query.sellerAddress[key] = context.params.query.sellerAddress[key].toLowerCase()
+            })
+          } else {
+            context.params.query.sellerAddress = context.params.query.sellerAddress.toLowerCase()
+          }
+        }
+
+        context.params.query.status = 'ACTIVE'
       }
     ],
     find: [],
