@@ -40,7 +40,7 @@ export default class DomainOffer extends Model {
   @Column({ type: DataType.DECIMAL })
   price!: number
 
-  @Column({ type: DataType.BIGINT })
+  @Column({ type: DataType.DATE })
   creationDate: number
 
   @Column({ type: DataType.ENUM('ACTIVE', 'CANCELED') })

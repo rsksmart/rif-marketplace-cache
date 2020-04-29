@@ -9,7 +9,7 @@ import Utils from 'web3-utils'
 
 const logger = loggingFactory('rns:blockchain')
 
-async function transferHandler (eventData: EventData): Promise<void> {
+async function transferHandler(eventData: EventData): Promise<void> {
   // Transfer(address indexed from, address indexed to, uint256 indexed tokenId)
 
   if (eventData.returnValues.from !== '0x0000000000000000000000000000000000000000') {
@@ -44,9 +44,9 @@ async function transferHandler (eventData: EventData): Promise<void> {
   }
 }
 
-async function expirationChangedHandler (eventData: EventData): Promise<void> {
+async function expirationChangedHandler(eventData: EventData): Promise<void> {
   const tokenId = Utils.numberToHex(eventData.returnValues.tokenId)
-  const expirationDate = BigInt(eventData.returnValues.expirationTime * 1000)
+  const expirationDate = eventData.returnValues.expirationTime * 1000
   const [domain, created] = await Domain.upsert({ tokenId, expirationDate }, { returning: true })
 
   if (created) {
@@ -56,7 +56,7 @@ async function expirationChangedHandler (eventData: EventData): Promise<void> {
   }
 }
 
-async function nameChangedHandler (eventData: EventData): Promise<void> {
+async function nameChangedHandler(eventData: EventData): Promise<void> {
   const name = eventData.returnValues.name
 
   const label = name.substring(0, name.indexOf('.'))
@@ -71,7 +71,7 @@ async function nameChangedHandler (eventData: EventData): Promise<void> {
   }
 }
 
-async function updatePlacementHandler (eventData: EventData): Promise<void> {
+async function updatePlacementHandler(eventData: EventData): Promise<void> {
   // UpdatePlacement(tokenId, paymentToken, cost)
   const transactionHash = eventData.transactionHash
   const tokenId = Utils.numberToHex(eventData.returnValues.tokenId)
@@ -111,7 +111,7 @@ async function updatePlacementHandler (eventData: EventData): Promise<void> {
       tokenId: tokenId,
       paymentToken: paymentToken,
       price: price,
-      creationDate: BigInt(Date.now()), // TODO: get from block timestamp
+      creationDate: Date.now(), // TODO: get from block timestamp
       status: 'ACTIVE'
     })
 
