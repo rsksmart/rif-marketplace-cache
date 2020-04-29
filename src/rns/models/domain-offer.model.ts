@@ -43,6 +43,6 @@ export default class DomainOffer extends Model {
   @Column({ type: DataType.BIGINT })
   creationDate: number
 
-  @Column({ type: DataType.ENUM('COMPLETED', 'CANCELED') })
+  @Column({ type: DataType.ENUM('ACTIVE', 'CANCELED') })
   status: string
 }
