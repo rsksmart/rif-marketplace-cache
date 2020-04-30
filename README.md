@@ -49,11 +49,12 @@ It has following schema:
 [
   {
     "address": "string", // Hash, serves as ID
-    "capacity": "number?",
-    "maximumDuration": "number?",
+    "totalCapacity": "number",
+    "utilizedCapacity": "number",
+    "availableCapacity": "number",
     "createdAt": "Date",
     "updatedAt": "Date",
-    "prices": [
+    "plans": [
       {
         "id": "number",
         "period": "number",
@@ -61,6 +62,24 @@ It has following schema:
         "offerId": "string",
         "createdAt": "Date",
         "updatedAt": "Date"
+      }
+    ],
+    "agreements": [
+      {
+        "numberOfPrepaidPeriods": "number",
+        "periodsSinceLastPayout": "number",
+        "toBePayedOut": "number",
+        "hasSufficientFunds": "boolean",
+        "agreementReference": "string",
+        "dataReference": "string",
+        "consumer": "string",
+        "size": "number",
+        "isActive": "boolean", // False when agreement is stopped
+        "billingPeriod": "number",
+        "billingPrice": "number",
+        "availableFunds": "number",
+        "lastPayout": "Date",
+        "offerId": "string"
       }
     ]
   }

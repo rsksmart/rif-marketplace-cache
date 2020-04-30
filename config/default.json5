@@ -49,7 +49,7 @@
     enabled: true,
 
     // Events that will be listened to
-    events: ['CapacitySet', 'MaximumDurationSet', 'PriceSet', 'RequestMade', 'RequestStopped', 'RequestTopUp', 'EarningsWithdrawn'],
+    events: ['TotalCapacitySet', 'MessageEmitted', 'BillingPlanSet', 'NewAgreement', 'AgreementFundsDeposited', 'AgreementFundsWithdrawn', 'AgreementFundsPayout', 'AgreementStopped'],
 
     // Specify behavior of EventsEmitter, that retrieves events from blockchain and pass them onwards for further processing.
     eventsEmitter: {

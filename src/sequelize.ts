@@ -9,7 +9,7 @@ import { loggingFactory } from './logger'
 const logger = loggingFactory('db')
 
 function formatLogs (msg: string): string {
-  const result = msg.match(/^Executing \((\w+)\): (.*)/m)
+  const result = msg.match(/^Executing \(([\w\d-]+)\): (.*)/m)
 
   if (!result) {
     return msg
