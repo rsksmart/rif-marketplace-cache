@@ -5,28 +5,31 @@ import config from 'config'
 import { EventData } from 'web3-eth-contract'
 import { getObject } from 'sequelize-store'
 
-import StorageOffer from './models/storage-offer.model'
+import { ethFactory } from '../../blockchain'
+import { errorHandler, waitForReadyApp } from '../../utils'
 import { Application, CachedService } from '../../definitions'
 import { loggingFactory } from '../../logger'
 import { getEventsEmitterForService, isServiceInitialized } from '../../blockchain/utils'
+
+import BillingPlan from './models/price.model'
+import Offer from './models/offer.model'
+import Agreement from './models/agreement.model'
+
 import hooks from './storage.hooks'
 import eventProcessor from './storage.processor'
-import Price from './models/price.model'
-import { ethFactory } from '../../blockchain'
-import { errorHandler, waitForReadyApp } from '../../utils'
 
 import storageManagerContract from '@rsksmart/rif-marketplace-storage/build/contracts/StorageManager.json'
 
-export class StorageOfferService extends Service {
+export class OfferService extends Service {
 }
 
 const SERVICE_NAME = 'storage'
 
 const logger = loggingFactory(SERVICE_NAME)
 
-function precache (eth?: Eth): Promise<void> {
+function precache (possibleEth?: Eth): Promise<void> {
   return new Promise<void>((resolve, reject) => {
-    eth = eth || ethFactory()
+    const eth = possibleEth || ethFactory()
     const eventsEmitter = getEventsEmitterForService(SERVICE_NAME, eth, storageManagerContract.abi as AbiItem[])
 
     const dataQueue: EventData[] = []
@@ -36,9 +39,10 @@ function precache (eth?: Eth): Promise<void> {
       eventsEmitter.off('newEvent', dataQueuePusher)
 
       // Needs to be sequentially processed
+      const processor = eventProcessor(eth)
       try {
         for (const event of dataQueue) {
-          await eventProcessor(event)
+          await processor(event)
         }
         resolve()
       } catch (e) {
@@ -63,7 +67,7 @@ const storage: CachedService = {
     await waitForReadyApp(app)
 
     // Initialize feather's service
-    app.use('/storage/v0/offers', new StorageOfferService({ Model: StorageOffer }))
+    app.use('/storage/v0/offers', new OfferService({ Model: Offer }))
     const service = app.service('/storage/v0/offers')
     service.hooks(hooks)
 
@@ -81,16 +85,17 @@ const storage: CachedService = {
     }
 
     const eventsEmitter = getEventsEmitterForService(SERVICE_NAME, eth, storageManagerContract.abi as AbiItem[])
-    eventsEmitter.on('newEvent', errorHandler(eventProcessor, logger))
+    eventsEmitter.on('newEvent', errorHandler(eventProcessor(eth), logger))
     eventsEmitter.on('error', (e: Error) => {
       logger.error(`There was unknown error in Events Emitter! ${e}`)
     })
   },
 
   async purge (): Promise<void> {
-    const priceCount = await Price.destroy({ where: {}, truncate: true, cascade: true })
-    const offersCount = await StorageOffer.destroy({ where: {}, truncate: true, cascade: true })
-    logger.info(`Removed ${priceCount} price entries and ${offersCount} storage offers`)
+    const priceCount = await BillingPlan.destroy({ where: {}, truncate: true, cascade: true })
+    const agreementsCount = await Agreement.destroy({ where: {}, truncate: true, cascade: true })
+    const offersCount = await Offer.destroy({ where: {}, truncate: true, cascade: true })
+    logger.info(`Removed ${priceCount} billing plans entries, ${offersCount} offers and ${agreementsCount} agreements`)
 
     const store = getObject()
     delete store['storage.lastProcessedBlock']

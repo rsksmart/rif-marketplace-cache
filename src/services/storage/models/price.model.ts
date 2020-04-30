@@ -1,18 +1,18 @@
-import { Table, Column, Model, ForeignKey, BelongsTo, DataType } from 'sequelize-typescript'
-import StorageOffer from './storage-offer.model'
+import { Table, Column, Model, ForeignKey, BelongsTo } from 'sequelize-typescript'
+import Offer from './offer.model'
 
-@Table({ freezeTableName: true, tableName: 'price' })
-export default class Price extends Model {
-  @Column(DataType.INTEGER)
+@Table({ freezeTableName: true, tableName: 'storage_billing-plan' })
+export default class BillingPlan extends Model {
+  @Column
   period!: number
 
-  @Column(DataType.INTEGER)
+  @Column
   amount!: number
 
-  @ForeignKey(() => StorageOffer)
-  @Column(DataType.STRING)
+  @ForeignKey(() => Offer)
+  @Column
   offerId!: string
 
-  @BelongsTo(() => StorageOffer)
-  offer!: StorageOffer
+  @BelongsTo(() => Offer)
+  offer!: Offer
 }

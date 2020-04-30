@@ -1,6 +1,6 @@
 import { HookContext } from '@feathersjs/feathers'
-import Price from './models/price.model'
-import Request from './models/request.model'
+import BillingPlan from './models/price.model'
+import Agreement from './models/agreement.model'
 import { disallow } from 'feathers-hooks-common'
 
 export default {
@@ -9,14 +9,14 @@ export default {
       (context: HookContext) => {
         context.params.sequelize = {
           raw: false,
-          include: [Price, Request],
+          include: [BillingPlan, Agreement],
           nest: true
         }
 
-        if (!context.params.query || !context.params.query['not-completed']) {
-          context.params.sequelize.scope = 'active'
+        if (context.params?.query?.['non-active']) {
+          delete context.params?.query?.['non-active']
         } else {
-          delete context.params.query['not-completed']
+          context.params.sequelize.scope = 'active'
         }
       }
     ],

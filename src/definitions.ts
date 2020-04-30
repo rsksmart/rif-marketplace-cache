@@ -4,14 +4,14 @@ import * as Parser from '@oclif/parser'
 import { EventData } from 'web3-eth-contract'
 import { Eth } from 'web3-eth'
 
-import { StorageOfferService } from './services/storage'
+import { OfferService } from './services/storage'
 import { RatesService } from './services/rates'
 import { RnsService } from './services/rns'
 import ConfirmationService from './blockchain/confirmation.service'
 
 // A mapping of service names to types. Will be extended in service files.
 interface ServiceTypes {
-  '/storage/v0/offers': StorageOfferService & ServiceAddons<any>
+  '/storage/v0/offers': OfferService & ServiceAddons<any>
   '/rates/v0/': RatesService & ServiceAddons<any>
   '/rns/v0/:ownerAddress/domains': RnsService & ServiceAddons<any>
   '/rns/v0/:ownerAddress/sold': RnsService & ServiceAddons<any>
@@ -25,7 +25,7 @@ export type Application = ExpressFeathers<ServiceTypes>;
 export interface CachedService {
   precache (eth?: Eth): Promise<void>
   purge (): Promise<void>
-  initialize (app: Application): void
+  initialize (app: Application): Promise<void>
 }
 
 export enum RatesProvider {
@@ -190,5 +190,5 @@ export interface Logger {
  */
 export interface Handler {
   events: string[]
-  handler: (event: EventData) => Promise<void>
+  handler: (event: EventData, eth: Eth) => Promise<void>
 }

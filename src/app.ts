@@ -13,6 +13,7 @@ import sequelize from './sequelize'
 import blockchain from './blockchain'
 import healthcheck from './healthcheck'
 import { configureStore } from './store'
+import { errorHandler } from './utils'
 
 import storage from './services/storage'
 import rates from './services/rates'
@@ -62,12 +63,12 @@ export function appFactory (): Application {
   // Configure each services
 
   for (const service of Object.values(services)) {
-    app.configure(service.initialize)
+    app.configure(errorHandler(service.initialize, logger))
   }
 
   // Configure a middleware for 404s and the error handler
-  app.use(express.notFound())
-  app.use(express.errorHandler({ logger }))
+  // app.use(express.notFound())
+  // app.use(express.errorHandler({ logger }))
 
   return app
 }
