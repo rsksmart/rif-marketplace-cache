@@ -123,6 +123,13 @@ export interface Config {
       pollingInterval?: number
     }
   }
+
+  // Settings for RNS service related function
+  rns?: {
+
+    // Sets if RNS service should be enabled
+    enabled?: boolean
+  }
 }
 
 interface Args {[name: string]: any}

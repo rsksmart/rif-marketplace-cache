@@ -9,12 +9,6 @@ export default {
           raw: false,
           nest: true
         }
-
-        if (!context.params.query || !context.params.query['not-completed']) {
-          context.params.sequelize.scope = 'active'
-        } else {
-          delete context.params.query['not-completed']
-        }
       }
     ],
     find: [

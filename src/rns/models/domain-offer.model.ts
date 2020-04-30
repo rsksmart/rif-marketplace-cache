@@ -11,7 +11,8 @@ import Domain from './domain.model'
     include: [
       {
         model: Domain,
-        required: true
+        required: true,
+        attributes: ['ownerAddress', 'name', 'expirationDate']
       }
     ]
   }

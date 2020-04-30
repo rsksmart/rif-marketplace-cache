@@ -11,6 +11,9 @@ export interface ConfOptions {
   rates: {
     lastUpdate: number
   }
+  rns: {
+    lastProcessedBlock: number
+  }
 }
 
 export function confFactory (): Conf {

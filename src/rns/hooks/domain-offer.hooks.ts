@@ -10,12 +10,6 @@ export default {
           nest: true
         }
 
-        if (!context.params.query || !context.params.query['not-completed']) {
-          context.params.sequelize.scope = 'active'
-        } else {
-          delete context.params.query['not-completed']
-        }
-
         if(context.params.query.sellerAddress) {
           if(typeof context.params.query.sellerAddress === 'object') {
             Object.keys(context.params.query.sellerAddress).map(key => {
@@ -24,6 +18,14 @@ export default {
           } else {
             context.params.query.sellerAddress = context.params.query.sellerAddress.toLowerCase()
           }
+        }
+
+        if(context.params.query.domainName) {
+          const domainName = context.params.query.domainName
+          context.params.sequelize['where'] = {
+            '$domain.name$': domainName
+          }
+          delete context.params.query.domainName
         }
 
         context.params.query.status = 'ACTIVE'
