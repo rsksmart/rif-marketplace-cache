@@ -55,6 +55,7 @@
     "@rsksmart/rif-marketplace-storage-pinning": "github:rsksmart/rif-marketplace-storage-pinning#feat/npm_package_preparations",
     "@rsksmart/rns-reverse": "^1.0.2",
     "@rsksmart/rns-rskregistrar": "^1.2.1",
+    "@rsksmart/rif-marketplace-nfts": "github:rsksmart/rif-marketplace-nfts#abi-install",
     "async-sema": "^3.1.0",
     "coingecko-api": "^1.0.10",
     "colors": "^1.4.0",

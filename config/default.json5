@@ -53,4 +53,34 @@
       polling: false
     }
   },
+
+  // Settings for RNS service related function
+  rns: {
+    // Sets if RNS service should be enabled
+    enabled: true,
+
+    // RSKOwner contract settings
+    owner: {
+
+      // Events that will be listened to
+      events: ['Transfer', 'ExpirationChanged'],
+
+    },
+
+    // Reverse resolution contract settings
+    reverse: {
+
+      // Events that will be listened to
+      'events': ['NameChanged'],
+
+    },
+
+    // Placement contract settings
+    placement: {
+
+      // Events that will be listened to
+      events: ['UpdatePlacement'],
+
+    }
+  }
 }
