@@ -16,12 +16,13 @@ async function transferHandler (eventData: EventData): Promise<void> {
     const tokenId = Utils.numberToHex(eventData.returnValues.tokenId)
     const ownerAddress = eventData.returnValues.to.toLowerCase()
     const [domain, created] = await Domain.findCreateFind({ where: { tokenId }, defaults: { ownerAddress } })
+
     // if not exist then create (1 insert), Domain.findCreateFind
     // else create a SoldDomain and update with the new owner the registry (1 insert + update)
     if (created) {
-      logger.info(`Transfer event, Domain ${tokenId} created`)
+      logger.info(`Transfer event: Domain ${tokenId} created`)
     } else {
-      logger.info(`Transfer event, Domain ${tokenId} updated`)
+      logger.info(`Transfer event: Domain ${tokenId} updated`)
       const transactionHash = eventData.transactionHash
       const from = eventData.returnValues.from.toLowerCase()
       const soldDomain = await SoldDomain.create({
@@ -32,13 +33,14 @@ async function transferHandler (eventData: EventData): Promise<void> {
       })
 
       if (soldDomain) {
-        logger.info(`Transfer event, SoldDomain ${tokenId} created`)
+        logger.info(`Transfer event: SoldDomain ${tokenId} created`)
       }
       const [affectedRows, realAffectedRows] = await Domain.update({ ownerAddress }, { where: { tokenId } })
+
       if (affectedRows) {
-        logger.info(`Transfer event, Updated Domain ${domain} -> ${tokenId}`)
+        logger.info(`Transfer event: Updated Domain ${domain} -> ${tokenId}`)
       } else {
-        logger.info(`Transfer event, no Domain ${domain} updated`)
+        logger.info(`Transfer event: no Domain ${domain} updated`)
       }
     }
   }
@@ -50,9 +52,9 @@ async function expirationChangedHandler (eventData: EventData): Promise<void> {
   const [domain, created] = await Domain.upsert({ tokenId, expirationDate }, { returning: true })
 
   if (created) {
-    logger.info(`ExpirationChange event, Domain ${tokenId} created`)
+    logger.info(`ExpirationChange event: Domain ${tokenId} created`)
   } else {
-    logger.info(`ExpirationChange event, Domain ${tokenId} updated`)
+    logger.info(`ExpirationChange event: Domain ${tokenId} updated`)
   }
 }
 
@@ -65,9 +67,9 @@ async function nameChangedHandler (eventData: EventData): Promise<void> {
   const [affectedRows, realAffectedRows] = await Domain.update({ name: name }, { where: { tokenId: tokenId } })
 
   if (affectedRows) {
-    logger.info(`NameChanged event, Updated Domain ${name} -> ${tokenId}`)
+    logger.info(`NameChanged event: Updated Domain ${name} -> ${tokenId}`)
   } else {
-    logger.info(`NameChanged event, no Domain ${name} updated`)
+    logger.info(`NameChanged event: no Domain ${name} updated`)
   }
 }
 
@@ -91,13 +93,13 @@ async function updatePlacementHandler (eventData: EventData): Promise<void> {
       const [affectedRows, realAffectedRows] = await SoldDomain.update({
         price: lastOffer.price,
         paymentToken: lastOffer.paymentToken,
-        soldDate: BigInt(Date.now())
+        soldDate: Date.now()
       }, { where: { id: transactionHash } })
 
       if (affectedRows) {
-        logger.info(`UpdatePlacement event, Sold Domain ${tokenId}`)
+        logger.info(`UpdatePlacement event: Sold Domain ${tokenId}`)
       } else {
-        logger.info(`UpdatePlacement event, no Domain ${tokenId} updated`)
+        logger.info(`UpdatePlacement event: no Domain ${tokenId} updated`)
       }
     }
   } else {
@@ -116,7 +118,7 @@ async function updatePlacementHandler (eventData: EventData): Promise<void> {
     })
 
     if (domainOffer) {
-      logger.info(`UpdatePlacement event, Domain ${tokenId} created`)
+      logger.info(`UpdatePlacement event: Domain ${tokenId} created`)
     }
   }
 

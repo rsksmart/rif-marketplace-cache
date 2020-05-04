@@ -129,6 +129,104 @@ export interface Config {
 
     // Sets if RNS service should be enabled
     enabled?: boolean
+
+    owner: {
+
+      // Address of deployed RSKOwner contract
+      contractAddress?: string
+
+      // Events that will be listened to
+      events?: string[]
+
+      // Specify behavior of EventsEmitter, that retrieves events from blockchain and pass them onwards for further processing.
+      eventsEmitter?: {
+        // If to use polling strategy, if false then listening is used.
+        polling?: boolean
+
+        // Interval in milliseconds, how often is blockchain checked.
+        pollingInterval?: number
+
+        // Starting block that upon first start of the service, will the blockchain be crawled for the past events.
+        startingBlock?: string
+
+        // Number of blocks that will be waited before passing an event for further processing.
+        confirmations?: number
+      }
+
+      // Specify behavior of NewBlockEmitter, that detects new blocks on blockchain.
+      newBlockEmitter?: {
+        // If to use polling strategy, if false then listening is used.
+        polling?: boolean
+
+        // Interval in milliseconds, how often is blockchain checked.
+        pollingInterval?: number
+      }
+    }
+
+    reverse: {
+      // Address of deployed Reverse contract
+      contractAddress?: string
+
+      // Events that will be listened to
+      events?: string[]
+
+      // Specify behavior of EventsEmitter, that retrieves events from blockchain and pass them onwards for further processing.
+      eventsEmitter?: {
+        // If to use polling strategy, if false then listening is used.
+        polling?: boolean
+
+        // Interval in milliseconds, how often is blockchain checked.
+        pollingInterval?: number
+
+        // Starting block that upon first start of the service, will the blockchain be crawled for the past events.
+        startingBlock?: string
+
+        // Number of blocks that will be waited before passing an event for further processing.
+        confirmations?: number
+      }
+
+      // Specify behavior of NewBlockEmitter, that detects new blocks on blockchain.
+      newBlockEmitter?: {
+        // If to use polling strategy, if false then listening is used.
+        polling?: boolean
+
+        // Interval in milliseconds, how often is blockchain checked.
+        pollingInterval?: number
+      }
+    }
+
+    placement: {
+
+      // Address of deployed SimplePlacement contract
+      contractAddress?: string
+
+      // Events that will be listened to
+      events?: string[]
+
+      // Specify behavior of EventsEmitter, that retrieves events from blockchain and pass them onwards for further processing.
+      eventsEmitter?: {
+        // If to use polling strategy, if false then listening is used.
+        polling?: boolean
+
+        // Interval in milliseconds, how often is blockchain checked.
+        pollingInterval?: number
+
+        // Starting block that upon first start of the service, will the blockchain be crawled for the past events.
+        startingBlock?: string
+
+        // Number of blocks that will be waited before passing an event for further processing.
+        confirmations?: number
+      }
+
+      // Specify behavior of NewBlockEmitter, that detects new blocks on blockchain.
+      newBlockEmitter?: {
+        // If to use polling strategy, if false then listening is used.
+        polling?: boolean
+
+        // Interval in milliseconds, how often is blockchain checked.
+        pollingInterval?: number
+      }
+    }
   }
 }
 

@@ -1,13 +1,16 @@
 import { HookContext } from '@feathersjs/feathers'
 import { disallow } from 'feathers-hooks-common'
 
+import Domain from '../models/domain.model'
+
 export default {
   before: {
     all: [
       (context: HookContext) => {
         context.params.sequelize = {
           raw: false,
-          nest: true
+          nest: true,
+          include: [Domain]
         }
 
         if (context.params.query.sellerAddress) {
