@@ -10,8 +10,8 @@ export default {
           nest: true
         }
 
-        if(context.params.query.sellerAddress) {
-          if(typeof context.params.query.sellerAddress === 'object') {
+        if (context.params.query.sellerAddress) {
+          if (typeof context.params.query.sellerAddress === 'object') {
             Object.keys(context.params.query.sellerAddress).map(key => {
               context.params.query.sellerAddress[key] = context.params.query.sellerAddress[key].toLowerCase()
             })
@@ -20,9 +20,9 @@ export default {
           }
         }
 
-        if(context.params.query.domainName) {
+        if (context.params.query.domainName) {
           const domainName = context.params.query.domainName
-          context.params.sequelize['where'] = {
+          context.params.sequelize.where = {
             '$domain.name$': domainName
           }
           delete context.params.query.domainName

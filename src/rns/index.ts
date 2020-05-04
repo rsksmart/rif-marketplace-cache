@@ -34,7 +34,7 @@ export class DomainOfferService extends Service {
 export class SoldDomainService extends Service {
 }
 
-function precache(eth?: Eth): Promise<void> {
+function precache (eth?: Eth): Promise<void> {
   return new Promise<void>((resolve, reject) => {
     eth = eth || ethFactory()
     const eventsEmitter = getEventsEmitterForService('rns.owner', eth, rnsContractAbi.abi as AbiItem[])
@@ -59,7 +59,7 @@ function precache(eth?: Eth): Promise<void> {
 }
 
 const rns: RNSService = {
-  async initialize(app: Application): Promise<void> {
+  async initialize (app: Application): Promise<void> {
     if (config.has('rns.enabled') && !config.get<boolean>('rns.enabled')) {
       logger.info('RNS service: disabled')
       return
@@ -79,6 +79,7 @@ const rns: RNSService = {
 
     // Initialize blockchain watcher
     const eth = app.get('eth') as Eth
+
     if (!isServiceInitialized('rns.owner')) {
       logger.info('Precaching rns.owner service')
       await precache(eth)
@@ -106,7 +107,7 @@ const rns: RNSService = {
 
   precache,
 
-  async purge(): Promise<void> {
+  async purge (): Promise<void> {
     const offersCount = await DomainOffer.destroy({ where: {}, truncate: true, cascade: true })
     const soldCount = await SoldDomain.destroy({ where: {}, truncate: true, cascade: true })
     const domainsCount = await Domain.destroy({ where: {}, truncate: true, cascade: true })
