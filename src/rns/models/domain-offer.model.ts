@@ -33,7 +33,7 @@ export default class DomainOffer extends Model {
   sellerAddress: string
 
   @Column
-  tokenId!: number
+  sellerDomain: string
 
   @Column
   paymentToken!: string
