@@ -97,7 +97,7 @@
     "@types/node": "^13.13.4",
     "@types/node-fetch": "^2.5.7",
     "@types/serve-favicon": "^2.5.0",
-    "@types/sinon": "^7.5.2",
+    "@types/sinon": "^9.0.0",
     "@types/validator": "^13.0.0",
     "bignumber.js": "^9.0.0",
     "chai": "^4.2.0",
