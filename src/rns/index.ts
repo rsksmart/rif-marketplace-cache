@@ -27,35 +27,50 @@ const logger = loggingFactory('rns')
 export class RnsService extends Service {
 }
 
-function precache (eth?: Eth): Promise<void> {
+function fetchEventsForService (eth: Eth, serviceName: string, abi: AbiItem[], dataPusher: (event: EventData) => void): Promise<void> {
   return new Promise<void>((resolve, reject) => {
-    eth = eth || ethFactory()
-    const eventsEmitter = getEventsEmitterForService('rns.owner', eth, rnsContractAbi.abi as AbiItem[])
-    const dataQueue: EventData[] = []
-    const dataQueuePusher = (event: EventData): void => { dataQueue.push(event) }
-    eventsEmitter.on('initFinished', async () => {
-      eventsEmitter.off('newEvent', dataQueuePusher)
-      try {
-        for (const event of dataQueue) {
-          await eventProcessor(event)
-        }
-        resolve()
-      } catch (e) {
-        reject(e)
-      }
+    const eventsEmitter = getEventsEmitterForService(serviceName, eth, abi)
+    eventsEmitter.on('initFinished', () => {
+      eventsEmitter.off('newEvent', dataPusher)
+      resolve()
     })
-    eventsEmitter.on('newEvent', eventProcessor)
+    eventsEmitter.on('newEvent', dataPusher)
     eventsEmitter.on('error', (e: Error) => {
       logger.error(`There was unknown error in Events Emitter! ${e}`)
+      reject(e)
     })
   })
 }
 
+async function precache (eth?: Eth): Promise<void> {
+  eth = eth || ethFactory()
+  const eventsDataQueue: EventData[] = []
+  const dataQueuePusher = (event: EventData): void => { eventsDataQueue.push(event) }
+
+  await fetchEventsForService(eth, 'rns.owner', rnsContractAbi.abi as AbiItem[], dataQueuePusher)
+  await fetchEventsForService(eth, 'rns.reverse', rnsReverseContractAbi.abi as AbiItem[], dataQueuePusher)
+  await fetchEventsForService(eth, 'rns.placement', simplePlacementsContractAbi as AbiItem[], dataQueuePusher)
+
+  // We need to sort the events in order to have valid
+  eventsDataQueue.sort((a, b): number => {
+    // First by block number
+    if (a.blockNumber - b.blockNumber !== 0) return a.blockNumber - b.blockNumber
+
+    if (a.transactionIndex - b.transactionIndex !== 0) return a.transactionIndex - b.transactionIndex
+
+    return a.logIndex - b.logIndex
+  })
+
+  for (const event of eventsDataQueue) {
+    await eventProcessor(event)
+  }
+}
+
 const rns: CachedService = {
-  async initialize (app: Application): Promise<void> {
+  initialize (app: Application): Promise<void> {
     if (!config.get<boolean>('rns.enabled')) {
       logger.info('RNS service: disabled')
-      return
+      return Promise.resolve()
     }
     logger.info('RNS service: enabled')
 
@@ -72,9 +87,9 @@ const rns: CachedService = {
     const eth = app.get('eth') as Eth
 
     if (!isServiceInitialized('rns.owner')) {
-      logger.info('Precaching rns.owner service')
-      await precache(eth)
-      logger.info('Precaching rns.owner finished service')
+      logger.info('Precaching RNS service')
+      // await precache(eth)
+      logger.info('Precaching RNS finished service')
     }
 
     const rnsEventsEmitter = getEventsEmitterForService('rns.owner', eth, rnsContractAbi.abi as AbiItem[])
@@ -94,6 +109,8 @@ const rns: CachedService = {
     rnsPlacementsEventsEmitter.on('error', (e: Error) => {
       logger.error(`There was unknown error in Events Emitter! ${e}`)
     })
+
+    return Promise.resolve()
   },
 
   precache,

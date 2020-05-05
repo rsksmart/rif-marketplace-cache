@@ -65,6 +65,26 @@
       // Events that will be listened to
       events: ['Transfer', 'ExpirationChanged'],
 
+      // Specify behavior of EventsEmitter, that retrieves events from blockchain and pass them onwards for further processing.
+      eventsEmitter: {
+        // If to use polling strategy, if false then listening is used.
+        polling: true,
+
+        // Interval in milliseconds, how often is blockchain checked.
+        pollingInterval: 5000,
+
+        // Starting block that upon first start of the service, will the blockchain be crawled for the past events.
+        startingBlock: "genesis",
+
+        // Number of blocks that will be waited before passing an event for further processing.
+        confirmations: 6
+      },
+
+      // Specify behavior of NewBlockEmitter, that detects new blocks on blockchain.
+      newBlockEmitter: {
+        // If to use polling strategy, if false then listening is used.
+        polling: false
+      }
     },
 
     // Reverse resolution contract settings
@@ -73,6 +93,26 @@
       // Events that will be listened to
       'events': ['NameChanged'],
 
+      // Specify behavior of EventsEmitter, that retrieves events from blockchain and pass them onwards for further processing.
+      eventsEmitter: {
+        // If to use polling strategy, if false then listening is used.
+        polling: true,
+
+        // Interval in milliseconds, how often is blockchain checked.
+        pollingInterval: 5000,
+
+        // Starting block that upon first start of the service, will the blockchain be crawled for the past events.
+        startingBlock: "genesis",
+
+        // Number of blocks that will be waited before passing an event for further processing.
+        confirmations: 6
+      },
+
+      // Specify behavior of NewBlockEmitter, that detects new blocks on blockchain.
+      newBlockEmitter: {
+        // If to use polling strategy, if false then listening is used.
+        polling: false
+      }
     },
 
     // Placement contract settings
@@ -81,6 +121,26 @@
       // Events that will be listened to
       events: ['UpdatePlacement'],
 
+      // Specify behavior of EventsEmitter, that retrieves events from blockchain and pass them onwards for further processing.
+      eventsEmitter: {
+        // If to use polling strategy, if false then listening is used.
+        polling: true,
+
+        // Interval in milliseconds, how often is blockchain checked.
+        pollingInterval: 5000,
+
+        // Starting block that upon first start of the service, will the blockchain be crawled for the past events.
+        startingBlock: "genesis",
+
+        // Number of blocks that will be waited before passing an event for further processing.
+        confirmations: 6
+      },
+
+      // Specify behavior of NewBlockEmitter, that detects new blocks on blockchain.
+      newBlockEmitter: {
+        // If to use polling strategy, if false then listening is used.
+        polling: false
+      }
     }
   }
 }
