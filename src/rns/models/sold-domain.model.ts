@@ -15,20 +15,20 @@ import Domain from './domain.model'
 @Table({ freezeTableName: true, tableName: 'rns_sold-domain', timestamps: false })
 export default class SoldDomain extends Model {
   @Column({ primaryKey: true, type: DataType.STRING })
-  id: string
+  id!: string
 
   @ForeignKey(() => Domain)
   @Column
   tokenId!: string
 
   @BelongsTo(() => Domain)
-  domain: Domain
+  domain!: Domain
 
   @Column
-  sellerAddress: string // previous owner
+  sellerAddress!: string // previous owner
 
   @Column
-  newOwnerAddress: string // buyer
+  newOwnerAddress!: string // buyer
 
   @Column
   paymentToken!: string // currency
@@ -37,5 +37,5 @@ export default class SoldDomain extends Model {
   price!: number// selling price
 
   @Column({ type: DataType.DATE })
-  soldDate: number // selling date
+  soldDate!: number // selling date
 }

@@ -23,11 +23,11 @@ export default class Domain extends Model {
   name!: string
 
   @Column({ type: DataType.DATE })
-  expirationDate: number
+  expirationDate!: number
 
   @HasMany(() => SoldDomain)
-  sales: SoldDomain[]
+  sales!: SoldDomain[]
 
   @HasMany(() => DomainOffer)
-  offers: DomainOffer[]
+  offers!: DomainOffer[]
 }

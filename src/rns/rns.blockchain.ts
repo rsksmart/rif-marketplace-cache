@@ -107,6 +107,10 @@ async function updatePlacementHandler (eventData: EventData): Promise<void> {
 
     const domain = await Domain.findByPk(tokenId)
 
+    if (!domain) {
+      throw new Error(`Domain with token ID ${tokenId} not found!`)
+    }
+
     const domainOffer = await DomainOffer.create({
       offerId: transactionHash,
       sellerAddress: domain.ownerAddress,
@@ -132,8 +136,11 @@ const commands = {
   UpdatePlacement: updatePlacementHandler
 }
 
+function isValidEvent (value: string): value is keyof typeof commands {
+  return value in commands
+}
 export default async function (eventData: EventData): Promise<void> {
-  if (commands[eventData.event]) {
+  if (isValidEvent(eventData.event)) {
     await commands[eventData.event](eventData)
   } else {
     logger.error(`Unknown event ${eventData.event}`)

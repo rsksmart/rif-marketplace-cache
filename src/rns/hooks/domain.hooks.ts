@@ -1,5 +1,6 @@
 import { HookContext } from '@feathersjs/feathers'
 import { disallow } from 'feathers-hooks-common'
+import { setOwnerAddressParamHook } from './utils'
 
 export default {
   before: {
@@ -9,19 +10,9 @@ export default {
           raw: false,
           nest: true
         }
-
-        if (!context.params.query || !context.params.query['not-completed']) {
-          context.params.sequelize.scope = 'active'
-        } else {
-          delete context.params.query['not-completed']
-        }
       }
     ],
-    find: [
-      (context: HookContext) => {
-        context.params.query.ownerAddress = context.params.route.ownerAddress.toLowerCase()
-      }
-    ],
+    find: [setOwnerAddressParamHook],
     get: [],
     create: disallow(),
     update: disallow(),

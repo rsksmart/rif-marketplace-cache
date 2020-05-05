@@ -2,22 +2,21 @@ import { Service } from 'feathers-sequelize'
 import Eth from 'web3-eth'
 import { AbiItem } from 'web3-utils'
 import config from 'config'
-
 import { EventData } from 'web3-eth-contract'
 
-import Domain from './models/domain.model'
-import DomainOffer from './models/domain-offer.model'
-import SoldDomain from './models/sold-domain.model'
-import { Application } from '../definitions'
+import { Application, CachedService } from '../definitions'
 import { loggingFactory } from '../logger'
 import { confFactory } from '../conf'
 import { ethFactory } from '../blockchain'
 import { getEventsEmitterForService, isServiceInitialized } from '../blockchain/utils'
 
+import eventProcessor from './rns.blockchain'
+import Domain from './models/domain.model'
+import DomainOffer from './models/domain-offer.model'
+import SoldDomain from './models/sold-domain.model'
 import domainHooks from './hooks/domain.hooks'
 import domainOfferHooks from './hooks/domain-offer.hooks'
 import soldDomainHooks from './hooks/sold-domain.hooks'
-import eventProcessor from './rns.blockchain'
 
 import rnsContractAbi from '@rsksmart/rns-rskregistrar/RSKOwnerData.json'
 import rnsReverseContractAbi from '@rsksmart/rns-reverse/NameResolverData.json'
@@ -25,13 +24,7 @@ import simplePlacementsContractAbi from '@rsksmart/rif-marketplace-nfts/ERC721Si
 
 const logger = loggingFactory('rns')
 
-export class DomainService extends Service {
-}
-
-export class DomainOfferService extends Service {
-}
-
-export class SoldDomainService extends Service {
+export class RnsService extends Service {
 }
 
 function precache (eth?: Eth): Promise<void> {
@@ -58,24 +51,22 @@ function precache (eth?: Eth): Promise<void> {
   })
 }
 
-const rns: RNSService = {
+const rns: CachedService = {
   async initialize (app: Application): Promise<void> {
-    if (config.has('rns.enabled') && !config.get<boolean>('rns.enabled')) {
+    if (!config.get<boolean>('rns.enabled')) {
       logger.info('RNS service: disabled')
       return
     }
     logger.info('RNS service: enabled')
 
     // Initialize feather's service
-    app.use('/rns/v0/:ownerAddress/domains', new DomainService({ Model: Domain }))
-    app.use('/rns/v0/:ownerAddress/sold', new DomainService({ Model: SoldDomain }))
-    app.use('/rns/v0/:ownerAddress/offers', new DomainOfferService({ Model: DomainOffer }))
-    app.use('/rns/v0/offers', new DomainOfferService({ Model: DomainOffer }))
+    app.use('/rns/v0/:ownerAddress/domains', new RnsService({ Model: Domain }))
+    app.use('/rns/v0/:ownerAddress/sold', new RnsService({ Model: SoldDomain }))
+    app.use('/rns/v0/offers', new RnsService({ Model: DomainOffer }))
 
-    app.service('rns/v0/:ownerAddress/domains').hooks(domainHooks)
-    app.service('rns/v0/:ownerAddress/sold').hooks(soldDomainHooks)
-    app.service('rns/v0/:ownerAddress/offers').hooks(domainOfferHooks)
-    app.service('rns/v0/offers').hooks(domainOfferHooks)
+    app.service('/rns/v0/:ownerAddress/domains').hooks(domainHooks)
+    app.service('/rns/v0/:ownerAddress/sold').hooks(soldDomainHooks)
+    app.service('/rns/v0/offers').hooks(domainOfferHooks)
 
     // Initialize blockchain watcher
     const eth = app.get('eth') as Eth

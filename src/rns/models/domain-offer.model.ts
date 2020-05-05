@@ -1,22 +1,7 @@
-import { Table, DataType, Column, Model, Scopes, ForeignKey, BelongsTo } from 'sequelize-typescript'
-import { Op } from 'sequelize'
+import { Table, DataType, Column, Model, ForeignKey, BelongsTo } from 'sequelize-typescript'
 
 import Domain from './domain.model'
 
-@Scopes(() => ({
-  active: {
-    where: {
-      price: { [Op.gt]: 0 }
-    },
-    include: [
-      {
-        model: Domain,
-        required: true,
-        attributes: ['ownerAddress', 'name', 'expirationDate']
-      }
-    ]
-  }
-}))
 @Table({ freezeTableName: true, tableName: 'rns_domain-offer', timestamps: false })
 export default class DomainOffer extends Model {
   @Column({ primaryKey: true, type: DataType.STRING })
@@ -27,13 +12,13 @@ export default class DomainOffer extends Model {
   tokenId!: string
 
   @BelongsTo(() => Domain)
-  domain: Domain
+  domain!: Domain
 
   @Column
-  sellerAddress: string
+  sellerAddress!: string
 
   @Column
-  sellerDomain: string
+  sellerDomain!: string
 
   @Column
   paymentToken!: string
@@ -42,8 +27,8 @@ export default class DomainOffer extends Model {
   price!: number
 
   @Column({ type: DataType.DATE })
-  creationDate: number
+  creationDate!: number
 
   @Column({ type: DataType.ENUM('ACTIVE', 'CANCELED') })
-  status: string
+  status!: string
 }

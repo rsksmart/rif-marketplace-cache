@@ -1,16 +1,20 @@
 import { Application as ExpressFeathers } from '@feathersjs/express'
-import { StorageOfferService } from './storage'
-import { RatesService } from './rates'
-
 import { ServiceAddons } from '@feathersjs/feathers'
 import * as Parser from '@oclif/parser'
 import { EventData } from 'web3-eth-contract'
 import { Eth } from 'web3-eth'
 
+import { StorageOfferService } from './storage'
+import { RatesService } from './rates'
+import { RnsService } from './rns'
+
 // A mapping of service names to types. Will be extended in service files.
 interface ServiceTypes {
   '/storage/v0/offers': StorageOfferService & ServiceAddons<any>
   '/rates/v0/': RatesService & ServiceAddons<any>
+  '/rns/v0/:ownerAddress/domains': RnsService & ServiceAddons<any>
+  '/rns/v0/:ownerAddress/sold': RnsService & ServiceAddons<any>
+  '/rns/v0/offers': RnsService & ServiceAddons<any>
 }
 
 // The application instance type that will be used everywhere else
@@ -42,6 +46,42 @@ export const SupportedFromSymbols: FromSymbols[] = ['rbtc', 'rif']
 
 export type FetchedRates = Record<FromSymbols, Record<ToSymbols, number>>
 
+export interface EventsEmitterOptions {
+  // If to use polling strategy, if false then listening is used.
+  polling?: boolean
+
+  // Interval in milliseconds, how often is blockchain checked.
+  pollingInterval?: number
+
+  // Starting block that upon first start of the service, will the blockchain be crawled for the past events.
+  startingBlock?: string
+
+  // Number of blocks that will be waited before passing an event for further processing.
+  confirmations?: number
+}
+
+export interface NewBlockEmitterOptions {
+  // If to use polling strategy, if false then listening is used.
+  polling?: boolean
+
+  // Interval in milliseconds, how often is blockchain checked.
+  pollingInterval?: number
+}
+
+export interface BlockchainServiceOptions {
+  // Address of deployed  contract
+  contractAddress?: string
+
+  // Events that will be listened to
+  events?: string[]
+
+  // Specify behavior of EventsEmitter, that retrieves events from blockchain and pass them onwards for further processing.
+  eventsEmitter?: EventsEmitterOptions
+
+  // Specify behavior of NewBlockEmitter, that detects new blocks on blockchain.
+  newBlockEmitter?: NewBlockEmitterOptions
+}
+
 export interface Config {
   host?: string
   port?: number
@@ -64,7 +104,6 @@ export interface Config {
   }
 
   blockchain?: {
-
     // Address to where web3js should connect to. Should be WS endpoint.
     provider?: string
   }
@@ -88,40 +127,9 @@ export interface Config {
   }
 
   // Settings for Storage service related function
-  storage?: {
-
+  storage?: BlockchainServiceOptions & {
     // Sets if Storage service should be enabled
     enabled?: boolean
-
-    // Address of deployed pinning contract
-    contractAddress?: string
-
-    // Events that will be listened to
-    events?: string[]
-
-    // Specify behavior of EventsEmitter, that retrieves events from blockchain and pass them onwards for further processing.
-    eventsEmitter?: {
-      // If to use polling strategy, if false then listening is used.
-      polling?: boolean
-
-      // Interval in milliseconds, how often is blockchain checked.
-      pollingInterval?: number
-
-      // Starting block that upon first start of the service, will the blockchain be crawled for the past events.
-      startingBlock?: string
-
-      // Number of blocks that will be waited before passing an event for further processing.
-      confirmations?: number
-    }
-
-    // Specify behavior of NewBlockEmitter, that detects new blocks on blockchain.
-    newBlockEmitter?: {
-      // If to use polling strategy, if false then listening is used.
-      polling?: boolean
-
-      // Interval in milliseconds, how often is blockchain checked.
-      pollingInterval?: number
-    }
   }
 
   // Settings for RNS service related function
@@ -130,103 +138,14 @@ export interface Config {
     // Sets if RNS service should be enabled
     enabled?: boolean
 
-    owner: {
+    // Owner contract's options
+    owner?: BlockchainServiceOptions
 
-      // Address of deployed RSKOwner contract
-      contractAddress?: string
+    // Reverse contract's options
+    reverse?: BlockchainServiceOptions
 
-      // Events that will be listened to
-      events?: string[]
-
-      // Specify behavior of EventsEmitter, that retrieves events from blockchain and pass them onwards for further processing.
-      eventsEmitter?: {
-        // If to use polling strategy, if false then listening is used.
-        polling?: boolean
-
-        // Interval in milliseconds, how often is blockchain checked.
-        pollingInterval?: number
-
-        // Starting block that upon first start of the service, will the blockchain be crawled for the past events.
-        startingBlock?: string
-
-        // Number of blocks that will be waited before passing an event for further processing.
-        confirmations?: number
-      }
-
-      // Specify behavior of NewBlockEmitter, that detects new blocks on blockchain.
-      newBlockEmitter?: {
-        // If to use polling strategy, if false then listening is used.
-        polling?: boolean
-
-        // Interval in milliseconds, how often is blockchain checked.
-        pollingInterval?: number
-      }
-    }
-
-    reverse: {
-      // Address of deployed Reverse contract
-      contractAddress?: string
-
-      // Events that will be listened to
-      events?: string[]
-
-      // Specify behavior of EventsEmitter, that retrieves events from blockchain and pass them onwards for further processing.
-      eventsEmitter?: {
-        // If to use polling strategy, if false then listening is used.
-        polling?: boolean
-
-        // Interval in milliseconds, how often is blockchain checked.
-        pollingInterval?: number
-
-        // Starting block that upon first start of the service, will the blockchain be crawled for the past events.
-        startingBlock?: string
-
-        // Number of blocks that will be waited before passing an event for further processing.
-        confirmations?: number
-      }
-
-      // Specify behavior of NewBlockEmitter, that detects new blocks on blockchain.
-      newBlockEmitter?: {
-        // If to use polling strategy, if false then listening is used.
-        polling?: boolean
-
-        // Interval in milliseconds, how often is blockchain checked.
-        pollingInterval?: number
-      }
-    }
-
-    placement: {
-
-      // Address of deployed SimplePlacement contract
-      contractAddress?: string
-
-      // Events that will be listened to
-      events?: string[]
-
-      // Specify behavior of EventsEmitter, that retrieves events from blockchain and pass them onwards for further processing.
-      eventsEmitter?: {
-        // If to use polling strategy, if false then listening is used.
-        polling?: boolean
-
-        // Interval in milliseconds, how often is blockchain checked.
-        pollingInterval?: number
-
-        // Starting block that upon first start of the service, will the blockchain be crawled for the past events.
-        startingBlock?: string
-
-        // Number of blocks that will be waited before passing an event for further processing.
-        confirmations?: number
-      }
-
-      // Specify behavior of NewBlockEmitter, that detects new blocks on blockchain.
-      newBlockEmitter?: {
-        // If to use polling strategy, if false then listening is used.
-        polling?: boolean
-
-        // Interval in milliseconds, how often is blockchain checked.
-        pollingInterval?: number
-      }
-    }
+    // Placement contract's options
+    placement?: BlockchainServiceOptions
   }
 }
 

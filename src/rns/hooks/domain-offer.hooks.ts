@@ -13,22 +13,8 @@ export default {
           include: [Domain]
         }
 
-        if (context.params.query.sellerAddress) {
-          if (typeof context.params.query.sellerAddress === 'object') {
-            Object.keys(context.params.query.sellerAddress).map(key => {
-              context.params.query.sellerAddress[key] = context.params.query.sellerAddress[key].toLowerCase()
-            })
-          } else {
-            context.params.query.sellerAddress = context.params.query.sellerAddress.toLowerCase()
-          }
-        }
-
-        if (context.params.query.domainName) {
-          const domainName = context.params.query.domainName
-          context.params.sequelize.where = {
-            '$domain.name$': domainName
-          }
-          delete context.params.query.domainName
+        if (!context.params.query) {
+          context.params.query = {}
         }
 
         context.params.query.status = 'ACTIVE'

@@ -2,6 +2,7 @@ import { HookContext } from '@feathersjs/feathers'
 import { disallow } from 'feathers-hooks-common'
 
 import Domain from '../models/domain.model'
+import { setOwnerAddressParamHook } from './utils'
 
 export default {
   before: {
@@ -14,11 +15,7 @@ export default {
         }
       }
     ],
-    find: [
-      (context: HookContext) => {
-        context.params.query.sellerAddress = context.params.route.ownerAddress.toLowerCase()
-      }
-    ],
+    find: [setOwnerAddressParamHook],
     get: [],
     create: disallow(),
     update: disallow(),
