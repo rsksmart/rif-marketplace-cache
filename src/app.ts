@@ -14,17 +14,20 @@ import { configure as confConfigure } from './conf'
 
 import storage from './storage'
 import rates from './rates'
+import rns from './rns'
 
 const logger = loggingFactory()
 
 export enum SupportedServices {
   STORAGE = 'storage',
-  RATES = 'rates'
+  RATES = 'rates',
+  RNS = 'rns'
 }
 
 export const services = {
   [SupportedServices.STORAGE]: storage,
-  [SupportedServices.RATES]: rates
+  [SupportedServices.RATES]: rates,
+  [SupportedServices.RNS]: rns
 }
 
 export function isSupportedServices (value: any): value is SupportedServices {

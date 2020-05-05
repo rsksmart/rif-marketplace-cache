@@ -15,5 +15,22 @@
   },
   rates: {
     refresh: 10
+  },
+  rns: {
+    owner: {
+      eventsEmitter: {
+        confirmations: 1
+      }
+    },
+    reverse: {
+      eventsEmitter: {
+        confirmations: 1
+      }
+    },
+    placement: {
+      eventsEmitter: {
+        confirmations: 1
+      }
+    }
   }
 }
