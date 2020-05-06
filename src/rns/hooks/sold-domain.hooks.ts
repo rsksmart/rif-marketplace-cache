@@ -2,7 +2,7 @@ import { HookContext } from '@feathersjs/feathers'
 import { disallow } from 'feathers-hooks-common'
 
 import Domain from '../models/domain.model'
-import { setOwnerAddressParamHook } from './utils'
+import { setSellerAddressParamHook } from './utils'
 
 export default {
   before: {
@@ -15,7 +15,7 @@ export default {
         }
       }
     ],
-    find: [setOwnerAddressParamHook],
+    find: [setSellerAddressParamHook],
     get: [],
     create: disallow(),
     update: disallow(),
