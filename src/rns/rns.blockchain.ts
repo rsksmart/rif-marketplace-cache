@@ -109,7 +109,7 @@ async function tokenUnplacedHandler (eventData: EventData): Promise<void> {
 
   const tokenId = Utils.numberToHex(eventData.returnValues.tokenId)
 
-  const [affectedRows, realAffectedRows] = await DomainOffer.update({
+  const [affectedRows] = await DomainOffer.update({
     status: 'CANCELED'
   }, { where: { tokenId: tokenId, status: 'ACTIVE' } })
 
