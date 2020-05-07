@@ -35,7 +35,7 @@ async function transferHandler (eventData: EventData): Promise<void> {
       if (soldDomain) {
         logger.info(`Transfer event: SoldDomain ${tokenId} created`)
       }
-      const [affectedRows, realAffectedRows] = await Domain.update({ ownerAddress }, { where: { tokenId } })
+      const [affectedRows] = await Domain.update({ ownerAddress }, { where: { tokenId } })
 
       if (affectedRows) {
         logger.info(`Transfer event: Updated Domain ${domain} -> ${tokenId}`)
@@ -47,6 +47,8 @@ async function transferHandler (eventData: EventData): Promise<void> {
 }
 
 async function expirationChangedHandler (eventData: EventData): Promise<void> {
+  // event ExpirationChanged(uint256 tokenId, uint expirationTime);
+
   const tokenId = Utils.numberToHex(eventData.returnValues.tokenId)
   const expirationDate = eventData.returnValues.expirationTime * 1000
   const [domain, created] = await Domain.upsert({ tokenId, expirationDate }, { returning: true })
@@ -64,7 +66,7 @@ async function nameChangedHandler (eventData: EventData): Promise<void> {
   const label = name.substring(0, name.indexOf('.'))
   const tokenId = Utils.sha3(label)
 
-  const [affectedRows, realAffectedRows] = await Domain.update({ name: name }, { where: { tokenId: tokenId } })
+  const [affectedRows] = await Domain.update({ name: name }, { where: { tokenId: tokenId } })
 
   if (affectedRows) {
     logger.info(`NameChanged event: Updated Domain ${name} -> ${tokenId}`)
@@ -73,67 +75,85 @@ async function nameChangedHandler (eventData: EventData): Promise<void> {
   }
 }
 
-async function updatePlacementHandler (eventData: EventData): Promise<void> {
-  // UpdatePlacement(tokenId, paymentToken, cost)
+async function tokenPlacedHandler (eventData: EventData): Promise<void> {
+  // event TokenPlaced(uint256 indexed tokenId, address indexed paymentToken, uint256 cost);
+
   const transactionHash = eventData.transactionHash
   const tokenId = Utils.numberToHex(eventData.returnValues.tokenId)
   const paymentToken = eventData.returnValues.paymentToken
   const cost = eventData.returnValues.cost
 
-  if (cost === '0') {
-    // Canceled or sold
-    logger.info(`Canceled or sold: ${tokenId}`)
-    const lastOffer = await DomainOffer.findOne({ where: { tokenId: tokenId, status: 'ACTIVE' } })
+  const domain = await Domain.findByPk(tokenId)
 
-    if (lastOffer) {
-      logger.info(`Found last offer for ${tokenId}`)
-      lastOffer.status = 'CANCELED'
-      lastOffer.save()
-
-      const [affectedRows, realAffectedRows] = await SoldDomain.update({
-        price: lastOffer.price,
-        paymentToken: lastOffer.paymentToken,
-        soldDate: Date.now()
-      }, { where: { id: transactionHash } })
-
-      if (affectedRows) {
-        logger.info(`UpdatePlacement event: Sold Domain ${tokenId}`)
-      } else {
-        logger.info(`UpdatePlacement event: no Domain ${tokenId} updated`)
-      }
-    }
-  } else {
-    const price = cost
-
-    const domain = await Domain.findByPk(tokenId)
-
-    if (!domain) {
-      throw new Error(`Domain with token ID ${tokenId} not found!`)
-    }
-
-    const domainOffer = await DomainOffer.create({
-      offerId: transactionHash,
-      sellerAddress: domain.ownerAddress,
-      tokenId: tokenId,
-      paymentToken: paymentToken,
-      price: price,
-      creationDate: Date.now(), // TODO: get from block timestamp
-      status: 'ACTIVE'
-    })
-
-    if (domainOffer) {
-      logger.info(`UpdatePlacement event: Domain ${tokenId} created`)
-    }
+  if (!domain) {
+    throw new Error(`Domain with token ID ${tokenId} not found!`)
   }
 
-  logger.info(`UpdatePlacement: ${tokenId}, ${paymentToken}, ${cost}`)
+  const domainOffer = await DomainOffer.create({
+    offerId: transactionHash,
+    sellerAddress: domain.ownerAddress,
+    tokenId: tokenId,
+    paymentToken: paymentToken,
+    price: cost,
+    creationDate: Date.now(), // TODO: get from block timestamp
+    status: 'ACTIVE'
+  })
+
+  if (domainOffer) {
+    logger.info(`TokenPlaced event: ${tokenId} created`)
+  }
+}
+
+async function tokenUnplacedHandler (eventData: EventData): Promise<void> {
+  // event TokenUnplaced(uint256 indexed tokenId);
+
+  const tokenId = Utils.numberToHex(eventData.returnValues.tokenId)
+
+  const [affectedRows] = await DomainOffer.update({
+    status: 'CANCELED'
+  }, { where: { tokenId: tokenId, status: 'ACTIVE' } })
+
+  if (affectedRows) {
+    logger.info(`TokenUnplaced event: ${tokenId} updated`)
+  } else {
+    logger.info(`TokenUnplaced event: ${tokenId} not updated`)
+  }
+}
+
+async function tokenSoldHandler (eventData: EventData): Promise<void> {
+  // event TokenSold(uint256 indexed tokenId);
+
+  const transactionHash = eventData.transactionHash
+  const tokenId = Utils.numberToHex(eventData.returnValues.tokenId)
+
+  const lastOffer = await DomainOffer.findOne({ where: { tokenId: tokenId, status: 'ACTIVE' } })
+
+  if (lastOffer) {
+    logger.info(`Found last offer for ${tokenId}`)
+    lastOffer.status = 'SOLD'
+    lastOffer.save()
+
+    const [affectedRows] = await SoldDomain.update({
+      price: lastOffer.price,
+      paymentToken: lastOffer.paymentToken,
+      soldDate: Date.now()
+    }, { where: { id: transactionHash } })
+
+    if (affectedRows) {
+      logger.info(`TokenSold event: ${tokenId}`)
+    } else {
+      logger.info(`TokenSold event: ${tokenId} not updated`)
+    }
+  }
 }
 
 const commands = {
   Transfer: transferHandler,
   ExpirationChanged: expirationChangedHandler,
   NameChanged: nameChangedHandler,
-  UpdatePlacement: updatePlacementHandler
+  TokenPlaced: tokenPlacedHandler,
+  TokenUnplaced: tokenUnplacedHandler,
+  TokenSold: tokenSoldHandler
 }
 
 function isValidEvent (value: string): value is keyof typeof commands {
