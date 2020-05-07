@@ -106,6 +106,14 @@ Returns
 ]
 ```
 
+### RNS
+
+API that caches several parts of the RNS and Domain Sail contracts. Supported routes are:
+
+ - `/rns/v0/offers` - List active Domain Offers
+ - `/rns/v0/:ownerAddress/sold` - List sold domains for specific `:ownerAddress`
+ - `/rns/v0/:ownerAddress/domains` - List domains that are owned by the `:ownerAddress`
+
 ## Configuration
 
 There are several ways how to configure this application:
@@ -131,6 +139,16 @@ file and load that either using the `--config` CLI parameter or using environmen
  - Storage related:
     - `RIFM_STORAGE_CONTRACT_ADDR` (string): address of deployed storage contract
     - `RIFM_STORAGE_STARTING_BLOCK` (number | string): block from which the caching service should process events
+ - RNS related:
+    - Owner contract:
+        - `RIFM_RNS_OWNER_CONTRACT_ADDR` (string): address of deployed storage contract
+        - `RIFM_RNS_OWNER_STARTING_BLOCK` (number | string): block from which the caching service should process events
+    - Reverse contract:
+        - `RIFM_RNS_REVERSE_CONTRACT_ADDR` (string): address of deployed storage contract
+        - `RIFM_RNS_REVERSE_STARTING_BLOCK` (number | string): block from which the caching service should process events
+   - Placement contract:
+        - `RIFM_RNS_REVERSE_CONTRACT_ADDR` (string): address of deployed storage contract
+        - `RIFM_RNS_REVERSE_STARTING_BLOCK` (number | string): block from which the caching service should process events
  - Logging related (see bellow):
     - `LOG_LEVEL` (string)
     - `LOG_FILTER` (string)
@@ -192,6 +210,8 @@ $ export RIFM_PROVIDER=ws://localhost:8545
 // Start the server
 $ rif-marketplace-cache start
 ```
+
+For some more details on how to deploy this server please see [Deployment guide](./DEPLOYMENT.md).
 
 ### Commands
 <!-- commands -->
@@ -322,6 +342,7 @@ There are some ways you can make this module better:
 
 Some tips for development:
 
+ - for complete development environment please see https://github.com/rsksmart/rif-marketplace-dev
  - to use the CLI commands from the cloned repo use `npm run bin -- <cmd> <...args/flags>`
 
 ## License
