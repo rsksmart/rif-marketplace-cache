@@ -15,7 +15,7 @@ import { confFactory } from '../conf'
 import { ethFactory } from '../blockchain'
 import { errorHandler } from '../utils'
 
-import pinningContractAbi from '@rsksmart/rif-marketplace-storage-pinning/build/contracts/PinningManager.json'
+import storageManagerContract from '@rsksmart/rif-marketplace-storage/build/contracts/StorageManager.json'
 
 export class StorageOfferService extends Service {
 }
@@ -27,7 +27,7 @@ const logger = loggingFactory(SERVICE_NAME)
 function precache (eth?: Eth): Promise<void> {
   return new Promise<void>((resolve, reject) => {
     eth = eth || ethFactory()
-    const eventsEmitter = getEventsEmitterForService(SERVICE_NAME, eth, pinningContractAbi.abi as AbiItem[])
+    const eventsEmitter = getEventsEmitterForService(SERVICE_NAME, eth, storageManagerContract.abi as AbiItem[])
 
     const dataQueue: EventData[] = []
     const dataQueuePusher = (event: EventData): void => { dataQueue.push(event) }
@@ -74,7 +74,7 @@ const storage: CachedService = {
       logger.info('Precaching finished service')
     }
 
-    const eventsEmitter = getEventsEmitterForService(SERVICE_NAME, eth, pinningContractAbi.abi as AbiItem[])
+    const eventsEmitter = getEventsEmitterForService(SERVICE_NAME, eth, storageManagerContract.abi as AbiItem[])
     eventsEmitter.on('newEvent', errorHandler(eventProcessor, logger))
     eventsEmitter.on('error', (e: Error) => {
       logger.error(`There was unknown error in Events Emitter! ${e}`)
