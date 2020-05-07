@@ -22,10 +22,10 @@ export default class StorageOffer extends Model {
   @Column({ primaryKey: true, type: DataType.STRING(64) })
   address!: string
 
-  @Column
+  @Column(DataType.INTEGER)
   capacity!: number
 
-  @Column
+  @Column(DataType.INTEGER)
   maximumDuration!: number
 
   @HasMany(() => Price)

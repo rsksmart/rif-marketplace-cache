@@ -1,6 +1,6 @@
 {
   "name": "@rsksmart/rif-marketplace-cache",
-  "version": "0.1.0-dev.0",
+  "version": "0.1.0-dev.1",
   "description": "Caching server for RIF Marketplace",
   "keywords": [
     "RIF",
@@ -16,8 +16,9 @@
     "email": "adam@uhlir.dev"
   },
   "files": [
-    "types",
-    "lib"
+    "/oclif.manifest.json",
+    "/lib",
+    "/bin"
   ],
   "directories": {
     "lib": "src",
@@ -33,6 +34,7 @@
     "url": "https://github.com/rsksmart/rif-marketplace-cache.git"
   },
   "scripts": {
+    "prepack": "oclif-dev manifest",
     "bin": "tasegir run --watch ./bin/run -- ",
     "compile": "tasegir compile",
     "docs": "typedoc --mode modules --excludeNotExported --readme none --excludePrivate  --tsconfig ./node_modules/tasegir/src/config/tsconfig.json --exclude 'src/providers/*,test/**/*' --out docs src",
@@ -119,7 +121,7 @@
     "dependabot-preview[bot] <27856297+dependabot-preview[bot]@users.noreply.github.com>"
   ],
   "oclif": {
-    "commands": "./src/cli",
+    "commands": "./lib/cli",
     "bin": "rif-marketplace-cache",
     "plugins": [
       "@oclif/plugin-help"

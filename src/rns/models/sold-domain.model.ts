@@ -18,24 +18,24 @@ export default class SoldDomain extends Model {
   id!: string
 
   @ForeignKey(() => Domain)
-  @Column
+  @Column(DataType.STRING)
   tokenId!: string
 
   @BelongsTo(() => Domain)
   domain!: Domain
 
-  @Column
+  @Column(DataType.STRING)
   sellerAddress!: string // previous owner
 
-  @Column
+  @Column(DataType.STRING)
   newOwnerAddress!: string // buyer
 
-  @Column
+  @Column(DataType.STRING)
   paymentToken!: string // currency
 
-  @Column({ type: DataType.DECIMAL })
+  @Column(DataType.DECIMAL)
   price!: number// selling price
 
-  @Column({ type: DataType.DATE })
+  @Column(DataType.DATE)
   soldDate!: number // selling date
 }

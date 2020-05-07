@@ -21,3 +21,6 @@ coverage
 
 # Dependency directory
 node_modules
+
+# Oclif Manifest
+oclif.manifest.json

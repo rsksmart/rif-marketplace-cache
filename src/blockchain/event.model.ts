@@ -12,13 +12,13 @@ import { Table, Column, Model, DataType } from 'sequelize-typescript'
 })
 
 export default class Event extends Model {
-  @Column
+  @Column(DataType.INTEGER)
   blockNumber!: number
 
-  @Column
+  @Column(DataType.STRING(64))
   transactionHash!: string
 
-  @Column
+  @Column(DataType.INTEGER)
   logIndex!: number
 
   @Column(DataType.TEXT)

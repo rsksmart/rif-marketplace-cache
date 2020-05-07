@@ -16,10 +16,10 @@ export default class Domain extends Model {
   @Column({ primaryKey: true, type: DataType.STRING })
   tokenId!: string
 
-  @Column
+  @Column(DataType.STRING)
   ownerAddress!: string
 
-  @Column
+  @Column(DataType.STRING)
   name!: string
 
   @Column({ type: DataType.DATE })
