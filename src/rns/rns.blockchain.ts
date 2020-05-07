@@ -130,7 +130,7 @@ async function tokenSoldHandler (eventData: EventData): Promise<void> {
 
   if (lastOffer) {
     logger.info(`Found last offer for ${tokenId}`)
-    lastOffer.status = 'CANCELED'
+    lastOffer.status = 'SOLD'
     lastOffer.save()
 
     const [affectedRows] = await SoldDomain.update({
