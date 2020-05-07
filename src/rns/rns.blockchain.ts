@@ -35,7 +35,7 @@ async function transferHandler (eventData: EventData): Promise<void> {
       if (soldDomain) {
         logger.info(`Transfer event: SoldDomain ${tokenId} created`)
       }
-      const [affectedRows, realAffectedRows] = await Domain.update({ ownerAddress }, { where: { tokenId } })
+      const [affectedRows] = await Domain.update({ ownerAddress }, { where: { tokenId } })
 
       if (affectedRows) {
         logger.info(`Transfer event: Updated Domain ${domain} -> ${tokenId}`)
@@ -66,7 +66,7 @@ async function nameChangedHandler (eventData: EventData): Promise<void> {
   const label = name.substring(0, name.indexOf('.'))
   const tokenId = Utils.sha3(label)
 
-  const [affectedRows, realAffectedRows] = await Domain.update({ name: name }, { where: { tokenId: tokenId } })
+  const [affectedRows] = await Domain.update({ name: name }, { where: { tokenId: tokenId } })
 
   if (affectedRows) {
     logger.info(`NameChanged event: Updated Domain ${name} -> ${tokenId}`)
@@ -133,7 +133,7 @@ async function tokenSoldHandler (eventData: EventData): Promise<void> {
     lastOffer.status = 'CANCELED'
     lastOffer.save()
 
-    const [affectedRows, realAffectedRows] = await SoldDomain.update({
+    const [affectedRows] = await SoldDomain.update({
       price: lastOffer.price,
       paymentToken: lastOffer.paymentToken,
       soldDate: Date.now()
