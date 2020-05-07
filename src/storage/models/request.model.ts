@@ -15,20 +15,20 @@ export default class Request extends Model {
   @Column({ type: DataType.STRING(64) })
   requester!: string
 
-  @Column
+  @Column(DataType.INTEGER)
   size!: number
 
-  @Column
+  @Column(DataType.INTEGER)
   period!: number
 
-  @Column
+  @Column(DataType.INTEGER)
   price!: number
 
-  @Column
+  @Column(DataType.INTEGER)
   deposited!: number
 
   @ForeignKey(() => StorageOffer)
-  @Column
+  @Column(DataType.STRING)
   offerId!: string
 
   @BelongsTo(() => StorageOffer)

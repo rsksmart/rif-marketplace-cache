@@ -8,27 +8,27 @@ export default class DomainOffer extends Model {
   offerId!: string
 
   @ForeignKey(() => Domain)
-  @Column
+  @Column(DataType.STRING)
   tokenId!: string
 
   @BelongsTo(() => Domain)
   domain!: Domain
 
-  @Column
+  @Column(DataType.STRING)
   sellerAddress!: string
 
-  @Column
+  @Column(DataType.STRING)
   sellerDomain!: string
 
-  @Column
+  @Column(DataType.STRING)
   paymentToken!: string
 
-  @Column({ type: DataType.DECIMAL })
+  @Column(DataType.DECIMAL)
   price!: number
 
-  @Column({ type: DataType.DATE })
+  @Column(DataType.DATE)
   creationDate!: number
 
-  @Column({ type: DataType.ENUM('ACTIVE', 'CANCELED', 'SOLD') })
+  @Column(DataType.ENUM('ACTIVE', 'CANCELED', 'SOLD'))
   status!: string
 }
