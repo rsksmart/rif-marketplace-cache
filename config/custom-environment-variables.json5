@@ -9,6 +9,20 @@
     contractAddress: "RIFM_STORAGE_CONTRACT_ADDR",
     startingBlock: "RIFM_STORAGE_STARTING_BLOCK"
   },
+  rns: {
+    owner: {
+      contractAddress: "RIFM_RNS_OWNER_CONTRACT_ADDR",
+      startingBlock: "RIFM_RNS_OWNER_STARTING_BLOCK"
+    },
+    reverse: {
+      contractAddress: "RIFM_RNS_REVERSE_CONTRACT_ADDR",
+      startingBlock: "RIFM_RNS_REVERSE_STARTING_BLOCK"
+    },
+    placement: {
+      contractAddress: "RIFM_RNS_PLACEMENT_CONTRACT_ADDR",
+      startingBlock: "RIFM_RNS_PLACEMENT_STARTING_BLOCK"
+    },
+  },
   log: {
     level: "LOG_LEVEL",
     filter: "LOG_FILTER",
