@@ -89,7 +89,17 @@ async function tokenPlacedHandler (eventData: EventData): Promise<void> {
     throw new Error(`Domain with token ID ${tokenId} not found!`)
   }
 
-  const domainOffer = await DomainOffer.create({
+  const [affectedRows] = await DomainOffer.update({
+    status: 'CANCELED'
+  }, { where: { tokenId: tokenId, status: 'ACTIVE' } })
+
+  if (affectedRows) {
+    logger.info(`TokenPlaced event: ${tokenId} previous placement cancelled`)
+  } else {
+    logger.info(`TokenPlaced event: ${tokenId} no previous placement`)
+  }
+
+  const domainOffer = new DomainOffer({
     offerId: transactionHash,
     sellerAddress: domain.ownerAddress,
     tokenId: tokenId,
@@ -98,10 +108,9 @@ async function tokenPlacedHandler (eventData: EventData): Promise<void> {
     creationDate: Date.now(), // TODO: get from block timestamp
     status: 'ACTIVE'
   })
+  await domainOffer.save()
 
-  if (domainOffer) {
-    logger.info(`TokenPlaced event: ${tokenId} created`)
-  }
+  logger.info(`TokenPlaced event: ${tokenId} created`)
 }
 
 async function tokenUnplacedHandler (eventData: EventData): Promise<void> {
