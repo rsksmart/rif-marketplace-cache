@@ -34,7 +34,8 @@
     "url": "https://github.com/rsksmart/rif-marketplace-cache.git"
   },
   "scripts": {
-    "prepack": "oclif-dev manifest",
+    "prepack": "oclif-dev manifest && sed -i '' 's#\"./src/cli\"#\"./lib/cli\"#g' package.json",
+    "postpack": "sed -i '' 's#\"./lib/cli\"#\"./src/cli\"#g' package.json",
     "bin": "tasegir run --watch ./bin/run -- ",
     "compile": "tasegir compile",
     "docs": "typedoc --mode modules --excludeNotExported --readme none --excludePrivate  --tsconfig ./node_modules/tasegir/src/config/tsconfig.json --exclude 'src/providers/*,test/**/*' --out docs src",
@@ -121,7 +122,7 @@
     "dependabot-preview[bot] <27856297+dependabot-preview[bot]@users.noreply.github.com>"
   ],
   "oclif": {
-    "commands": "./lib/cli",
+    "commands": "./src/cli",
     "bin": "rif-marketplace-cache",
     "plugins": [
       "@oclif/plugin-help"
