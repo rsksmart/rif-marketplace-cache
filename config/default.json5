@@ -50,7 +50,7 @@
     // Specify behavior of NewBlockEmitter, that detects new blocks on blockchain.
     newBlockEmitter: {
       // If to use polling strategy, if false then listening is used.
-      polling: false
+      polling: true
     }
   },
 
@@ -83,7 +83,7 @@
       // Specify behavior of NewBlockEmitter, that detects new blocks on blockchain.
       newBlockEmitter: {
         // If to use polling strategy, if false then listening is used.
-        polling: false
+        polling: true
       }
     },
 
@@ -111,7 +111,7 @@
       // Specify behavior of NewBlockEmitter, that detects new blocks on blockchain.
       newBlockEmitter: {
         // If to use polling strategy, if false then listening is used.
-        polling: false
+        polling: true
       }
     },
 
@@ -139,7 +139,7 @@
       // Specify behavior of NewBlockEmitter, that detects new blocks on blockchain.
       newBlockEmitter: {
         // If to use polling strategy, if false then listening is used.
-        polling: false
+        polling: true
       }
     }
   }
