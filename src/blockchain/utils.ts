@@ -19,6 +19,10 @@ function getBlockTracker (keyPrefix?: string): BlockTracker {
   return new BlockTracker(confStore)
 }
 
+export async function getBlockDate (eth: Eth, blockNumber: number): Promise<Date> {
+  return new Date(((await eth.getBlock(blockNumber)).timestamp as number) * 1000)
+}
+
 export function isServiceInitialized (serviceName: string): boolean {
   const blockTracker = getBlockTracker(serviceName)
   return blockTracker.getLastProcessedBlock() !== undefined
@@ -27,11 +31,10 @@ export function isServiceInitialized (serviceName: string): boolean {
 export function getEventsEmitterForService (serviceName: string, eth: Eth, contractAbi: AbiItem[]): EventEmitter {
   const contractAddresses = config.get<string>(`${serviceName}.contractAddress`)
   const contract = new eth.Contract(contractAbi, contractAddresses)
-
   const logger = loggingFactory(`${serviceName}:blockchain`)
-  logger.info(`For listening on service '${serviceName}' using contract on address: ${contractAddresses}`)
 
   const eventsToListen = config.get<string[]>(`${serviceName}.events`)
+  logger.info(`For listening on service '${serviceName}' for events ${eventsToListen.join(', ')} using contract on address: ${contractAddresses}`)
   const eventsEmitterOptions = config.get<EventsEmitterOptions>(`${serviceName}.eventsEmitter`)
   const newBlockEmitterOptions = config.get<PollingOptions>(`${serviceName}.newBlockEmitter`)
   const options = Object.assign(

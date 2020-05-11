@@ -62,7 +62,7 @@ async function precache (eth?: Eth): Promise<void> {
   })
 
   for (const event of eventsDataQueue) {
-    await eventProcessor(event)
+    await eventProcessor(eth)(event)
   }
 }
 
@@ -93,19 +93,19 @@ const rns: CachedService = {
     }
 
     const rnsEventsEmitter = getEventsEmitterForService('rns.owner', eth, rnsContractAbi.abi as AbiItem[])
-    rnsEventsEmitter.on('newEvent', eventProcessor)
+    rnsEventsEmitter.on('newEvent', eventProcessor(eth))
     rnsEventsEmitter.on('error', (e: Error) => {
       logger.error(`There was unknown error in Events Emitter! ${e}`)
     })
 
     const rnsReverseEventsEmitter = getEventsEmitterForService('rns.reverse', eth, rnsReverseContractAbi.abi as AbiItem[])
-    rnsReverseEventsEmitter.on('newEvent', eventProcessor)
+    rnsReverseEventsEmitter.on('newEvent', eventProcessor(eth))
     rnsReverseEventsEmitter.on('error', (e: Error) => {
       logger.error(`There was unknown error in Events Emitter! ${e}`)
     })
 
     const rnsPlacementsEventsEmitter = getEventsEmitterForService('rns.placement', eth, simplePlacementsContractAbi as AbiItem[])
-    rnsPlacementsEventsEmitter.on('newEvent', eventProcessor)
+    rnsPlacementsEventsEmitter.on('newEvent', eventProcessor(eth))
     rnsPlacementsEventsEmitter.on('error', (e: Error) => {
       logger.error(`There was unknown error in Events Emitter! ${e}`)
     })
