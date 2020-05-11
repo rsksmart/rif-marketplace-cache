@@ -119,7 +119,7 @@
     placement: {
 
       // Events that will be listened to
-      events: ['UpdatePlacement'],
+      events: ['TokenPlaced', 'TokenUnplaced', 'TokenSold'],
 
       // Specify behavior of EventsEmitter, that retrieves events from blockchain and pass them onwards for further processing.
       eventsEmitter: {
