@@ -67,7 +67,7 @@ async function precache (eth?: Eth): Promise<void> {
 }
 
 const rns: CachedService = {
-  initialize (app: Application): Promise<void> {
+  async initialize (app: Application): Promise<void> {
     if (!config.get<boolean>('rns.enabled')) {
       logger.info('RNS service: disabled')
       return Promise.resolve()
@@ -88,26 +88,27 @@ const rns: CachedService = {
 
     if (!isServiceInitialized('rns.owner')) {
       logger.info('Precaching RNS service')
-      // await precache(eth)
+      await precache(eth)
       logger.info('Precaching RNS finished service')
     }
 
     const rnsEventsEmitter = getEventsEmitterForService('rns.owner', eth, rnsContractAbi.abi as AbiItem[])
     rnsEventsEmitter.on('newEvent', eventProcessor(eth))
     rnsEventsEmitter.on('error', (e: Error) => {
-      logger.error(`There was unknown error in Events Emitter! ${e}`)
+      logger.error(`There was unknown error in Events Emitter for rns.owner! ${e}`)
     })
 
     const rnsReverseEventsEmitter = getEventsEmitterForService('rns.reverse', eth, rnsReverseContractAbi.abi as AbiItem[])
+    rnsReverseEventsEmitter.on('newEvent', e => console.log(e.event))
     rnsReverseEventsEmitter.on('newEvent', eventProcessor(eth))
     rnsReverseEventsEmitter.on('error', (e: Error) => {
-      logger.error(`There was unknown error in Events Emitter! ${e}`)
+      logger.error(`There was unknown error in Events Emitter for rns.reverse! ${e}`)
     })
 
     const rnsPlacementsEventsEmitter = getEventsEmitterForService('rns.placement', eth, simplePlacementsContractAbi as AbiItem[])
     rnsPlacementsEventsEmitter.on('newEvent', eventProcessor(eth))
     rnsPlacementsEventsEmitter.on('error', (e: Error) => {
-      logger.error(`There was unknown error in Events Emitter! ${e}`)
+      logger.error(`There was unknown error in Events Emitter for rns.placement! ${e}`)
     })
 
     return Promise.resolve()
