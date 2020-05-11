@@ -24,3 +24,6 @@ node_modules
 
 # Oclif Manifest
 oclif.manifest.json
+
+# Local configurations
+/config/local*
