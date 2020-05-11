@@ -6,10 +6,12 @@ import { EventData } from 'web3-eth-contract'
 import { loggingFactory } from '../logger'
 
 import Utils from 'web3-utils'
+import { Eth } from 'web3-eth'
+import { getBlockDate } from '../blockchain/utils'
 
 const logger = loggingFactory('rns:blockchain')
 
-async function transferHandler (eventData: EventData): Promise<void> {
+async function transferHandler (eventData: EventData, eth: Eth): Promise<void> {
   // Transfer(address indexed from, address indexed to, uint256 indexed tokenId)
 
   if (eventData.returnValues.from !== '0x0000000000000000000000000000000000000000') {
@@ -38,9 +40,9 @@ async function transferHandler (eventData: EventData): Promise<void> {
       const [affectedRows] = await Domain.update({ ownerAddress }, { where: { tokenId } })
 
       if (affectedRows) {
-        logger.info(`Transfer event: Updated Domain ${domain} -> ${tokenId}`)
+        logger.info(`Transfer event: Updated Domain ${domain.name} -> ${tokenId}`)
       } else {
-        logger.info(`Transfer event: no Domain ${domain} updated`)
+        logger.info(`Transfer event: no Domain ${domain.name} updated`)
       }
     }
   }
@@ -80,7 +82,7 @@ async function nameChangedHandler (eventData: EventData): Promise<void> {
   }
 }
 
-async function tokenPlacedHandler (eventData: EventData): Promise<void> {
+async function tokenPlacedHandler (eventData: EventData, eth: Eth): Promise<void> {
   // event TokenPlaced(uint256 indexed tokenId, address indexed paymentToken, uint256 cost);
 
   const transactionHash = eventData.transactionHash
@@ -110,7 +112,7 @@ async function tokenPlacedHandler (eventData: EventData): Promise<void> {
     tokenId: tokenId,
     paymentToken: paymentToken,
     price: cost,
-    creationDate: Date.now(), // TODO: get from block timestamp
+    creationDate: await getBlockDate(eth, eventData.blockNumber),
     status: 'ACTIVE'
   })
   await domainOffer.save()
@@ -134,7 +136,7 @@ async function tokenUnplacedHandler (eventData: EventData): Promise<void> {
   }
 }
 
-async function tokenSoldHandler (eventData: EventData): Promise<void> {
+async function tokenSoldHandler (eventData: EventData, eth: Eth): Promise<void> {
   // event TokenSold(uint256 indexed tokenId);
 
   const transactionHash = eventData.transactionHash
@@ -150,7 +152,7 @@ async function tokenSoldHandler (eventData: EventData): Promise<void> {
     const [affectedRows] = await SoldDomain.update({
       price: lastOffer.price,
       paymentToken: lastOffer.paymentToken,
-      soldDate: Date.now()
+      soldDate: await getBlockDate(eth, eventData.blockNumber)
     }, { where: { id: transactionHash } })
 
     if (affectedRows) {
@@ -173,10 +175,14 @@ const commands = {
 function isValidEvent (value: string): value is keyof typeof commands {
   return value in commands
 }
-export default async function (eventData: EventData): Promise<void> {
-  if (isValidEvent(eventData.event)) {
-    await commands[eventData.event](eventData)
-  } else {
-    logger.error(`Unknown event ${eventData.event}`)
+
+export default function rnsProcessorFactory (eth: Eth) {
+  return async function (eventData: EventData): Promise<void> {
+    if (isValidEvent(eventData.event)) {
+      logger.info(`Processing event ${eventData.event}`)
+      await commands[eventData.event](eventData, eth)
+    } else {
+      logger.error(`Unknown event ${eventData.event}`)
+    }
   }
 }
