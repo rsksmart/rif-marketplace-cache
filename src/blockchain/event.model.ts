@@ -15,7 +15,7 @@ export default class Event extends Model {
   @Column(DataType.INTEGER)
   blockNumber!: number
 
-  @Column(DataType.STRING(64))
+  @Column(DataType.STRING(66))
   transactionHash!: string
 
   @Column(DataType.INTEGER)
