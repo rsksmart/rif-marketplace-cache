@@ -34,7 +34,7 @@ export default {
         if (context.params.query?.status) {
           const { status, ownerAddress } = context.params.query
           const statusConds: Record<string, string> = {
-            owned: '"offers"."status" != \'ACTIVE\' OR "offers"."tokenId" is null',
+            owned: '"offers"."status" = \'CANCELED\' OR "offers"."tokenId" is null',
             placed: '"offers"."status" = \'ACTIVE\''
           }
           const sql = `SELECT
