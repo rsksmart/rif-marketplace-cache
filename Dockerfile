@@ -1,26 +1,28 @@
 # Compiler container
-FROM node:12 AS compiler
+FROM node:10-alpine AS compiler
+
+RUN apk add --no-cache build-base git python
 
 WORKDIR /usr/src/app
-COPY . .
-RUN npm ci --only=production \
-  && npm install tasegir \
-  && npx tasegir compile
+COPY package*.json ./
+RUN npm ci --only=production && npm install tasegir
+COPY . ./
+RUN npx tasegir compile
 
 # Runtime container
-FROM node:12-alpine
+FROM node:10-alpine
 
 RUN mkdir -p /srv/app && chown node:node /srv/app
 
 USER node
 WORKDIR /srv/app
-COPY --from=compiler /usr/src/app/lib .
-COPY --from=compiler /usr/src/app/node_modules .
+COPY --from=compiler /usr/src/app/lib ./lib/
+COPY --from=compiler /usr/src/app/node_modules ./node_modules/
 COPY package*.json ./
-COPY bin/ .
-COPY config/ .
+COPY bin ./bin/
+COPY config ./config/
 
-EXPOSE 8080
+EXPOSE 3030
 
 ENTRYPOINT [ "./bin/run" ]
 CMD [ "start" ]
