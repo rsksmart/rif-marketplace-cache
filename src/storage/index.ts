@@ -69,9 +69,13 @@ const storage: CachedService = {
     const eth = app.get('eth') as Eth
 
     if (!isServiceInitialized(SERVICE_NAME)) {
-      logger.info('Precaching service')
-      await precache(eth)
-      logger.info('Precaching finished service')
+      logger.info('Precaching Storage service')
+      try {
+        await precache(eth)
+        logger.info('Precaching Storage service finished')
+      } catch (e) {
+        logger.error(`There was an error while precaching for Storage service! ${e}`)
+      }
     }
 
     const eventsEmitter = getEventsEmitterForService(SERVICE_NAME, eth, storageManagerContract.abi as AbiItem[])

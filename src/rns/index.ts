@@ -21,6 +21,7 @@ import soldDomainHooks from './hooks/sold-domain.hooks'
 import rnsContractAbi from '@rsksmart/rns-rskregistrar/RSKOwnerData.json'
 import rnsReverseContractAbi from '@rsksmart/rns-reverse/NameResolverData.json'
 import simplePlacementsContractAbi from '@rsksmart/rif-marketplace-nfts/ERC721SimplePlacementsABI.json'
+import { errorHandler } from '../utils'
 
 const logger = loggingFactory('rns')
 
@@ -88,25 +89,31 @@ const rns: CachedService = {
 
     if (!isServiceInitialized('rns.owner')) {
       logger.info('Precaching RNS service')
-      await precache(eth)
-      logger.info('Precaching RNS finished service')
+      try {
+        await precache(eth)
+        logger.info('Precaching RNS finished service')
+      } catch (e) {
+        logger.error(`There was an error while precaching for RNS service! ${e}`)
+      }
     }
 
     const rnsEventsEmitter = getEventsEmitterForService('rns.owner', eth, rnsContractAbi.abi as AbiItem[])
-    rnsEventsEmitter.on('newEvent', eventProcessor(eth))
+    rnsEventsEmitter.on('newEvent', e => console.log(e.event))
+    rnsEventsEmitter.on('newEvent', errorHandler(eventProcessor(eth), logger))
     rnsEventsEmitter.on('error', (e: Error) => {
       logger.error(`There was unknown error in Events Emitter for rns.owner! ${e}`)
     })
 
     const rnsReverseEventsEmitter = getEventsEmitterForService('rns.reverse', eth, rnsReverseContractAbi.abi as AbiItem[])
     rnsReverseEventsEmitter.on('newEvent', e => console.log(e.event))
-    rnsReverseEventsEmitter.on('newEvent', eventProcessor(eth))
+    rnsReverseEventsEmitter.on('newEvent', errorHandler(eventProcessor(eth), logger))
     rnsReverseEventsEmitter.on('error', (e: Error) => {
       logger.error(`There was unknown error in Events Emitter for rns.reverse! ${e}`)
     })
 
     const rnsPlacementsEventsEmitter = getEventsEmitterForService('rns.placement', eth, simplePlacementsContractAbi as AbiItem[])
-    rnsPlacementsEventsEmitter.on('newEvent', eventProcessor(eth))
+    rnsPlacementsEventsEmitter.on('newEvent', e => console.log(e.event))
+    rnsPlacementsEventsEmitter.on('newEvent', errorHandler(eventProcessor(eth), logger))
     rnsPlacementsEventsEmitter.on('error', (e: Error) => {
       logger.error(`There was unknown error in Events Emitter for rns.placement! ${e}`)
     })
