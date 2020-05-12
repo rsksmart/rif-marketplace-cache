@@ -3,6 +3,7 @@ import { disallow } from 'feathers-hooks-common'
 
 import Domain from '../models/domain.model'
 import { Op } from 'sequelize'
+import { sha3 } from 'web3-utils'
 
 export default {
   before: {
@@ -33,15 +34,18 @@ export default {
         const { params: { sequelize: { include } } } = context
         const { domain } = context.params.query as any
 
-        if ((context.params.query as any).domain) {
-          delete (context.params.query as any).domain
-        }
+        delete (context.params.query as any).domain
 
         if (include && domain) {
           const { name: { $like } } = domain
           include.where = {
-            name: {
-              [Op.like]: $like
+            [Op.or]: {
+              name: {
+                [Op.like]: $like
+              },
+              tokenId: {
+                [Op.eq]: sha3($like)
+              }
             }
           }
         }
