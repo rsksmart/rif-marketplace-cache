@@ -34,14 +34,12 @@ export default {
         const { params: { sequelize: { include } } } = context
         const { domain } = context.params.query as any
 
-        delete (context.params.query as any).domain
-
         if (include && domain) {
           const { name: { $like } } = domain
           include.where = {
             [Op.or]: {
               name: {
-                [Op.like]: $like
+                [Op.like]: `%${$like}%`
               },
               tokenId: {
                 [Op.eq]: sha3($like)
@@ -49,6 +47,8 @@ export default {
             }
           }
         }
+
+        delete (context.params.query as any).domain
       }
     ],
     get: [],
