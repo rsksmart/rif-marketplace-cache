@@ -493,7 +493,7 @@ export class PollingEventsEmitter extends BaseEventsEmitter {
     await this.semaphore.acquire()
     this.logger.info(`Received new block number ${currentBlock}`)
     try {
-      const lastProcessedBlock = this.blockTracker.getLastProcessedBlock()
+      const lastProcessedBlock = this.blockTracker.getLastProcessedBlock() as number // undefined is checked in init()
 
       // Nothing new, lets fast-forward
       if (lastProcessedBlock === currentBlock) {
@@ -504,7 +504,7 @@ export class PollingEventsEmitter extends BaseEventsEmitter {
       this.logger.info(`Checking new events between blocks ${lastProcessedBlock}-${currentBlock}`)
       // TODO: Possible to filter-out the events with "topics" property directly from the node
       const events = await this.contract.getPastEvents('allEvents', {
-        fromBlock: lastProcessedBlock,
+        fromBlock: lastProcessedBlock + 1, // +1 because both fromBlock and toBlock is "or equal"
         toBlock: currentBlock
       })
 
