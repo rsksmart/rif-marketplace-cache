@@ -307,7 +307,12 @@ export abstract class BaseEventsEmitter extends AutoStartStopEventEmitter {
    */
   private async confirmEvents (currentBlockNumber: number): Promise<void> {
     try {
-      const dbEvents = await Event.findAll({ where: { blockNumber: { [Op.lte]: currentBlockNumber - this.confirmations } } })
+      const dbEvents = await Event.findAll({
+        where: {
+          blockNumber: { [Op.lte]: currentBlockNumber - this.confirmations },
+          event: this.events
+        }
+      })
 
       const ethEvents = dbEvents.map(event => JSON.parse(event.content)) as EventData[]
       const validEthEvents = await asyncFilter(ethEvents, this.eventHasValidReceipt.bind(this))
@@ -348,6 +353,7 @@ export abstract class BaseEventsEmitter extends AutoStartStopEventEmitter {
       blockNumber: data.blockNumber,
       transactionHash: data.transactionHash,
       logIndex: data.logIndex,
+      event: data.event,
       content: JSON.stringify(data)
     }
   }

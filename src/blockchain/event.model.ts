@@ -22,7 +22,10 @@ export default class Event extends Model {
   logIndex!: number
 
   @Column(DataType.TEXT)
+  event!: string
+
+  @Column(DataType.TEXT)
   content!: string
 }
 
-export type EventInterface = Pick<Event, 'blockNumber' | 'transactionHash' | 'logIndex' | 'content'>
+export type EventInterface = Pick<Event, 'blockNumber' | 'transactionHash' | 'logIndex' | 'event' | 'content'>
