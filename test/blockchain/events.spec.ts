@@ -5,7 +5,7 @@ import {
   ListeningNewBlockEmitter, PollingEventsEmitter,
   PollingNewBlockEmitter
 } from '../../src/blockchain/events'
-import { Store } from '../../src/definitions'
+import { Logger, Store } from '../../src/definitions'
 import { BlockHeader, Eth, TransactionReceipt } from 'web3-eth'
 
 import { Arg, Substitute } from '@fluffy-spoon/substitute'
@@ -104,8 +104,14 @@ function receiptMock (blockNumber?: number, status = true): TransactionReceipt {
  * Dummy implementation for testing BaseEventsEmitter
  */
 export class DummyEventsEmitter extends BaseEventsEmitter {
-  constructor (eth: Eth, contract: Contract, events: string[], options?: EventsEmitterOptions) {
-    const logger = loggingFactory('blockchain:events:dummy')
+  constructor (eth: Eth, contract: Contract, events: string[], options?: EventsEmitterOptions, name?: string) {
+    let logger: Logger
+    if (!name) {
+      logger = loggingFactory('blockchain:events:dummy')
+    } else {
+      logger = loggingFactory('blockchain:events:' + name)
+    }
+
     super(eth, contract, events, logger, options)
   }
 
@@ -415,12 +421,12 @@ describe('BaseEventsEmitter', () => {
 
       // Create events to be confirmed
       const events = [
-        { blockNumber: 7, transactionHash: '1', logIndex: 1, content: '{"transactionHash": "1", "blockNumber": 7}' },
-        { blockNumber: 8, transactionHash: '2', logIndex: 1, content: '{"transactionHash": "2", "blockNumber": 8}' },
-        { blockNumber: 9, transactionHash: '3', logIndex: 1, content: '{"transactionHash": "3", "blockNumber": 9}' },
-        { blockNumber: 9, transactionHash: '4', logIndex: 1, content: '{"transactionHash": "4", "blockNumber": 9}' },
-        { blockNumber: 10, transactionHash: '5', logIndex: 1, content: '{"transactionHash": "5", "blockNumber": 10}' },
-        { blockNumber: 11, transactionHash: '6', logIndex: 1, content: '{"transactionHash": "6",  "blockNumber": 11}' }
+        { event: 'testEvent', blockNumber: 7, transactionHash: '1', logIndex: 1, content: '{"transactionHash": "1", "blockNumber": 7}' },
+        { event: 'testEvent', blockNumber: 8, transactionHash: '2', logIndex: 1, content: '{"transactionHash": "2", "blockNumber": 8}' },
+        { event: 'testEvent', blockNumber: 9, transactionHash: '3', logIndex: 1, content: '{"transactionHash": "3", "blockNumber": 9}' },
+        { event: 'testEvent', blockNumber: 9, transactionHash: '4', logIndex: 1, content: '{"transactionHash": "4", "blockNumber": 9}' },
+        { event: 'testEvent', blockNumber: 10, transactionHash: '5', logIndex: 1, content: '{"transactionHash": "5", "blockNumber": 10}' },
+        { event: 'testEvent', blockNumber: 11, transactionHash: '6', logIndex: 1, content: '{"transactionHash": "6",  "blockNumber": 11}' }
       ]
       await Event.bulkCreate(events)
 
@@ -453,12 +459,12 @@ describe('BaseEventsEmitter', () => {
 
       // Create events to be confirmed
       const events = [
-        { blockNumber: 7, transactionHash: '1', logIndex: 1, content: '{"transactionHash": "1", "blockNumber": 7}' },
-        { blockNumber: 8, transactionHash: '2', logIndex: 1, content: '{"transactionHash": "2", "blockNumber": 8}' },
-        { blockNumber: 9, transactionHash: '3', logIndex: 1, content: '{"transactionHash": "3", "blockNumber": 9}' },
-        { blockNumber: 9, transactionHash: '4', logIndex: 1, content: '{"transactionHash": "4", "blockNumber": 9}' },
-        { blockNumber: 10, transactionHash: '5', logIndex: 1, content: '{"transactionHash": "5", "blockNumber": 10}' },
-        { blockNumber: 11, transactionHash: '6', logIndex: 1, content: '{"transactionHash": "6",  "blockNumber": 11}' }
+        { event: 'testEvent', blockNumber: 7, transactionHash: '1', logIndex: 1, content: '{"transactionHash": "1", "blockNumber": 7}' },
+        { event: 'testEvent', blockNumber: 8, transactionHash: '2', logIndex: 1, content: '{"transactionHash": "2", "blockNumber": 8}' },
+        { event: 'testEvent', blockNumber: 9, transactionHash: '3', logIndex: 1, content: '{"transactionHash": "3", "blockNumber": 9}' },
+        { event: 'testEvent', blockNumber: 9, transactionHash: '4', logIndex: 1, content: '{"transactionHash": "4", "blockNumber": 9}' },
+        { event: 'testEvent', blockNumber: 10, transactionHash: '5', logIndex: 1, content: '{"transactionHash": "5", "blockNumber": 10}' },
+        { event: 'testEvent', blockNumber: 11, transactionHash: '6', logIndex: 1, content: '{"transactionHash": "6",  "blockNumber": 11}' }
       ]
       await Event.bulkCreate(events)
 
@@ -467,6 +473,111 @@ describe('BaseEventsEmitter', () => {
       await sleep(500)
 
       expect(emitterSpy.getCalls().length).to.be.eql(3, 'Expected three events emitted.')
+      expect(await Event.count()).to.eql(2)
+    })
+
+    it('each emitter should confirm only his events', async function () {
+      const eth = Substitute.for<Eth>()
+      eth.getBlockNumber().returns(Promise.resolve(10))
+
+      eth.getTransactionReceipt('1').returns(Promise.resolve(receiptMock(7)))
+      eth.getTransactionReceipt('2').returns(Promise.resolve(receiptMock(8)))
+      eth.getTransactionReceipt('3').returns(Promise.resolve(receiptMock(9)))
+      eth.getTransactionReceipt('4').returns(Promise.resolve(receiptMock(10)))
+      eth.getTransactionReceipt('5').returns(Promise.resolve(receiptMock(11)))
+
+      const contract = Substitute.for<Contract>()
+      contract.getPastEvents(Arg.all()).returns(Promise.resolve([]))
+
+      const firstBlockTracker = new BlockTracker(new StoreMock())
+      const firstNewBlockEmitter = new EventEmitter()
+      const firstOptions: EventsEmitterOptions = {
+        confirmations: 2,
+        blockTracker: firstBlockTracker,
+        newBlockEmitter: firstNewBlockEmitter
+      }
+      const firstEmitterSpy = sinon.spy()
+      const firstEventsEmitter = new DummyEventsEmitter(eth, contract, ['firstEvent'], firstOptions, 'dummy1')
+      firstEventsEmitter.on(DATA_EVENT_NAME, firstEmitterSpy)
+
+      const secondBlockTracker = new BlockTracker(new StoreMock())
+      const secondNewBlockEmitter = new EventEmitter()
+      const secondOptions: EventsEmitterOptions = {
+        confirmations: 2,
+        blockTracker: secondBlockTracker,
+        newBlockEmitter: secondNewBlockEmitter
+      }
+      const secondEmitterSpy = sinon.spy()
+      const secondEventsEmitter = new DummyEventsEmitter(eth, contract, ['secondEvent'], secondOptions, 'dummy2')
+      secondEventsEmitter.on(DATA_EVENT_NAME, secondEmitterSpy)
+
+      // Create events to be confirmed
+      const events = [
+        {
+          event: 'firstEvent',
+          blockNumber: 7,
+          transactionHash: '1',
+          logIndex: 1,
+          content: '{"transactionHash": "1", "blockNumber": 7, "event": "firstEvent"}'
+        },
+        {
+          event: 'secondEvent',
+          blockNumber: 8,
+          transactionHash: '2',
+          logIndex: 1,
+          content: '{"transactionHash": "2", "blockNumber": 8, "event": "secondEvent"}'
+        },
+        {
+          event: 'firstEvent',
+          blockNumber: 9,
+          transactionHash: '3',
+          logIndex: 1,
+          content: '{"transactionHash": "3", "blockNumber": 9, "event": "firstEvent"}'
+        },
+        {
+          event: 'secondEvent',
+          blockNumber: 10,
+          transactionHash: '4',
+          logIndex: 1,
+          content: '{"transactionHash": "4", "blockNumber": 10, "event": "secondEvent"}'
+        },
+        {
+          event: 'firstEvent',
+          blockNumber: 11,
+          transactionHash: '5',
+          logIndex: 1,
+          content: '{"transactionHash": "5", "blockNumber": 11, "event": "firstEvent"}'
+        },
+        {
+          event: 'firstEvent',
+          blockNumber: 12,
+          transactionHash: '6',
+          logIndex: 1,
+          content: '{"transactionHash": "6",  "blockNumber": 12, "event": "firstEvent"}'
+        },
+        {
+          event: 'secondEvent',
+          blockNumber: 13,
+          transactionHash: '7',
+          logIndex: 1,
+          content: '{"transactionHash": "7",  "blockNumber": 13, "event": "secondEvent"}'
+        }
+      ]
+      await Event.bulkCreate(events)
+
+      // Start confirmations process
+      firstNewBlockEmitter.emit(NEW_BLOCK_EVENT, 13)
+      await sleep(500)
+
+      secondNewBlockEmitter.emit(NEW_BLOCK_EVENT, 13)
+      await sleep(500)
+
+      expect(firstEmitterSpy.getCalls().length).to.be.eql(3, 'Expected three firstEvent events emitted.')
+      firstEmitterSpy.getCalls().forEach(call => expect(call.args[0].event).to.eql('firstEvent'))
+
+      expect(secondEmitterSpy.getCalls().length).to.be.eql(2, 'Expected two secondEvent events emitted.')
+      secondEmitterSpy.getCalls().forEach(call => expect(call.args[0].event).to.eql('secondEvent'))
+
       expect(await Event.count()).to.eql(2)
     })
   })
