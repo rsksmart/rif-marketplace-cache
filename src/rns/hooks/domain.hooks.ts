@@ -32,7 +32,7 @@ export default {
       },
       async (context: HookContext) => {
         if (context.params.query?.status) {
-          const { status, ownerAddress } = context.params.query
+          const { status, ownerAddress, name: nameFilter } = context.params.query
 
           const isOwned = status === 'owned'
           const sql =
@@ -78,6 +78,7 @@ export default {
               )
               ${isOwned ? `AND "active_offers"."tokenId" IS NULL
               AND ("INACTIVE_OFFERS"."tokenId" IS NOT NULL OR "offers"."tokenId" IS NULL)` : ''}
+              ${nameFilter?.$like ? `AND "Domain"."name" LIKE '%${nameFilter.$like}%'` : ''}
           `
 
           const sequelize = context.app.get('sequelize')
