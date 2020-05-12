@@ -18,6 +18,7 @@
   "files": [
     "/oclif.manifest.json",
     "/lib",
+    "/config/default.json5",
     "/bin"
   ],
   "directories": {
