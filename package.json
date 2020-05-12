@@ -1,6 +1,6 @@
 {
   "name": "@rsksmart/rif-marketplace-cache",
-  "version": "0.1.0-dev.1",
+  "version": "0.1.0-dev.2",
   "description": "Caching server for RIF Marketplace",
   "keywords": [
     "RIF",
@@ -120,6 +120,7 @@
     "Adam Uhlíř <adam@uhlir.dev>",
     "Juraj <36888576+jurajpiar@users.noreply.github.com>",
     "Leandro Yalet <leandro@iovlabs.org>",
+    "Lucas <39061310+lucasvuotto@users.noreply.github.com>",
     "dependabot-preview[bot] <27856297+dependabot-preview[bot]@users.noreply.github.com>"
   ],
   "oclif": {
