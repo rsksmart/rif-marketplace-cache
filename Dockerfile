@@ -22,6 +22,8 @@ COPY package*.json ./
 COPY bin ./bin/
 COPY config ./config/
 
+RUN sed -i 's#"./src/cli"#"./lib/cli"#g' package.json
+
 EXPOSE 3030
 
 ENTRYPOINT [ "./bin/run" ]
