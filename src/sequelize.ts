@@ -8,7 +8,7 @@ const logger = loggingFactory('db')
 
 export function sequelizeFactory (): Sequelize {
   const dbSettings: SequelizeOptions = {
-    models: [path.join(__dirname, '/**/*.model.ts')],
+    models: [path.join(__dirname, '/**/*.model.+(ts|js)')],
     modelMatch: (filename: string, member: string): boolean => {
       return filename.substring(0, filename.indexOf('.model')) === member.toLowerCase()
     },
