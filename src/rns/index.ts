@@ -23,6 +23,8 @@ import rnsReverseContractAbi from '@rsksmart/rns-reverse/NameResolverData.json'
 import simplePlacementsContractAbi from '@rsksmart/rif-marketplace-nfts/ERC721SimplePlacementsABI.json'
 import { errorHandler } from '../utils'
 
+import rnsPrecache from './rns.precache'
+
 const logger = loggingFactory('rns')
 
 export class RnsService extends Service {
@@ -48,6 +50,8 @@ async function precache (eth?: Eth): Promise<void> {
   const precacheLogger = loggingFactory('rns:precache:processor')
   const eventsDataQueue: EventData[] = []
   const dataQueuePusher = (event: EventData): void => { eventsDataQueue.push(event) }
+
+  await rnsPrecache(eth, rnsContractAbi.abi as AbiItem[], config.get<string>(`rns.owner.contractAddress`), config.get<string>(`rns.fifsAddrRegistrar.contractAddress`))
 
   await fetchEventsForService(eth, 'rns.owner', rnsContractAbi.abi as AbiItem[], dataQueuePusher)
   await fetchEventsForService(eth, 'rns.reverse', rnsReverseContractAbi.abi as AbiItem[], dataQueuePusher)

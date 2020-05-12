@@ -61,6 +61,7 @@
     "@rsksmart/rif-marketplace-storage": "^0.1.0-dev.0",
     "@rsksmart/rns-reverse": "^1.0.2",
     "@rsksmart/rns-rskregistrar": "^1.2.1",
+    "abi-decoder": "^2.3.0",
     "async-sema": "^3.1.0",
     "coingecko-api": "^1.0.10",
     "colors": "^1.4.0",

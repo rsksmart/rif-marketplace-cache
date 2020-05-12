@@ -138,6 +138,8 @@ export interface Config {
     // Sets if RNS service should be enabled
     enabled?: boolean
 
+    fifsAddrRegistrar?: BlockchainServiceOptions
+
     // Owner contract's options
     owner?: BlockchainServiceOptions
 
