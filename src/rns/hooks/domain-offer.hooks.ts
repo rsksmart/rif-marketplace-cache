@@ -27,7 +27,7 @@ export default {
           raw: false,
           nest: true,
           include: {
-            model: Domain,
+            model: Domain
           }
         }
         const { params: { sequelize: { include } } } = context
@@ -35,8 +35,7 @@ export default {
         delete context.params.query.domain
 
         if (include && domain) {
-          const { name: { $like } } = domain;
-          console.log('$like:', $like)
+          const { name: { $like } } = domain
           include.where = {
             name: {
               [Op.like]: $like
