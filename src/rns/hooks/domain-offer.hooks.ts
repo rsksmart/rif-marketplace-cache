@@ -31,8 +31,11 @@ export default {
           }
         }
         const { params: { sequelize: { include } } } = context
-        const { domain } = context.params.query
-        delete context.params.query.domain
+        const { domain } = context.params.query as any
+
+        if ((context.params.query as any).domain) {
+          delete (context.params.query as any).domain
+        }
 
         if (include && domain) {
           const { name: { $like } } = domain
