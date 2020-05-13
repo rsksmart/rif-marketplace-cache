@@ -106,6 +106,7 @@ function receiptMock (blockNumber?: number, status = true): TransactionReceipt {
 export class DummyEventsEmitter extends BaseEventsEmitter {
   constructor (eth: Eth, contract: Contract, events: string[], options?: EventsEmitterOptions, name?: string) {
     let logger: Logger
+
     if (!name) {
       logger = loggingFactory('blockchain:events:dummy')
     } else {
