@@ -5,6 +5,7 @@ import colors from 'colors'
 import config from 'config'
 
 import { Logger } from './definitions'
+import { inspect } from 'util'
 
 // Inspired from https://github.com/visionmedia/debug
 const names: RegExp[] = []
@@ -112,7 +113,7 @@ function initLogging (): void {
     // To see more detailed errors, change this to 'debug'
     level: config.get('log.level') || 'info',
     format: format.combine(
-      format.splat(),
+      // format.splat(),
       format.metadata(),
       filterServices(),
       upperCaseLevel(),
@@ -121,11 +122,20 @@ function initLogging (): void {
       format.timestamp({ format: 'DD/MM hh:mm:ss' }),
       format.colorize(),
       format.printf(info => {
-        if (info.metadata.service) {
-          return `[${info.level}] ${colors.grey(info.timestamp)} (${info.metadata.service}): ${info.message}`
+        let message: string
+        const { service, ...rest } = info.metadata
+
+        if (service) {
+          message = `[${info.level}] ${colors.grey(info.timestamp)} (${service}): ${info.message}`
         } else {
-          return `[${info.level}] ${colors.grey(info.timestamp)}: ${info.message}`
+          message = `[${info.level}] ${colors.grey(info.timestamp)}: ${info.message}`
         }
+
+        if (Object.keys(rest).length > 0) {
+          message += '\n' + Object.values(rest).map(e => inspect(e, false, 2, true)).join('\n')
+        }
+
+        return message
       })
     ),
     transports: transportsSet
@@ -134,7 +144,7 @@ function initLogging (): void {
 
 type SupportedLevels = 'error' | 'warn' | 'info' | 'verbose' | 'debug'
 
-function delayedLoggingMethod (level: SupportedLevels, name?: string): (message: string, ...meta: any[]) => void {
+function delayedLoggingMethod (level: SupportedLevels, name?: string) {
   return function (message: string, ...meta: any[]): void {
     // First logging call, lets setup logging
     if (!mainLogger) {
@@ -146,9 +156,9 @@ function delayedLoggingMethod (level: SupportedLevels, name?: string): (message:
         loggers[name] = mainLogger.child({ service: name })
       }
 
-      loggers[name][level](message, ...meta)
+      loggers[name].log(level, message, ...meta)
     } else {
-      mainLogger[level](message, ...meta)
+      mainLogger.log(level, message, ...meta)
     }
   }
 }
