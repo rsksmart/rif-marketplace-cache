@@ -162,16 +162,19 @@ export type Flags<T> = Options<T>['flags']
  */
 export interface Logger {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  error (message: string | Error, ...meta: any[]): void
+  error (message: string | Error | object, ...meta: any[]): void
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  debug (message: string, ...meta: any[]): void
+  warn (message: string | object, ...meta: any[]): void
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  warn (message: string, ...meta: any[]): void
+  info (message: string | object, ...meta: any[]): void
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  info (message: string, ...meta: any[]): void
+  verbose (message: string | object, ...meta: any[]): void
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  debug (message: string | object, ...meta: any[]): void
 }
 
 /**
