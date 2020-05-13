@@ -50,7 +50,12 @@ async function expirationChangedHandler (eventData: EventData): Promise<void> {
   // event ExpirationChanged(uint256 tokenId, uint expirationTime);
 
   const tokenId = Utils.numberToHex(eventData.returnValues.tokenId)
-  const expirationDate = eventData.returnValues.expirationTime * 1000
+  let normalizedTimestamp = eventData.returnValues.expirationTime
+
+  if (normalizedTimestamp.startsWith('10000')) {
+    normalizedTimestamp = eventData.returnValues.expirationTime.slice(5)
+  }
+  const expirationDate = normalizedTimestamp * 1000
   const [domain, created] = await Domain.upsert({ tokenId, expirationDate }, { returning: true })
 
   if (created) {
