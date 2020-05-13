@@ -10,7 +10,7 @@ import { confFactory } from '../conf'
 import { ethFactory } from '../blockchain'
 import { getEventsEmitterForService, isServiceInitialized } from '../blockchain/utils'
 
-import eventProcessor from './rns.blockchain'
+import eventProcessor from './rns.processor'
 import Domain from './models/domain.model'
 import DomainOffer from './models/domain-offer.model'
 import SoldDomain from './models/sold-domain.model'
@@ -45,6 +45,7 @@ function fetchEventsForService (eth: Eth, serviceName: string, abi: AbiItem[], d
 
 async function precache (eth?: Eth): Promise<void> {
   eth = eth || ethFactory()
+  const precacheLogger = loggingFactory('rns:precache:processor')
   const eventsDataQueue: EventData[] = []
   const dataQueuePusher = (event: EventData): void => { eventsDataQueue.push(event) }
 
@@ -63,7 +64,7 @@ async function precache (eth?: Eth): Promise<void> {
   })
 
   for (const event of eventsDataQueue) {
-    await eventProcessor(eth)(event)
+    await eventProcessor(precacheLogger, eth)(event)
   }
 }
 
@@ -98,22 +99,19 @@ const rns: CachedService = {
     }
 
     const rnsEventsEmitter = getEventsEmitterForService('rns.owner', eth, rnsContractAbi.abi as AbiItem[])
-    rnsEventsEmitter.on('newEvent', e => console.log(e.event))
-    rnsEventsEmitter.on('newEvent', errorHandler(eventProcessor(eth), logger))
+    rnsEventsEmitter.on('newEvent', errorHandler(eventProcessor(loggingFactory('rns.owner:processor'), eth), logger))
     rnsEventsEmitter.on('error', (e: Error) => {
       logger.error(`There was unknown error in Events Emitter for rns.owner! ${e}`)
     })
 
     const rnsReverseEventsEmitter = getEventsEmitterForService('rns.reverse', eth, rnsReverseContractAbi.abi as AbiItem[])
-    rnsReverseEventsEmitter.on('newEvent', e => console.log(e.event))
-    rnsReverseEventsEmitter.on('newEvent', errorHandler(eventProcessor(eth), logger))
+    rnsReverseEventsEmitter.on('newEvent', errorHandler(eventProcessor(loggingFactory('rns.reverse:processor'), eth), logger))
     rnsReverseEventsEmitter.on('error', (e: Error) => {
       logger.error(`There was unknown error in Events Emitter for rns.reverse! ${e}`)
     })
 
     const rnsPlacementsEventsEmitter = getEventsEmitterForService('rns.placement', eth, simplePlacementsContractAbi as AbiItem[])
-    rnsPlacementsEventsEmitter.on('newEvent', e => console.log(e.event))
-    rnsPlacementsEventsEmitter.on('newEvent', errorHandler(eventProcessor(eth), logger))
+    rnsPlacementsEventsEmitter.on('newEvent', errorHandler(eventProcessor(loggingFactory('rns.placement:processor'), eth), logger))
     rnsPlacementsEventsEmitter.on('error', (e: Error) => {
       logger.error(`There was unknown error in Events Emitter for rns.placement! ${e}`)
     })

@@ -3,15 +3,13 @@ import SoldDomain from './models/sold-domain.model'
 import DomainOffer from './models/domain-offer.model'
 
 import { EventData } from 'web3-eth-contract'
-import { loggingFactory } from '../logger'
 
 import Utils from 'web3-utils'
 import { Eth } from 'web3-eth'
 import { getBlockDate } from '../blockchain/utils'
+import { Logger } from '../definitions'
 
-const logger = loggingFactory('rns:blockchain')
-
-async function transferHandler (eventData: EventData, eth: Eth): Promise<void> {
+async function transferHandler (logger: Logger, eventData: EventData): Promise<void> {
   // Transfer(address indexed from, address indexed to, uint256 indexed tokenId)
 
   if (eventData.returnValues.from !== '0x0000000000000000000000000000000000000000') {
@@ -48,12 +46,13 @@ async function transferHandler (eventData: EventData, eth: Eth): Promise<void> {
   }
 }
 
-async function expirationChangedHandler (eventData: EventData): Promise<void> {
+async function expirationChangedHandler (logger: Logger, eventData: EventData): Promise<void> {
   // event ExpirationChanged(uint256 tokenId, uint expirationTime);
 
   const tokenId = Utils.numberToHex(eventData.returnValues.tokenId)
-  let normalizedTimestamp = eventData.returnValues.expirationTime
+  let normalizedTimestamp = eventData.returnValues.expirationTime as string
 
+  // For the old RNS register where timestamps start with 10000
   if (normalizedTimestamp.startsWith('10000')) {
     normalizedTimestamp = eventData.returnValues.expirationTime.slice(5)
   }
@@ -67,7 +66,7 @@ async function expirationChangedHandler (eventData: EventData): Promise<void> {
   }
 }
 
-async function nameChangedHandler (eventData: EventData): Promise<void> {
+async function nameChangedHandler (logger: Logger, eventData: EventData): Promise<void> {
   const name = eventData.returnValues.name
 
   const label = name.substring(0, name.indexOf('.'))
@@ -82,7 +81,7 @@ async function nameChangedHandler (eventData: EventData): Promise<void> {
   }
 }
 
-async function tokenPlacedHandler (eventData: EventData, eth: Eth): Promise<void> {
+async function tokenPlacedHandler (logger: Logger, eventData: EventData, eth: Eth): Promise<void> {
   // event TokenPlaced(uint256 indexed tokenId, address indexed paymentToken, uint256 cost);
 
   const transactionHash = eventData.transactionHash
@@ -120,7 +119,7 @@ async function tokenPlacedHandler (eventData: EventData, eth: Eth): Promise<void
   logger.info(`TokenPlaced event: ${tokenId} created`)
 }
 
-async function tokenUnplacedHandler (eventData: EventData): Promise<void> {
+async function tokenUnplacedHandler (logger: Logger, eventData: EventData): Promise<void> {
   // event TokenUnplaced(uint256 indexed tokenId);
 
   const tokenId = Utils.numberToHex(eventData.returnValues.tokenId)
@@ -136,7 +135,7 @@ async function tokenUnplacedHandler (eventData: EventData): Promise<void> {
   }
 }
 
-async function tokenSoldHandler (eventData: EventData, eth: Eth): Promise<void> {
+async function tokenSoldHandler (logger: Logger, eventData: EventData, eth: Eth): Promise<void> {
   // event TokenSold(uint256 indexed tokenId);
 
   const transactionHash = eventData.transactionHash
@@ -176,11 +175,11 @@ function isValidEvent (value: string): value is keyof typeof commands {
   return value in commands
 }
 
-export default function rnsProcessorFactory (eth: Eth) {
+export default function rnsProcessorFactory (logger: Logger, eth: Eth) {
   return async function (eventData: EventData): Promise<void> {
     if (isValidEvent(eventData.event)) {
       logger.info(`Processing event ${eventData.event}`)
-      await commands[eventData.event](eventData, eth)
+      await commands[eventData.event](logger, eventData, eth)
     } else {
       logger.error(`Unknown event ${eventData.event}`)
     }
