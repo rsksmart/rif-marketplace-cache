@@ -6,6 +6,7 @@ import { loggingFactory } from '../logger'
 import { Flags, Config } from '../definitions'
 import { BaseCLICommand } from '../utils'
 import { sequelizeFactory } from '../sequelize'
+import Event from '../blockchain/event.model'
 
 const logger = loggingFactory('cli:start')
 
@@ -92,6 +93,8 @@ ${formattedServices}`
     await Promise.all(
       toBePurgedServices.map((service) => services[service].purge())
     )
+
+    await Event.destroy({ where: {}, truncate: true, cascade: true })
   }
 
   async run (): Promise<void> {
