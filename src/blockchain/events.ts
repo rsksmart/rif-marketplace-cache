@@ -133,7 +133,7 @@ export class PollingNewBlockEmitter extends AutoStartStopEventEmitter {
 
       if (this.lastBlockNumber !== currentLastBlockNumber) {
         this.lastBlockNumber = currentLastBlockNumber
-        this.logger.info(`New block ${currentLastBlockNumber}`)
+        this.logger.verbose(`New block ${currentLastBlockNumber}`)
         this.emit(NEW_BLOCK_EVENT_NAME, currentLastBlockNumber)
       }
     } catch (e) {
@@ -182,7 +182,7 @@ export class ListeningNewBlockEmitter extends AutoStartStopEventEmitter {
           return
         }
 
-        this.logger.info(`New block ${blockHeader.number}`)
+        this.logger.verbose(`New block ${blockHeader.number}`)
         this.emit(NEW_BLOCK_EVENT_NAME, blockHeader.number)
       })
     } catch (e) {
@@ -316,7 +316,7 @@ export abstract class BaseEventsEmitter extends AutoStartStopEventEmitter {
 
       const ethEvents = dbEvents.map(event => JSON.parse(event.content)) as EventData[]
       const validEthEvents = await asyncFilter(ethEvents, this.eventHasValidReceipt.bind(this))
-      validEthEvents.forEach(event => this.emit(NEW_EVENT_EVENT_NAME, event))
+      validEthEvents.forEach(this.emitEvent.bind(this))
       this.logger.info(`Confirmed ${validEthEvents.length} events.`)
 
       if (dbEvents.length !== validEthEvents.length) {
@@ -344,6 +344,7 @@ export abstract class BaseEventsEmitter extends AutoStartStopEventEmitter {
   }
 
   protected emitEvent (data: EventData): void {
+    this.logger.debug('Emitting event', [data])
     this.emit(NEW_EVENT_EVENT_NAME, data)
   }
 
@@ -421,8 +422,6 @@ export abstract class BaseEventsEmitter extends AutoStartStopEventEmitter {
     if (events.length === 0) {
       this.logger.info('No events to be processed.')
       return
-    } else {
-      this.logger.info(`New events! Processing ${events.length} events.`)
     }
 
     if (this.confirmations === 0) {
@@ -431,7 +430,7 @@ export abstract class BaseEventsEmitter extends AutoStartStopEventEmitter {
     }
 
     const thresholdBlock = currentBlock - this.confirmations
-    this.logger.info(`Threshold block ${thresholdBlock},`)
+    this.logger.verbose(`Threshold block ${thresholdBlock},`)
 
     const eventsToBeConfirmed = events
       .filter(event => event.blockNumber > thresholdBlock)
@@ -497,13 +496,13 @@ export class PollingEventsEmitter extends BaseEventsEmitter {
 
   async poll (currentBlock: number): Promise<void> {
     await this.semaphore.acquire()
-    this.logger.info(`Received new block number ${currentBlock}`)
+    this.logger.verbose(`Received new block number ${currentBlock}`)
     try {
       const lastProcessedBlock = this.blockTracker.getLastProcessedBlock() as number // undefined is checked in init()
 
       // Nothing new, lets fast-forward
       if (lastProcessedBlock === currentBlock) {
-        this.logger.info('Nothing new to process')
+        this.logger.verbose('Nothing new to process')
         return
       }
 
@@ -513,6 +512,7 @@ export class PollingEventsEmitter extends BaseEventsEmitter {
         fromBlock: lastProcessedBlock + 1, // +1 because both fromBlock and toBlock is "or equal"
         toBlock: currentBlock
       })
+      this.logger.debug('Received events: ', events)
 
       await this.processEvents(events, currentBlock)
       this.blockTracker.setLastProcessedBlock(currentBlock)
