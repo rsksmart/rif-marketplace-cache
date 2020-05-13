@@ -81,7 +81,7 @@ export abstract class BaseCLICommand extends Command {
     }),
     log: flags.string({
       description: 'what level of information to log',
-      options: ['error', 'warn', 'info', 'debug'],
+      options: ['error', 'warn', 'info', 'verbose', 'debug'],
       default: 'error',
       env: 'LOG_LEVEL'
     }),

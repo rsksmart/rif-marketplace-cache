@@ -132,7 +132,7 @@ function initLogging (): void {
   })
 }
 
-type SupportedLevels = 'error' | 'warn' | 'info' | 'debug'
+type SupportedLevels = 'error' | 'warn' | 'info' | 'verbose' | 'debug'
 
 function delayedLoggingMethod (level: SupportedLevels, name?: string): (message: string, ...meta: any[]) => void {
   return function (message: string, ...meta: any[]): void {
@@ -158,6 +158,7 @@ export function loggingFactory (name?: string): Logger {
     error: delayedLoggingMethod('error', name),
     warn: delayedLoggingMethod('warn', name),
     info: delayedLoggingMethod('info', name),
+    verbose: delayedLoggingMethod('verbose', name),
     debug: delayedLoggingMethod('debug', name)
   }
 }
