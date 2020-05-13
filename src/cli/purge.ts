@@ -2,6 +2,7 @@ import { services, SupportedServices } from '../app'
 import Listr from 'listr'
 import { sequelizeFactory } from '../sequelize'
 import { BaseCLICommand, capitalizeFirstLetter, validateServices } from '../utils'
+import Event from '../blockchain/event.model'
 
 export default class Purge extends BaseCLICommand {
   static get description () {
@@ -46,6 +47,13 @@ ${formattedServices}`
         }
       }
     )
+
+    tasksDefinition.push({
+      title: 'Events',
+      task: async () => {
+        await Event.destroy({ where: {}, truncate: true, cascade: true })
+      }
+    })
 
     this.log('Removing cached data for service:')
     const tasks = new Listr(tasksDefinition)
