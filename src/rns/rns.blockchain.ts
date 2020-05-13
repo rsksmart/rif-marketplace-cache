@@ -55,7 +55,7 @@ async function expirationChangedHandler (eventData: EventData): Promise<void> {
   if (normalizedTimestamp.startsWith('10000')) {
     normalizedTimestamp = eventData.returnValues.expirationTime.slice(5)
   }
-  const expirationDate = normalizedTimestamp * 1000
+  const expirationDate = parseInt(normalizedTimestamp) * 1000
   const [domain, created] = await Domain.upsert({ tokenId, expirationDate }, { returning: true })
 
   if (created) {
