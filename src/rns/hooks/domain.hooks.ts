@@ -1,6 +1,8 @@
 import { HookContext } from '@feathersjs/feathers'
 import { disallow } from 'feathers-hooks-common'
 import { sha3, numberToHex } from 'web3-utils'
+import Domain from '../models/domain.model'
+import DomainOffer from '../models/domain-offer.model'
 
 export default {
   before: {
@@ -42,14 +44,10 @@ export default {
               "Domain"."ownerAddress",
               "Domain"."name",
               "Domain"."expirationDate",
-              "offers"."offerId" AS "offers.offerId",
-              "offers"."tokenId" AS "offers.tokenId",
-              "offers"."sellerAddress" AS "offers.sellerAddress",
-              "offers"."sellerDomain" AS "offers.sellerDomain",
-              "offers"."paymentToken" AS "offers.paymentToken",
-              "offers"."price" AS "offers.price",
-              "offers"."creationDate" AS "offers.creationDate",
-              "offers"."status" AS "offers.status"
+              "offers"."offerId",
+              "offers"."paymentToken",
+              "offers"."price",
+              "offers"."creationDate"
           FROM
               "rns_domain" AS "Domain"
               LEFT JOIN "rns_domain-offer" AS "offers" ON "Domain"."tokenId" = "offers"."tokenId"
@@ -83,7 +81,21 @@ export default {
           `
 
           const sequelize = context.app.get('sequelize')
-          context.result = (await sequelize.query(sql))[0]
+          const results = (await sequelize.query(sql))[0]
+
+          context.result = results.map((item: Domain & DomainOffer) => {
+            const { offerId, paymentToken, price, creationDate, ...rest } = item
+
+            return {
+              ...rest,
+              offer: offerId && {
+                offerId,
+                paymentToken,
+                price,
+                creationDate
+              }
+            }
+          })
         }
         return context
       }
