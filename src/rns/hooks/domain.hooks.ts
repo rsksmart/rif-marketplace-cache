@@ -1,5 +1,6 @@
 import { HookContext } from '@feathersjs/feathers'
 import { disallow } from 'feathers-hooks-common'
+import { sha3, numberToHex } from 'web3-utils'
 
 export default {
   before: {
@@ -78,7 +79,7 @@ export default {
               )
               ${isOwned ? `AND "active_offers"."tokenId" IS NULL
               AND ("INACTIVE_OFFERS"."tokenId" IS NOT NULL OR "offers"."tokenId" IS NULL)` : ''}
-              ${nameFilter?.$like ? `AND "Domain"."name" LIKE '%${nameFilter.$like}%'` : ''}
+              ${nameFilter?.$like ? `AND "Domain"."name" LIKE '%${nameFilter.$like}%' OR "Domain"."tokenId" = '${numberToHex(sha3(nameFilter.$like))}'` : ''}
           `
 
           const sequelize = context.app.get('sequelize')
