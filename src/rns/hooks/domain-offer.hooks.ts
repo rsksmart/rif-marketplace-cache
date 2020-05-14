@@ -3,7 +3,7 @@ import { disallow } from 'feathers-hooks-common'
 
 import Domain from '../models/domain.model'
 import { Op } from 'sequelize'
-import { sha3 } from 'web3-utils'
+import { sha3, numberToHex } from 'web3-utils'
 
 export default {
   before: {
@@ -42,7 +42,7 @@ export default {
                 [Op.like]: `%${$like}%`
               },
               tokenId: {
-                [Op.eq]: sha3($like)
+                [Op.eq]: numberToHex(((sha3($like)) as string))
               }
             }
           }
