@@ -12,7 +12,7 @@ export function sequelizeFactory (): Sequelize {
     modelMatch: (filename: string, member: string): boolean => {
       return filename.substring(0, filename.indexOf('.model')) === member.toLowerCase()
     },
-    logging: logger.debug
+    logging: (msg) => logger.debug(msg)
   }
 
   return new Sequelize(config.get('db'), dbSettings)
