@@ -44,14 +44,15 @@ export default {
                 [Op.like]: `%${$like}%`
               },
               tokenId: {
-                [Op.eq]: numberToHex((sha3($like)))
+                [Op.eq]: numberToHex(((sha3($like)) as string))
               }
             }
           }
         }
 
         delete (context.params.query as any).domain
-      }],
+      }
+    ],
     get: [],
     create: disallow(),
     update: disallow(),

@@ -79,7 +79,7 @@ export default {
               )
               ${isOwned ? `AND "active_offers"."tokenId" IS NULL
               AND ("INACTIVE_OFFERS"."tokenId" IS NOT NULL OR "offers"."tokenId" IS NULL)` : ''}
-              ${nameFilter?.$like ? `AND "Domain"."name" LIKE '%${nameFilter.$like}%' OR "Domain"."tokenId" = '${numberToHex(sha3(nameFilter.$like))}'` : ''}
+              ${nameFilter?.$like ? `AND ("Domain"."name" LIKE '%${nameFilter.$like}%' OR "Domain"."tokenId" = '${numberToHex((sha3(nameFilter.$like)) as string)}')` : ''}
           `
 
           const sequelize = context.app.get('sequelize')
