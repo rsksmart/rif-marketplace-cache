@@ -69,6 +69,7 @@ async function precache (eth?: Eth): Promise<void> {
 }
 
 const rns: CachedService = {
+  // eslint-disable-next-line require-await
   async initialize (app: Application): Promise<void> {
     if (!config.get<boolean>('rns.enabled')) {
       logger.info('RNS service: disabled')

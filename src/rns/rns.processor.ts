@@ -57,13 +57,9 @@ async function expirationChangedHandler (logger: Logger, eventData: EventData): 
     normalizedTimestamp = eventData.returnValues.expirationTime.slice(5)
   }
   const expirationDate = parseInt(normalizedTimestamp) * 1000
-  const [domain, created] = await Domain.upsert({ tokenId, expirationDate }, { returning: true })
+  await Domain.upsert({ tokenId, expirationDate })
 
-  if (created) {
-    logger.info(`ExpirationChange event: Domain ${tokenId} created`)
-  } else {
-    logger.info(`ExpirationChange event: Domain ${tokenId} updated`)
-  }
+  logger.info(`ExpirationChange event: Domain ${tokenId} updated`)
 }
 
 async function nameChangedHandler (logger: Logger, eventData: EventData): Promise<void> {

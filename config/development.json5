@@ -4,7 +4,6 @@
     name: 'dev-config',
     persist: true
   },
-  db: 'postgres://dev:dev@localhost/rif_marketplace_cache',
   blockchain: {
     provider: "ws://localhost:8545",
   },
