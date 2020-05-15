@@ -65,18 +65,21 @@ export default {
                   FROM
                       "rns_domain-offer"
                   WHERE
-                      "status" = '${isOwned ? 'CANCELED' : 'ACTIVE'}'
+                  ${isOwned ? '"status" IN (\'CANCELED\', \'SOLD\')' : '"status" = \'ACTIVE\''}
               ) "INACTIVE_OFFERS" ON "INACTIVE_OFFERS"."tokenId" = "Domain"."tokenId"
               AND "INACTIVE_OFFERS"."creationDate" = "offers"."creationDate"
               AND "INACTIVE_OFFERS"."ROW_PRIORITY" = 1
           WHERE
               "Domain"."ownerAddress" = '${ownerAddress}'
-              AND (
-                  "offers"."status" = '${isOwned ? 'CANCELED' : 'ACTIVE'}'
-                  ${isOwned ? 'OR "offers"."tokenId" is null' : ''}
-              )
-              ${isOwned ? `AND "active_offers"."tokenId" IS NULL
-              AND ("INACTIVE_OFFERS"."tokenId" IS NOT NULL OR "offers"."tokenId" IS NULL)` : ''}
+              ${isOwned
+              ? `
+              AND ("offers"."status" IN ('CANCELED', 'SOLD') OR "offers"."tokenId" IS NULL) 
+              AND "active_offers"."tokenId" IS NULL
+              AND ("INACTIVE_OFFERS"."tokenId" IS NOT NULL OR "offers"."tokenId" IS NULL)
+              `
+              : `
+              AND "offers"."status" = 'ACTIVE'
+              `}
               ${nameFilter?.$like ? `AND ("Domain"."name" LIKE '%${nameFilter.$like}%' OR "Domain"."tokenId" = '${numberToHex((sha3(nameFilter.$like)) as string)}')` : ''}
           `
 
