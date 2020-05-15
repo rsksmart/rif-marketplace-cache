@@ -27,3 +27,6 @@ oclif.manifest.json
 
 # Local configurations
 /config/local*
+
+# DB file
+db.sqlite

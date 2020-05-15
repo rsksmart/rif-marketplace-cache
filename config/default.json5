@@ -2,6 +2,7 @@
 
 {
   port: null,
+  db: 'sqlite:db.sqlite',
 
   log: {
     level: "info",
