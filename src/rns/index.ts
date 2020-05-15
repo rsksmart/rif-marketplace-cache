@@ -20,10 +20,11 @@ import soldDomainHooks from './hooks/sold-domain.hooks'
 
 import rnsContractAbi from '@rsksmart/rns-rskregistrar/RSKOwnerData.json'
 import rnsReverseContractAbi from '@rsksmart/rns-reverse/NameResolverData.json'
+import auctionRegistrarContractAbi from '@rsksmart/rns-auction-registrar/TokenRegistrarData.json'
 import simplePlacementsContractAbi from '@rsksmart/rif-marketplace-nfts/ERC721SimplePlacementsABI.json'
 import { errorHandler } from '../utils'
 
-import rnsPrecache from './rns.precache'
+import { processRskOwner, processAuctionRegistrar } from './rns.precache'
 
 const logger = loggingFactory('rns')
 
@@ -51,7 +52,8 @@ async function precache (eth?: Eth): Promise<void> {
   const eventsDataQueue: EventData[] = []
   const dataQueuePusher = (event: EventData): void => { eventsDataQueue.push(event) }
 
-  await rnsPrecache(eth, rnsContractAbi.abi as AbiItem[], config.get<string>(`rns.owner.contractAddress`), config.get<string>(`rns.fifsAddrRegistrar.contractAddress`))
+  await processAuctionRegistrar(eth, auctionRegistrarContractAbi.abi as AbiItem[])
+  await processRskOwner(eth, rnsContractAbi.abi as AbiItem[])
 
   await fetchEventsForService(eth, 'rns.owner', rnsContractAbi.abi as AbiItem[], dataQueuePusher)
   await fetchEventsForService(eth, 'rns.reverse', rnsReverseContractAbi.abi as AbiItem[], dataQueuePusher)
