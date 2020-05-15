@@ -89,13 +89,18 @@ const rns: CachedService = {
     const eth = app.get('eth') as Eth
 
     if (!isServiceInitialized('rns.owner')) {
-      logger.info('Precaching RNS service')
-      try {
-        await precache(eth)
-        logger.info('Precaching RNS finished service')
-      } catch (e) {
-        logger.error(`There was an error while precaching for RNS service! ${e}`)
-      }
+      // TODO: Debug this https://github.com/rsksmart/rif-marketplace-cache/issues/103
+      // eslint-disable-next-line no-console
+      console.error('Currently the precache on start is not supported! Run precache command before starting the server!')
+      process.exit(1)
+
+      // logger.info('Precaching RNS service')
+      // try {
+      //   await precache(eth)
+      //   logger.info('Precaching RNS finished service')
+      // } catch (e) {
+      //   logger.error(`There was an error while precaching for RNS service! ${e}`)
+      // }
     }
 
     const rnsEventsEmitter = getEventsEmitterForService('rns.owner', eth, rnsContractAbi.abi as AbiItem[])
