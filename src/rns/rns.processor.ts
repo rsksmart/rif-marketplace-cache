@@ -12,11 +12,12 @@ import { Logger } from '../definitions'
 async function transferHandler (logger: Logger, eventData: EventData): Promise<void> {
   // Transfer(address indexed from, address indexed to, uint256 indexed tokenId)
 
-  if (eventData.returnValues.from !== '0x0000000000000000000000000000000000000000') {
-    const tokenId = Utils.numberToHex(eventData.returnValues.tokenId)
-    const ownerAddress = eventData.returnValues.to.toLowerCase()
-    const [domain, created] = await Domain.findCreateFind({ where: { tokenId }, defaults: { ownerAddress } })
+  const tokenId = Utils.numberToHex(eventData.returnValues.tokenId)
+  const ownerAddress = eventData.returnValues.to.toLowerCase()
 
+  const [domain, created] = await Domain.findCreateFind({ where: { tokenId }, defaults: { ownerAddress } })
+
+  if (eventData.returnValues.from !== '0x0000000000000000000000000000000000000000') {
     // if not exist then create (1 insert), Domain.findCreateFind
     // else create a SoldDomain and update with the new owner the registry (1 insert + update)
     if (created) {
@@ -42,6 +43,12 @@ async function transferHandler (logger: Logger, eventData: EventData): Promise<v
       } else {
         logger.info(`Transfer event: no Domain ${domain.name} updated`)
       }
+    }
+  } else {
+    if (domain.ownerAddress == null) {
+      domain.ownerAddress = ownerAddress
+      await domain.save()
+      logger.info(`Transfer event: ${tokenId} ownership updated`)
     }
   }
 }
