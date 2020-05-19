@@ -52,8 +52,8 @@ async function precache (eth?: Eth): Promise<void> {
   const eventsDataQueue: EventData[] = []
   const dataQueuePusher = (event: EventData): void => { eventsDataQueue.push(event) }
 
-  await processAuctionRegistrar(eth, auctionRegistrarContractAbi.abi as AbiItem[])
-  await processRskOwner(eth, rnsContractAbi.abi as AbiItem[])
+  await processAuctionRegistrar(eth, precacheLogger, auctionRegistrarContractAbi.abi as AbiItem[])
+  await processRskOwner(eth, precacheLogger, rnsContractAbi.abi as AbiItem[])
 
   await fetchEventsForService(eth, 'rns.owner', rnsContractAbi.abi as AbiItem[], dataQueuePusher)
   await fetchEventsForService(eth, 'rns.reverse', rnsReverseContractAbi.abi as AbiItem[], dataQueuePusher)

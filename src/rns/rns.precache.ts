@@ -2,6 +2,7 @@ import { Eth } from 'web3-eth'
 import config from 'config'
 import Utils from 'web3-utils'
 import abiDecoder from 'abi-decoder'
+import { BlockchainServiceOptions, Logger } from '../definitions'
 
 import Domain from './models/domain.model'
 
@@ -35,11 +36,13 @@ abiDecoder.addABI([
   }
 ])
 
-export async function processRskOwner (eth: Eth, contractAbi: Utils.AbiItem[]) {
+export async function processRskOwner (eth: Eth, logger: Logger, contractAbi: Utils.AbiItem[]) {
+  logger.info("Processing events Transfer from FIFSAddrRegistrar")
   const rskOwner = new eth.Contract(contractAbi, config.get<string>('rns.owner.contractAddress'))
+  const startingBlock = config.get<BlockchainServiceOptions>('rns.owner')?.eventsEmitter?.startingBlock || 'genesis';
   const rskOwnerEvents = await rskOwner.getPastEvents('Transfer', {
     filter: { from: config.get<string>('rns.fifsAddrRegistrar.contractAddress') },
-    fromBlock: config.get<string>('rns.owner.eventsEmitter.startingBlock')
+    fromBlock: startingBlock
   })
   for (const rskOwnerEvent of rskOwnerEvents) {
     const transaction = await eth.getTransaction(rskOwnerEvent.transactionHash)
@@ -56,11 +59,13 @@ export async function processRskOwner (eth: Eth, contractAbi: Utils.AbiItem[]) {
   }
 }
 
-export async function processAuctionRegistrar (eth: Eth, contractAbi: Utils.AbiItem[]) {
+export async function processAuctionRegistrar (eth: Eth, logger: Logger, contractAbi: Utils.AbiItem[]) {
+  logger.info("Processing events HashRegistered")
+  const startingBlock = config.get<BlockchainServiceOptions>('rns.registrar')?.eventsEmitter?.startingBlock || 'genesis';
   const auctionRegistrar = new eth.Contract(contractAbi, config.get<string>('rns.registrar.contractAddress'))
   const auctionRegistrarEvents = await auctionRegistrar.getPastEvents('HashRegistered', {
     filter: { from: '0x0000000000000000000000000000000000000000' },
-    fromBlock: config.get<string>('rns.registrar.eventsEmitter.startingBlock')
+    fromBlock: startingBlock
   })
   for (const event of auctionRegistrarEvents) {
     const tokenId = event.returnValues.hash
