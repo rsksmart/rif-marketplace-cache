@@ -56,7 +56,7 @@
     "@oclif/config": "^1.14.0",
     "@oclif/errors": "^1.2.2",
     "@oclif/parser": "^3.8.4",
-    "@oclif/plugin-help": "^2.2.3",
+    "@oclif/plugin-help": "^3.0.1",
     "@rsksmart/rif-marketplace-nfts": "~0.0.2",
     "@rsksmart/rif-marketplace-storage": "^0.1.0-dev.0",
     "@rsksmart/rns-auction-registrar": "1.0.2",
