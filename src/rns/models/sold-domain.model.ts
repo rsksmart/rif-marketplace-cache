@@ -1,6 +1,7 @@
 import { Table, DataType, Column, Model, Scopes, ForeignKey, BelongsTo } from 'sequelize-typescript'
 
 import Domain from './domain.model'
+import Transfer from './transfer.model'
 
 @Scopes(() => ({
   active: {
@@ -24,11 +25,10 @@ export default class SoldDomain extends Model {
   @BelongsTo(() => Domain)
   domain!: Domain
 
-  @Column(DataType.STRING)
-  sellerAddress!: string // previous owner
-
-  @Column(DataType.STRING)
-  newOwnerAddress!: string // buyer
+  @BelongsTo(() => Transfer, {
+    foreignKey: 'id'
+  })
+  transfer!: Transfer
 
   @Column(DataType.STRING)
   paymentToken!: string // currency
