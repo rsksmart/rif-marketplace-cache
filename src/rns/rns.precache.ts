@@ -37,9 +37,9 @@ abiDecoder.addABI([
 ])
 
 export async function processRskOwner (eth: Eth, logger: Logger, contractAbi: Utils.AbiItem[]) {
-  logger.info("Processing events Transfer from FIFSAddrRegistrar")
+  logger.info('Processing events Transfer from FIFSAddrRegistrar')
   const rskOwner = new eth.Contract(contractAbi, config.get<string>('rns.owner.contractAddress'))
-  const startingBlock = config.get<BlockchainServiceOptions>('rns.owner')?.eventsEmitter?.startingBlock || 'genesis';
+  const startingBlock = config.get<BlockchainServiceOptions>('rns.owner')?.eventsEmitter?.startingBlock || 'genesis'
   const rskOwnerEvents = await rskOwner.getPastEvents('Transfer', {
     filter: { from: config.get<string>('rns.fifsAddrRegistrar.contractAddress') },
     fromBlock: startingBlock
@@ -60,8 +60,8 @@ export async function processRskOwner (eth: Eth, logger: Logger, contractAbi: Ut
 }
 
 export async function processAuctionRegistrar (eth: Eth, logger: Logger, contractAbi: Utils.AbiItem[]) {
-  logger.info("Processing events HashRegistered")
-  const startingBlock = config.get<BlockchainServiceOptions>('rns.registrar')?.eventsEmitter?.startingBlock || 'genesis';
+  logger.info('Processing events HashRegistered')
+  const startingBlock = config.get<BlockchainServiceOptions>('rns.registrar')?.eventsEmitter?.startingBlock || 'genesis'
   const auctionRegistrar = new eth.Contract(contractAbi, config.get<string>('rns.registrar.contractAddress'))
   const auctionRegistrarEvents = await auctionRegistrar.getPastEvents('HashRegistered', {
     filter: { from: '0x0000000000000000000000000000000000000000' },
