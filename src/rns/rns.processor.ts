@@ -1,5 +1,6 @@
 import Domain from './models/domain.model'
 import SoldDomain from './models/sold-domain.model'
+import Transfer from './models/transfer.model'
 import DomainOffer from './models/domain-offer.model'
 
 import { EventData } from 'web3-eth-contract'
@@ -26,15 +27,16 @@ async function transferHandler (logger: Logger, eventData: EventData): Promise<v
       logger.info(`Transfer event: Domain ${tokenId} updated`)
       const transactionHash = eventData.transactionHash
       const from = eventData.returnValues.from.toLowerCase()
-      const soldDomain = await SoldDomain.create({
+
+      const transferDomain = await Transfer.create({
         id: transactionHash,
-        tokenId: tokenId,
+        tokenId,
         sellerAddress: from,
         newOwnerAddress: ownerAddress
       })
 
-      if (soldDomain) {
-        logger.info(`Transfer event: SoldDomain ${tokenId} created`)
+      if (transferDomain) {
+        logger.info(`Transfer event: Transfer ${tokenId} created`)
       }
       const [affectedRows] = await Domain.update({ ownerAddress }, { where: { tokenId } })
 
@@ -151,13 +153,15 @@ async function tokenSoldHandler (logger: Logger, eventData: EventData, eth: Eth)
     lastOffer.status = 'SOLD'
     lastOffer.save()
 
-    const [affectedRows] = await SoldDomain.update({
+    const soldDomain = await SoldDomain.create({
+      id: transactionHash,
+      tokenId: tokenId,
       price: lastOffer.price,
       paymentToken: lastOffer.paymentToken,
       soldDate: await getBlockDate(eth, eventData.blockNumber)
-    }, { where: { id: transactionHash } })
+    })
 
-    if (affectedRows) {
+    if (soldDomain) {
       logger.info(`TokenSold event: ${tokenId}`)
     } else {
       logger.info(`TokenSold event: ${tokenId} not updated`)

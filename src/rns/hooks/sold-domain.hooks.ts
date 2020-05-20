@@ -4,6 +4,7 @@ import { disallow } from 'feathers-hooks-common'
 import Domain from '../models/domain.model'
 import { Op } from 'sequelize'
 import { numberToHex, sha3 } from 'web3-utils'
+import Transfer from '../models/transfer.model'
 
 export default {
   before: {
@@ -18,36 +19,39 @@ export default {
         if (!context.params.query) {
           context.params.query = {}
         }
-
-        if (context.params.route?.ownerAddress) {
-          context.params.query.sellerAddress = context.params.route.ownerAddress.toLowerCase()
-        }
       }
     ],
     find: [
       (context: HookContext) => {
-        context.params.sequelize = {
-          raw: false,
-          nest: true,
-          include: {
-            model: Domain
-          }
-        }
-        const { params: { sequelize: { include } } } = context
         const { domain } = context.params.query as any
+        let nameSearch
 
-        if (include && domain) {
-          const { name: { $like } } = domain
-          include.where = {
+        if (domain) {
+          nameSearch = {
             [Op.or]: {
               name: {
-                [Op.like]: `%${$like}%`
+                [Op.like]: `%${domain}%`
               },
               tokenId: {
-                [Op.eq]: numberToHex(((sha3($like)) as string))
+                [Op.eq]: numberToHex(((sha3(domain)) as string))
               }
             }
           }
+        }
+
+        context.params.sequelize = {
+          raw: false,
+          nest: true,
+          include: [
+            { model: Domain, attributes: ['tokenId', 'name', 'expirationDate'], where: nameSearch },
+            {
+              model: Transfer,
+              attributes: ['sellerAddress', 'newOwnerAddress'],
+              where: {
+                sellerAddress: context.params.route?.ownerAddress
+              }
+            }
+          ]
         }
 
         delete (context.params.query as any).domain
