@@ -14,6 +14,7 @@ import eventProcessor from './rns.processor'
 import Domain from './models/domain.model'
 import DomainOffer from './models/domain-offer.model'
 import SoldDomain from './models/sold-domain.model'
+import Transfer from './models/transfer.model'
 import domainHooks from './hooks/domain.hooks'
 import domainOfferHooks from './hooks/domain-offer.hooks'
 import soldDomainHooks from './hooks/sold-domain.hooks'
@@ -136,10 +137,11 @@ const rns: CachedService = {
   precache,
 
   async purge (): Promise<void> {
+    const transferCount = await Transfer.destroy({ where: {}, truncate: true, cascade: true })
     const offersCount = await DomainOffer.destroy({ where: {}, truncate: true, cascade: true })
     const soldCount = await SoldDomain.destroy({ where: {}, truncate: true, cascade: true })
     const domainsCount = await Domain.destroy({ where: {}, truncate: true, cascade: true })
-    logger.info(`Removed ${offersCount} offers entries, ${soldCount} sold domains and ${domainsCount} domains`)
+    logger.info(`Removed ${offersCount} offers entries, ${soldCount} sold domains, ${transferCount} transfers and ${domainsCount} domains`)
 
     const store = getObject()
     delete store['rns.placement.lastProcessedBlock']
