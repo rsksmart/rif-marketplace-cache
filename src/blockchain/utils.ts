@@ -2,21 +2,14 @@ import { AbiItem } from 'web3-utils'
 import Eth from 'web3-eth'
 import { EventEmitter } from 'events'
 import config from 'config'
+import { getObject } from 'sequelize-store'
 
 import { loggingFactory } from '../logger'
 import eventsEmitterFactory, { BlockTracker, EventsEmitterOptions, PollingOptions } from './events'
-import { confFactory } from '../conf'
-import { scopeStore } from '../utils'
-import { Store } from '../definitions'
 
 function getBlockTracker (keyPrefix?: string): BlockTracker {
-  let confStore: Store = confFactory()
-
-  if (keyPrefix) {
-    confStore = scopeStore(confStore, keyPrefix)
-  }
-
-  return new BlockTracker(confStore)
+  const store = getObject(keyPrefix)
+  return new BlockTracker(store)
 }
 
 export async function getBlockDate (eth: Eth, blockNumber: number): Promise<Date> {
@@ -24,7 +17,7 @@ export async function getBlockDate (eth: Eth, blockNumber: number): Promise<Date
 }
 
 export function isServiceInitialized (serviceName: string): boolean {
-  const blockTracker = getBlockTracker(serviceName)
+  const blockTracker = getBlockTracker(`${serviceName}.`)
   return blockTracker.getLastProcessedBlock() !== undefined
 }
 
@@ -43,7 +36,7 @@ export function getEventsEmitterForService (serviceName: string, eth: Eth, contr
     {
       newBlockEmitter: newBlockEmitterOptions,
       loggerBaseName: serviceName,
-      blockTracker: { keyPrefix: serviceName }
+      blockTracker: { keyPrefix: `${serviceName}.` }
     } as EventsEmitterOptions
   )
 

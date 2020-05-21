@@ -3,6 +3,7 @@ import Listr from 'listr'
 import { sequelizeFactory } from '../sequelize'
 import { BaseCLICommand, capitalizeFirstLetter, validateServices } from '../utils'
 import Event from '../blockchain/event.model'
+import { initStore } from '../store'
 
 export default class Purge extends BaseCLICommand {
   static get description () {
@@ -37,7 +38,10 @@ ${formattedServices}`
     }
 
     // Init database connection
-    sequelizeFactory()
+    const sequelize = sequelizeFactory()
+
+    // Init Store
+    await initStore(sequelize)
 
     const tasksDefinition = servicesToPurge.map(
       serviceName => {

@@ -10,13 +10,6 @@
     path: null
   },
 
-  conf: {
-    name: 'config',
-
-    // Specifies if configuration using Conf() should be persisted between restarts
-    persist: true
-  },
-
   rates: {
     enabled: true,
     provider: 'coingecko',
@@ -142,6 +135,11 @@
         // If to use polling strategy, if false then listening is used.
         polling: true
       }
+    },
+
+    // RNS Registrar contract settings used for RNS precache
+    registrar: {
+      startingBlock: "genesis"
     }
   }
 }

@@ -1,11 +1,11 @@
 import {
   BaseEventsEmitter,
-  BlockTracker,
+  BlockTracker, BlockTrackerStore,
   EventsEmitterOptions,
   ListeningNewBlockEmitter, PollingEventsEmitter,
   PollingNewBlockEmitter
 } from '../../src/blockchain/events'
-import { Logger, Store } from '../../src/definitions'
+import { Logger } from '../../src/definitions'
 import { BlockHeader, Eth, TransactionReceipt } from 'web3-eth'
 
 import { Arg, Substitute } from '@fluffy-spoon/substitute'
@@ -27,22 +27,6 @@ const expect = chai.expect
 const setImmediatePromise = util.promisify(setImmediate)
 const NEW_BLOCK_EVENT = 'newBlock'
 const DATA_EVENT_NAME = 'newEvent'
-
-class StoreMock implements Store {
-  data: Record<string, any> = {}
-
-  get (key: string): any {
-    return this.data[key]
-  }
-
-  set (key: string, value: any): void {
-    this.data[key] = value
-  }
-
-  isEmpty (): boolean {
-    return Object.keys(this.data).length === 0
-  }
-}
 
 function sleep<T> (ms: number, ...args: T[]): Promise<T> {
   return new Promise(resolve => setTimeout(() => resolve(...args), ms))
@@ -139,23 +123,21 @@ describe('BlockTracker', () => {
   const STORE_LAST_PROCESSED_BLOCK_KEY = 'lastProcessedBlock'
 
   it('read initial block from store', function () {
-    const store = new StoreMock()
-    store.set(STORE_LAST_PROCESSED_BLOCK_KEY, 111)
-
+    const store = { [STORE_LAST_PROCESSED_BLOCK_KEY]: 111 }
     const bt = new BlockTracker(store)
     expect(bt.getLastProcessedBlock()).to.eql(111)
   })
 
   it('should save block', function () {
-    const store = new StoreMock()
+    const store = {} as BlockTrackerStore
     const bt = new BlockTracker(store)
 
     expect(bt.getLastProcessedBlock()).to.be.undefined()
-    expect(store.isEmpty()).to.be.true()
+    expect(store[STORE_LAST_PROCESSED_BLOCK_KEY]).to.be.undefined()
 
     bt.setLastProcessedBlock(10)
     expect(bt.getLastProcessedBlock()).to.eql(10)
-    expect(store.data[STORE_LAST_PROCESSED_BLOCK_KEY]).to.eql(10)
+    expect(store[STORE_LAST_PROCESSED_BLOCK_KEY]).to.eql(10)
   })
 })
 
@@ -286,7 +268,7 @@ describe('BaseEventsEmitter', () => {
     const contract = Substitute.for<Contract>()
     contract.getPastEvents(Arg.all()).returns(sleep(200, events))
 
-    const blockTracker = new BlockTracker(new StoreMock())
+    const blockTracker = new BlockTracker({})
     const newBlockEmitter = new EventEmitter()
     const options = { blockTracker, newBlockEmitter }
     const spy = sinon.spy()
@@ -318,7 +300,7 @@ describe('BaseEventsEmitter', () => {
       const contract = Substitute.for<Contract>()
       contract.getPastEvents(Arg.all()).returns(Promise.resolve(events))
 
-      const blockTracker = new BlockTracker(new StoreMock())
+      const blockTracker = new BlockTracker({})
       const newBlockEmitter = new EventEmitter()
       const options: EventsEmitterOptions = { confirmations: 2, blockTracker, newBlockEmitter }
       const spy = sinon.spy()
@@ -340,7 +322,7 @@ describe('BaseEventsEmitter', () => {
       const contract = Substitute.for<Contract>()
       contract.getPastEvents(Arg.all()).returns(Promise.resolve([]))
 
-      const blockTracker = new BlockTracker(new StoreMock())
+      const blockTracker = new BlockTracker({})
       const newBlockEmitter = new EventEmitter()
       const options: EventsEmitterOptions = { confirmations: 2, blockTracker, newBlockEmitter }
       const spy = sinon.spy()
@@ -369,7 +351,7 @@ describe('BaseEventsEmitter', () => {
       const contract = Substitute.for<Contract>()
       contract.getPastEvents(Arg.all()).returns(Promise.resolve([]))
 
-      const blockTracker = new BlockTracker(new StoreMock())
+      const blockTracker = new BlockTracker({})
       const newBlockEmitter = new EventEmitter()
       const options: EventsEmitterOptions = { confirmations: 2, blockTracker, newBlockEmitter }
       const spy = sinon.spy()
@@ -413,7 +395,7 @@ describe('BaseEventsEmitter', () => {
       const contract = Substitute.for<Contract>()
       contract.getPastEvents(Arg.all()).returns(Promise.resolve([]))
 
-      const blockTracker = new BlockTracker(new StoreMock())
+      const blockTracker = new BlockTracker({})
       const newBlockEmitter = new EventEmitter()
       const options: EventsEmitterOptions = { confirmations: 2, blockTracker, newBlockEmitter }
       const emitterSpy = sinon.spy()
@@ -422,12 +404,48 @@ describe('BaseEventsEmitter', () => {
 
       // Create events to be confirmed
       const events = [
-        { event: 'testEvent', blockNumber: 7, transactionHash: '1', logIndex: 1, content: '{"transactionHash": "1", "blockNumber": 7}' },
-        { event: 'testEvent', blockNumber: 8, transactionHash: '2', logIndex: 1, content: '{"transactionHash": "2", "blockNumber": 8}' },
-        { event: 'testEvent', blockNumber: 9, transactionHash: '3', logIndex: 1, content: '{"transactionHash": "3", "blockNumber": 9}' },
-        { event: 'testEvent', blockNumber: 9, transactionHash: '4', logIndex: 1, content: '{"transactionHash": "4", "blockNumber": 9}' },
-        { event: 'testEvent', blockNumber: 10, transactionHash: '5', logIndex: 1, content: '{"transactionHash": "5", "blockNumber": 10}' },
-        { event: 'testEvent', blockNumber: 11, transactionHash: '6', logIndex: 1, content: '{"transactionHash": "6",  "blockNumber": 11}' }
+        {
+          event: 'testEvent',
+          blockNumber: 7,
+          transactionHash: '1',
+          logIndex: 1,
+          content: '{"transactionHash": "1", "blockNumber": 7}'
+        },
+        {
+          event: 'testEvent',
+          blockNumber: 8,
+          transactionHash: '2',
+          logIndex: 1,
+          content: '{"transactionHash": "2", "blockNumber": 8}'
+        },
+        {
+          event: 'testEvent',
+          blockNumber: 9,
+          transactionHash: '3',
+          logIndex: 1,
+          content: '{"transactionHash": "3", "blockNumber": 9}'
+        },
+        {
+          event: 'testEvent',
+          blockNumber: 9,
+          transactionHash: '4',
+          logIndex: 1,
+          content: '{"transactionHash": "4", "blockNumber": 9}'
+        },
+        {
+          event: 'testEvent',
+          blockNumber: 10,
+          transactionHash: '5',
+          logIndex: 1,
+          content: '{"transactionHash": "5", "blockNumber": 10}'
+        },
+        {
+          event: 'testEvent',
+          blockNumber: 11,
+          transactionHash: '6',
+          logIndex: 1,
+          content: '{"transactionHash": "6",  "blockNumber": 11}'
+        }
       ]
       await Event.bulkCreate(events)
 
@@ -451,7 +469,7 @@ describe('BaseEventsEmitter', () => {
       const contract = Substitute.for<Contract>()
       contract.getPastEvents(Arg.all()).returns(Promise.resolve([]))
 
-      const blockTracker = new BlockTracker(new StoreMock())
+      const blockTracker = new BlockTracker({})
       const newBlockEmitter = new EventEmitter()
       const options: EventsEmitterOptions = { confirmations: 2, blockTracker, newBlockEmitter }
       const emitterSpy = sinon.spy()
@@ -460,12 +478,48 @@ describe('BaseEventsEmitter', () => {
 
       // Create events to be confirmed
       const events = [
-        { event: 'testEvent', blockNumber: 7, transactionHash: '1', logIndex: 1, content: '{"transactionHash": "1", "blockNumber": 7}' },
-        { event: 'testEvent', blockNumber: 8, transactionHash: '2', logIndex: 1, content: '{"transactionHash": "2", "blockNumber": 8}' },
-        { event: 'testEvent', blockNumber: 9, transactionHash: '3', logIndex: 1, content: '{"transactionHash": "3", "blockNumber": 9}' },
-        { event: 'testEvent', blockNumber: 9, transactionHash: '4', logIndex: 1, content: '{"transactionHash": "4", "blockNumber": 9}' },
-        { event: 'testEvent', blockNumber: 10, transactionHash: '5', logIndex: 1, content: '{"transactionHash": "5", "blockNumber": 10}' },
-        { event: 'testEvent', blockNumber: 11, transactionHash: '6', logIndex: 1, content: '{"transactionHash": "6",  "blockNumber": 11}' }
+        {
+          event: 'testEvent',
+          blockNumber: 7,
+          transactionHash: '1',
+          logIndex: 1,
+          content: '{"transactionHash": "1", "blockNumber": 7}'
+        },
+        {
+          event: 'testEvent',
+          blockNumber: 8,
+          transactionHash: '2',
+          logIndex: 1,
+          content: '{"transactionHash": "2", "blockNumber": 8}'
+        },
+        {
+          event: 'testEvent',
+          blockNumber: 9,
+          transactionHash: '3',
+          logIndex: 1,
+          content: '{"transactionHash": "3", "blockNumber": 9}'
+        },
+        {
+          event: 'testEvent',
+          blockNumber: 9,
+          transactionHash: '4',
+          logIndex: 1,
+          content: '{"transactionHash": "4", "blockNumber": 9}'
+        },
+        {
+          event: 'testEvent',
+          blockNumber: 10,
+          transactionHash: '5',
+          logIndex: 1,
+          content: '{"transactionHash": "5", "blockNumber": 10}'
+        },
+        {
+          event: 'testEvent',
+          blockNumber: 11,
+          transactionHash: '6',
+          logIndex: 1,
+          content: '{"transactionHash": "6",  "blockNumber": 11}'
+        }
       ]
       await Event.bulkCreate(events)
 
@@ -490,7 +544,7 @@ describe('BaseEventsEmitter', () => {
       const contract = Substitute.for<Contract>()
       contract.getPastEvents(Arg.all()).returns(Promise.resolve([]))
 
-      const firstBlockTracker = new BlockTracker(new StoreMock())
+      const firstBlockTracker = new BlockTracker({})
       const firstNewBlockEmitter = new EventEmitter()
       const firstOptions: EventsEmitterOptions = {
         confirmations: 2,
@@ -501,7 +555,7 @@ describe('BaseEventsEmitter', () => {
       const firstEventsEmitter = new DummyEventsEmitter(eth, contract, ['firstEvent'], firstOptions, 'dummy1')
       firstEventsEmitter.on(DATA_EVENT_NAME, firstEmitterSpy)
 
-      const secondBlockTracker = new BlockTracker(new StoreMock())
+      const secondBlockTracker = new BlockTracker({})
       const secondNewBlockEmitter = new EventEmitter()
       const secondOptions: EventsEmitterOptions = {
         confirmations: 2,
@@ -598,7 +652,7 @@ describe('BaseEventsEmitter', () => {
       const contract = Substitute.for<Contract>()
       contract.getPastEvents(Arg.all()).returns(Promise.resolve(events))
 
-      const blockTracker = new BlockTracker(new StoreMock())
+      const blockTracker = new BlockTracker({})
       const newBlockEmitter = new EventEmitter()
       const options = { blockTracker, newBlockEmitter }
       const spy = sinon.spy()
@@ -619,7 +673,7 @@ describe('BaseEventsEmitter', () => {
       const contract = Substitute.for<Contract>()
       contract.getPastEvents(Arg.all()).returns(Promise.resolve([]))
 
-      const blockTracker = new BlockTracker(new StoreMock())
+      const blockTracker = new BlockTracker({})
       const newBlockEmitter = new EventEmitter()
       const options = { blockTracker, newBlockEmitter }
       const spy = sinon.spy()
@@ -653,7 +707,7 @@ describe('PollingEventsEmitter', function () {
       Promise.resolve([eventMock({ blockNumber: 12, event: 'testEvent', returnValues: { hey: 321 } })]) // Value for polling new events
     )
 
-    const blockTracker = new BlockTracker(new StoreMock())
+    const blockTracker = new BlockTracker({})
     blockTracker.setLastProcessedBlock(10)
 
     const newBlockEmitter = new EventEmitter()
@@ -682,7 +736,7 @@ describe('PollingEventsEmitter', function () {
       Promise.resolve([]) // Value for polling new events
     )
 
-    const blockTracker = new BlockTracker(new StoreMock())
+    const blockTracker = new BlockTracker({})
     blockTracker.setLastProcessedBlock(10)
 
     const newBlockEmitter = new EventEmitter()
@@ -710,7 +764,7 @@ describe('PollingEventsEmitter', function () {
       Promise.resolve([eventMock({ blockNumber: 11 })]) // Value for polling new events
     )
 
-    const blockTracker = new BlockTracker(new StoreMock())
+    const blockTracker = new BlockTracker({})
     blockTracker.setLastProcessedBlock(10)
 
     const newBlockEmitter = new EventEmitter()
@@ -745,7 +799,7 @@ describe('PollingEventsEmitter', function () {
     const contract = Substitute.for<Contract>()
     contract.getPastEvents(Arg.all()).returns(sleep(200, events), Promise.resolve(events))
 
-    const blockTracker = new BlockTracker(new StoreMock())
+    const blockTracker = new BlockTracker({})
     const newBlockEmitter = new EventEmitter()
     const options = { blockTracker, newBlockEmitter }
     const spy = sinon.spy()

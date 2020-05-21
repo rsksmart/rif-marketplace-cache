@@ -3,10 +3,10 @@ import Eth from 'web3-eth'
 import { AbiItem } from 'web3-utils'
 import config from 'config'
 import { EventData } from 'web3-eth-contract'
+import { getObject } from 'sequelize-store'
 
 import { Application, CachedService } from '../definitions'
 import { loggingFactory } from '../logger'
-import { confFactory } from '../conf'
 import { ethFactory } from '../blockchain'
 import { getEventsEmitterForService, isServiceInitialized } from '../blockchain/utils'
 
@@ -22,7 +22,7 @@ import rnsContractAbi from '@rsksmart/rns-rskregistrar/RSKOwnerData.json'
 import rnsReverseContractAbi from '@rsksmart/rns-reverse/NameResolverData.json'
 import auctionRegistrarContractAbi from '@rsksmart/rns-auction-registrar/TokenRegistrarData.json'
 import simplePlacementsContractAbi from '@rsksmart/rif-marketplace-nfts/ERC721SimplePlacementsABI.json'
-import { errorHandler } from '../utils'
+import { errorHandler, waitForReadyApp } from '../utils'
 
 import { processRskOwner, processAuctionRegistrar } from './rns.precache'
 
@@ -83,6 +83,8 @@ const rns: CachedService = {
     }
     logger.info('RNS service: enabled')
 
+    await waitForReadyApp(app)
+
     // Initialize feather's service
     app.use('/rns/v0/:ownerAddress/domains', new RnsService({ Model: Domain }))
     app.use('/rns/v0/:ownerAddress/sold', new RnsService({ Model: SoldDomain }))
@@ -139,9 +141,10 @@ const rns: CachedService = {
     const domainsCount = await Domain.destroy({ where: {}, truncate: true, cascade: true })
     logger.info(`Removed ${offersCount} offers entries, ${soldCount} sold domains and ${domainsCount} domains`)
 
-    confFactory().delete('rns.owner')
-    confFactory().delete('rns.reverse')
-    confFactory().delete('rns.placement')
+    const store = getObject()
+    delete store['rns.placement.lastProcessedBlock']
+    delete store['rns.reverse.lastProcessedBlock']
+    delete store['rns.owner.lastProcessedBlock']
   }
 
 }
