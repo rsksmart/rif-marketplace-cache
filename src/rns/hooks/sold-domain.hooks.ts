@@ -23,35 +23,34 @@ export default {
     ],
     find: [
       (context: HookContext) => {
-        const { domain } = context.params.query as any
-        let nameSearch
-
-        if (domain) {
-          nameSearch = {
-            [Op.or]: {
-              name: {
-                [Op.like]: `%${domain}%`
-              },
-              tokenId: {
-                [Op.eq]: numberToHex(((sha3(domain)) as string))
-              }
-            }
-          }
-        }
-
         context.params.sequelize = {
           raw: false,
           nest: true,
           include: [
-            { model: Domain, attributes: ['tokenId', 'name', 'expirationDate'], where: nameSearch },
+            { model: Domain, attributes: ['tokenId', 'name', 'expirationDate'] },
             {
               model: Transfer,
               attributes: ['sellerAddress', 'newOwnerAddress'],
               where: {
-                sellerAddress: context.params.route?.ownerAddress
+                sellerAddress: context.params.route?.ownerAddress.toLowerCase()
               }
             }
           ]
+        }
+        const { params: { sequelize: { include }, domain } } = context
+
+        if (domain && include) {
+          const { name: { $like: searchTerm } } = domain
+          include.where = {
+            [Op.or]: {
+              name: {
+                [Op.like]: `%${searchTerm}%`
+              },
+              tokenId: {
+                [Op.eq]: numberToHex(((sha3(searchTerm)) as string))
+              }
+            }
+          }
         }
 
         delete (context.params.query as any).domain
