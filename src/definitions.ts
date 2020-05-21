@@ -20,11 +20,6 @@ interface ServiceTypes {
 // The application instance type that will be used everywhere else
 export type Application = ExpressFeathers<ServiceTypes>;
 
-export interface Store {
-  get (key: string): any
-  set (key: string, value: any): void
-}
-
 export interface CachedService {
   precache (eth?: Eth): Promise<void>
   purge (): Promise<void>
@@ -93,14 +88,6 @@ export interface Config {
     level?: string
     filter?: string
     path?: string
-  }
-
-  conf?: {
-    // Name for config to have separate configs for different environments (test, dev, prod)
-    name?: string
-
-    // Specifies if configuration using Conf() should be persisted between restarts
-    persist?: boolean
   }
 
   blockchain?: {

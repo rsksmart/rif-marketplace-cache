@@ -5,12 +5,12 @@ import { EventEmitter } from 'events'
 import { NotImplemented } from '@feathersjs/errors'
 import { Op } from 'sequelize'
 import { Sema } from 'async-sema'
+import { getObject as getStore } from 'sequelize-store'
 
-import { asyncFilter, scopeStore } from '../utils'
-import { confFactory } from '../conf'
+import { asyncFilter } from '../utils'
 import { loggingFactory } from '../logger'
 import Event, { EventInterface } from './event.model'
-import { Store, Logger } from '../definitions'
+import { Logger } from '../definitions'
 
 // Constant number that defines default interval of all polling mechanisms.
 const DEFAULT_POLLING_INTERVAL = 5000
@@ -22,6 +22,10 @@ const PROCESSED_BLOCK_KEY = 'lastProcessedBlock'
 export interface PollingOptions {
   polling?: boolean
   pollingInterval?: number
+}
+
+export interface BlockTrackerStore {
+  [PROCESSED_BLOCK_KEY]?: number
 }
 
 export enum EventsEmitterStrategy {
@@ -43,7 +47,7 @@ export interface EventsEmitterOptions {
   startingBlock?: number | string
 
   // Defines BlockTracker or its configuration
-  blockTracker?: BlockTracker | { store?: Store, keyPrefix?: string }
+  blockTracker?: BlockTracker | { store?: BlockTrackerStore, keyPrefix?: string }
 
   // Defines the NewBlockEmitter or its configuration
   newBlockEmitter?: EventEmitter | PollingOptions
@@ -57,21 +61,18 @@ export interface EventsEmitterOptions {
  * of the server.
  */
 export class BlockTracker {
-  private store: Store
-  private lastProcessedBlock: number
+  private readonly store: BlockTrackerStore
 
-  constructor (store: Store) {
+  constructor (store: BlockTrackerStore) {
     this.store = store
-    this.lastProcessedBlock = this.store.get(PROCESSED_BLOCK_KEY)
   }
 
   setLastProcessedBlock (block: number): void {
-    this.lastProcessedBlock = block
-    this.store.set(PROCESSED_BLOCK_KEY, block)
+    this.store[PROCESSED_BLOCK_KEY] = block
   }
 
   getLastProcessedBlock (): number | undefined {
-    return this.lastProcessedBlock
+    return this.store[PROCESSED_BLOCK_KEY]
   }
 }
 
@@ -225,16 +226,11 @@ export abstract class BaseEventsEmitter extends AutoStartStopEventEmitter {
       if (options.blockTracker instanceof BlockTracker) {
         this.blockTracker = options.blockTracker
       } else {
-        let confStore = options.blockTracker.store || confFactory()
-
-        if (options.blockTracker.keyPrefix) {
-          confStore = scopeStore(confStore, options.blockTracker.keyPrefix)
-        }
-
+        const confStore = options.blockTracker.store || getStore(options.blockTracker.keyPrefix ? options.blockTracker.keyPrefix : undefined)
         this.blockTracker = new BlockTracker(confStore)
       }
     } else {
-      this.blockTracker = new BlockTracker(confFactory())
+      this.blockTracker = new BlockTracker(getStore())
     }
 
     if (options?.newBlockEmitter) {

@@ -3,6 +3,7 @@ import Eth from 'web3-eth'
 import { AbiItem } from 'web3-utils'
 import config from 'config'
 import { EventData } from 'web3-eth-contract'
+import { getObject } from 'sequelize-store'
 
 import StorageOffer from './models/storage-offer.model'
 import { Application, CachedService } from '../definitions'
@@ -11,9 +12,8 @@ import { getEventsEmitterForService, isServiceInitialized } from '../blockchain/
 import hooks from './storage.hooks'
 import eventProcessor from './storage.processor'
 import Price from './models/price.model'
-import { confFactory } from '../conf'
 import { ethFactory } from '../blockchain'
-import { errorHandler } from '../utils'
+import { errorHandler, waitForReadyApp } from '../utils'
 
 import storageManagerContract from '@rsksmart/rif-marketplace-storage/build/contracts/StorageManager.json'
 
@@ -60,6 +60,8 @@ const storage: CachedService = {
     }
     logger.info('Storage service: enabled')
 
+    await waitForReadyApp(app)
+
     // Initialize feather's service
     app.use('/storage/v0/offers', new StorageOfferService({ Model: StorageOffer }))
     const service = app.service('/storage/v0/offers')
@@ -90,7 +92,8 @@ const storage: CachedService = {
     const offersCount = await StorageOffer.destroy({ where: {}, truncate: true, cascade: true })
     logger.info(`Removed ${priceCount} price entries and ${offersCount} storage offers`)
 
-    confFactory().delete(SERVICE_NAME)
+    const store = getObject()
+    delete store['storage.lastProcessedBlock']
   },
 
   precache

@@ -2,7 +2,7 @@ import { Eth } from 'web3-eth'
 import config from 'config'
 import Utils from 'web3-utils'
 import abiDecoder from 'abi-decoder'
-import { BlockchainServiceOptions, Logger } from '../definitions'
+import { Logger } from '../definitions'
 
 import Domain from './models/domain.model'
 
@@ -37,9 +37,14 @@ abiDecoder.addABI([
 ])
 
 export async function processRskOwner (eth: Eth, logger: Logger, contractAbi: Utils.AbiItem[]) {
+  if (!config.has('rns.fifsAddrRegistrar.contractAddress')) {
+    logger.warn('RNS FIFS Registrar address is not defined, skipping Auction Registrar precaching!')
+    return
+  }
+
   logger.info('Processing events Transfer from FIFSAddrRegistrar')
   const rskOwner = new eth.Contract(contractAbi, config.get<string>('rns.owner.contractAddress'))
-  const startingBlock = config.get<BlockchainServiceOptions>('rns.owner')?.eventsEmitter?.startingBlock || 'genesis'
+  const startingBlock = config.get<string | number>('rns.owner.eventsEmitter.startingBlock')
   const rskOwnerEvents = await rskOwner.getPastEvents('Transfer', {
     filter: { from: config.get<string>('rns.fifsAddrRegistrar.contractAddress') },
     fromBlock: startingBlock
@@ -60,8 +65,13 @@ export async function processRskOwner (eth: Eth, logger: Logger, contractAbi: Ut
 }
 
 export async function processAuctionRegistrar (eth: Eth, logger: Logger, contractAbi: Utils.AbiItem[]) {
+  if (!config.has('rns.registrar.contractAddress')) {
+    logger.warn('RNS Registrar address is not defined, skipping Auction Registrar precaching!')
+    return
+  }
+
   logger.info('Processing events HashRegistered')
-  const startingBlock = config.get<BlockchainServiceOptions>('rns.registrar')?.eventsEmitter?.startingBlock || 'genesis'
+  const startingBlock = config.get<string | number>('rns.registrar.startingBlock')
   const auctionRegistrar = new eth.Contract(contractAbi, config.get<string>('rns.registrar.contractAddress'))
   const auctionRegistrarEvents = await auctionRegistrar.getPastEvents('HashRegistered', {
     filter: { from: '0x0000000000000000000000000000000000000000' },

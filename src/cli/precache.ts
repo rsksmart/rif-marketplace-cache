@@ -2,6 +2,7 @@ import { services, SupportedServices } from '../app'
 import Listr from 'listr'
 import { sequelizeFactory } from '../sequelize'
 import { BaseCLICommand, capitalizeFirstLetter, validateServices } from '../utils'
+import { initStore } from '../store'
 
 export default class PreCache extends BaseCLICommand {
   static get description () {
@@ -36,7 +37,10 @@ ${formattedServices}`
     }
 
     // Init database connection
-    sequelizeFactory()
+    const sequelize = sequelizeFactory()
+
+    // Init Store
+    await initStore(sequelize)
 
     const tasksDefinition = servicesToPreCache.map(
       serviceName => {

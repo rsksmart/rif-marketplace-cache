@@ -10,7 +10,7 @@ import { Application } from './definitions'
 import { loggingFactory } from './logger'
 import sequelize from './sequelize'
 import blockchain from './blockchain'
-import { configure as confConfigure } from './conf'
+import { configureStore } from './store'
 
 import storage from './storage'
 import rates from './rates'
@@ -51,7 +51,7 @@ export function appFactory (): Application {
   // Custom general services
   app.configure(sequelize)
   app.configure(blockchain)
-  app.configure(confConfigure)
+  app.configure(configureStore)
 
   /**********************************************************/
   // Configure each services
