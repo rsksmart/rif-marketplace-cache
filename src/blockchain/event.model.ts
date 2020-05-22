@@ -21,6 +21,9 @@ export default class Event extends Model {
   @Column(DataType.INTEGER)
   logIndex!: number
 
+  @Column(DataType.INTEGER)
+  targetConfirmation!: number
+
   @Column(DataType.TEXT)
   event!: string
 
@@ -28,4 +31,4 @@ export default class Event extends Model {
   content!: string
 }
 
-export type EventInterface = Pick<Event, 'blockNumber' | 'transactionHash' | 'logIndex' | 'event' | 'content'>
+export type EventInterface = Pick<Event, 'blockNumber' | 'transactionHash' | 'logIndex' | 'event' | 'targetConfirmation' | 'content'>

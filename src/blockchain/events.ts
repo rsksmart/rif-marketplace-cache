@@ -351,6 +351,7 @@ export abstract class BaseEventsEmitter extends AutoStartStopEventEmitter {
       transactionHash: data.transactionHash,
       logIndex: data.logIndex,
       event: data.event,
+      targetConfirmation: this.confirmations,
       content: JSON.stringify(data)
     }
   }
