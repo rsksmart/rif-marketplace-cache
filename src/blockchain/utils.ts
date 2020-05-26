@@ -5,7 +5,8 @@ import config from 'config'
 import { getObject } from 'sequelize-store'
 
 import { loggingFactory } from '../logger'
-import eventsEmitterFactory, { BlockTracker, EventsEmitterOptions, PollingOptions } from './events'
+import eventsEmitterFactory, { BlockTracker, EventsEmitterOptions } from './events'
+import { NewBlockEmitterOptions } from '../definitions'
 
 function getBlockTracker (keyPrefix?: string): BlockTracker {
   const store = getObject(keyPrefix)
@@ -29,7 +30,7 @@ export function getEventsEmitterForService (serviceName: string, eth: Eth, contr
   const eventsToListen = config.get<string[]>(`${serviceName}.events`)
   logger.info(`For listening on service '${serviceName}' for events ${eventsToListen.join(', ')} using contract on address: ${contractAddresses}`)
   const eventsEmitterOptions = config.get<EventsEmitterOptions>(`${serviceName}.eventsEmitter`)
-  const newBlockEmitterOptions = config.get<PollingOptions>(`${serviceName}.newBlockEmitter`)
+  const newBlockEmitterOptions = config.get<NewBlockEmitterOptions>(`${serviceName}.newBlockEmitter`)
   const options = Object.assign(
     {},
     eventsEmitterOptions,
@@ -41,4 +42,24 @@ export function getEventsEmitterForService (serviceName: string, eth: Eth, contr
   )
 
   return eventsEmitterFactory(eth, contract, eventsToListen, options)
+}
+
+interface LookupTableEvents {
+  transactionHash: string
+  logIndex: number
+  emitted?: boolean
+}
+
+export function createTransactionLookupTable (events: LookupTableEvents[], emittedOnly = false): Record<string, number[]> {
+  return events.reduce<Record<string, number[]>>((previousValue, currentValue) => {
+    if (emittedOnly && !currentValue.emitted) return previousValue
+
+    if (!previousValue[currentValue.transactionHash]) {
+      previousValue[currentValue.transactionHash] = [currentValue.logIndex]
+    } else {
+      previousValue[currentValue.transactionHash].push(currentValue.logIndex)
+    }
+
+    return previousValue
+  }, {})
 }

@@ -1,15 +1,10 @@
 {
-  port: 3030,
-  conf: {
-    name: 'test-config',
-    persist: false
-  },
-  db: 'sqlite://:memory:',
+  db: 'sqlite://db_test.sqlite',
   blockchain: {
     provider: 'ws://localhost:8545',
-    pinningContractAddress: '',
-    eventsEmitter: {
-      confirmations: 1
+
+    confirmationsService: {
+      deleteTargetConfirmationsMultiplier: 2
     }
   }
 }

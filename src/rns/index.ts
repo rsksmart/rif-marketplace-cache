@@ -60,17 +60,18 @@ async function precache (eth?: Eth): Promise<void> {
   await fetchEventsForService(eth, 'rns.reverse', rnsReverseContractAbi.abi as AbiItem[], dataQueuePusher)
   await fetchEventsForService(eth, 'rns.placement', simplePlacementsContractAbi as AbiItem[], dataQueuePusher)
 
-  // We need to sort the events in order to have valid
-  const sortedQueue = eventsDataQueue.sort((a, b): number => {
+  // We need to sort the events in order to have valid sequence of Events
+  eventsDataQueue.sort((a, b): number => {
     // First by block number
-    if (a.blockNumber - b.blockNumber !== 0) return a.blockNumber - b.blockNumber
+    if (a.blockNumber !== b.blockNumber) return a.blockNumber - b.blockNumber
 
-    if (a.transactionIndex - b.transactionIndex !== 0) return a.transactionIndex - b.transactionIndex
+    // Then by transaction index
+    if (a.transactionIndex !== b.transactionIndex) return a.transactionIndex - b.transactionIndex
 
     return a.logIndex - b.logIndex
   })
 
-  for (const event of sortedQueue) {
+  for (const event of eventsDataQueue) {
     await eventProcessor(precacheLogger, eth)(event)
   }
 }

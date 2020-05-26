@@ -7,6 +7,7 @@ import { Eth } from 'web3-eth'
 import { StorageOfferService } from './storage'
 import { RatesService } from './rates'
 import { RnsService } from './rns'
+import ConfirmationService from './blockchain/confirmation.service'
 
 // A mapping of service names to types. Will be extended in service files.
 interface ServiceTypes {
@@ -15,6 +16,7 @@ interface ServiceTypes {
   '/rns/v0/:ownerAddress/domains': RnsService & ServiceAddons<any>
   '/rns/v0/:ownerAddress/sold': RnsService & ServiceAddons<any>
   '/rns/v0/offers': RnsService & ServiceAddons<any>
+  '/confirmations': ConfirmationService & ServiceAddons<any>
 }
 
 // The application instance type that will be used everywhere else
@@ -93,6 +95,19 @@ export interface Config {
   blockchain?: {
     // Address to where web3js should connect to. Should be WS endpoint.
     provider?: string
+
+    // Service that expose transactions that are currently awaiting for confirmations.
+    confirmationsService?: {
+
+      // Multiplier that is used for targetConfirmations that determines when an event
+      // from DB is supposed to be removed.
+      // Eq. if event is supposed to be confirmed after 5 blocks (eq. targetConfirmations)
+      // when this parameter is set to "2" then the event will be removed after 10 confirmations.
+      deleteTargetConfirmationsMultiplier?: number
+
+      // Specify behavior of NewBlockEmitter, that detects new blocks on blockchain.
+      newBlockEmitter?: NewBlockEmitterOptions
+    }
   }
 
   rates?: {

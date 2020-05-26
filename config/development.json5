@@ -1,9 +1,5 @@
 {
   port: 3030,
-  conf: {
-    name: 'dev-config',
-    persist: true
-  },
   blockchain: {
     provider: "ws://localhost:8545",
   },
