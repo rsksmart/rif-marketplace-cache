@@ -1,6 +1,7 @@
 import compress from 'compression'
 import helmet from 'helmet'
-import cors from 'cors'
+import cors, { CorsOptionsDelegate } from 'cors'
+import config from 'config'
 
 import feathers from '@feathersjs/feathers'
 import express from '@feathersjs/express'
@@ -37,9 +38,11 @@ export function isSupportedServices (value: any): value is SupportedServices {
 export function appFactory (): Application {
   const app: Application = express(feathers())
 
+  const corsOptions: CorsOptionsDelegate = config.get('cors')
+
   // Enable security, CORS, compression and body parsing
   app.use(helmet())
-  app.use(cors())
+  app.use(cors(corsOptions))
   app.use(compress())
   app.use(express.json())
   app.use(express.urlencoded({ extended: true }))

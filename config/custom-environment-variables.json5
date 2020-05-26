@@ -2,6 +2,11 @@
   port: 'RIFM_PORT',
   db: 'RIFM_DB',
 
+  cors: {
+    origin: "RIFM_CORS_ORIGIN",
+    methods: "RIFM_CORS_METHODS"
+  },
+
   blockchain: {
     provider: "RIFM_PROVIDER",
   },

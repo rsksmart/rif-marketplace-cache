@@ -4,6 +4,12 @@
   port: null,
   db: 'sqlite:db.sqlite',
 
+  // CORS setting, please consult https://expressjs.com/en/resources/middleware/cors.html for more details
+  cors: {
+    origin: '*',
+    methods: 'GET,HEAD'
+  },
+
   log: {
     level: "info",
     filter: null,

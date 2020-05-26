@@ -136,6 +136,9 @@ file and load that either using the `--config` CLI parameter or using environmen
  - `RIFM_PORT` (number): port on which the server should listen to
  - `RIFM_DB` (string): database connection URI
  - `RIFM_PROVIDER` (string): blockchain connection URI
+ - CORS settings ([see more on expressjs documentation](https://expressjs.com/en/resources/middleware/cors.html)):
+    - `RIFM_CORS_ORIGIN` (boolean | string | regexp): Configures the Access-Control-Allow-Origin CORS header
+    - `RIFM_CORS_METHODS` (string) Configures the Access-Control-Allow-Methods CORS header
  - Storage related:
     - `RIFM_STORAGE_CONTRACT_ADDR` (string): address of deployed storage contract
     - `RIFM_STORAGE_STARTING_BLOCK` (number | string): block from which the caching service should process events
