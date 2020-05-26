@@ -29,4 +29,4 @@ oclif.manifest.json
 /config/local*
 
 # DB file
-db.sqlite
+*.sqlite

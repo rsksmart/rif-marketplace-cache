@@ -10,6 +10,25 @@
     methods: 'GET,HEAD'
   },
 
+  blockchain: {
+
+    // Service that expose transactions that are currently awaiting for confirmations.
+    confirmationsService: {
+
+      // Multiplier that is used for targetConfirmations that determines when an event
+      // from DB is supposed to be removed.
+      // Eq. if event is supposed to be confirmed after 5 blocks (eq. targetConfirmations)
+      // when this parameter is set to "2" then the event will be removed after 10 confirmations.
+      deleteTargetConfirmationsMultiplier: 2,
+
+      // Specify behavior of NewBlockEmitter, that detects new blocks on blockchain.
+      newBlockEmitter: {
+        // If to use polling strategy, if false then listening is used.
+        polling: true
+      }
+    }
+  },
+
   log: {
     level: "info",
     filter: null,

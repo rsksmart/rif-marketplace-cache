@@ -6,14 +6,27 @@ import config from 'config'
 
 import { Application, Config, Logger } from './definitions'
 import { isSupportedServices, SupportedServices } from './app'
-import { EventData } from 'web3-eth-contract'
 
 const readFile = promisify(readFileCb)
 
-export async function asyncFilter<T> (arr: Array<T>, callback: (elem: T) => Promise<boolean>): Promise<Array<T>> {
-  const fail = Symbol('async-filter-fail')
-  const mappedArray = await Promise.all(arr.map(async item => (await callback(item)) ? item : fail))
-  return mappedArray.filter(i => i !== fail) as T[]
+/**
+ * Function that will split array into two groups based on callback
+ *
+ * @param arr
+ * @param callback
+ * @return [success, failure] array where first are positives based on callback and second are negatives
+ */
+export async function asyncSplit<T> (arr: T[], callback: (elem: T) => Promise<boolean>): Promise<[T[], T[]]> {
+  const splitArray = await Promise.all(arr.map(async item => await callback(item)))
+  return arr.reduce<[T[], T[]]>(([pass, fail], elem, currentIndex) => {
+    return splitArray[currentIndex] ? [[...pass, elem], fail] : [pass, [...fail, elem]]
+  }, [[], []])
+}
+
+export function split<T> (array: T[], isValid: (elem: T) => boolean): [T[], T[]] {
+  return array.reduce<[T[], T[]]>(([pass, fail], elem) => {
+    return isValid(elem) ? [[...pass, elem], fail] : [pass, [...fail, elem]]
+  }, [[], []])
 }
 
 export function capitalizeFirstLetter (value: string): string {
@@ -38,9 +51,9 @@ export function validateServices (args: string[]): SupportedServices[] {
   return args as SupportedServices[]
 }
 
-export function errorHandler (fn: (event: EventData) => Promise<void>, logger: Logger): (event: EventData) => void {
-  return (event): void => {
-    fn(event).catch(err => logger.error(err))
+export function errorHandler (fn: (...args: any[]) => Promise<void>, logger: Logger): (...args: any[]) => void {
+  return (...args): void => {
+    fn(...args).catch(err => logger.error(err))
   }
 }
 

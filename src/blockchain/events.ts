@@ -7,10 +7,10 @@ import { Op } from 'sequelize'
 import { Sema } from 'async-sema'
 import { getObject as getStore } from 'sequelize-store'
 
-import { asyncFilter } from '../utils'
 import { loggingFactory } from '../logger'
 import Event, { EventInterface } from './event.model'
-import { Logger } from '../definitions'
+import { Logger, NewBlockEmitterOptions } from '../definitions'
+import { createTransactionLookupTable } from './utils'
 
 // Constant number that defines default interval of all polling mechanisms.
 const DEFAULT_POLLING_INTERVAL = 5000
@@ -18,11 +18,6 @@ const NEW_EVENT_EVENT_NAME = 'newEvent'
 const INIT_FINISHED_EVENT_NAME = 'initFinished'
 const NEW_BLOCK_EVENT_NAME = 'newBlock'
 const PROCESSED_BLOCK_KEY = 'lastProcessedBlock'
-
-export interface PollingOptions {
-  polling?: boolean
-  pollingInterval?: number
-}
 
 export interface BlockTrackerStore {
   [PROCESSED_BLOCK_KEY]?: number
@@ -50,7 +45,7 @@ export interface EventsEmitterOptions {
   blockTracker?: BlockTracker | { store?: BlockTrackerStore, keyPrefix?: string }
 
   // Defines the NewBlockEmitter or its configuration
-  newBlockEmitter?: EventEmitter | PollingOptions
+  newBlockEmitter?: EventEmitter | NewBlockEmitterOptions
 
   // Defines what strategy should emitter use to get events
   strategy?: EventsEmitterStrategy
@@ -306,36 +301,20 @@ export abstract class BaseEventsEmitter extends AutoStartStopEventEmitter {
       const dbEvents = await Event.findAll({
         where: {
           blockNumber: { [Op.lte]: currentBlockNumber - this.confirmations },
-          event: this.events
+          event: this.events,
+          emitted: false
         }
       })
 
       const ethEvents = dbEvents.map(event => JSON.parse(event.content)) as EventData[]
-      const validEthEvents = await asyncFilter(ethEvents, this.eventHasValidReceipt.bind(this))
-      validEthEvents.forEach(this.emitEvent.bind(this))
-      this.logger.info(`Confirmed ${validEthEvents.length} events.`)
+      ethEvents.forEach(this.emitEvent.bind(this))
+      this.logger.info(`Confirmed ${ethEvents.length} events.`)
 
-      if (dbEvents.length !== validEthEvents.length) {
-        this.logger.warn(`${dbEvents.length - validEthEvents.length} events dropped because of no valid reciept.`)
-      }
-
-      // We will remove all events even the invalid ones
-      await Promise.all(dbEvents.map(event => event.destroy()))
+      // Update DB that events were emitted
+      await Event.update({ emitted: true }, { where: { id: dbEvents.map(e => e.id) } })
     } catch (e) {
       this.logger.error(`During confirmation error was raised: ${e}`)
       this.emit('error', e)
-    }
-  }
-
-  private async eventHasValidReceipt (event: EventData): Promise<boolean> {
-    const reciept = await this.eth.getTransactionReceipt(event.transactionHash)
-
-    if (reciept.status && reciept.blockNumber === event.blockNumber) {
-      return true
-    } else {
-      this.logger.warn(`Event ${event.event} of transaction ${event.transactionHash} does not have valid receipt!
-      Block numbers: ${event.blockNumber} (event) vs ${reciept.blockNumber} (receipt) and receipt status: ${reciept.status} `)
-      return false
     }
   }
 
@@ -359,8 +338,8 @@ export abstract class BaseEventsEmitter extends AutoStartStopEventEmitter {
   /**
    * Adds the events to database for later on confirmation.
    *
-   * Before adding the event it validates that there is no same Event already present in the database. It
-   * identifies "same Event" using transaction hash and log index.
+   * Before adding the event it validates that there is no same Event **that was already not emitted/processed** present in the database.
+   * It identifies "same Event" using transaction hash and log index.
    *
    * @param events
    */
@@ -380,25 +359,27 @@ export abstract class BaseEventsEmitter extends AutoStartStopEventEmitter {
     }
 
     // Optimization lookup table for identification of good transactionHash&logIndex tuple
-    const transactionLookupTable = sequelizeEvents.reduce<Record<string, number[]>>((previousValue, currentValue) => {
-      if (!previousValue[currentValue.transactionHash]) {
-        previousValue[currentValue.transactionHash] = [currentValue.logIndex]
-      } else {
-        previousValue[currentValue.transactionHash].push(currentValue.logIndex)
-      }
+    const transactionLookupTable = createTransactionLookupTable(sequelizeEvents)
 
-      return previousValue
-    }, {})
+    // Old events to be removed from DB
+    const eventsForDeletion = existingEvents.filter(event => !event.emitted && transactionLookupTable[event.transactionHash].includes(event.logIndex))
 
-    // Remove old events from DB
-    const eventsForDeletion = existingEvents.filter(event => transactionLookupTable[event.transactionHash].includes(event.logIndex))
-    this.logger.warn(`Found ${eventsForDeletion.length} re-emitted events! Removing old ones!`)
-    await Promise.all(eventsForDeletion.map(event => {
-      this.logger.warn(`Detected duplicate event of block ${event.blockNumber} and transaction ${event.transactionHash}`)
-      return event.destroy()
-    }))
+    if (eventsForDeletion.length > 0) {
+      this.logger.warn(`Found ${eventsForDeletion.length} re-emitted events! Removing old ones!`)
+      await Promise.all(eventsForDeletion.map(event => {
+        this.logger.warn(`Detected duplicate event of block ${event.blockNumber} and transaction ${event.transactionHash}`)
+        return event.destroy()
+      }))
+    }
 
-    await Event.bulkCreate(sequelizeEvents)
+    const existingEmittedEvents = createTransactionLookupTable(existingEvents, true)
+    const eventsThatDontHaveAlreadyEmittedCounterpart = sequelizeEvents.filter(
+      event => !(
+        existingEmittedEvents[event.transactionHash] &&
+        existingEmittedEvents[event.transactionHash].includes(event.logIndex)
+      )
+    )
+    await Event.bulkCreate(eventsThatDontHaveAlreadyEmittedCounterpart)
   }
 
   /**

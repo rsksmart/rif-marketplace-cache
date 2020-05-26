@@ -75,7 +75,7 @@ API that caches conversion rates currently for RBTC and RIF Token.
 GET: /rates/v0/
 ```
 
-Returns
+Returns (example)
 
 ```json
 [
@@ -113,6 +113,55 @@ API that caches several parts of the RNS and Domain Sail contracts. Supported ro
  - `/rns/v0/offers` - List active Domain Offers
  - `/rns/v0/:ownerAddress/sold` - List sold domains for specific `:ownerAddress`
  - `/rns/v0/:ownerAddress/domains` - List domains that are owned by the `:ownerAddress`
+
+### Confirmations
+
+API for getting information about confirmation status of transactions related to Marketplace.
+
+```
+GET: /confirmations
+```
+
+Returns (example)
+
+```json
+[
+  {
+    "event": "ExpirationChanged",
+    "transactionHash": "0x78a9f1912e8bf590e30a43f919f405924c168f55dad6efd298e8bc4ccfd4438d",
+    "confirmations": 1,
+    "targetConfirmation": 2
+  },
+  ...
+]
+```
+
+There are also two events emitted for WebSocket connections.
+
+#### `newConfirmation` event
+
+Emitted when new confirmation was available. It is emitted with an object that has same
+structured as presented above for the `GET /confirmations` route.¨
+
+```json
+{
+  "event": "ExpirationChanged",
+  "transactionHash": "0x78a9f1912e8bf590e30a43f919f405924c168f55dad6efd298e8bc4ccfd4438d",
+  "confirmations": 1,
+  "targetConfirmation": 2
+}
+```
+
+#### `invalidConfirmation`
+
+Emitted when a block with the transaction was dropped from blockchain and hence won't become ever confirmed.
+It is emitted with the object containing property `transactionHash` that contains the hash of the transaction dropped out.
+
+```json
+{
+  "transactionHash": "0x78a9f1912e8bf590e30a43f919f405924c168f55dad6efd298e8bc4ccfd4438d"
+}
+```
 
 ## Configuration
 

@@ -1,3 +1,15 @@
+import { BlockHeader, Eth } from 'web3-eth'
+import { Arg, Substitute } from '@fluffy-spoon/substitute'
+import sinon from 'sinon'
+import chai from 'chai'
+import dirtyChai from 'dirty-chai'
+import chaiAsPromised from 'chai-as-promised'
+import util from 'util'
+import sinonChai from 'sinon-chai'
+import { Sequelize } from 'sequelize-typescript'
+import { Contract, EventData } from 'web3-eth-contract'
+import { EventEmitter } from 'events'
+
 import {
   BaseEventsEmitter,
   BlockTracker, BlockTrackerStore,
@@ -6,31 +18,18 @@ import {
   PollingNewBlockEmitter
 } from '../../src/blockchain/events'
 import { Logger } from '../../src/definitions'
-import { BlockHeader, Eth, TransactionReceipt } from 'web3-eth'
-
-import { Arg, Substitute } from '@fluffy-spoon/substitute'
-import sinon from 'sinon'
-import chai from 'chai'
-import dirtyChai from 'dirty-chai'
-import chaiAsPromised from 'chai-as-promised'
-import util from 'util'
-import { Contract, EventData } from 'web3-eth-contract'
-import { EventEmitter } from 'events'
 import { loggingFactory } from '../../src/logger'
-import { Sequelize } from 'sequelize-typescript'
 import { sequelizeFactory } from '../../src/sequelize'
 import Event from '../../src/blockchain/event.model'
+import { sleep } from '../utils'
 
+chai.use(sinonChai)
 chai.use(chaiAsPromised)
 chai.use(dirtyChai)
 const expect = chai.expect
 const setImmediatePromise = util.promisify(setImmediate)
 const NEW_BLOCK_EVENT = 'newBlock'
 const DATA_EVENT_NAME = 'newEvent'
-
-function sleep<T> (ms: number, ...args: T[]): Promise<T> {
-  return new Promise(resolve => setTimeout(() => resolve(...args), ms))
-}
 
 function subscribeMock (sequence: Array<Error | BlockHeader>, interval = 100): (event: string, cb: (err?: Error, blockHeader?: BlockHeader) => void) => void {
   let counter = 0
@@ -68,20 +67,6 @@ function eventMock (options?: Partial<EventData>): EventData {
   }
 
   return testEvent
-}
-
-function receiptMock (blockNumber?: number, status = true): TransactionReceipt {
-  const receipt = Substitute.for<TransactionReceipt>()
-
-  if (blockNumber !== undefined) {
-    receipt.blockNumber.returns!(blockNumber)
-  }
-
-  if (status !== undefined) {
-    receipt.status.returns!(status)
-  }
-
-  return receipt
 }
 
 /**
@@ -236,10 +221,10 @@ describe('ListeningNewBlockEmitter', () => {
     await sleep(410)
 
     eth.received(1).getBlockNumber()
-    expect(spy.getCalls().length).to.eql(3, 'Emitter callback should have been called three times.')
-    expect(spy.firstCall.calledWithExactly(9)).to.be.true('Emitter callback should have been called first with 9.')
-    expect(spy.secondCall.calledWithExactly(10)).to.be.true('Emitter callback should have been called second time with 10.')
-    expect(spy.thirdCall.calledWithExactly(11)).to.be.true('Emitter callback should have been called second time with 11.')
+    expect(spy).to.have.callCount(3)
+    expect(spy.firstCall).to.be.calledWithExactly(9)
+    expect(spy.secondCall).to.be.calledWithExactly(10)
+    expect(spy.thirdCall).to.be.calledWithExactly(11)
   })
 })
 
@@ -308,7 +293,7 @@ describe('BaseEventsEmitter', () => {
       eventsEmitter.on(DATA_EVENT_NAME, spy)
       await sleep(100)
 
-      expect(spy.getCalls().length).to.be.eql(2, 'Expected two events emitted.')
+      expect(spy.callCount).to.be.eql(2, 'Expected two events emitted.')
       eth.received(1).getBlockNumber()
       contract.received(1).getPastEvents(Arg.all())
       expect(await Event.count()).to.eql(2)
@@ -338,7 +323,7 @@ describe('BaseEventsEmitter', () => {
       await eventsEmitter.createEvent(events)
 
       expect(await Event.count()).to.eql(2)
-      expect(spy.getCalls().length).to.be.eql(2, 'Expected two events emitted.')
+      expect(spy.callCount).to.be.eql(2, 'Expected two events emitted.')
       eth.received(2).getBlockNumber()
       contract.received(1).getPastEvents(Arg.all())
       expect(blockTracker.getLastProcessedBlock()).to.eql(10)
@@ -383,15 +368,50 @@ describe('BaseEventsEmitter', () => {
       expect(await Event.findOne({ where: { blockNumber: 8, transactionHash: '3', logIndex: 1 } })).to.be.null()
     })
 
+    it('should handle only re-emitted events that were not already processed in past', async function () {
+      const eth = Substitute.for<Eth>()
+      eth.getBlockNumber().returns(Promise.resolve(10))
+
+      const contract = Substitute.for<Contract>()
+      contract.getPastEvents(Arg.all()).returns(Promise.resolve([]))
+
+      const blockTracker = new BlockTracker({})
+      const newBlockEmitter = new EventEmitter()
+      const options: EventsEmitterOptions = { confirmations: 2, blockTracker, newBlockEmitter }
+      const spy = sinon.spy()
+      const eventsEmitter = new DummyEventsEmitter(eth, contract, ['testEvent'], options)
+      eventsEmitter.on(DATA_EVENT_NAME, spy)
+
+      // Create events that will have conflict with the new events (a.k.a re-emitted from blockchain)
+      const storedEvents = [
+        { blockNumber: 7, transactionHash: '1', logIndex: 1, content: '{"transactionIndex": 1}' },
+        { blockNumber: 7, transactionHash: '1', logIndex: 2, content: '{"transactionIndex": 1}' }, // Will be deleted
+        { blockNumber: 8, transactionHash: '2', logIndex: 1, content: '{"transactionIndex": 2}' }, // Will be deleted
+        { blockNumber: 8, transactionHash: '3', logIndex: 1, emitted: true, content: '{"transactionIndex": 3}' }, // Should be deleted, but was already processed ==> should be ignored
+        { blockNumber: 9, transactionHash: '4', logIndex: 1, content: '{"transactionIndex": 3}' }
+      ]
+      await Event.bulkCreate(storedEvents)
+
+      const events = [
+        eventMock({ blockNumber: 9, transactionHash: '1', logIndex: 2 }), // Re-emitted event
+        eventMock({ blockNumber: 9, transactionHash: '2', logIndex: 1 }), // Re-emitted event
+        eventMock({ blockNumber: 9, transactionHash: '3', logIndex: 1 }), // Re-emitted event, but was already processed ==> should be ignored
+        eventMock({ blockNumber: 10, transactionHash: '6', logIndex: 1 })
+      ]
+      await eventsEmitter.createEvent(events)
+
+      expect(await Event.count()).to.eql(6)
+      expect(spy.called).to.be.false()
+      expect(await Event.findOne({ where: { blockNumber: 7, transactionHash: '1', logIndex: 2 } })).to.be.null()
+      expect(await Event.findOne({ where: { blockNumber: 8, transactionHash: '2', logIndex: 1 } })).to.be.null()
+      expect(await Event.findOne({ where: { blockNumber: 8, transactionHash: '3', logIndex: 1 } })).to.not.be.null()
+      expect(await Event.findOne({ where: { blockNumber: 9, transactionHash: '3', logIndex: 1 } })).to.be.null()
+    })
+
     it('should confirm events', async function () {
       const eth = Substitute.for<Eth>()
       eth.getBlockNumber().returns(Promise.resolve(10))
 
-      eth.getTransactionReceipt('1').returns(Promise.resolve(receiptMock(7)))
-      eth.getTransactionReceipt('2').returns(Promise.resolve(receiptMock(8)))
-      eth.getTransactionReceipt('3').returns(Promise.resolve(receiptMock(9)))
-      eth.getTransactionReceipt('4').returns(Promise.resolve(receiptMock(9))) // Incorrect block number
-
       const contract = Substitute.for<Contract>()
       contract.getPastEvents(Arg.all()).returns(Promise.resolve([]))
 
@@ -448,98 +468,19 @@ describe('BaseEventsEmitter', () => {
         }
       ]
       await Event.bulkCreate(events)
+      expect(await Event.count({ where: { emitted: true } })).to.eql(0)
 
       // Start confirmations process
       newBlockEmitter.emit(NEW_BLOCK_EVENT, 11)
       await sleep(500)
 
-      expect(emitterSpy.getCalls().length).to.be.eql(4, 'Expected four events emitted.')
-      expect(await Event.count()).to.eql(2)
-    })
-
-    it('should confirm events using receipts for correct blocks', async function () {
-      const eth = Substitute.for<Eth>()
-      eth.getBlockNumber().returns(Promise.resolve(10))
-
-      eth.getTransactionReceipt('1').returns(Promise.resolve(receiptMock(7)))
-      eth.getTransactionReceipt('2').returns(Promise.resolve(receiptMock(8)))
-      eth.getTransactionReceipt('3').returns(Promise.resolve(receiptMock(9)))
-      eth.getTransactionReceipt('4').returns(Promise.resolve(receiptMock(10))) // Incorrect block number
-
-      const contract = Substitute.for<Contract>()
-      contract.getPastEvents(Arg.all()).returns(Promise.resolve([]))
-
-      const blockTracker = new BlockTracker({})
-      const newBlockEmitter = new EventEmitter()
-      const options: EventsEmitterOptions = { confirmations: 2, blockTracker, newBlockEmitter }
-      const emitterSpy = sinon.spy()
-      const eventsEmitter = new DummyEventsEmitter(eth, contract, ['testEvent'], options)
-      eventsEmitter.on(DATA_EVENT_NAME, emitterSpy)
-
-      // Create events to be confirmed
-      const events = [
-        {
-          event: 'testEvent',
-          blockNumber: 7,
-          transactionHash: '1',
-          logIndex: 1,
-          content: '{"transactionHash": "1", "blockNumber": 7}'
-        },
-        {
-          event: 'testEvent',
-          blockNumber: 8,
-          transactionHash: '2',
-          logIndex: 1,
-          content: '{"transactionHash": "2", "blockNumber": 8}'
-        },
-        {
-          event: 'testEvent',
-          blockNumber: 9,
-          transactionHash: '3',
-          logIndex: 1,
-          content: '{"transactionHash": "3", "blockNumber": 9}'
-        },
-        {
-          event: 'testEvent',
-          blockNumber: 9,
-          transactionHash: '4',
-          logIndex: 1,
-          content: '{"transactionHash": "4", "blockNumber": 9}'
-        },
-        {
-          event: 'testEvent',
-          blockNumber: 10,
-          transactionHash: '5',
-          logIndex: 1,
-          content: '{"transactionHash": "5", "blockNumber": 10}'
-        },
-        {
-          event: 'testEvent',
-          blockNumber: 11,
-          transactionHash: '6',
-          logIndex: 1,
-          content: '{"transactionHash": "6",  "blockNumber": 11}'
-        }
-      ]
-      await Event.bulkCreate(events)
-
-      // Start confirmations process
-      newBlockEmitter.emit(NEW_BLOCK_EVENT, 11)
-      await sleep(500)
-
-      expect(emitterSpy.getCalls().length).to.be.eql(3, 'Expected three events emitted.')
-      expect(await Event.count()).to.eql(2)
+      expect(emitterSpy.callCount).to.be.eql(4, 'Expected four events emitted.')
+      expect(await Event.count({ where: { emitted: true } })).to.eql(4)
     })
 
     it('each emitter should confirm only his events', async function () {
       const eth = Substitute.for<Eth>()
       eth.getBlockNumber().returns(Promise.resolve(10))
-
-      eth.getTransactionReceipt('1').returns(Promise.resolve(receiptMock(7)))
-      eth.getTransactionReceipt('2').returns(Promise.resolve(receiptMock(8)))
-      eth.getTransactionReceipt('3').returns(Promise.resolve(receiptMock(9)))
-      eth.getTransactionReceipt('4').returns(Promise.resolve(receiptMock(10)))
-      eth.getTransactionReceipt('5').returns(Promise.resolve(receiptMock(11)))
 
       const contract = Substitute.for<Contract>()
       contract.getPastEvents(Arg.all()).returns(Promise.resolve([]))
@@ -619,6 +560,7 @@ describe('BaseEventsEmitter', () => {
         }
       ]
       await Event.bulkCreate(events)
+      expect(await Event.count({ where: { emitted: true } })).to.eql(0)
 
       // Start confirmations process
       firstNewBlockEmitter.emit(NEW_BLOCK_EVENT, 13)
@@ -627,13 +569,13 @@ describe('BaseEventsEmitter', () => {
       secondNewBlockEmitter.emit(NEW_BLOCK_EVENT, 13)
       await sleep(500)
 
-      expect(firstEmitterSpy.getCalls().length).to.be.eql(3, 'Expected three firstEvent events emitted.')
+      expect(firstEmitterSpy.callCount).to.be.eql(3, 'Expected three firstEvent events emitted.')
       firstEmitterSpy.getCalls().forEach(call => expect(call.args[0].event).to.eql('firstEvent'))
 
-      expect(secondEmitterSpy.getCalls().length).to.be.eql(2, 'Expected two secondEvent events emitted.')
+      expect(secondEmitterSpy.callCount).to.be.eql(2, 'Expected two secondEvent events emitted.')
       secondEmitterSpy.getCalls().forEach(call => expect(call.args[0].event).to.eql('secondEvent'))
 
-      expect(await Event.count()).to.eql(2)
+      expect(await Event.count({ where: { emitted: true } })).to.eql(5)
     })
   })
 
@@ -660,7 +602,7 @@ describe('BaseEventsEmitter', () => {
       eventsEmitter.on(DATA_EVENT_NAME, spy)
       await sleep(100)
 
-      expect(spy.getCalls().length).to.be.eql(3, 'Expected three events emitted.')
+      expect(spy.callCount).to.be.eql(3, 'Expected three events emitted.')
       eth.received(1).getBlockNumber()
       contract.received(1).getPastEvents(Arg.all())
       expect(blockTracker.getLastProcessedBlock()).to.eql(10)
@@ -690,7 +632,7 @@ describe('BaseEventsEmitter', () => {
       await eventsEmitter.createEvent(events)
       await sleep(100) // In order to processPastEvents() finish
 
-      expect(spy.getCalls().length).to.be.eql(3, 'Expected three events emitted.')
+      expect(spy.callCount).to.be.eql(3, 'Expected three events emitted.')
       expect(blockTracker.getLastProcessedBlock()).to.eql(10)
       contract.received(1).getPastEvents(Arg.all())
       eth.received(2).getBlockNumber()
@@ -725,7 +667,7 @@ describe('PollingEventsEmitter', function () {
 
     contract.received(2).getPastEvents(Arg.all())
     expect(blockTracker.getLastProcessedBlock()).to.eql(12)
-    expect(spy.getCalls().length).to.eql(2, 'Expected two emitted events')
+    expect(spy.callCount).to.eql(2, 'Expected two emitted events')
   })
 
   it('should not emit empty events', async function () {
@@ -754,7 +696,7 @@ describe('PollingEventsEmitter', function () {
 
     contract.received(2).getPastEvents(Arg.all())
     expect(blockTracker.getLastProcessedBlock()).to.eql(12)
-    expect(spy.getCalls().length).to.eql(1)
+    expect(spy.callCount).to.eql(1)
   })
 
   it('should ignore same blocks', async function () {
@@ -782,7 +724,7 @@ describe('PollingEventsEmitter', function () {
 
     contract.received(1).getPastEvents(Arg.all())
     expect(blockTracker.getLastProcessedBlock()).to.eql(11)
-    expect(spy.getCalls().length).to.eql(1, 'Expected only one emitted event')
+    expect(spy.callCount).to.eql(1, 'Expected only one emitted event')
   })
 
   it('should wait for previous processing finished', async function () {

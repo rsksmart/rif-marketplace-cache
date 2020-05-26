@@ -29,6 +29,15 @@ export default class Event extends Model {
 
   @Column(DataType.TEXT)
   content!: string
+
+  @Column({ type: DataType.BOOLEAN, defaultValue: false })
+  emitted!: boolean
+
+  public getConfirmationsCount (currentBlockNumber: number): number {
+    return currentBlockNumber - this.blockNumber
+  }
 }
 
-export type EventInterface = Pick<Event, 'blockNumber' | 'transactionHash' | 'logIndex' | 'event' | 'targetConfirmation' | 'content'>
+export type EventInterface =
+  Pick<Event, 'blockNumber' | 'transactionHash' | 'logIndex' | 'event' | 'targetConfirmation' | 'content'>
+  & { emitted?: boolean }
