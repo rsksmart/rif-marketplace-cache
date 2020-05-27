@@ -1,8 +1,8 @@
 import { Service } from 'feathers-sequelize'
 import config from 'config'
 
-import { Application, CachedService } from '../definitions'
-import { loggingFactory } from '../logger'
+import { Application, CachedService } from '../../definitions'
+import { loggingFactory } from '../../logger'
 import hooks from './rates.hooks'
 import Rate from './rates.model'
 import { updater } from './update'

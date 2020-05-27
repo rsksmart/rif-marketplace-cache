@@ -1,10 +1,10 @@
 import { EventData } from 'web3-eth-contract'
 import { hexToAscii, soliditySha3 } from 'web3-utils'
 
-import { loggingFactory } from '../../logger'
-import { Handler } from '../../definitions'
+import { loggingFactory } from '../../../logger'
+import { Handler } from '../../../definitions'
 import Request from '../models/request.model'
-import { EventError } from '../../errors'
+import { EventError } from '../../../errors'
 import Price from '../models/price.model'
 
 const logger = loggingFactory('storage:handler:request')

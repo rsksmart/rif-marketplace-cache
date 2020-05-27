@@ -1,8 +1,8 @@
 import StorageOffer from '../models/storage-offer.model'
 import Price from '../models/price.model'
 import { EventData } from 'web3-eth-contract'
-import { loggingFactory } from '../../logger'
-import { Handler } from '../../definitions'
+import { loggingFactory } from '../../../logger'
+import { Handler } from '../../../definitions'
 
 const logger = loggingFactory('storage:handler:offer')
 

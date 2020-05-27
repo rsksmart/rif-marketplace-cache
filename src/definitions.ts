@@ -4,9 +4,9 @@ import * as Parser from '@oclif/parser'
 import { EventData } from 'web3-eth-contract'
 import { Eth } from 'web3-eth'
 
-import { StorageOfferService } from './storage'
-import { RatesService } from './rates'
-import { RnsService } from './rns'
+import { StorageOfferService } from './services/storage'
+import { RatesService } from './services/rates'
+import { RnsService } from './services/rns'
 import ConfirmationService from './blockchain/confirmation.service'
 
 // A mapping of service names to types. Will be extended in service files.

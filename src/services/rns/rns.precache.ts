@@ -2,7 +2,7 @@ import { Eth } from 'web3-eth'
 import config from 'config'
 import Utils from 'web3-utils'
 import abiDecoder from 'abi-decoder'
-import { Logger } from '../definitions'
+import { Logger } from '../../definitions'
 
 import Domain from './models/domain.model'
 

@@ -7,8 +7,8 @@ import { EventData } from 'web3-eth-contract'
 
 import Utils from 'web3-utils'
 import { Eth } from 'web3-eth'
-import { getBlockDate } from '../blockchain/utils'
-import { Logger } from '../definitions'
+import { getBlockDate } from '../../blockchain/utils'
+import { Logger } from '../../definitions'
 
 async function transferHandler (logger: Logger, eventData: EventData): Promise<void> {
   // Transfer(address indexed from, address indexed to, uint256 indexed tokenId)
