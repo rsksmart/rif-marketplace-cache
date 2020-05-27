@@ -24,7 +24,7 @@ export default class ConfirmationService implements Partial<ServiceMethods<any>>
 
   constructor (eth: Eth, newBlockEmitterOptions?: NewBlockEmitterOptions | EventEmitter) {
     this.eth = eth
-    this.events = [NEW_CONFIRMATION_EVENT_NAME]
+    this.events = [NEW_CONFIRMATION_EVENT_NAME, INVALID_CONFIRMATION_EVENT_NAME]
 
     if (newBlockEmitterOptions) {
       if (newBlockEmitterOptions instanceof EventEmitter) {
