@@ -259,8 +259,14 @@ $ rif-marketplace-cache db-sync
 // Connection to your blockchain provider
 $ export RIFM_PROVIDER=ws://localhost:8545
 
+// Prefetch all the data from the network
+$ rif-marketplace-cache precache all
+
 // Start the server
-$ rif-marketplace-cache start
+$ rif-marketplace-cache start --port 8000
+
+// Start the server listening for testnet configuration
+$ NODE_ENV=rsktestnet rif-marketplace-cache start --port 8000
 ```
 
 For some more details on how to deploy this server please see [Deployment guide](./DEPLOYMENT.md).
@@ -308,6 +314,7 @@ DESCRIPTION
   Currently supported services:
     - all
     - storage
+    - rns
     - rates
 
 EXAMPLES
@@ -334,6 +341,7 @@ DESCRIPTION
   Currently supported services:
     - all
     - storage
+    - rns
     - rates
 
 EXAMPLES
@@ -363,6 +371,8 @@ OPTIONS
 DESCRIPTION
   Currently supported services:
     - storage
+    - rns
+    - rates
 
 EXAMPLE
   $ rif-marketplace-cache start --disable service1 --disable service2 --enable service3
