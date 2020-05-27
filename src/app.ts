@@ -13,9 +13,9 @@ import sequelize from './sequelize'
 import blockchain from './blockchain'
 import { configureStore } from './store'
 
-import storage from './storage'
-import rates from './rates'
-import rns from './rns'
+import storage from './services/storage'
+import rates from './services/rates'
+import rns from './services/rns'
 
 const logger = loggingFactory()
 

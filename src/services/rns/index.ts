@@ -5,10 +5,10 @@ import config from 'config'
 import { EventData } from 'web3-eth-contract'
 import { getObject } from 'sequelize-store'
 
-import { Application, CachedService } from '../definitions'
-import { loggingFactory } from '../logger'
-import { ethFactory } from '../blockchain'
-import { getEventsEmitterForService, isServiceInitialized } from '../blockchain/utils'
+import { Application, CachedService } from '../../definitions'
+import { loggingFactory } from '../../logger'
+import { ethFactory } from '../../blockchain'
+import { getEventsEmitterForService, isServiceInitialized } from '../../blockchain/utils'
 
 import eventProcessor from './rns.processor'
 import Domain from './models/domain.model'
@@ -23,7 +23,7 @@ import rnsContractAbi from '@rsksmart/rns-rskregistrar/RSKOwnerData.json'
 import rnsReverseContractAbi from '@rsksmart/rns-reverse/NameResolverData.json'
 import auctionRegistrarContractAbi from '@rsksmart/rns-auction-registrar/TokenRegistrarData.json'
 import simplePlacementsContractAbi from '@rsksmart/rif-marketplace-nfts/ERC721SimplePlacementsABI.json'
-import { errorHandler, waitForReadyApp } from '../utils'
+import { errorHandler, waitForReadyApp } from '../../utils'
 
 import { processRskOwner, processAuctionRegistrar } from './rns.precache'
 
