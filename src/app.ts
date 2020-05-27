@@ -11,6 +11,7 @@ import { Application } from './definitions'
 import { loggingFactory } from './logger'
 import sequelize from './sequelize'
 import blockchain from './blockchain'
+import healthcheck from './healthcheck'
 import { configureStore } from './store'
 
 import storage from './services/storage'
@@ -55,6 +56,7 @@ export function appFactory (): Application {
   app.configure(sequelize)
   app.configure(blockchain)
   app.configure(configureStore)
+  app.configure(healthcheck)
 
   /**********************************************************/
   // Configure each services

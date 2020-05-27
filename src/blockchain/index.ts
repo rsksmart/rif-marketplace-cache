@@ -3,9 +3,14 @@ import config from 'config'
 
 import ConfirmationService from './confirmation.service'
 import { Application } from '../definitions'
+import { loggingFactory } from '../logger'
+
+const logger = loggingFactory('blockchain')
 
 export function ethFactory (): Eth {
   const provider = Eth.givenProvider || config.get('blockchain.provider')
+  logger.info(`Connecting to provider ${provider}`)
+
   return new Eth(provider)
 }
 
