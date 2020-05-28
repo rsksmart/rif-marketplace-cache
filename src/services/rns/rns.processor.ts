@@ -1,20 +1,20 @@
-import Domain from './models/domain.model'
-import SoldDomain from './models/sold-domain.model'
-import Transfer from './models/transfer.model'
-import DomainOffer from './models/domain-offer.model'
-
-import { EventData } from 'web3-eth-contract'
-
-import Utils from 'web3-utils'
+import config from 'config'
 import { Eth } from 'web3-eth'
+import { EventData } from 'web3-eth-contract'
+import Utils from 'web3-utils'
+import { RnsServices } from '.'
 import { getBlockDate } from '../../blockchain/utils'
 import { Logger } from '../../definitions'
+import DomainOffer from './models/domain-offer.model'
+import Domain from './models/domain.model'
 import DomainExpiration from './models/expiration.model'
-import config from 'config'
 import DomainOwner from './models/owner.model'
+import SoldDomain from './models/sold-domain.model'
+import Transfer from './models/transfer.model'
 
-async function transferHandler(logger: Logger, eventData: EventData): Promise<void> {
+async function transferHandler(logger: Logger, eventData: EventData, _: Eth, services: RnsServices): Promise<void> {
   // Transfer(address indexed from, address indexed to, uint256 indexed tokenId)
+  const domainsService = services.domains
 
   const tokenId = Utils.numberToHex(eventData.returnValues.tokenId)
   const ownerAddress = eventData.returnValues.to.toLowerCase()
@@ -55,8 +55,10 @@ async function transferHandler(logger: Logger, eventData: EventData): Promise<vo
   }
 }
 
-async function expirationChangedHandler(logger: Logger, eventData: EventData): Promise<void> {
+async function expirationChangedHandler(logger: Logger, eventData: EventData, _: Eth, services: RnsServices): Promise<void> {
   // event ExpirationChanged(uint256 tokenId, uint expirationTime);
+
+  const domainsService = services.domains
 
   const tokenId = Utils.numberToHex(eventData.returnValues.tokenId)
   let normalizedTimestamp = eventData.returnValues.expirationTime as string
@@ -82,8 +84,10 @@ async function expirationChangedHandler(logger: Logger, eventData: EventData): P
   }
 }
 
-async function nameChangedHandler(logger: Logger, eventData: EventData): Promise<void> {
+async function nameChangedHandler(logger: Logger, eventData: EventData, _: Eth, services: RnsServices): Promise<void> {
   const name = eventData.returnValues.name
+
+  const domainsService = services.domains
 
   const label = name.substring(0, name.indexOf('.'))
   const tokenId = Utils.numberToHex(Utils.sha3(label) as string)
@@ -100,9 +104,10 @@ async function nameChangedHandler(logger: Logger, eventData: EventData): Promise
   }
 }
 
-async function tokenPlacedHandler(logger: Logger, eventData: EventData, eth: Eth): Promise<void> {
+async function tokenPlacedHandler(logger: Logger, eventData: EventData, eth: Eth, services: RnsServices): Promise<void> {
   // event TokenPlaced(uint256 indexed tokenId, address indexed paymentToken, uint256 cost);
 
+  const offersService = services.offers
   const transactionHash = eventData.transactionHash
   const tokenId = Utils.numberToHex(eventData.returnValues.tokenId)
   const paymentToken = eventData.returnValues.paymentToken
@@ -122,7 +127,7 @@ async function tokenPlacedHandler(logger: Logger, eventData: EventData, eth: Eth
     logger.info(`TokenPlaced event: ${tokenId} no previous placement`)
   }
 
-  const domainOffer = new DomainOffer({
+  offersService.create({
     offerId: transactionHash,
     sellerAddress: owner.address,
     tokenId: tokenId,
@@ -130,13 +135,13 @@ async function tokenPlacedHandler(logger: Logger, eventData: EventData, eth: Eth
     price: cost,
     creationDate: await getBlockDate(eth, eventData.blockNumber)
   })
-  await domainOffer.save()
 
   logger.info(`TokenPlaced event: ${tokenId} created`)
 }
 
-async function tokenUnplacedHandler(logger: Logger, eventData: EventData): Promise<void> {
+async function tokenUnplacedHandler(logger: Logger, eventData: EventData, eth: Eth, services: RnsServices): Promise<void> {
   // event TokenUnplaced(uint256 indexed tokenId);
+  const offersService = services.offers
 
   const tokenId = Utils.numberToHex(eventData.returnValues.tokenId)
 
@@ -150,8 +155,9 @@ async function tokenUnplacedHandler(logger: Logger, eventData: EventData): Promi
   }
 }
 
-async function tokenSoldHandler(logger: Logger, eventData: EventData, eth: Eth): Promise<void> {
+async function tokenSoldHandler(logger: Logger, eventData: EventData, eth: Eth, services: RnsServices): Promise<void> {
   // event TokenSold(uint256 indexed tokenId);
+  const soldService = services.sold
 
   const transactionHash = eventData.transactionHash
   const tokenId = Utils.numberToHex(eventData.returnValues.tokenId)
@@ -190,11 +196,11 @@ function isValidEvent(value: string): value is keyof typeof commands {
   return value in commands
 }
 
-export default function rnsProcessorFactory(logger: Logger, eth: Eth) {
+export default function rnsProcessorFactory(logger: Logger, eth: Eth, services: RnsServices) {
   return async function (eventData: EventData): Promise<void> {
     if (isValidEvent(eventData.event)) {
       logger.info(`Processing event ${eventData.event}`)
-      await commands[eventData.event](logger, eventData, eth)
+      await commands[eventData.event](logger, eventData, eth, services)
     } else {
       logger.error(`Unknown event ${eventData.event}`)
     }

@@ -22,10 +22,10 @@ export default {
     ],
     find: [],
     get: [],
-    create: disallow(),
-    update: disallow(),
-    patch: disallow(),
-    remove: disallow()
+    create: disallow('external'),
+    update: disallow('external'),
+    patch: disallow('external'),
+    remove: disallow('external')
   },
 
   after: {

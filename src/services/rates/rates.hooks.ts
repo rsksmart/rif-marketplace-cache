@@ -11,11 +11,11 @@ export default {
       }
     ],
     find: [],
-    get: disallow(),
-    create: disallow(),
-    update: disallow(),
-    patch: disallow(),
-    remove: disallow()
+    get: disallow('external'),
+    create: disallow('external'),
+    update: disallow('external'),
+    patch: disallow('external'),
+    remove: disallow('external')
   },
 
   after: {

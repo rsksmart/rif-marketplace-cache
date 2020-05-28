@@ -1,8 +1,9 @@
-import { Service } from 'feathers-sequelize'
-import Eth from 'web3-eth'
-import { AbiItem } from 'web3-utils'
+import simplePlacementsContractAbi from '@rsksmart/rif-marketplace-nfts/ERC721SimplePlacementsABI.json'
+import auctionRegistrarContractAbi from '@rsksmart/rns-auction-registrar/TokenRegistrarData.json'
+import rnsReverseContractAbi from '@rsksmart/rns-reverse/NameResolverData.json'
+import rnsContractAbi from '@rsksmart/rns-rskregistrar/RSKOwnerData.json'
 import config from 'config'
-import { EventData } from 'web3-eth-contract'
+import { Service } from 'feathers-sequelize'
 import { getObject } from 'sequelize-store'
 
 import { Application, CachedService, ServiceAddresses } from '../../definitions'
@@ -19,20 +20,25 @@ import domainHooks from './hooks/domain.hooks'
 import domainOfferHooks from './hooks/domain-offer.hooks'
 import soldDomainHooks from './hooks/sold-domain.hooks'
 
-import rnsContractAbi from '@rsksmart/rns-rskregistrar/RSKOwnerData.json'
-import rnsReverseContractAbi from '@rsksmart/rns-reverse/NameResolverData.json'
-import auctionRegistrarContractAbi from '@rsksmart/rns-auction-registrar/TokenRegistrarData.json'
-import simplePlacementsContractAbi from '@rsksmart/rif-marketplace-nfts/ERC721SimplePlacementsABI.json'
 import { errorHandler, waitForReadyApp } from '../../utils'
 
 import { processRskOwner, processAuctionRegistrar } from './rns.precache'
+import rnsChannels from './rns.channels'
+import Eth from 'web3-eth'
+import { AbiItem } from 'web3-utils'
+import { EventData } from 'web3-eth-contract'
 
 const logger = loggingFactory('rns')
 
 export class RnsService extends Service {
 }
+export interface RnsServices {
+  domains: RnsService
+  sold: RnsService
+  offers: RnsService
+}
 
-function fetchEventsForService (eth: Eth, serviceName: string, abi: AbiItem[], dataPusher: (event: EventData) => void): Promise<void> {
+function fetchEventsForService(eth: Eth, serviceName: string, abi: AbiItem[], dataPusher: (event: EventData) => void): Promise<void> {
   return new Promise<void>((resolve, reject) => {
     const eventsEmitter = getEventsEmitterForService(serviceName, eth, abi)
     eventsEmitter.on('initFinished', () => {
@@ -47,7 +53,7 @@ function fetchEventsForService (eth: Eth, serviceName: string, abi: AbiItem[], d
   })
 }
 
-async function precache (eth?: Eth): Promise<void> {
+async function precache(eth?: Eth): Promise<void> {
   eth = eth || ethFactory()
   const precacheLogger = loggingFactory('rns:precache:processor')
   const eventsDataQueue: EventData[] = []
@@ -71,14 +77,20 @@ async function precache (eth?: Eth): Promise<void> {
     return a.logIndex - b.logIndex
   })
 
+  const sequelizeServices = {
+    domains: new RnsService({ Model: Domain }),
+    sold: new RnsService({ Model: SoldDomain }),
+    offers: new RnsService({ Model: DomainOffer, multi: true })
+  }
+
   for (const event of eventsDataQueue) {
-    await eventProcessor(precacheLogger, eth)(event)
+    await eventProcessor(precacheLogger, eth, sequelizeServices)(event)
   }
 }
 
 const rns: CachedService = {
   // eslint-disable-next-line require-await
-  async initialize (app: Application): Promise<void> {
+  async initialize(app: Application): Promise<void> {
     if (!config.get<boolean>('rns.enabled')) {
       logger.info('RNS service: disabled')
       return Promise.resolve()
@@ -92,9 +104,15 @@ const rns: CachedService = {
     app.use(ServiceAddresses.RNS_SOLD, new RnsService({ Model: SoldDomain }))
     app.use(ServiceAddresses.RNS_OFFERS, new RnsService({ Model: DomainOffer }))
 
-    app.service(ServiceAddresses.RNS_DOMAINS).hooks(domainHooks)
-    app.service(ServiceAddresses.RNS_SOLD).hooks(soldDomainHooks)
-    app.service(ServiceAddresses.RNS_OFFERS).hooks(domainOfferHooks)
+    const domains = app.service(ServiceAddresses.RNS_DOMAINS)
+    const sold = app.service(ServiceAddresses.RNS_SOLD)
+    const offers = app.service(ServiceAddresses.RNS_OFFERS)
+
+    domains.hooks(domainHooks)
+    sold.hooks(soldDomainHooks)
+    offers.hooks(domainOfferHooks)
+
+    app.configure(rnsChannels);
 
     // Initialize blockchain watcher
     const eth = app.get('eth') as Eth
@@ -103,21 +121,21 @@ const rns: CachedService = {
     if (!isServiceInitialized('rns.owner')) {
       return logger.critical('RNS service is not initialized! Run precache command.')
     }
-
+    const services = { domains, sold, offers }
     const rnsEventsEmitter = getEventsEmitterForService('rns.owner', eth, rnsContractAbi.abi as AbiItem[])
-    rnsEventsEmitter.on('newEvent', errorHandler(eventProcessor(loggingFactory('rns.owner:processor'), eth), logger))
+    rnsEventsEmitter.on('newEvent', errorHandler(eventProcessor(loggingFactory('rns.owner:processor'), eth, services), logger))
     rnsEventsEmitter.on('error', (e: Error) => {
       logger.error(`There was unknown error in Events Emitter for rns.owner! ${e}`)
     })
 
     const rnsReverseEventsEmitter = getEventsEmitterForService('rns.reverse', eth, rnsReverseContractAbi.abi as AbiItem[])
-    rnsReverseEventsEmitter.on('newEvent', errorHandler(eventProcessor(loggingFactory('rns.reverse:processor'), eth), logger))
+    rnsReverseEventsEmitter.on('newEvent', errorHandler(eventProcessor(loggingFactory('rns.reverse:processor'), eth, services), logger))
     rnsReverseEventsEmitter.on('error', (e: Error) => {
       logger.error(`There was unknown error in Events Emitter for rns.reverse! ${e}`)
     })
 
     const rnsPlacementsEventsEmitter = getEventsEmitterForService('rns.placement', eth, simplePlacementsContractAbi as AbiItem[])
-    rnsPlacementsEventsEmitter.on('newEvent', errorHandler(eventProcessor(loggingFactory('rns.placement:processor'), eth), logger))
+    rnsPlacementsEventsEmitter.on('newEvent', errorHandler(eventProcessor(loggingFactory('rns.placement:processor'), eth, services), logger))
     rnsPlacementsEventsEmitter.on('error', (e: Error) => {
       logger.error(`There was unknown error in Events Emitter for rns.placement! ${e}`)
     })
@@ -127,7 +145,7 @@ const rns: CachedService = {
 
   precache,
 
-  async purge (): Promise<void> {
+  async purge(): Promise<void> {
     const transferCount = await Transfer.destroy({ where: {}, truncate: true, cascade: true })
     const offersCount = await DomainOffer.destroy({ where: {}, truncate: true, cascade: true })
     const soldCount = await SoldDomain.destroy({ where: {}, truncate: true, cascade: true })
