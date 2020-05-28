@@ -1,7 +1,6 @@
 // For full syntax see /src/types.ts::Config interface
 
 {
-  port: null,
   db: 'sqlite:db.sqlite',
 
   // CORS setting, please consult https://expressjs.com/en/resources/middleware/cors.html for more details
