@@ -13,8 +13,6 @@ import SoldDomain from './models/sold-domain.model'
 import Transfer from './models/transfer.model'
 
 async function transferHandler(logger: Logger, eventData: EventData, _: Eth, services: RnsServices): Promise<void> {
-  // Transfer(address indexed from, address indexed to, uint256 indexed tokenId)
-  const domainsService = services.domains
 
   const tokenId = Utils.numberToHex(eventData.returnValues.tokenId)
   const ownerAddress = eventData.returnValues.to.toLowerCase()
@@ -67,6 +65,7 @@ async function expirationChangedHandler(logger: Logger, eventData: EventData, _:
   if (normalizedTimestamp.startsWith('10000')) {
     normalizedTimestamp = eventData.returnValues.expirationTime.slice(5)
   }
+
   const expirationDate = parseInt(normalizedTimestamp) * 1000
 
   const currentExpiration = await DomainExpiration.findByPk(tokenId)
