@@ -108,7 +108,7 @@ ${formattedServices}`
       await this.purge()
     }
 
-    const app = appFactory()
+    const app = await appFactory()
     const port = config.get('port')
     const server = app.listen(port)
 

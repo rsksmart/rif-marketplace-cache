@@ -74,14 +74,9 @@ const storage: CachedService = {
     // Initialize blockchain watcher
     const eth = app.get('eth') as Eth
 
+    // We require services to be precached before running server
     if (!isServiceInitialized(SERVICE_NAME)) {
-      logger.info('Precaching Storage service')
-      try {
-        await precache(eth)
-        logger.info('Precaching Storage service finished')
-      } catch (e) {
-        logger.error(`There was an error while precaching for Storage service! ${e}`)
-      }
+      logger.critical('Storage service is not initialized! Rune precache command.')
     }
 
     const eventsEmitter = getEventsEmitterForService(SERVICE_NAME, eth, storageManagerContract.abi as AbiItem[])

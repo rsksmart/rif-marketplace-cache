@@ -37,7 +37,7 @@ export function isSupportedServices (value: any): value is SupportedServices {
   return Object.values(SupportedServices).includes(value)
 }
 
-export function appFactory (): Application {
+export async function appFactory (): Promise<Application> {
   const app: Application = express(feathers())
 
   const corsOptions: CorsOptionsDelegate = config.get('cors')
@@ -62,13 +62,17 @@ export function appFactory (): Application {
   /**********************************************************/
   // Configure each services
 
+  const servicePromises: Promise<void>[] = []
   for (const service of Object.values(services)) {
-    app.configure(errorHandler(service.initialize, logger))
+    app.configure((app) => servicePromises.push(errorHandler(service.initialize, logger)(app)))
   }
 
+  // Wait for services to initialize
+  await Promise.all(servicePromises)
+
   // Configure a middleware for 404s and the error handler
-  // app.use(express.notFound())
-  // app.use(express.errorHandler({ logger }))
+  app.use(express.notFound())
+  app.use(express.errorHandler({ logger }))
 
   return app
 }

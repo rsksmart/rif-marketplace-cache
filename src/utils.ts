@@ -51,9 +51,9 @@ export function validateServices (args: string[]): SupportedServices[] {
   return args as SupportedServices[]
 }
 
-export function errorHandler (fn: (...args: any[]) => Promise<void>, logger: Logger): (...args: any[]) => void {
-  return (...args): void => {
-    fn(...args).catch(err => logger.error(err))
+export function errorHandler (fn: (...args: any[]) => Promise<void>, logger: Logger): (...args: any[]) => Promise<void> {
+  return (...args) => {
+    return fn(...args).catch(err => logger.error(err))
   }
 }
 
