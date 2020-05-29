@@ -86,9 +86,21 @@ const upperCaseLevel = format(info => {
   return info
 })
 
+type SupportedLevels = 'critical' | 'error' | 'warn' | 'info' | 'verbose' | 'debug'
+
+const supportedLevels: Record<SupportedLevels, number> = {
+  critical: 0,
+  error: 1,
+  warn: 2,
+  info: 3,
+  verbose: 4,
+  debug: 5
+}
+
 addColors({
   debug: 'grey',
-  info: 'blue'
+  info: 'blue',
+  critical: 'white redBG'
 })
 
 let mainLogger: RealLogger
@@ -112,8 +124,8 @@ function initLogging (): void {
   mainLogger = createLogger({
     // To see more detailed errors, change this to 'debug'
     level: config.get('log.level') || 'info',
+    levels: supportedLevels,
     format: format.combine(
-      // format.splat(),
       format.metadata(),
       filterServices(),
       upperCaseLevel(),
@@ -132,7 +144,7 @@ function initLogging (): void {
         }
 
         if (Object.keys(rest).length > 0) {
-          message += '\n' + Object.values(rest).map(e => inspect(e, false, 2, true)).join('\n')
+          message += '\n' + inspect(rest, false, 2, true)
         }
 
         return message
@@ -141,8 +153,6 @@ function initLogging (): void {
     transports: transportsSet
   })
 }
-
-type SupportedLevels = 'error' | 'warn' | 'info' | 'verbose' | 'debug'
 
 function delayedLoggingMethod (level: SupportedLevels, name?: string) {
   return function (message: string, ...meta: any[]): void {
@@ -163,8 +173,16 @@ function delayedLoggingMethod (level: SupportedLevels, name?: string) {
   }
 }
 
+function exitAfterProcessingClosure (fn: any): () => never {
+  return (...args: any[]) => {
+    fn(...args)
+    process.exit(1)
+  }
+}
+
 export function loggingFactory (name?: string): Logger {
   return {
+    critical: exitAfterProcessingClosure(delayedLoggingMethod('critical', name)),
     error: delayedLoggingMethod('error', name),
     warn: delayedLoggingMethod('warn', name),
     info: delayedLoggingMethod('info', name),
