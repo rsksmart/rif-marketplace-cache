@@ -46,9 +46,7 @@ The easiest way is to mount the config directly into the Docker container.
 $ git clone https://github.com/rsksmart/rif-marketplace-cache.git
 $ cd ./rif-marketplace-cache
 $ docker build -t rif-marketplace-cache .
-$ docker run -v <path-to-the-config>:/srv/app/config/local.json5 -id rif-marketplace-cache db-sync
-$ docker run -v <path-to-the-config>:/srv/app/config/local.json5 -id rif-marketplace-cache precache rns rates
-$ docker run -v <path-to-the-config>:/srv/app/config/local.json5 -id rif-marketplace-cache start # Will start the server
+$ docker run -v <path-to-the-config>:/srv/app/config/local.json5 -id rif-marketplace-cache --config local
 ```
 
 ## UNIX environment
