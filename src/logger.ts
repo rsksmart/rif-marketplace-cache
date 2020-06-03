@@ -126,10 +126,10 @@ function initLogging (): void {
     level: config.get('log.level') || 'info',
     levels: supportedLevels,
     format: format.combine(
+      format.errors({ stack: true }),
       format.metadata(),
       filterServices(),
       upperCaseLevel(),
-      format.errors({ stack: true }),
       // format.padLevels(),
       format.timestamp({ format: 'DD/MM hh:mm:ss' }),
       format.colorize(),
