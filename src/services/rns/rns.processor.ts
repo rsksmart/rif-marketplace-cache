@@ -9,6 +9,8 @@ import Utils from 'web3-utils'
 import { Eth } from 'web3-eth'
 import { getBlockDate } from '../../blockchain/utils'
 import { Logger } from '../../definitions'
+import DomainExpiration from './models/expiration.model'
+import config from 'config'
 
 async function transferHandler (logger: Logger, eventData: EventData): Promise<void> {
   // Transfer(address indexed from, address indexed to, uint256 indexed tokenId)
@@ -16,47 +18,39 @@ async function transferHandler (logger: Logger, eventData: EventData): Promise<v
   const tokenId = Utils.numberToHex(eventData.returnValues.tokenId)
   const ownerAddress = eventData.returnValues.to.toLowerCase()
 
-  const [domain, created] = await Domain.findCreateFind({ where: { tokenId }, defaults: { ownerAddress } })
+  const fiftsAddr = config.get('rns.fifsAddrReg.contractAddress')
 
-  if (eventData.returnValues.from !== '0x0000000000000000000000000000000000000000') {
-    // if not exist then create (1 insert), Domain.findCreateFind
-    // else create a SoldDomain and update with the new owner the registry (1 insert + update)
-    if (created) {
-      logger.info(`Transfer event: Domain ${tokenId} created`)
-    } else {
-      logger.info(`Transfer event: Domain ${tokenId} updated`)
-      const transactionHash = eventData.transactionHash
-      const from = eventData.returnValues.from.toLowerCase()
+  if ((fiftsAddr as string).toLowerCase() === ownerAddress) {
+    return
+  }
 
-      const transferDomain = await Transfer.create({
-        id: transactionHash,
-        tokenId,
-        sellerAddress: from,
-        newOwnerAddress: ownerAddress
-      })
+  const transactionHash = eventData.transactionHash
+  const from = eventData.returnValues.from.toLowerCase()
 
-      if (transferDomain) {
-        logger.info(`Transfer event: Transfer ${tokenId} created`)
-      }
-      const [affectedRows] = await Domain.update({ ownerAddress }, { where: { tokenId } })
+  const transferDomain = await Transfer.create({
+    id: transactionHash,
+    tokenId,
+    sellerAddress: from,
+    newOwnerAddress: ownerAddress
+  })
 
-      if (affectedRows) {
-        logger.info(`Transfer event: Updated Domain ${domain.name} -> ${tokenId}`)
-      } else {
-        logger.info(`Transfer event: no Domain ${domain.name} updated`)
-      }
-    }
+  if (transferDomain) {
+    logger.info(`Transfer event: Transfer ${tokenId} created`)
+  }
+  const domain = await Domain.findByPk(tokenId)
+
+  if (domain) {
+    await Domain.update({ ownerAddress }, { where: { tokenId } })
+    logger.info(`Transfer event: Updated Domain ${tokenId} for owner ${ownerAddress}`)
   } else {
-    if (domain.ownerAddress == null) {
-      domain.ownerAddress = ownerAddress
-      await domain.save()
-      logger.info(`Transfer event: ${tokenId} ownership updated`)
-    }
+    await Domain.create({ tokenId, ownerAddress })
+    logger.info(`Transfer event: Created Domain ${tokenId} for owner ${ownerAddress}`)
   }
 }
 
 async function expirationChangedHandler (logger: Logger, eventData: EventData): Promise<void> {
   // event ExpirationChanged(uint256 tokenId, uint expirationTime);
+  const transactionHash = eventData.transactionHash
 
   const tokenId = Utils.numberToHex(eventData.returnValues.tokenId)
   let normalizedTimestamp = eventData.returnValues.expirationTime as string
@@ -66,9 +60,20 @@ async function expirationChangedHandler (logger: Logger, eventData: EventData): 
     normalizedTimestamp = eventData.returnValues.expirationTime.slice(5)
   }
   const expirationDate = parseInt(normalizedTimestamp) * 1000
-  await Domain.upsert({ tokenId, expirationDate })
 
-  logger.info(`ExpirationChange event: Domain ${tokenId} updated`)
+  const currentRecord = await DomainExpiration.findOne({ where: { tokenId } })
+
+  if (currentRecord) {
+    await DomainExpiration.update({ expirationDate }, { where: { tokenId } })
+    logger.info(`ExpirationChange event: DomainExpiration for token ${tokenId} updated`)
+  } else {
+    await DomainExpiration.create({
+      id: transactionHash,
+      tokenId,
+      expirationDate
+    })
+    logger.info(`ExpirationChange event: DomainExpiration for token ${tokenId} created`)
+  }
 }
 
 async function nameChangedHandler (logger: Logger, eventData: EventData): Promise<void> {
@@ -100,12 +105,10 @@ async function tokenPlacedHandler (logger: Logger, eventData: EventData, eth: Et
     throw new Error(`Domain with token ID ${tokenId} not found!`)
   }
 
-  const [affectedRows] = await DomainOffer.update({
-    status: 'CANCELED'
-  }, { where: { tokenId: tokenId, status: 'ACTIVE' } })
+  const deletedOffersCnt = await DomainOffer.destroy({ where: { tokenId } })
 
-  if (affectedRows) {
-    logger.info(`TokenPlaced event: ${tokenId} previous placement cancelled`)
+  if (deletedOffersCnt) {
+    logger.info(`TokenPlaced event: ${tokenId} previous placement removed`)
   } else {
     logger.info(`TokenPlaced event: ${tokenId} no previous placement`)
   }
@@ -116,8 +119,7 @@ async function tokenPlacedHandler (logger: Logger, eventData: EventData, eth: Et
     tokenId: tokenId,
     paymentToken: paymentToken,
     price: cost,
-    creationDate: await getBlockDate(eth, eventData.blockNumber),
-    status: 'ACTIVE'
+    creationDate: await getBlockDate(eth, eventData.blockNumber)
   })
   await domainOffer.save()
 
@@ -129,14 +131,13 @@ async function tokenUnplacedHandler (logger: Logger, eventData: EventData): Prom
 
   const tokenId = Utils.numberToHex(eventData.returnValues.tokenId)
 
-  const [affectedRows] = await DomainOffer.update({
-    status: 'CANCELED'
-  }, { where: { tokenId: tokenId, status: 'ACTIVE' } })
+  const storedOffer = await DomainOffer.findOne({ where: { tokenId } })
 
-  if (affectedRows) {
-    logger.info(`TokenUnplaced event: ${tokenId} updated`)
+  if (storedOffer) {
+    storedOffer.destroy()
+    logger.info(`TokenUnplaced event: ${tokenId} removed from offers`)
   } else {
-    logger.info(`TokenUnplaced event: ${tokenId} not updated`)
+    logger.info(`TokenUnplaced event: ${tokenId} not found in offers`)
   }
 }
 
@@ -146,22 +147,20 @@ async function tokenSoldHandler (logger: Logger, eventData: EventData, eth: Eth)
   const transactionHash = eventData.transactionHash
   const tokenId = Utils.numberToHex(eventData.returnValues.tokenId)
 
-  const lastOffer = await DomainOffer.findOne({ where: { tokenId: tokenId, status: 'ACTIVE' } })
+  const domainOffer = await DomainOffer.findOne({ where: { tokenId } })
 
-  if (lastOffer) {
+  if (domainOffer) {
     logger.info(`Found last offer for ${tokenId}`)
-    lastOffer.status = 'SOLD'
-    lastOffer.save()
-
     const soldDomain = await SoldDomain.create({
       id: transactionHash,
       tokenId: tokenId,
-      price: lastOffer.price,
-      paymentToken: lastOffer.paymentToken,
+      price: domainOffer.price,
+      paymentToken: domainOffer.paymentToken,
       soldDate: await getBlockDate(eth, eventData.blockNumber)
     })
 
     if (soldDomain) {
+      domainOffer.destroy()
       logger.info(`TokenSold event: ${tokenId}`)
     } else {
       logger.info(`TokenSold event: ${tokenId} not updated`)

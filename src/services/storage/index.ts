@@ -1,24 +1,21 @@
-import { Service } from 'feathers-sequelize'
-import Eth from 'web3-eth'
-import { AbiItem } from 'web3-utils'
+import storageManagerContract from '@rsksmart/rif-marketplace-storage/build/contracts/StorageManager.json'
 import config from 'config'
-import { EventData } from 'web3-eth-contract'
+import { Service } from 'feathers-sequelize'
 import { getObject } from 'sequelize-store'
-
+import Eth from 'web3-eth'
+import { EventData } from 'web3-eth-contract'
+import { AbiItem } from 'web3-utils'
 import { ethFactory } from '../../blockchain'
-import { errorHandler, waitForReadyApp } from '../../utils'
-import { Application, CachedService } from '../../definitions'
-import { loggingFactory } from '../../logger'
 import { getEventsEmitterForService, isServiceInitialized } from '../../blockchain/utils'
-
-import BillingPlan from './models/price.model'
-import Offer from './models/offer.model'
+import { Application, CachedService, ServiceAddresses } from '../../definitions'
+import { loggingFactory } from '../../logger'
+import { errorHandler, waitForReadyApp } from '../../utils'
+import StorageOffer from '../storage/models/offer.model'
 import Agreement from './models/agreement.model'
-
+import Offer from './models/offer.model'
+import BillingPlan from './models/price.model'
 import hooks from './storage.hooks'
 import eventProcessor from './storage.processor'
-
-import storageManagerContract from '@rsksmart/rif-marketplace-storage/build/contracts/StorageManager.json'
 
 export class OfferService extends Service {
 }
@@ -67,8 +64,8 @@ const storage: CachedService = {
     await waitForReadyApp(app)
 
     // Initialize feather's service
-    app.use('/storage/v0/offers', new OfferService({ Model: Offer }))
-    const service = app.service('/storage/v0/offers')
+    app.use(ServiceAddresses.STORAGE_OFFERS, new OfferService({ Model: StorageOffer }))
+    const service = app.service(ServiceAddresses.STORAGE_OFFERS)
     service.hooks(hooks)
 
     // Initialize blockchain watcher

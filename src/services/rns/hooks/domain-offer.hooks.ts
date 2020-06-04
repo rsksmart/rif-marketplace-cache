@@ -4,6 +4,7 @@ import { disallow } from 'feathers-hooks-common'
 import Domain from '../models/domain.model'
 import { Op } from 'sequelize'
 import { sha3, numberToHex } from 'web3-utils'
+import DomainExpiration from '../models/expiration.model'
 
 export default {
   before: {
@@ -12,14 +13,18 @@ export default {
         context.params.sequelize = {
           raw: false,
           nest: true,
-          include: [Domain]
+          include: {
+            model: Domain,
+            include: {
+              model: DomainExpiration,
+              attributes: ['expirationDate']
+            }
+          }
         }
 
         if (!context.params.query) {
           context.params.query = {}
         }
-
-        context.params.query.status = 'ACTIVE'
       }
     ],
     find: [
@@ -28,7 +33,11 @@ export default {
           raw: false,
           nest: true,
           include: {
-            model: Domain
+            model: Domain,
+            include: {
+              model: DomainExpiration,
+              attributes: ['expirationDate']
+            }
           }
         }
         const { params: { sequelize: { include } } } = context

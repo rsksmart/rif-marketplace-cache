@@ -1,14 +1,20 @@
-import { Table, DataType, Column, Model, Scopes, HasMany } from 'sequelize-typescript'
+import { Table, DataType, Column, Model, Scopes, HasMany, HasOne, BelongsTo } from 'sequelize-typescript'
 import { Op } from 'sequelize'
 
 import DomainOffer from './domain-offer.model'
 import SoldDomain from './sold-domain.model'
+import DomainExpiration from './expiration.model'
 
 @Scopes(() => ({
   active: {
-    where: {
-      expirationDate: { [Op.gt]: Date.now() }
-    }
+    include: [
+      {
+        model: DomainExpiration,
+        where: {
+          expirationDate: { [Op.gt]: Date.now() }
+        }
+      }
+    ]
   }
 }))
 @Table({ freezeTableName: true, tableName: 'rns_domain', timestamps: false })
@@ -22,8 +28,10 @@ export default class Domain extends Model {
   @Column(DataType.STRING)
   name!: string
 
-  @Column({ type: DataType.DATE })
-  expirationDate!: number
+  @BelongsTo(() => DomainExpiration, {
+    foreignKey: 'tokenId'
+  })
+  expiration!: DomainExpiration
 
   @HasMany(() => SoldDomain)
   sales!: SoldDomain[]

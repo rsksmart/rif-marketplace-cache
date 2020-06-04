@@ -9,23 +9,31 @@ import { RatesService } from './services/rates'
 import { RnsService } from './services/rns'
 import ConfirmationService from './blockchain/confirmation.service'
 
+export enum ServiceAddresses {
+  RNS_DOMAINS = '/rns/v0/:ownerAddress/domains',
+  RNS_SOLD = '/rns/v0/:ownerAddress/sold',
+  RNS_OFFERS = '/rns/v0/offers',
+  STORAGE_OFFERS = '/storage/v0/offers',
+  XR = '/rates/v0/',
+  CONFIRMATIONS = '/confirmations'
+}
 // A mapping of service names to types. Will be extended in service files.
 interface ServiceTypes {
-  '/storage/v0/offers': OfferService & ServiceAddons<any>
-  '/rates/v0/': RatesService & ServiceAddons<any>
-  '/rns/v0/:ownerAddress/domains': RnsService & ServiceAddons<any>
-  '/rns/v0/:ownerAddress/sold': RnsService & ServiceAddons<any>
-  '/rns/v0/offers': RnsService & ServiceAddons<any>
-  '/confirmations': ConfirmationService & ServiceAddons<any>
+  [ServiceAddresses.STORAGE_OFFERS]: OfferService & ServiceAddons<any>
+  [ServiceAddresses.XR]: RatesService & ServiceAddons<any>
+  [ServiceAddresses.RNS_DOMAINS]: RnsService & ServiceAddons<any>
+  [ServiceAddresses.RNS_SOLD]: RnsService & ServiceAddons<any>
+  [ServiceAddresses.RNS_OFFERS]: RnsService & ServiceAddons<any>
+  [ServiceAddresses.CONFIRMATIONS]: ConfirmationService & ServiceAddons<any>
 }
 
 // The application instance type that will be used everywhere else
 export type Application = ExpressFeathers<ServiceTypes>;
 
 export interface CachedService {
-  precache (eth?: Eth): Promise<void>
-  purge (): Promise<void>
-  initialize (app: Application): Promise<void>
+  precache(eth?: Eth): Promise<void>
+  purge(): Promise<void>
+  initialize(app: Application): Promise<void>
 }
 
 export enum RatesProvider {
@@ -157,7 +165,7 @@ export interface Config {
   }
 }
 
-interface Args {[name: string]: any}
+interface Args { [name: string]: any }
 
 type Options<T> = T extends Parser.Input<infer R>
   ? Parser.Output<R, Args>
@@ -170,22 +178,22 @@ export type Flags<T> = Options<T>['flags']
  */
 export interface Logger {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  critical (message: string | Error | object, ...meta: any[]): never
+  critical(message: string | Error | object, ...meta: any[]): never
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  error (message: string | Error | object, ...meta: any[]): void
+  error(message: string | Error | object, ...meta: any[]): void
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  warn (message: string | object, ...meta: any[]): void
+  warn(message: string | object, ...meta: any[]): void
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  info (message: string | object, ...meta: any[]): void
+  info(message: string | object, ...meta: any[]): void
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  verbose (message: string | object, ...meta: any[]): void
+  verbose(message: string | object, ...meta: any[]): void
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  debug (message: string | object, ...meta: any[]): void
+  debug(message: string | object, ...meta: any[]): void
 }
 
 /**
