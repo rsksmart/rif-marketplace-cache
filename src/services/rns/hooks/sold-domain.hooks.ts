@@ -5,6 +5,7 @@ import Domain from '../models/domain.model'
 import { Op } from 'sequelize'
 import { numberToHex, sha3 } from 'web3-utils'
 import Transfer from '../models/transfer.model'
+import DomainExpiration from '../models/expiration.model'
 
 export default {
   before: {
@@ -27,7 +28,7 @@ export default {
           raw: false,
           nest: true,
           include: [
-            { model: Domain, attributes: ['tokenId', 'name', 'expirationDate'] },
+            { model: Domain, attributes: ['tokenId', 'name'] },
             {
               model: Transfer,
               attributes: ['sellerAddress', 'newOwnerAddress'],

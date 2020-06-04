@@ -1,7 +1,7 @@
 import { Service } from 'feathers-sequelize'
 import config from 'config'
 
-import { Application, CachedService } from '../../definitions'
+import { Application, CachedService, ServiceAddresses } from '../../definitions'
 import { loggingFactory } from '../../logger'
 import hooks from './rates.hooks'
 import Rate from './rates.model'
@@ -24,8 +24,8 @@ const storage: CachedService = {
     logger.info('Rates service: enabled')
 
     // Initialize feather's service
-    app.use('/rates/v0/', new RatesService({ Model: Rate }))
-    const service = app.service('/rates/v0/')
+    app.use(ServiceAddresses.XR, new RatesService({ Model: Rate }))
+    const service = app.service(ServiceAddresses.XR)
     service.hooks(hooks)
 
     // Start periodical refresh

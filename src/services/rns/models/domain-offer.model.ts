@@ -28,7 +28,4 @@ export default class DomainOffer extends Model {
 
   @Column(DataType.DATE)
   creationDate!: number
-
-  @Column(DataType.ENUM('ACTIVE', 'CANCELED', 'SOLD'))
-  status!: string
 }

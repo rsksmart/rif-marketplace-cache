@@ -5,7 +5,7 @@ import config from 'config'
 import { EventData } from 'web3-eth-contract'
 import { getObject } from 'sequelize-store'
 
-import { Application, CachedService } from '../../definitions'
+import { Application, CachedService, ServiceAddresses } from '../../definitions'
 import { loggingFactory } from '../../logger'
 import { ethFactory } from '../../blockchain'
 import { getEventsEmitterForService, isServiceInitialized } from '../../blockchain/utils'
@@ -88,13 +88,13 @@ const rns: CachedService = {
     await waitForReadyApp(app)
 
     // Initialize feather's service
-    app.use('/rns/v0/:ownerAddress/domains', new RnsService({ Model: Domain }))
-    app.use('/rns/v0/:ownerAddress/sold', new RnsService({ Model: SoldDomain }))
-    app.use('/rns/v0/offers', new RnsService({ Model: DomainOffer }))
+    app.use(ServiceAddresses.RNS_DOMAINS, new RnsService({ Model: Domain }))
+    app.use(ServiceAddresses.RNS_SOLD, new RnsService({ Model: SoldDomain }))
+    app.use(ServiceAddresses.RNS_OFFERS, new RnsService({ Model: DomainOffer }))
 
-    app.service('/rns/v0/:ownerAddress/domains').hooks(domainHooks)
-    app.service('/rns/v0/:ownerAddress/sold').hooks(soldDomainHooks)
-    app.service('/rns/v0/offers').hooks(domainOfferHooks)
+    app.service(ServiceAddresses.RNS_DOMAINS).hooks(domainHooks)
+    app.service(ServiceAddresses.RNS_SOLD).hooks(soldDomainHooks)
+    app.service(ServiceAddresses.RNS_OFFERS).hooks(domainOfferHooks)
 
     // Initialize blockchain watcher
     const eth = app.get('eth') as Eth
