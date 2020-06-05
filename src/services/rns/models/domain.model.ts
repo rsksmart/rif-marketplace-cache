@@ -1,9 +1,8 @@
-import { Table, DataType, Column, Model, Scopes, HasMany, HasOne, BelongsTo } from 'sequelize-typescript'
 import { Op } from 'sequelize'
-
+import { BelongsTo, Column, DataType, HasMany, Model, Scopes, Table } from 'sequelize-typescript'
 import DomainOffer from './domain-offer.model'
-import SoldDomain from './sold-domain.model'
 import DomainExpiration from './expiration.model'
+import SoldDomain from './sold-domain.model'
 
 @Scopes(() => ({
   active: {

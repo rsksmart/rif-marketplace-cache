@@ -1,5 +1,4 @@
-import { Column, DataType, Model, Table, HasMany, BelongsTo, ForeignKey } from 'sequelize-typescript'
-import Domain from './domain.model'
+import { Column, DataType, Model, Table } from 'sequelize-typescript'
 
 @Table({ freezeTableName: true, tableName: 'rns_domain_expiration', timestamps: false })
 export default class DomainExpiration extends Model {
