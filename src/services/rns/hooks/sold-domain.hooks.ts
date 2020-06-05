@@ -1,11 +1,9 @@
 import { HookContext } from '@feathersjs/feathers'
 import { disallow, discardQuery } from 'feathers-hooks-common'
-
-import Domain from '../models/domain.model'
 import { Op } from 'sequelize'
 import { numberToHex, sha3 } from 'web3-utils'
+import Domain from '../models/domain.model'
 import Transfer from '../models/transfer.model'
-import DomainExpiration from '../models/expiration.model'
 
 export default {
   before: {
