@@ -1,5 +1,5 @@
 import { HookContext } from '@feathersjs/feathers'
-import { disallow } from 'feathers-hooks-common'
+import { disallow, discardQuery } from 'feathers-hooks-common'
 
 import Domain from '../models/domain.model'
 import { Op } from 'sequelize'
@@ -54,7 +54,7 @@ export default {
           }
         }
 
-        delete (context.params.query as any).domain
+        discardQuery('domain')
       }
     ],
     get: [],

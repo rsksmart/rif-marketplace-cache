@@ -1,5 +1,5 @@
 import { HookContext } from '@feathersjs/feathers'
-import { disallow } from 'feathers-hooks-common'
+import { disallow, discardQuery } from 'feathers-hooks-common'
 import { Op } from 'sequelize'
 import { numberToHex, sha3 } from 'web3-utils'
 import DomainOffer from '../models/domain-offer.model'
@@ -74,8 +74,8 @@ export default {
               }
             }
           }
-          delete (context.params.query as any).status
-          delete (context.params.query as any).name
+          discardQuery('placed')
+          discardQuery('name')
         }
       }
     ],
