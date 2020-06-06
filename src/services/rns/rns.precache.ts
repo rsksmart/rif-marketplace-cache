@@ -5,6 +5,7 @@ import abiDecoder from 'abi-decoder'
 import { Logger } from '../../definitions'
 
 import Domain from './models/domain.model'
+import DomainExpiration from './models/expiration.model'
 
 abiDecoder.addABI([
   {
@@ -81,7 +82,7 @@ export async function processAuctionRegistrar (eth: Eth, logger: Logger, contrac
     const tokenId = event.returnValues.hash
     const ownerAddress = event.returnValues.owner.toLowerCase()
     const expirationDate = parseInt(event.returnValues.registrationDate) * 1000
-    const req = new Domain({ tokenId, ownerAddress, expirationDate })
-    await req.save()
+    await DomainExpiration.upsert({ tokenId, expirationDate })
+    await Domain.upsert({ tokenId, ownerAddress })
   }
 }

@@ -28,7 +28,7 @@ export default class Domain extends Model {
   name!: string
 
   @BelongsTo(() => DomainExpiration, {
-    foreignKey: 'tokenId'
+    foreignKey: 'id'
   })
   expiration!: DomainExpiration
 
