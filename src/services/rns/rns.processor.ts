@@ -18,9 +18,14 @@ async function transferHandler (logger: Logger, eventData: EventData): Promise<v
   const tokenId = Utils.numberToHex(eventData.returnValues.tokenId)
   const ownerAddress = eventData.returnValues.to.toLowerCase()
 
-  const fiftsAddr = config.get('rns.fifsAddrReg.contractAddress')
+  const fiftsAddr = config.get('rns.fifsAddrRegistrar.contractAddress')
+  const registrar = config.get('rns.registrar.contractAddress')
 
-  if ((fiftsAddr as string).toLowerCase() === ownerAddress) {
+  if (ownerAddress === (fiftsAddr as string).toLowerCase()) {
+    return
+  }
+
+  if (ownerAddress === (registrar as string).toLowerCase()) {
     return
   }
 
