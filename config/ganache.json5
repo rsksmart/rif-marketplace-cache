@@ -4,38 +4,38 @@
     provider: "ws://127.0.0.1:8545/"
   },
   storage: {
-    enabled: false,
+    enabled: false
   },
   rns: {
     enabled: true,
     owner: {
-      contractAddress: "0xfE82e8f24A51E670133f4268cDfc164c49FC3b37",
+      contractAddress: "0x4bf749ec68270027C5910220CEAB30Cc284c7BA2",
       eventsEmitter: {
-          confirmations: 0
+        confirmations: 0
       }
     },
     reverse: {
-      contractAddress: "0x4cFB3F70BF6a80397C2e634e5bDd85BC0bb189EE",
+      contractAddress: "0x9561C133DD8580860B6b7E504bC5Aa500f0f06a7",
       eventsEmitter: {
-          confirmations: 0
+        confirmations: 0
       }
     },
     placement: {
-      contractAddress: "0xB349FB172D6D5f693b0aA1C6eEc4c61cFd6846f4",
+      contractAddress: "0x22d5C8BdD4346b390014a07109a8F830094d4abf",
       eventsEmitter: {
-          confirmations: 0
+        confirmations: 0
       }
     },
     registrar: {
-      contractAddress: "0xc34175A79ACca40392bECD22ff10fAeBFE780Ae7",
+      contractAddress: "0x2612Af3A521c2df9EAF28422Ca335b04AdF3ac66",
       eventsEmitter: {
-          confirmations: 0
+        confirmations: 0
       }
     },
     fifsAddrRegistrar: {
-      contractAddress: "0x42D4BA5e542d9FeD87EA657f0295F1968A61c00A",
+      contractAddress: "0xFF6049B87215476aBf744eaA3a476cBAd46fB1cA",
       eventsEmitter: {
-          confirmations: 0
+        confirmations: 0
       }
     }
   }
