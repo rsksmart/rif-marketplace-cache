@@ -73,7 +73,7 @@ const storage: CachedService = {
 
     // We require services to be precached before running server
     if (!isServiceInitialized(SERVICE_NAME)) {
-      logger.critical('Storage service is not initialized! Rune precache command.')
+      return logger.critical('Storage service is not initialized! Run precache command.')
     }
 
     const eventsEmitter = getEventsEmitterForService(SERVICE_NAME, eth, storageManagerContract.abi as AbiItem[])
