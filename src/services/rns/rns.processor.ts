@@ -13,7 +13,7 @@ import DomainExpiration from './models/expiration.model'
 import config from 'config'
 import DomainOwner from './models/owner.model'
 
-async function transferHandler (logger: Logger, eventData: EventData): Promise<void> {
+async function transferHandler(logger: Logger, eventData: EventData): Promise<void> {
   // Transfer(address indexed from, address indexed to, uint256 indexed tokenId)
 
   const tokenId = Utils.numberToHex(eventData.returnValues.tokenId)
@@ -55,7 +55,7 @@ async function transferHandler (logger: Logger, eventData: EventData): Promise<v
   }
 }
 
-async function expirationChangedHandler (logger: Logger, eventData: EventData): Promise<void> {
+async function expirationChangedHandler(logger: Logger, eventData: EventData): Promise<void> {
   // event ExpirationChanged(uint256 tokenId, uint expirationTime);
 
   const tokenId = Utils.numberToHex(eventData.returnValues.tokenId)
@@ -82,7 +82,7 @@ async function expirationChangedHandler (logger: Logger, eventData: EventData): 
   }
 }
 
-async function nameChangedHandler (logger: Logger, eventData: EventData): Promise<void> {
+async function nameChangedHandler(logger: Logger, eventData: EventData): Promise<void> {
   const name = eventData.returnValues.name
 
   const label = name.substring(0, name.indexOf('.'))
@@ -100,7 +100,7 @@ async function nameChangedHandler (logger: Logger, eventData: EventData): Promis
   }
 }
 
-async function tokenPlacedHandler (logger: Logger, eventData: EventData, eth: Eth): Promise<void> {
+async function tokenPlacedHandler(logger: Logger, eventData: EventData, eth: Eth): Promise<void> {
   // event TokenPlaced(uint256 indexed tokenId, address indexed paymentToken, uint256 cost);
 
   const transactionHash = eventData.transactionHash
@@ -135,7 +135,7 @@ async function tokenPlacedHandler (logger: Logger, eventData: EventData, eth: Et
   logger.info(`TokenPlaced event: ${tokenId} created`)
 }
 
-async function tokenUnplacedHandler (logger: Logger, eventData: EventData): Promise<void> {
+async function tokenUnplacedHandler(logger: Logger, eventData: EventData): Promise<void> {
   // event TokenUnplaced(uint256 indexed tokenId);
 
   const tokenId = Utils.numberToHex(eventData.returnValues.tokenId)
@@ -150,7 +150,7 @@ async function tokenUnplacedHandler (logger: Logger, eventData: EventData): Prom
   }
 }
 
-async function tokenSoldHandler (logger: Logger, eventData: EventData, eth: Eth): Promise<void> {
+async function tokenSoldHandler(logger: Logger, eventData: EventData, eth: Eth): Promise<void> {
   // event TokenSold(uint256 indexed tokenId);
 
   const transactionHash = eventData.transactionHash
@@ -186,11 +186,11 @@ const commands = {
   TokenSold: tokenSoldHandler
 }
 
-function isValidEvent (value: string): value is keyof typeof commands {
+function isValidEvent(value: string): value is keyof typeof commands {
   return value in commands
 }
 
-export default function rnsProcessorFactory (logger: Logger, eth: Eth) {
+export default function rnsProcessorFactory(logger: Logger, eth: Eth) {
   return async function (eventData: EventData): Promise<void> {
     if (isValidEvent(eventData.event)) {
       logger.info(`Processing event ${eventData.event}`)
