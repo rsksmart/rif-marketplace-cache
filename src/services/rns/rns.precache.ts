@@ -37,7 +37,7 @@ abiDecoder.addABI([
   }
 ])
 
-export async function processRskOwner (eth: Eth, logger: Logger, contractAbi: Utils.AbiItem[]) {
+export async function processRskOwner(eth: Eth, logger: Logger, contractAbi: Utils.AbiItem[]) {
   if (!config.has('rns.fifsAddrRegistrar.contractAddress')) {
     logger.warn('RNS FIFS Registrar address is not defined, skipping Auction Registrar precaching!')
     return
@@ -61,7 +61,7 @@ export async function processRskOwner (eth: Eth, logger: Logger, contractAbi: Ut
   }
 }
 
-export async function processAuctionRegistrar (eth: Eth, logger: Logger, contractAbi: Utils.AbiItem[]) {
+export async function processAuctionRegistrar(eth: Eth, logger: Logger, contractAbi: Utils.AbiItem[]) {
   if (!config.has('rns.registrar.contractAddress')) {
     logger.warn('RNS Registrar address is not defined, skipping Auction Registrar precaching!')
     return

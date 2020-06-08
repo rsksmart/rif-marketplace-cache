@@ -2,8 +2,8 @@ import { Op } from 'sequelize'
 import { Column, DataType, HasMany, HasOne, Model, Scopes, Table } from 'sequelize-typescript'
 import DomainOffer from './domain-offer.model'
 import DomainExpiration from './expiration.model'
-import DomainOwner from './owner.model'
 import SoldDomain from './sold-domain.model'
+import DomainOwner from './owner.model'
 
 @Scopes(() => ({
   active: {
