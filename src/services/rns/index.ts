@@ -101,7 +101,7 @@ const rns: CachedService = {
 
     // We require services to be precached before running server
     if (!isServiceInitialized('rns.owner')) {
-      logger.critical('Storage service is not initialized! Rune precache command.')
+      return logger.critical('RNS service is not initialized! Run precache command.')
     }
 
     const rnsEventsEmitter = getEventsEmitterForService('rns.owner', eth, rnsContractAbi.abi as AbiItem[])
