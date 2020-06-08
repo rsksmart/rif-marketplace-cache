@@ -11,6 +11,7 @@ import { getBlockDate } from '../../blockchain/utils'
 import { Logger } from '../../definitions'
 import DomainExpiration from './models/expiration.model'
 import config from 'config'
+import DomainOwner from './models/owner.model'
 
 async function transferHandler (logger: Logger, eventData: EventData): Promise<void> {
   // Transfer(address indexed from, address indexed to, uint256 indexed tokenId)
@@ -45,17 +46,17 @@ async function transferHandler (logger: Logger, eventData: EventData): Promise<v
   const domain = await Domain.findByPk(tokenId)
 
   if (domain) {
-    await Domain.update({ ownerAddress }, { where: { tokenId } })
-    logger.info(`Transfer event: Updated Domain ${tokenId} for owner ${ownerAddress}`)
+    await DomainOwner.upsert({ address: ownerAddress, tokenId })
+    logger.info(`Transfer event: Updated DomainOwner ${ownerAddress} for tokenId ${tokenId}`)
   } else {
+    await Domain.upsert({ tokenId })
     await Domain.create({ tokenId, ownerAddress })
-    logger.info(`Transfer event: Created Domain ${tokenId} for owner ${ownerAddress}`)
+    logger.info(`Transfer event: Created Domain ${tokenId} and DomainOwner ${ownerAddress}`)
   }
 }
 
 async function expirationChangedHandler (logger: Logger, eventData: EventData): Promise<void> {
   // event ExpirationChanged(uint256 tokenId, uint expirationTime);
-  const transactionHash = eventData.transactionHash
 
   const tokenId = Utils.numberToHex(eventData.returnValues.tokenId)
   let normalizedTimestamp = eventData.returnValues.expirationTime as string
@@ -66,16 +67,16 @@ async function expirationChangedHandler (logger: Logger, eventData: EventData): 
   }
   const expirationDate = parseInt(normalizedTimestamp) * 1000
 
-  const currentRecord = await DomainExpiration.findOne({ where: { tokenId } })
+  const currentExpiration = await DomainExpiration.findByPk(tokenId)
 
-  if (currentRecord) {
+  if (currentExpiration) {
     await DomainExpiration.update({ expirationDate }, { where: { tokenId } })
     logger.info(`ExpirationChange event: DomainExpiration for token ${tokenId} updated`)
   } else {
+    await Domain.upsert({ tokenId })
     await DomainExpiration.create({
-      id: transactionHash,
       tokenId,
-      expirationDate
+      date: expirationDate
     })
     logger.info(`ExpirationChange event: DomainExpiration for token ${tokenId} created`)
   }
@@ -85,14 +86,17 @@ async function nameChangedHandler (logger: Logger, eventData: EventData): Promis
   const name = eventData.returnValues.name
 
   const label = name.substring(0, name.indexOf('.'))
-  const tokenId = Utils.sha3(label)
+  const tokenId = Utils.numberToHex(Utils.sha3(label) as string)
 
-  const [affectedRows] = await Domain.update({ name: name }, { where: { tokenId: tokenId } })
+  const domain = await Domain.findByPk(tokenId)
 
-  if (affectedRows) {
-    logger.info(`NameChanged event: Updated Domain ${name} -> ${tokenId}`)
+  if (domain) {
+    domain.name = name
+    domain.save()
+    logger.info(`NameChanged event: Updated Domain name ${name} -> ${tokenId}`)
   } else {
-    logger.info(`NameChanged event: no Domain ${name} updated`)
+    await Domain.create({ tokenId, name })
+    logger.info(`NameChanged event: Domain with name ${name} created`)
   }
 }
 
@@ -104,10 +108,10 @@ async function tokenPlacedHandler (logger: Logger, eventData: EventData, eth: Et
   const paymentToken = eventData.returnValues.paymentToken
   const cost = eventData.returnValues.cost
 
-  const domain = await Domain.findByPk(tokenId)
+  const owner = await DomainOwner.findByPk(tokenId)
 
-  if (!domain) {
-    throw new Error(`Domain with token ID ${tokenId} not found!`)
+  if (!owner) {
+    throw new Error(`Domain owner with token ID ${tokenId} not found!`)
   }
 
   const deletedOffersCnt = await DomainOffer.destroy({ where: { tokenId } })
@@ -120,7 +124,7 @@ async function tokenPlacedHandler (logger: Logger, eventData: EventData, eth: Et
 
   const domainOffer = new DomainOffer({
     offerId: transactionHash,
-    sellerAddress: domain.ownerAddress,
+    sellerAddress: owner.address,
     tokenId: tokenId,
     paymentToken: paymentToken,
     price: cost,

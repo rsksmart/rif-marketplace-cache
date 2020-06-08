@@ -1,7 +1,8 @@
 import { Op } from 'sequelize'
-import { BelongsTo, Column, DataType, HasMany, Model, Scopes, Table } from 'sequelize-typescript'
+import { Column, DataType, HasMany, HasOne, Model, Scopes, Table } from 'sequelize-typescript'
 import DomainOffer from './domain-offer.model'
 import DomainExpiration from './expiration.model'
+import DomainOwner from './owner.model'
 import SoldDomain from './sold-domain.model'
 
 @Scopes(() => ({
@@ -10,7 +11,7 @@ import SoldDomain from './sold-domain.model'
       {
         model: DomainExpiration,
         where: {
-          expirationDate: { [Op.gt]: Date.now() }
+          date: { [Op.gt]: Date.now() }
         }
       }
     ]
@@ -22,13 +23,15 @@ export default class Domain extends Model {
   tokenId!: string
 
   @Column(DataType.STRING)
-  ownerAddress!: string
-
-  @Column(DataType.STRING)
   name!: string
 
-  @BelongsTo(() => DomainExpiration, {
-    foreignKey: 'id'
+  @HasOne(() => DomainOwner, {
+    foreignKey: 'tokenId'
+  })
+  owner!: DomainOwner
+
+  @HasOne(() => DomainExpiration, {
+    foreignKey: 'tokenId'
   })
   expiration!: DomainExpiration
 

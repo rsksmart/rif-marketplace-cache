@@ -1,11 +1,11 @@
-import { Eth } from 'web3-eth'
-import config from 'config'
-import Utils from 'web3-utils'
 import abiDecoder from 'abi-decoder'
+import config from 'config'
+import { Eth } from 'web3-eth'
+import Utils from 'web3-utils'
 import { Logger } from '../../definitions'
-
 import Domain from './models/domain.model'
 import DomainExpiration from './models/expiration.model'
+import DomainOwner from './models/owner.model'
 
 abiDecoder.addABI([
   {
@@ -54,14 +54,10 @@ export async function processRskOwner (eth: Eth, logger: Logger, contractAbi: Ut
     const transaction = await eth.getTransaction(rskOwnerEvent.transactionHash)
     const decodedData = abiDecoder.decodeMethod(transaction.input)
     const name = Utils.hexToAscii('0x' + decodedData.params[2].value.slice(218, decodedData.params[2].value.length))
-    const tokenId = Utils.sha3(name)
+    const tokenId = Utils.numberToHex(Utils.sha3(name) as string)
     const ownerAddress = rskOwnerEvent.returnValues.to.toLowerCase()
-    const [domain, created] = await Domain.findCreateFind({ where: { tokenId }, defaults: { name, ownerAddress } })
-
-    if (!created) {
-      domain.ownerAddress = ownerAddress
-      await domain.save()
-    }
+    await Domain.upsert({ tokenId, name })
+    await DomainOwner.upsert({ tokenId, address: ownerAddress })
   }
 }
 
@@ -79,10 +75,11 @@ export async function processAuctionRegistrar (eth: Eth, logger: Logger, contrac
     fromBlock: startingBlock
   })
   for (const event of auctionRegistrarEvents) {
-    const tokenId = event.returnValues.hash
+    const tokenId = Utils.numberToHex(event.returnValues.hash)
     const ownerAddress = event.returnValues.owner.toLowerCase()
     const expirationDate = parseInt(event.returnValues.registrationDate) * 1000
-    await DomainExpiration.upsert({ tokenId, expirationDate })
-    await Domain.upsert({ tokenId, ownerAddress })
+    await Domain.upsert({ tokenId })
+    await DomainOwner.upsert({ tokenId, address: ownerAddress })
+    await DomainExpiration.upsert({ tokenId, date: expirationDate })
   }
 }
