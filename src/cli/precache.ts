@@ -31,7 +31,7 @@ ${formattedServices}`
 
     let servicesToPreCache
     try {
-      servicesToPreCache = validateServices(argv)
+      servicesToPreCache = validateServices(argv, true)
     } catch (e) {
       this.error(e.message)
     }

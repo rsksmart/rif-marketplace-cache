@@ -33,13 +33,18 @@ export function capitalizeFirstLetter (value: string): string {
   return value.charAt(0).toUpperCase() + value.slice(1)
 }
 
-export function validateServices (args: string[]): SupportedServices[] {
+export function validateServices (args: string[], onlyEnabledForAll = false): SupportedServices[] {
   if (args.length === 0) {
     throw new Error('You have to specify a service!')
   }
 
   if (args.length === 1 && args[0] === 'all') {
+    if (!onlyEnabledForAll) {
+      return Object.values(SupportedServices)
+    }
+
     return Object.values(SupportedServices)
+      .filter(service => config.get(`${service}.enabled`))
   }
 
   for (const service of args) {
