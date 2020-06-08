@@ -17,7 +17,7 @@ export default {
             model: Domain,
             include: {
               model: DomainExpiration,
-              attributes: ['expirationDate']
+              attributes: ['date']
             }
           }
         }
@@ -36,7 +36,7 @@ export default {
             model: Domain,
             include: {
               model: DomainExpiration,
-              attributes: ['expirationDate']
+              attributes: ['date']
             }
           }
         }

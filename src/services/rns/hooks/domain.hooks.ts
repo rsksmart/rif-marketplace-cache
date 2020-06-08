@@ -1,9 +1,10 @@
 import { HookContext } from '@feathersjs/feathers'
-import { disallow, discardQuery } from 'feathers-hooks-common'
+import { disallow } from 'feathers-hooks-common'
 import { Op } from 'sequelize'
 import { numberToHex, sha3 } from 'web3-utils'
 import DomainOffer from '../models/domain-offer.model'
 import DomainExpiration from '../models/expiration.model'
+import DomainOwner from '../models/owner.model'
 
 export default {
   before: {
@@ -44,10 +45,18 @@ export default {
             include: [
               {
                 model: DomainExpiration,
-                attributes: ['expirationDate']
+                attributes: ['date']
+              },
+              {
+                model: DomainOwner,
+                attributes: ['address'],
+                where: {
+                  address: ownerAddress
+                }
               },
               {
                 model: DomainOffer,
+                attributes: placed ? ['paymentToken', 'price'] : [],
                 as: 'offers',
                 required: false
               }
@@ -55,8 +64,7 @@ export default {
             where: {
               '$offers.tokenId$': placed
                 ? { [Op.not]: null }
-                : { [Op.is]: null },
-              ownerAddress
+                : { [Op.is]: null }
             }
           }
 
@@ -74,8 +82,6 @@ export default {
               }
             }
           }
-          discardQuery('placed')
-          discardQuery('name')
         }
       }
     ],
