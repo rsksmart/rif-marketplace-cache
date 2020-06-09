@@ -52,6 +52,7 @@
     "@feathersjs/express": "^4.5.4",
     "@feathersjs/feathers": "^4.5.1",
     "@feathersjs/socketio": "^4.5.4",
+    "@feathersjs/transport-commons": "^4.5.3",
     "@oclif/command": "^1.5.19",
     "@oclif/config": "^1.14.0",
     "@oclif/errors": "^1.2.2",
