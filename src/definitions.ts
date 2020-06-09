@@ -10,8 +10,8 @@ import { RnsService } from './services/rns'
 import ConfirmationService from './blockchain/confirmation.service'
 
 export enum ServiceAddresses {
-  RNS_DOMAINS = '/rns/v0/:ownerAddress/domains',
-  RNS_SOLD = '/rns/v0/:ownerAddress/sold',
+  RNS_DOMAINS = '/rns/v0/domains',
+  RNS_SOLD = '/rns/v0/sold',
   RNS_OFFERS = '/rns/v0/offers',
   STORAGE_OFFERS = '/storage/v0/offers',
   XR = '/rates/v0/',

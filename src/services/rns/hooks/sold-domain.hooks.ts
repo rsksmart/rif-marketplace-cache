@@ -1,5 +1,5 @@
 import { HookContext } from '@feathersjs/feathers'
-import { disallow, discardQuery } from 'feathers-hooks-common'
+import { disallow } from 'feathers-hooks-common'
 import { Op } from 'sequelize'
 import { numberToHex, sha3 } from 'web3-utils'
 import Domain from '../models/domain.model'
@@ -22,6 +22,11 @@ export default {
     ],
     find: [
       (context: HookContext) => {
+        const { params: { query } } = context
+        const sellerAddress = query?.ownerAddress.toLowerCase()
+
+        if (!sellerAddress) { return Promise.reject(new Error('No ownerAddress specified.')) }
+
         context.params.sequelize = {
           raw: false,
           nest: true,
@@ -29,9 +34,9 @@ export default {
             { model: Domain, attributes: ['tokenId', 'name'] },
             {
               model: Transfer,
-              attributes: ['sellerAddress', 'newOwnerAddress'],
+              attributes: ['sellerAddress', 'buyerAddress'],
               where: {
-                sellerAddress: context.params.route?.ownerAddress.toLowerCase()
+                sellerAddress
               }
             }
           ]
@@ -52,7 +57,7 @@ export default {
           }
         }
 
-        discardQuery('domain')
+        context.params.query = {}
       }
     ],
     get: [],

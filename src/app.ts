@@ -33,11 +33,11 @@ export const services = {
   [SupportedServices.RNS]: rns
 }
 
-export function isSupportedServices(value: any): value is SupportedServices {
+export function isSupportedServices (value: any): value is SupportedServices {
   return Object.values(SupportedServices).includes(value)
 }
 
-export async function appFactory(): Promise<Application> {
+export async function appFactory (): Promise<Application> {
   const app: Application = express(feathers())
 
   const corsOptions: CorsOptionsDelegate = config.get('cors')
