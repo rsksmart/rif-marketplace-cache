@@ -40,12 +40,13 @@ async function transferHandler (logger: Logger, eventData: EventData, _: Eth, se
     logger.info(`Transfer event: Transfer ${tokenId} created`)
   }
 
-  const domainsService = services.domains
+  const domainsService = services.domains as any
   const domain = await Domain.findByPk(tokenId)
 
   if (domain) {
     await DomainOwner.upsert({ address: ownerAddress, tokenId })
-    await domainsService.patch(domain.tokenId, { tokenId }) // Trigger patch event
+
+    if (domainsService.emit) domainsService.emit('patched', { tokenId })
     logger.info(`Transfer event: Updated DomainOwner ${ownerAddress} for tokenId ${tokenId}`)
   } else {
     await domainsService.create({ tokenId })
@@ -68,16 +69,17 @@ async function expirationChangedHandler (logger: Logger, eventData: EventData, _
   const expirationDate = parseInt(normalizedTimestamp) * 1000
 
   const currentExpiration = await DomainExpiration.findByPk(tokenId)
-  const { domains: domainsService } = services
+  const domainsService = services.domains as any
 
   if (currentExpiration) {
     await DomainExpiration.update({ expirationDate }, { where: { tokenId } })
-    domainsService.patch(tokenId, { tokenId }) // Trigger patch event
+
+    if (domainsService.emit) domainsService.emit('patched', { tokenId })
     logger.info(`ExpirationChange event: DomainExpiration for token ${tokenId} updated`)
   } else {
     const domain = await Domain.findByPk(tokenId)
 
-    if (!domain) domainsService.create({ tokenId })
+    if (!domain) await domainsService.create({ tokenId })
     await DomainExpiration.create({
       tokenId,
       date: expirationDate
@@ -96,10 +98,10 @@ async function nameChangedHandler (logger: Logger, eventData: EventData, _: Eth,
   const domain = await Domain.findByPk(tokenId)
 
   if (domain) {
-    domainsService.update(tokenId, { name })
+    await domainsService.update(tokenId, { name })
     logger.info(`NameChanged event: Updated Domain name ${name} -> ${tokenId}`)
   } else {
-    domainsService.create({ tokenId, name })
+    await domainsService.create({ tokenId, name })
     logger.info(`NameChanged event: Domain with name ${name} created`)
   }
 }

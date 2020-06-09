@@ -39,7 +39,9 @@ export default {
         if (context.params.query) {
           const { ownerAddress, placed, name } = context.params.query
 
-          if (!ownerAddress) { return Promise.reject(new Error('No ownerAddress specified.')) }
+          if (!ownerAddress) {
+            throw new Error('No ownerAddress specified.')
+          }
 
           context.params.sequelize = {
             raw: false,

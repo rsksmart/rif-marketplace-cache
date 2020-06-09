@@ -1,5 +1,5 @@
 import { HookContext } from '@feathersjs/feathers'
-import { disallow } from 'feathers-hooks-common'
+import { disallow, discardQuery } from 'feathers-hooks-common'
 import { Op } from 'sequelize'
 import { numberToHex, sha3 } from 'web3-utils'
 import Domain from '../models/domain.model'
@@ -24,28 +24,28 @@ export default {
       (context: HookContext) => {
         const { params: { query } } = context
         const sellerAddress = query?.ownerAddress.toLowerCase()
+        const domain = query?.domain
 
-        if (!sellerAddress) { return Promise.reject(new Error('No ownerAddress specified.')) }
+        if (!sellerAddress) {
+          throw new Error('No ownerAddress specified.')
+        }
+
+        const includeDomain = { model: Domain, attributes: ['tokenId', 'name'], where: {} }
+        const includeTransfer = {
+          model: Transfer,
+          attributes: ['sellerAddress', 'buyerAddress'],
+          where: { sellerAddress }
+        }
 
         context.params.sequelize = {
           raw: false,
           nest: true,
-          include: [
-            { model: Domain, attributes: ['tokenId', 'name'] },
-            {
-              model: Transfer,
-              attributes: ['sellerAddress', 'buyerAddress'],
-              where: {
-                sellerAddress
-              }
-            }
-          ]
+          include: [includeDomain, includeTransfer]
         }
-        const { params: { sequelize: { include }, domain } } = context
 
-        if (domain && include) {
+        if (domain) {
           const { name: { $like: searchTerm } } = domain
-          include.where = {
+          includeDomain.where = {
             [Op.or]: {
               name: {
                 [Op.like]: `%${searchTerm}%`
@@ -56,9 +56,9 @@ export default {
             }
           }
         }
-
-        context.params.query = {}
-      }
+      },
+      discardQuery('ownerAddress'),
+      discardQuery('domain')
     ],
     get: [],
     create: disallow('external'),
