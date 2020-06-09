@@ -12,5 +12,5 @@ export default class Transfer extends Model {
   sellerAddress!: string // previous owner
 
   @Column(DataType.STRING)
-  newOwnerAddress!: string // buyer
+  buyerAddress!: string // buyer
 }

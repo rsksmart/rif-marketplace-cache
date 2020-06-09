@@ -15,10 +15,10 @@ export default class DomainOffer extends Model {
   domain!: Domain
 
   @Column(DataType.STRING)
-  sellerAddress!: string
+  ownerAddress!: string
 
   @Column(DataType.STRING)
-  sellerDomain!: string
+  ownerDomain!: string
 
   @Column(DataType.STRING)
   paymentToken!: string

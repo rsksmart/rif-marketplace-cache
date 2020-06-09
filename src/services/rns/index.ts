@@ -38,7 +38,7 @@ export interface RnsServices {
   offers: RnsService
 }
 
-function fetchEventsForService(eth: Eth, serviceName: string, abi: AbiItem[], dataPusher: (event: EventData) => void): Promise<void> {
+function fetchEventsForService (eth: Eth, serviceName: string, abi: AbiItem[], dataPusher: (event: EventData) => void): Promise<void> {
   return new Promise<void>((resolve, reject) => {
     const eventsEmitter = getEventsEmitterForService(serviceName, eth, abi)
     eventsEmitter.on('initFinished', () => {
@@ -53,7 +53,7 @@ function fetchEventsForService(eth: Eth, serviceName: string, abi: AbiItem[], da
   })
 }
 
-async function precache(eth?: Eth): Promise<void> {
+async function precache (eth?: Eth): Promise<void> {
   eth = eth || ethFactory()
   const precacheLogger = loggingFactory('rns:precache:processor')
   const eventsDataQueue: EventData[] = []
@@ -90,7 +90,7 @@ async function precache(eth?: Eth): Promise<void> {
 
 const rns: CachedService = {
   // eslint-disable-next-line require-await
-  async initialize(app: Application): Promise<void> {
+  async initialize (app: Application): Promise<void> {
     if (!config.get<boolean>('rns.enabled')) {
       logger.info('RNS service: disabled')
       return Promise.resolve()
@@ -112,7 +112,7 @@ const rns: CachedService = {
     sold.hooks(soldDomainHooks)
     offers.hooks(domainOfferHooks)
 
-    app.configure(rnsChannels);
+    app.configure(rnsChannels)
 
     // Initialize blockchain watcher
     const eth = app.get('eth') as Eth
@@ -145,7 +145,7 @@ const rns: CachedService = {
 
   precache,
 
-  async purge(): Promise<void> {
+  async purge (): Promise<void> {
     const transferCount = await Transfer.destroy({ where: {}, truncate: true, cascade: true })
     const offersCount = await DomainOffer.destroy({ where: {}, truncate: true, cascade: true })
     const soldCount = await SoldDomain.destroy({ where: {}, truncate: true, cascade: true })

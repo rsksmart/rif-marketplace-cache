@@ -39,6 +39,8 @@ export default {
         if (context.params.query) {
           const { ownerAddress, placed, name } = context.params.query
 
+          if (!ownerAddress) { return Promise.reject(new Error('No ownerAddress specified.')) }
+
           context.params.sequelize = {
             raw: false,
             nest: true,
@@ -51,7 +53,7 @@ export default {
                 model: DomainOwner,
                 attributes: ['address'],
                 where: {
-                  address: ownerAddress
+                  address: ownerAddress.toLowerCase()
                 }
               },
               {
@@ -86,10 +88,10 @@ export default {
       }
     ],
     get: [],
-    create: disallow(),
-    update: disallow(),
-    patch: disallow(),
-    remove: disallow()
+    create: disallow('external'),
+    update: disallow('external'),
+    patch: disallow('external'),
+    remove: disallow('external')
   },
 
   after: {
