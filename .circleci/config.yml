@@ -9,16 +9,16 @@ jobs:
       - restore_cache:
           keys:
             # when lock file changes, use increasingly general patterns to restore cache
-            - node-v1-{{ .Branch }}-{{ checksum "package-lock.json" }}
-            - node-v1-{{ .Branch }}-
-            - node-v1-
+            - node-10-{{ .Branch }}-{{ checksum "package-lock.json" }}
+            - node-10-{{ .Branch }}-
+            - node-10-
       - run:
           name: "Install deps"
           command: npm ci
       - save_cache:
           paths:
             - ./node_modules
-          key: node-v1-{{ .Branch }}-{{ checksum "package-lock.json" }}
+          key: node-10-{{ .Branch }}-{{ checksum "package-lock.json" }}
       - run:
           name: "Commit linting"
           command: |
@@ -46,9 +46,16 @@ jobs:
       - restore_cache:
           keys:
             # when lock file changes, use increasingly general patterns to restore cache
-            - node-v1-{{ .Branch }}-{{ checksum "package-lock.json" }}
-            - node-v1-{{ .Branch }}-
-            - node-v1-
+            - node-<< parameters.version >>-{{ .Branch }}-{{ checksum "package-lock.json" }}
+            - node-<< parameters.version >>-{{ .Branch }}-
+            - node-<< parameters.version >>-
+      - run:
+          name: "Install deps"
+          command: npm ci
+            - save_cache:
+                paths:
+                  - ./node_modules
+                key: node-<< parameters.version >>-{{ .Branch }}-{{ checksum "package-lock.json" }}
       - run:
           name: "Install sqlite"
           command: npm install sqlite3
