@@ -55,10 +55,10 @@ jobs:
       - run:
           name: "Node tests"
           command: npx tasegir test --target node --reporter lcovonly -- --bail
-#      - sonarcloud/scan
+      - sonarcloud/scan
 
-#orbs:
-#  sonarcloud: sonarsource/sonarcloud@1.0.1
+orbs:
+  sonarcloud: sonarsource/sonarcloud@1.0.1
 
 workflows:
   test:
@@ -67,18 +67,15 @@ workflows:
       - node-tests:
           version: '10'
           name: node-10
-#          context: SonarCloud
           requires:
             - check
       - node-tests:
           version: '12'
           name: node-12
-#          context: SonarCloud
           requires:
             - check
       - node-tests:
           version: '14'
           name: node-14
-#          context: SonarCloud
           requires:
             - check
