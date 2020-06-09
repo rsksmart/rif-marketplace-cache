@@ -1,9 +1,8 @@
 import { HookContext } from '@feathersjs/feathers'
 import { disallow, discardQuery } from 'feathers-hooks-common'
-
-import Domain from '../models/domain.model'
 import { Op } from 'sequelize'
-import { sha3, numberToHex } from 'web3-utils'
+import { numberToHex, sha3 } from 'web3-utils'
+import Domain from '../models/domain.model'
 import DomainExpiration from '../models/expiration.model'
 
 export default {
@@ -56,9 +55,8 @@ export default {
             }
           }
         }
-
-        discardQuery('domain')
-      }
+      },
+      discardQuery('domain')
     ],
     get: [],
     create: disallow('external'),
