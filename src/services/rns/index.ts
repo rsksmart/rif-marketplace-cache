@@ -28,11 +28,12 @@ import eventProcessor from './rns.processor'
 const logger = loggingFactory('rns')
 
 export class RnsService extends Service {
+  emit?: Function
 }
 export interface RnsServices {
-  domains: RnsService
-  sold: RnsService
-  offers: RnsService
+  domains: RnsService & { emit?: Function }
+  sold: RnsService & { emit?: Function }
+  offers: RnsService & { emit?: Function }
 }
 
 function fetchEventsForService (eth: Eth, serviceName: string, abi: AbiItem[], dataPusher: (event: EventData) => void): Promise<void> {

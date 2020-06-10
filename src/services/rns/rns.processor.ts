@@ -40,7 +40,7 @@ async function transferHandler (logger: Logger, eventData: EventData, _: Eth, se
     logger.info(`Transfer event: Transfer ${tokenId} created`)
   }
 
-  const domainsService = services.domains as any
+  const domainsService = services.domains
   const domain = await Domain.findByPk(tokenId)
 
   if (domain) {
@@ -69,7 +69,7 @@ async function expirationChangedHandler (logger: Logger, eventData: EventData, _
   const expirationDate = parseInt(normalizedTimestamp) * 1000
 
   const currentExpiration = await DomainExpiration.findByPk(tokenId)
-  const domainsService = services.domains as any
+  const domainsService = services.domains
 
   if (currentExpiration) {
     await DomainExpiration.update({ expirationDate }, { where: { tokenId } })
