@@ -18,6 +18,9 @@
 
 - [Supported services](#supported-services)
     - [RIF Storage](#rif-storage)
+    - [RNS](#rns)
+    - [Rates](#rates)
+    - [Confirmations](#confirmations)
 - [Configuration](#configuration)
     - [Environment variables overview](#environment-variables-overview)
     - [Database](#database)
