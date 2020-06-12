@@ -19,7 +19,7 @@ export async function getBlockDate (eth: Eth, blockNumber: number): Promise<Date
 
 export function isServiceInitialized (serviceName: string): boolean {
   const blockTracker = getBlockTracker(`${serviceName}.`)
-  return blockTracker.getLastProcessedBlock() !== undefined
+  return blockTracker.getLastFetchedBlock() !== undefined
 }
 
 export function getEventsEmitterForService (serviceName: string, eth: Eth, contractAbi: AbiItem[]): EventEmitter {
