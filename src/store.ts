@@ -4,11 +4,11 @@ import type { Sequelize } from 'sequelize'
 
 export function initStore (sequelize: Sequelize): Promise<void> {
   return init(sequelize, {
-    'storage.lastProcessedBlock': 'int',
+    'storage.lastFetchedBlock': 'json',
     'rates.lastUpdate': 'int',
-    'rns.owner.lastProcessedBlock': 'int',
-    'rns.reverse.lastProcessedBlock': 'int',
-    'rns.placement.lastProcessedBlock': 'int'
+    'rns.owner.lastFetchedBlock': 'json',
+    'rns.reverse.lastFetchedBlock': 'json',
+    'rns.placement.lastFetchedBlock': 'json'
   })
 }
 

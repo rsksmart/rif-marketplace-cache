@@ -90,7 +90,7 @@ const storage: CachedService = {
     logger.info(`Removed ${priceCount} billing plans entries, ${offersCount} offers and ${agreementsCount} agreements`)
 
     const store = getObject()
-    delete store['storage.lastProcessedBlock']
+    delete store['storage.lastFetchedBlockNumber']
   },
 
   precache
