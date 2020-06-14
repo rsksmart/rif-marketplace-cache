@@ -1,3 +1,4 @@
+import abiDecoder, { DecodedData } from 'abi-decoder'
 import config from 'config'
 import { Eth } from 'web3-eth'
 import { EventData } from 'web3-eth-contract'
@@ -11,12 +12,32 @@ import DomainExpiration from './models/expiration.model'
 import DomainOwner from './models/owner.model'
 import Transfer from './models/transfer.model'
 
-async function transferHandler (logger: Logger, eventData: EventData, _: Eth, services: RnsServices): Promise<void> {
+async function transferHandler (logger: Logger, eventData: EventData, eth: Eth, services: RnsServices): Promise<void> {
   const tokenId = Utils.numberToHex(eventData.returnValues.tokenId)
   const ownerAddress = eventData.returnValues.to.toLowerCase()
 
   const fiftsAddr = config.get('rns.fifsAddrRegistrar.contractAddress')
   const registrar = config.get('rns.registrar.contractAddress')
+
+  const transactionHash = eventData.transactionHash
+  const from = eventData.returnValues.from.toLowerCase()
+
+  const domainsService = services.domains
+
+  if (from === '0x0000000000000000000000000000000000000000') {
+    const transaction = await eth.getTransaction(transactionHash)
+    const decodedData: DecodedData = abiDecoder.decodeMethod(transaction.input)
+
+    if (decodedData) {
+      const name = Utils.hexToAscii('0x' + decodedData.params[2].value.slice(218, decodedData.params[2].value.length))
+
+      if (name) {
+        await Domain.upsert({ tokenId, name })
+
+        if (domainsService.emit) domainsService.emit('patched', { tokenId })
+      }
+    }
+  }
 
   if (ownerAddress === (fiftsAddr as string).toLowerCase()) {
     return
@@ -25,9 +46,6 @@ async function transferHandler (logger: Logger, eventData: EventData, _: Eth, se
   if (ownerAddress === (registrar as string).toLowerCase()) {
     return
   }
-
-  const transactionHash = eventData.transactionHash
-  const from = eventData.returnValues.from.toLowerCase()
 
   const transferDomain = await Transfer.create({
     id: transactionHash,
@@ -40,7 +58,6 @@ async function transferHandler (logger: Logger, eventData: EventData, _: Eth, se
     logger.info(`Transfer event: Transfer ${tokenId} created`)
   }
 
-  const domainsService = services.domains
   const domain = await Domain.findByPk(tokenId)
 
   if (domain) {
@@ -50,7 +67,7 @@ async function transferHandler (logger: Logger, eventData: EventData, _: Eth, se
     logger.info(`Transfer event: Updated DomainOwner ${ownerAddress} for tokenId ${tokenId}`)
   } else {
     await domainsService.create({ tokenId })
-    await DomainOwner.create({ tokenId, ownerAddress })
+    await DomainOwner.create({ tokenId, address: ownerAddress })
     logger.info(`Transfer event: Created Domain ${tokenId} for owner ${ownerAddress}`)
   }
 }
