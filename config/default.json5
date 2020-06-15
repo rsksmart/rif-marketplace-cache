@@ -74,6 +74,7 @@
 
   // Settings for RNS service related function
   rns: {
+    tld: 'rsk',
     // Sets if RNS service should be enabled
     enabled: true,
 
