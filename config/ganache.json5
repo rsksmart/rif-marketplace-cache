@@ -21,7 +21,7 @@
       }
     },
     placement: {
-      contractAddress: "0x22d5C8BdD4346b390014a07109a8F830094d4abf",
+      contractAddress: "0x31630Dba815db73E9e0Fe16a4F42dF4bbFDB7Ba9",
       eventsEmitter: {
         confirmations: 0
       }
