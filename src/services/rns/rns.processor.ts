@@ -18,6 +18,7 @@ async function transferHandler (logger: Logger, eventData: EventData, eth: Eth, 
 
   const fiftsAddr = config.get('rns.fifsAddrRegistrar.contractAddress')
   const registrar = config.get('rns.registrar.contractAddress')
+  const tld = config.get('rns.tld')
 
   const transactionHash = eventData.transactionHash
   const from = eventData.returnValues.from.toLowerCase()
@@ -32,7 +33,7 @@ async function transferHandler (logger: Logger, eventData: EventData, eth: Eth, 
       const name = Utils.hexToAscii('0x' + decodedData.params[2].value.slice(218, decodedData.params[2].value.length))
 
       if (name) {
-        await Domain.upsert({ tokenId, name })
+        await Domain.upsert({ tokenId, name: `${name}.${tld}` })
 
         if (domainsService.emit) domainsService.emit('patched', { tokenId })
       }

@@ -42,6 +42,7 @@ export async function processRskOwner (eth: Eth, logger: Logger, contractAbi: Ut
     logger.warn('RNS FIFS Registrar address is not defined, skipping Auction Registrar precaching!')
     return
   }
+  const tld = config.get('rns.tld')
 
   logger.info('Processing events Transfer from FIFSAddrRegistrar')
   const rskOwner = new eth.Contract(contractAbi, config.get<string>('rns.owner.contractAddress'))
@@ -56,7 +57,7 @@ export async function processRskOwner (eth: Eth, logger: Logger, contractAbi: Ut
     const name = Utils.hexToAscii('0x' + decodedData.params[2].value.slice(218, decodedData.params[2].value.length))
     const tokenId = Utils.numberToHex(Utils.sha3(name) as string)
     const ownerAddress = rskOwnerEvent.returnValues.to.toLowerCase()
-    await Domain.upsert({ tokenId, name })
+    await Domain.upsert({ tokenId, name: `${name}.${tld}` })
     await DomainOwner.upsert({ tokenId, address: ownerAddress })
   }
 }
