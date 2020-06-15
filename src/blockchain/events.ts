@@ -321,7 +321,7 @@ export abstract class BaseEventsEmitter extends AutoStartStopEventEmitter {
       const dbEvents = await Event.findAll({
         where: {
           blockNumber: { [Op.lte]: currentBlock.number - this.confirmations },
-          event: this.events,
+          contractAddress: this.contract.options.address,
           emitted: false
         }
       })
@@ -354,6 +354,7 @@ export abstract class BaseEventsEmitter extends AutoStartStopEventEmitter {
       blockNumber: data.blockNumber,
       transactionHash: data.transactionHash,
       logIndex: data.logIndex,
+      contractAddress: this.contract.options.address,
       event: data.event,
       targetConfirmation: this.confirmations,
       content: JSON.stringify(data)
@@ -499,7 +500,7 @@ export class PollingEventsEmitter extends BaseEventsEmitter {
 
   async poll (currentBlock: BlockHeader): Promise<void> {
     await this.semaphore.acquire()
-    this.logger.verbose(`Received new block number ${currentBlock}`)
+    this.logger.verbose(`Received new block number ${currentBlock.number}`)
     try {
       const [lastFetchedBlockNumber, lastFetchedBlockHash] = this.blockTracker.getLastFetchedBlock()
 
