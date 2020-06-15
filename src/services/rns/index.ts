@@ -151,9 +151,12 @@ const rns: CachedService = {
     logger.info(`Removed ${offersCount} offers entries, ${soldCount} sold domains, ${transferCount} transfers and ${domainsCount} domains`)
 
     const store = getObject()
-    delete store['rns.placement.lastFetchedBlock']
-    delete store['rns.reverse.lastFetchedBlock']
-    delete store['rns.owner.lastFetchedBlock']
+    delete store['rns.placement.lastFetchedBlockNumber']
+    delete store['rns.placement.lastFetchedBlockHash']
+    delete store['rns.reverse.lastFetchedBlockNumber']
+    delete store['rns.reverse.lastFetchedBlockHash']
+    delete store['rns.owner.lastFetchedBlockNumber']
+    delete store['rns.owner.lastFetchedBlockHash']
   }
 
 }

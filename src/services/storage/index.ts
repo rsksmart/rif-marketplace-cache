@@ -91,6 +91,7 @@ const storage: CachedService = {
 
     const store = getObject()
     delete store['storage.lastFetchedBlockNumber']
+    delete store['storage.lastFetchedBlockHash']
   },
 
   precache
