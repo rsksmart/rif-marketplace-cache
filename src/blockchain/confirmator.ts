@@ -7,7 +7,7 @@ import type { EventData } from 'web3-eth-contract'
 import type { BlockHeader, Eth } from 'web3-eth'
 import type { Logger } from '../definitions'
 import type { ServiceMethods } from '@feathersjs/feathers'
-import type { BlockTracker } from './events'
+import type { BlockTracker } from './block-tracker'
 import type { EventEmitter } from 'events'
 
 function isAlreadyConfirmedClosure (currentBlockNumber: number) {
