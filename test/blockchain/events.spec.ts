@@ -1,4 +1,4 @@
-import { BlockHeader, Eth } from 'web3-eth'
+import { Eth } from 'web3-eth'
 import { Arg, Substitute } from '@fluffy-spoon/substitute'
 import sinon from 'sinon'
 import chai from 'chai'
@@ -14,14 +14,14 @@ import {
   BaseEventsEmitter,
   BlockTracker, BlockTrackerStore,
   EventsEmitterOptions,
-  ListeningNewBlockEmitter, PollingEventsEmitter,
-  PollingNewBlockEmitter
+  PollingEventsEmitter
 } from '../../src/blockchain/events'
 import { Logger } from '../../src/definitions'
 import { loggingFactory } from '../../src/logger'
 import { sequelizeFactory } from '../../src/sequelize'
 import Event from '../../src/blockchain/event.model'
-import { receiptMock, sleep, blockMock, eventMock, subscribeMock } from '../utils'
+import { sleep, blockMock, eventMock } from '../utils'
+import { NEW_BLOCK_EVENT_NAME } from '../../src/blockchain/new-block-emitters'
 
 chai.use(sinonChai)
 chai.use(chaiAsPromised)
@@ -29,7 +29,6 @@ chai.use(dirtyChai)
 const expect = chai.expect
 const setImmediatePromise = util.promisify(setImmediate)
 
-const NEW_BLOCK_EVENT = 'newBlock'
 const DATA_EVENT_NAME = 'newEvent'
 const STORE_LAST_FETCHED_BLOCK_NUMBER_KEY = 'lastFetchedBlockNumber'
 const STORE_LAST_FETCHED_BLOCK_HASH_KEY = 'lastFetchedBlockHash'
@@ -119,118 +118,6 @@ describe('BlockTracker', () => {
     expect(bt.getLastProcessedBlock()).to.eql([11, '0x1233'])
     expect(store[STORE_LAST_PROCESSED_BLOCK_NUMBER_KEY]).to.eql(11)
     expect(store[STORE_LAST_PROCESSED_BLOCK_HASH_KEY]).to.eql('0x1233')
-  })
-})
-
-describe('PollingNewBlockEmitter', () => {
-  it('should immediately emit event', async function () {
-    const spy = sinon.spy()
-    const block = blockMock(111)
-    const eth = Substitute.for<Eth>()
-    eth.getBlock(Arg.all()).returns(Promise.resolve(block))
-
-    const emitter = new PollingNewBlockEmitter(eth, 100)
-    emitter.on(NEW_BLOCK_EVENT, spy)
-
-    // We have to wait for all previous schedules events in event-loop to finish
-    await setImmediatePromise()
-    eth.received(1).getBlock(Arg.all())
-    expect(spy.calledOnceWith(block)).to.be.true('Emitter callback should have been called with 10.')
-
-    emitter.off(NEW_BLOCK_EVENT, spy) // Cleanup
-  })
-
-  it('should emit only new events', async function () {
-    const spy = sinon.spy()
-    const eth = Substitute.for<Eth>()
-    const firstBlock = blockMock(10)
-    const secondBlock = blockMock(11)
-    eth.getBlock(Arg.all()).returns(
-      Promise.resolve(firstBlock),
-      Promise.resolve(blockMock(10)),
-      Promise.resolve(secondBlock)
-    )
-
-    const emitter = new PollingNewBlockEmitter(eth, 100)
-    emitter.on(NEW_BLOCK_EVENT, spy)
-
-    // Lets wait for 3 events polls
-    await sleep(210)
-    eth.received(3).getBlock(Arg.all())
-    expect(spy.calledTwice).to.be.true('Emitter callback should have been called twice.')
-    expect(spy.firstCall.calledWithExactly(firstBlock)).to.be.true('Emitter callback should have been called first with 10.')
-    expect(spy.secondCall.calledWithExactly(secondBlock)).to.be.true('Emitter callback should have been called second time with 11.')
-
-    emitter.off(NEW_BLOCK_EVENT, spy) // Cleanup
-  })
-
-  it('should stop on removeListener', async function () {
-    const spy = sinon.spy()
-    const block = blockMock(10)
-    const eth = Substitute.for<Eth>()
-    eth.getBlock(Arg.all()).returns(
-      Promise.resolve(block),
-      Promise.resolve(blockMock(10))
-    )
-
-    const emitter = new PollingNewBlockEmitter(eth, 100)
-    emitter.on(NEW_BLOCK_EVENT, spy)
-
-    // Lets wait for 2 events polls
-    await sleep(110)
-    emitter.off(NEW_BLOCK_EVENT, spy)
-
-    // Lets make sure it is off
-    await sleep(110)
-
-    eth.received(2).getBlock(Arg.all())
-    expect(spy.calledOnce).to.be.true('Emitter callback should have been called once.')
-    expect(spy.firstCall.calledWithExactly(block)).to.be.true('Emitter callback should have been called first with 10.')
-  })
-})
-
-describe('ListeningNewBlockEmitter', () => {
-  const NEW_BLOCK_EVENT = 'newBlock'
-
-  it('should immediately emit event', async function () {
-    const spy = sinon.spy()
-    const block = blockMock(10)
-    const eth = Substitute.for<Eth>()
-    eth.getBlock(Arg.all()).returns(Promise.resolve(block))
-
-    const emitter = new ListeningNewBlockEmitter(eth)
-    emitter.on(NEW_BLOCK_EVENT, spy)
-
-    // We have to wait for all previous schedules events in event-loop to finish
-    await setImmediatePromise()
-    eth.received(1).getBlock(Arg.all())
-    expect(spy.calledOnceWith(block)).to.be.true('Emitter callback should have been called with 10.')
-  })
-
-  it('should listen for events from blockchain', async function () {
-    const spy = sinon.spy()
-    const block = blockMock(9)
-    const block1 = Substitute.for<BlockHeader>()
-    block1.number.returns!(10)
-    const block2 = Substitute.for<BlockHeader>()
-    block2.number.returns!(11)
-    const subscribe = subscribeMock([block1, block2], 100)
-    const eth = Substitute.for<Eth>()
-    eth.getBlock(Arg.all()).returns(Promise.resolve(block))
-    // @ts-ignore
-    eth.subscribe(Arg.all()).mimicks(subscribe)
-
-    const emitter = new ListeningNewBlockEmitter(eth)
-    emitter.on(NEW_BLOCK_EVENT, spy)
-
-    // Lets wait for 3 events fired
-    await sleep(410)
-
-    eth.received(1).getBlock(Arg.all())
-    expect(spy).to.have.callCount(3)
-    expect(spy.firstCall).to.be.calledWithExactly(block)
-    expect(spy.secondCall).to.be.calledWithExactly(block1)
-    expect(spy.thirdCall).to.be.calledWithExactly(block2)
   })
 })
 
@@ -498,10 +385,10 @@ describe('PollingEventsEmitter', function () {
     eventsEmitter.on(DATA_EVENT_NAME, spy)
     await setImmediatePromise()
 
-    newBlockEmitter.emit(NEW_BLOCK_EVENT, blockMock(11))
+    newBlockEmitter.emit(NEW_BLOCK_EVENT_NAME, blockMock(11))
     await sleep(100)
 
-    newBlockEmitter.emit(NEW_BLOCK_EVENT, blockMock(12))
+    newBlockEmitter.emit(NEW_BLOCK_EVENT_NAME, blockMock(12))
     await sleep(100)
 
     contract.received(2).getPastEvents(Arg.all())
@@ -527,10 +414,10 @@ describe('PollingEventsEmitter', function () {
     eventsEmitter.on(DATA_EVENT_NAME, spy)
     await setImmediatePromise()
 
-    newBlockEmitter.emit(NEW_BLOCK_EVENT, blockMock(11))
+    newBlockEmitter.emit(NEW_BLOCK_EVENT_NAME, blockMock(11))
     await sleep(100)
 
-    newBlockEmitter.emit(NEW_BLOCK_EVENT, blockMock(12))
+    newBlockEmitter.emit(NEW_BLOCK_EVENT_NAME, blockMock(12))
     await sleep(100)
 
     contract.received(2).getPastEvents(Arg.all())
@@ -555,10 +442,10 @@ describe('PollingEventsEmitter', function () {
     eventsEmitter.on(DATA_EVENT_NAME, spy)
     await setImmediatePromise()
 
-    newBlockEmitter.emit(NEW_BLOCK_EVENT, blockMock(11))
+    newBlockEmitter.emit(NEW_BLOCK_EVENT_NAME, blockMock(11))
     await sleep(100)
 
-    newBlockEmitter.emit(NEW_BLOCK_EVENT, blockMock(11)) // Testing if same block is ignored
+    newBlockEmitter.emit(NEW_BLOCK_EVENT_NAME, blockMock(11)) // Testing if same block is ignored
     await sleep(100)
 
     contract.received(1).getPastEvents(Arg.all())
@@ -588,7 +475,7 @@ describe('PollingEventsEmitter', function () {
     eventsEmitter.on(DATA_EVENT_NAME, spy) // Will start processingPastEvents() which will be delayed
 
     // Directly calling processEvents(), which should be blocked by the processingPastEvents()
-    newBlockEmitter.emit(NEW_BLOCK_EVENT, blockMock(11))
+    newBlockEmitter.emit(NEW_BLOCK_EVENT_NAME, blockMock(11))
     await sleep(50)
     contract.received(1).getPastEvents(Arg.all())
 
