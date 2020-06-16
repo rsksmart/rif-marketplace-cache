@@ -2,9 +2,6 @@
   db: 'sqlite://db_test.sqlite',
   blockchain: {
     provider: 'ws://localhost:8545',
-
-    confirmationsService: {
-      deleteTargetConfirmationsMultiplier: 2
-    }
+    deleteTargetConfirmationsMultiplier: 1.5
   }
 }

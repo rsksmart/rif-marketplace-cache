@@ -1,7 +1,7 @@
 import Eth from 'web3-eth'
 import config from 'config'
 
-import ConfirmationService from './confirmation.service'
+import { ConfirmatorService } from './confirmator'
 import { Application, ServiceAddresses } from '../definitions'
 import { loggingFactory } from '../logger'
 
@@ -30,7 +30,7 @@ function channelSetup (app: Application): void {
 export default function (app: Application): void {
   const eth = ethFactory()
   app.set('eth', eth)
-  app.use(ServiceAddresses.CONFIRMATIONS, new ConfirmationService(eth))
+  app.use(ServiceAddresses.CONFIRMATIONS, new ConfirmatorService(eth))
 
   channelSetup(app)
 }
