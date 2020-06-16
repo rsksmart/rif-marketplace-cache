@@ -187,6 +187,8 @@ It is emitted with the object containing property `transactionHash` that contain
 
 ## Configuration
 
+Required reading: [node-config docs](https://github.com/lorenwest/node-config/wiki/Configuration-Files)
+
 There are several ways how to configure this application:
 
  1. Using JSON file
