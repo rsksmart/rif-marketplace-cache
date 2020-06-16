@@ -112,31 +112,38 @@ const rns: CachedService = {
 
     app.configure(rnsChannels)
 
-    // Initialize blockchain watcher
-    const eth = app.get('eth') as Eth
-
     // We require services to be precached before running server
     if (!isServiceInitialized('rns.owner')) {
       return logger.critical('RNS service is not initialized! Run precache command.')
     }
+
+    // Initialize blockchain watchers
+    const eth = app.get('eth') as Eth
+    const confirmationService = app.service(ServiceAddresses.CONFIRMATIONS)
     const services = { domains, sold, offers }
     const rnsEventsEmitter = getEventsEmitterForService('rns.owner', eth, rnsContractAbi.abi as AbiItem[])
     rnsEventsEmitter.on('newEvent', errorHandler(eventProcessor(loggingFactory('rns.owner:processor'), eth, services), logger))
     rnsEventsEmitter.on('error', (e: Error) => {
       logger.error(`There was unknown error in Events Emitter for rns.owner! ${e}`)
     })
+    rnsEventsEmitter.on('newConfirmation', (data) => confirmationService.emit('newConfirmation', data))
+    rnsEventsEmitter.on('invalidConfirmation', (data) => confirmationService.emit('invalidConfirmation', data))
 
     const rnsReverseEventsEmitter = getEventsEmitterForService('rns.reverse', eth, rnsReverseContractAbi.abi as AbiItem[])
     rnsReverseEventsEmitter.on('newEvent', errorHandler(eventProcessor(loggingFactory('rns.reverse:processor'), eth, services), logger))
     rnsReverseEventsEmitter.on('error', (e: Error) => {
       logger.error(`There was unknown error in Events Emitter for rns.reverse! ${e}`)
     })
+    rnsReverseEventsEmitter.on('newConfirmation', (data) => confirmationService.emit('newConfirmation', data))
+    rnsReverseEventsEmitter.on('invalidConfirmation', (data) => confirmationService.emit('invalidConfirmation', data))
 
     const rnsPlacementsEventsEmitter = getEventsEmitterForService('rns.placement', eth, simplePlacementsContractAbi as AbiItem[])
     rnsPlacementsEventsEmitter.on('newEvent', errorHandler(eventProcessor(loggingFactory('rns.placement:processor'), eth, services), logger))
     rnsPlacementsEventsEmitter.on('error', (e: Error) => {
       logger.error(`There was unknown error in Events Emitter for rns.placement! ${e}`)
     })
+    rnsPlacementsEventsEmitter.on('newConfirmation', (data) => confirmationService.emit('newConfirmation', data))
+    rnsPlacementsEventsEmitter.on('invalidConfirmation', (data) => confirmationService.emit('invalidConfirmation', data))
 
     return Promise.resolve()
   },

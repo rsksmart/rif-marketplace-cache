@@ -68,19 +68,21 @@ const storage: CachedService = {
     const service = app.service(ServiceAddresses.STORAGE_OFFERS)
     service.hooks(hooks)
 
-    // Initialize blockchain watcher
-    const eth = app.get('eth') as Eth
-
     // We require services to be precached before running server
     if (!isServiceInitialized(SERVICE_NAME)) {
       return logger.critical('Storage service is not initialized! Run precache command.')
     }
 
+    // Initialize blockchain watcher
+    const eth = app.get('eth') as Eth
+    const confirmationService = app.service(ServiceAddresses.CONFIRMATIONS)
     const eventsEmitter = getEventsEmitterForService(SERVICE_NAME, eth, storageManagerContract.abi as AbiItem[])
     eventsEmitter.on('newEvent', errorHandler(eventProcessor(eth), logger))
     eventsEmitter.on('error', (e: Error) => {
       logger.error(`There was unknown error in Events Emitter! ${e}`)
     })
+    eventsEmitter.on('newConfirmation', (data) => confirmationService.emit('newConfirmation', data))
+    eventsEmitter.on('invalidConfirmation', (data) => confirmationService.emit('invalidConfirmation', data))
   },
 
   async purge (): Promise<void> {

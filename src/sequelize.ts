@@ -24,7 +24,9 @@ export function sequelizeFactory (): Sequelize {
     modelMatch: (filename: string, member: string): boolean => {
       return filename.substring(0, filename.indexOf('.model')) === member.toLowerCase()
     },
-    logging: (msg) => logger.debug(formatLogs(msg))
+    logging: (msg) => logger.debug(formatLogs(msg)),
+    // @ts-ignore
+    transactionType: 'IMMEDIATE'
   }
 
   return new Sequelize(config.get('db'), dbSettings)

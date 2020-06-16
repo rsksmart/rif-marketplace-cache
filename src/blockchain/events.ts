@@ -11,6 +11,8 @@ import { loggingFactory } from '../logger'
 import Event, { EventInterface } from './event.model'
 import { Logger, NewBlockEmitterOptions } from '../definitions'
 import { createTransactionLookupTable } from './utils'
+import { errorHandler } from '../utils'
+import { Confirmator } from './confirmator'
 
 // Constant number that defines default interval of all polling mechanisms.
 const DEFAULT_POLLING_INTERVAL = 5000
@@ -218,15 +220,17 @@ export class ListeningNewBlockEmitter extends AutoStartStopEventEmitter {
  * blocks are emitted to consumers for further processing.
  */
 export abstract class BaseEventsEmitter extends AutoStartStopEventEmitter {
-  protected readonly blockTracker: BlockTracker
+  public readonly blockTracker: BlockTracker
   protected readonly newBlockEmitter: EventEmitter
   protected readonly startingBlock: string | number
   protected readonly events: string[]
   protected readonly contract: Contract
   protected readonly eth: Eth
   protected readonly semaphore: Sema
+  private readonly confirmator?: Confirmator
   private readonly confirmations: number
   private isInitialized = false
+  private confirmationRoutine?: (...args: any[]) => void
 
   protected constructor (eth: Eth, contract: Contract, events: string[], logger: Logger, options?: EventsEmitterOptions) {
     super(logger, NEW_EVENT_EVENT_NAME)
@@ -263,6 +267,10 @@ export abstract class BaseEventsEmitter extends AutoStartStopEventEmitter {
     }
 
     this.newBlockEmitter.on('error', (e) => this.emit('error', e))
+
+    if (this.confirmations > 0) {
+      this.confirmator = new Confirmator(this, eth, contract.options.address, this.blockTracker, logger)
+    }
   }
 
   /**
@@ -287,7 +295,8 @@ export abstract class BaseEventsEmitter extends AutoStartStopEventEmitter {
     this.startEvents()
 
     if (this.confirmations > 0) {
-      this.newBlockEmitter.on(NEW_BLOCK_EVENT_NAME, this.confirmationRoutine.bind(this))
+      this.confirmationRoutine = errorHandler(this.confirmator!.runConfirmationsRoutine.bind(this.confirmator), this.logger)
+      this.newBlockEmitter.on(NEW_BLOCK_EVENT_NAME, this.confirmationRoutine)
     }
   }
 
@@ -295,7 +304,7 @@ export abstract class BaseEventsEmitter extends AutoStartStopEventEmitter {
     this.stopEvents()
 
     if (this.confirmations > 0) {
-      this.newBlockEmitter.off(NEW_BLOCK_EVENT_NAME, this.confirmationRoutine.bind(this))
+      this.newBlockEmitter.off(NEW_BLOCK_EVENT_NAME, this.confirmationRoutine!)
     }
   }
 
@@ -309,42 +318,9 @@ export abstract class BaseEventsEmitter extends AutoStartStopEventEmitter {
    */
   abstract stopEvents (): void
 
-  /**
-   * Retrieves confirmed events and emits them.
-   *
-   * Before emitting it validates that the Event is still valid on blockchain using the transaction's receipt.
-   *
-   * @param currentBlock
-   */
-  private async confirmationRoutine (currentBlock: BlockHeader): Promise<void> {
-    try {
-      const dbEvents = await Event.findAll({
-        where: {
-          blockNumber: { [Op.lte]: currentBlock.number - this.confirmations },
-          contractAddress: this.contract.options.address,
-          emitted: false
-        }
-      })
-
-      const ethEvents = dbEvents.map(event => JSON.parse(event.content)) as EventData[]
-      ethEvents.forEach(this.confirmEvent.bind(this))
-      this.logger.info(`Confirmed ${ethEvents.length} events.`)
-
-      // Update DB that events were emitted
-      await Event.update({ emitted: true }, { where: { id: dbEvents.map(e => e.id) } })
-    } catch (e) {
-      this.logger.error(`During confirmation error was raised: ${e}`)
-      this.emit('error', e)
-    }
-  }
-
-  private confirmEvent (data: EventData): void {
+  public emitEvent (data: EventData): void {
+    this.logger.debug('Emitting event', data)
     this.blockTracker.setLastProcessedBlockIfHigher(data.blockNumber, data.blockHash)
-    this.emitEvent(data)
-  }
-
-  protected emitEvent (data: EventData): void {
-    this.logger.debug('Emitting event', [data])
     this.emit(NEW_EVENT_EVENT_NAME, data)
   }
 
@@ -445,7 +421,7 @@ export abstract class BaseEventsEmitter extends AutoStartStopEventEmitter {
       .filter(event => event.blockNumber <= thresholdBlock)
     this.logger.info(`${eventsToBeEmitted.length} events to be emitted.`)
 
-    eventsToBeEmitted.forEach(this.confirmEvent.bind(this))
+    eventsToBeEmitted.forEach(this.emitEvent.bind(this))
   }
 
   /**

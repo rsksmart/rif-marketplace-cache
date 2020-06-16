@@ -7,7 +7,7 @@ import { Eth } from 'web3-eth'
 import { OfferService } from './services/storage'
 import { RatesService } from './services/rates'
 import { RnsService } from './services/rns'
-import ConfirmationService from './blockchain/confirmation.service'
+import { ConfirmatorService } from './blockchain/confirmator'
 
 export enum ServiceAddresses {
   RNS_DOMAINS = '/rns/v0/domains',
@@ -17,6 +17,7 @@ export enum ServiceAddresses {
   XR = '/rates/v0/',
   CONFIRMATIONS = '/confirmations'
 }
+
 // A mapping of service names to types. Will be extended in service files.
 interface ServiceTypes {
   [ServiceAddresses.STORAGE_OFFERS]: OfferService & ServiceAddons<any>
@@ -24,21 +25,22 @@ interface ServiceTypes {
   [ServiceAddresses.RNS_DOMAINS]: RnsService & ServiceAddons<any>
   [ServiceAddresses.RNS_SOLD]: RnsService & ServiceAddons<any>
   [ServiceAddresses.RNS_OFFERS]: RnsService & ServiceAddons<any>
-  [ServiceAddresses.CONFIRMATIONS]: ConfirmationService & ServiceAddons<any>
+  [ServiceAddresses.CONFIRMATIONS]: ConfirmatorService & ServiceAddons<any>
 }
 
 // The application instance type that will be used everywhere else
 export type Application = ExpressFeathers<ServiceTypes>;
 
 export interface CachedService {
-  precache(eth?: Eth): Promise<void>
-  purge(): Promise<void>
-  initialize(app: Application): Promise<void>
+  precache (eth?: Eth): Promise<void>
+  purge (): Promise<void>
+  initialize (app: Application): Promise<void>
 }
 
 export enum RatesProvider {
   coingecko = 'coingecko'
 }
+
 export function isRatesProvider (value: any): value is RatesProvider {
   return Object.values(RatesProvider).includes(value)
 }
@@ -104,18 +106,11 @@ export interface Config {
     // Address to where web3js should connect to. Should be WS endpoint.
     provider?: string
 
-    // Service that expose transactions that are currently awaiting for confirmations.
-    confirmationsService?: {
-
-      // Multiplier that is used for targetConfirmations that determines when an event
-      // from DB is supposed to be removed.
-      // Eq. if event is supposed to be confirmed after 5 blocks (eq. targetConfirmations)
-      // when this parameter is set to "2" then the event will be removed after 10 confirmations.
-      deleteTargetConfirmationsMultiplier?: number
-
-      // Specify behavior of NewBlockEmitter, that detects new blocks on blockchain.
-      newBlockEmitter?: NewBlockEmitterOptions
-    }
+    // Multiplier that is used for targetConfirmations that determines when an event
+    // from DB is supposed to be removed.
+    // Eq. if event is supposed to be confirmed after 5 blocks (eq. targetConfirmations)
+    // when this parameter is set to "2" then the event will be removed after 10 confirmations.
+    deleteTargetConfirmationsMultiplier?: number
   }
 
   rates?: {
@@ -165,7 +160,7 @@ export interface Config {
   }
 }
 
-interface Args { [name: string]: any }
+interface Args {[name: string]: any}
 
 type Options<T> = T extends Parser.Input<infer R>
   ? Parser.Output<R, Args>
@@ -178,22 +173,22 @@ export type Flags<T> = Options<T>['flags']
  */
 export interface Logger {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  critical(message: string | Error | object, ...meta: any[]): never
+  critical (message: string | Error | object, ...meta: any[]): never
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  error(message: string | Error | object, ...meta: any[]): void
+  error (message: string | Error | object, ...meta: any[]): void
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  warn(message: string | object, ...meta: any[]): void
+  warn (message: string | object, ...meta: any[]): void
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  info(message: string | object, ...meta: any[]): void
+  info (message: string | object, ...meta: any[]): void
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  verbose(message: string | object, ...meta: any[]): void
+  verbose (message: string | object, ...meta: any[]): void
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  debug(message: string | object, ...meta: any[]): void
+  debug (message: string | object, ...meta: any[]): void
 }
 
 /**
