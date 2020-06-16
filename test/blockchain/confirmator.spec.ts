@@ -13,7 +13,7 @@ import { sequelizeFactory } from '../../src/sequelize'
 import { Confirmator, ConfirmatorService } from '../../src/blockchain/confirmator'
 import { receiptMock, sleep } from '../utils'
 import { loggingFactory } from '../../src/logger'
-import { BlockTracker } from '../../src/blockchain/events'
+import { BlockTracker } from '../../src/blockchain/block-tracker'
 
 chai.use(sinonChai)
 chai.use(chaiAsPromised)

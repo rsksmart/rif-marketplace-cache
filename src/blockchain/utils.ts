@@ -5,8 +5,9 @@ import config from 'config'
 import { getObject } from 'sequelize-store'
 
 import { loggingFactory } from '../logger'
-import eventsEmitterFactory, { BlockTracker, EventsEmitterOptions } from './events'
+import eventsEmitterFactory, { EventsEmitterOptions } from './events'
 import { NewBlockEmitterOptions } from '../definitions'
+import { BlockTracker } from './block-tracker'
 
 function getBlockTracker (keyPrefix?: string): BlockTracker {
   const store = getObject(keyPrefix)
