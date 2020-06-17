@@ -1,4 +1,4 @@
-import { Eth } from 'web3-eth'
+import { BlockHeader, Eth } from 'web3-eth'
 import { Arg, Substitute } from '@fluffy-spoon/substitute'
 import sinon from 'sinon'
 import chai from 'chai'
@@ -13,7 +13,7 @@ import { EventEmitter } from 'events'
 import {
   BaseEventsEmitter,
   EventsEmitterOptions,
-  PollingEventsEmitter
+  PollingEventsEmitter, REORG_EVENT_NAME, REORG_OUT_OF_RANGE_EVENT_NAME
 } from '../../src/blockchain/events'
 import { Logger } from '../../src/definitions'
 import { loggingFactory } from '../../src/logger'
@@ -22,6 +22,8 @@ import Event from '../../src/blockchain/event.model'
 import { sleep, blockMock, eventMock } from '../utils'
 import { NEW_BLOCK_EVENT_NAME } from '../../src/blockchain/new-block-emitters'
 import { BlockTracker } from '../../src/blockchain/block-tracker'
+import { AbiItem } from 'web3-utils'
+import { Confirmator } from '../../src/blockchain/confirmator'
 
 chai.use(sinonChai)
 chai.use(chaiAsPromised)
@@ -168,85 +170,6 @@ describe('BaseEventsEmitter', () => {
       eth.received(1).getBlockNumber()
       contract.received(0).getPastEvents(Arg.all())
     })
-
-    it('should handle re-emitted events', async function () {
-      const contract = Substitute.for<Contract>()
-      const eth = Substitute.for<Eth>()
-      eth.getBlockNumber().resolves(10)
-
-      const blockTracker = new BlockTracker({})
-      blockTracker.setLastFetchedBlock(6, '') // Leads to no processPastEvents
-
-      const newBlockEmitter = new EventEmitter()
-      const options: EventsEmitterOptions = { confirmations: 2, blockTracker, newBlockEmitter }
-      const spy = sinon.spy()
-      const eventsEmitter = new DummyEventsEmitter(eth, contract, ['testEvent'], options)
-      eventsEmitter.on(DATA_EVENT_NAME, spy)
-
-      // Create events that will have conflict with the new events (a.k.a re-emitted from blockchain)
-      const storedEvents = [
-        { blockNumber: 7, transactionHash: '1', logIndex: 1, content: '{"transactionIndex": 1}' },
-        { blockNumber: 7, transactionHash: '1', logIndex: 2, content: '{"transactionIndex": 1}' }, // Will be deleted
-        { blockNumber: 8, transactionHash: '2', logIndex: 1, content: '{"transactionIndex": 2}' }, // Will be deleted
-        { blockNumber: 8, transactionHash: '3', logIndex: 1, content: '{"transactionIndex": 3}' }, // Will be deleted
-        { blockNumber: 9, transactionHash: '4', logIndex: 1, content: '{"transactionIndex": 3}' }
-      ]
-      await Event.bulkCreate(storedEvents)
-
-      const events = [
-        eventMock({ blockNumber: 9, transactionHash: '1', logIndex: 2 }), // Re-emitted event
-        eventMock({ blockNumber: 9, transactionHash: '2', logIndex: 1 }), // Re-emitted event
-        eventMock({ blockNumber: 9, transactionHash: '3', logIndex: 1 }), // Re-emitted event
-        eventMock({ blockNumber: 10, transactionHash: '6', logIndex: 1 })
-      ]
-      await eventsEmitter.createEvent(events)
-
-      expect(await Event.count()).to.eql(6)
-      expect(spy.called).to.be.false()
-      expect(await Event.findOne({ where: { blockNumber: 7, transactionHash: '1', logIndex: 2 } })).to.be.null()
-      expect(await Event.findOne({ where: { blockNumber: 8, transactionHash: '2', logIndex: 1 } })).to.be.null()
-      expect(await Event.findOne({ where: { blockNumber: 8, transactionHash: '3', logIndex: 1 } })).to.be.null()
-    })
-
-    it('should handle only re-emitted events that were not already processed in past', async function () {
-      const contract = Substitute.for<Contract>()
-      const eth = Substitute.for<Eth>()
-      eth.getBlockNumber().resolves(10)
-
-      const blockTracker = new BlockTracker({})
-      blockTracker.setLastFetchedBlock(6, '') // Leads to no processPastEvents
-
-      const newBlockEmitter = new EventEmitter()
-      const options: EventsEmitterOptions = { confirmations: 2, blockTracker, newBlockEmitter }
-      const spy = sinon.spy()
-      const eventsEmitter = new DummyEventsEmitter(eth, contract, ['testEvent'], options)
-      eventsEmitter.on(DATA_EVENT_NAME, spy)
-
-      // Create events that will have conflict with the new events (a.k.a re-emitted from blockchain)
-      const storedEvents = [
-        { blockNumber: 7, transactionHash: '1', logIndex: 1, content: '{"transactionIndex": 1}' },
-        { blockNumber: 7, transactionHash: '1', logIndex: 2, content: '{"transactionIndex": 1}' }, // Will be deleted
-        { blockNumber: 8, transactionHash: '2', logIndex: 1, content: '{"transactionIndex": 2}' }, // Will be deleted
-        { blockNumber: 8, transactionHash: '3', logIndex: 1, emitted: true, content: '{"transactionIndex": 3}' }, // Should be deleted, but was already processed ==> should be ignored
-        { blockNumber: 9, transactionHash: '4', logIndex: 1, content: '{"transactionIndex": 3}' }
-      ]
-      await Event.bulkCreate(storedEvents)
-
-      const events = [
-        eventMock({ blockNumber: 9, transactionHash: '1', logIndex: 2 }), // Re-emitted event
-        eventMock({ blockNumber: 9, transactionHash: '2', logIndex: 1 }), // Re-emitted event
-        eventMock({ blockNumber: 9, transactionHash: '3', logIndex: 1 }), // Re-emitted event, but was already processed ==> should be ignored
-        eventMock({ blockNumber: 10, transactionHash: '6', logIndex: 1 })
-      ]
-      await eventsEmitter.createEvent(events)
-
-      expect(await Event.count()).to.eql(6)
-      expect(spy.called).to.be.false()
-      expect(await Event.findOne({ where: { blockNumber: 7, transactionHash: '1', logIndex: 2 } })).to.be.null()
-      expect(await Event.findOne({ where: { blockNumber: 8, transactionHash: '2', logIndex: 1 } })).to.be.null()
-      expect(await Event.findOne({ where: { blockNumber: 8, transactionHash: '3', logIndex: 1 } })).to.not.be.null()
-      expect(await Event.findOne({ where: { blockNumber: 9, transactionHash: '3', logIndex: 1 } })).to.be.null()
-    })
   })
 
   describe('no confirmations', () => {
@@ -311,6 +234,16 @@ describe('BaseEventsEmitter', () => {
 })
 
 describe('PollingEventsEmitter', function () {
+  let sequelize: Sequelize
+
+  before((): void => {
+    sequelize = sequelizeFactory()
+  })
+
+  beforeEach(async () => {
+    await sequelize.sync({ force: true })
+  })
+
   it('should emit new events', async function () {
     const eth = Substitute.for<Eth>()
     const contract = Substitute.for<Contract>()
@@ -324,9 +257,13 @@ describe('PollingEventsEmitter', function () {
 
     const newBlockEmitter = new EventEmitter()
     const options = { blockTracker, newBlockEmitter }
-    const spy = sinon.spy()
+    const newEventSpy = sinon.spy()
+    const reorgSpy = sinon.spy()
+    const reorgOutOfRangeSpy = sinon.spy()
     const eventsEmitter = new PollingEventsEmitter(eth, contract, ['testEvent'], options)
-    eventsEmitter.on(DATA_EVENT_NAME, spy)
+    eventsEmitter.on(DATA_EVENT_NAME, newEventSpy)
+    eventsEmitter.on(REORG_EVENT_NAME, reorgSpy)
+    eventsEmitter.on(REORG_OUT_OF_RANGE_EVENT_NAME, reorgOutOfRangeSpy)
     await setImmediatePromise()
 
     newBlockEmitter.emit(NEW_BLOCK_EVENT_NAME, blockMock(11))
@@ -337,11 +274,16 @@ describe('PollingEventsEmitter', function () {
 
     contract.received(2).getPastEvents(Arg.all())
     expect(blockTracker.getLastFetchedBlock()).to.eql([12, '0x123'])
-    expect(spy.callCount).to.eql(2, 'Expected two emitted events')
+    expect(newEventSpy).to.have.callCount(2)
+    expect(reorgSpy).to.have.callCount(0)
+    expect(reorgOutOfRangeSpy).to.have.callCount(0)
   })
 
   it('should not emit empty events', async function () {
     const eth = Substitute.for<Eth>()
+    eth.getBlock(10).resolves(blockMock(10))
+    eth.getBlock(11).resolves(blockMock(11))
+
     const contract = Substitute.for<Contract>()
     contract.getPastEvents(Arg.all()).returns(
       Promise.resolve([eventMock({ blockNumber: 11, event: 'testEvent', returnValues: { hey: 123 } })]), // Value for polling new events
@@ -353,9 +295,13 @@ describe('PollingEventsEmitter', function () {
 
     const newBlockEmitter = new EventEmitter()
     const options = { blockTracker, newBlockEmitter }
-    const spy = sinon.spy()
+    const newEventSpy = sinon.spy()
+    const reorgSpy = sinon.spy()
+    const reorgOutOfRangeSpy = sinon.spy()
     const eventsEmitter = new PollingEventsEmitter(eth, contract, ['testEvent'], options)
-    eventsEmitter.on(DATA_EVENT_NAME, spy)
+    eventsEmitter.on(DATA_EVENT_NAME, newEventSpy)
+    eventsEmitter.on(REORG_EVENT_NAME, reorgSpy)
+    eventsEmitter.on(REORG_OUT_OF_RANGE_EVENT_NAME, reorgOutOfRangeSpy)
     await setImmediatePromise()
 
     newBlockEmitter.emit(NEW_BLOCK_EVENT_NAME, blockMock(11))
@@ -366,7 +312,9 @@ describe('PollingEventsEmitter', function () {
 
     contract.received(2).getPastEvents(Arg.all())
     expect(blockTracker.getLastFetchedBlock()).to.eql([12, '0x123'])
-    expect(spy.callCount).to.eql(1)
+    expect(newEventSpy).to.have.callCount(1)
+    expect(reorgSpy).to.have.callCount(0)
+    expect(reorgOutOfRangeSpy).to.have.callCount(0)
   })
 
   it('should ignore same blocks', async function () {
@@ -381,9 +329,13 @@ describe('PollingEventsEmitter', function () {
 
     const newBlockEmitter = new EventEmitter()
     const options = { blockTracker, newBlockEmitter }
-    const spy = sinon.spy()
+    const newEventSpy = sinon.spy()
+    const reorgSpy = sinon.spy()
+    const reorgOutOfRangeSpy = sinon.spy()
     const eventsEmitter = new PollingEventsEmitter(eth, contract, ['testEvent'], options)
-    eventsEmitter.on(DATA_EVENT_NAME, spy)
+    eventsEmitter.on(DATA_EVENT_NAME, newEventSpy)
+    eventsEmitter.on(REORG_EVENT_NAME, reorgSpy)
+    eventsEmitter.on(REORG_OUT_OF_RANGE_EVENT_NAME, reorgOutOfRangeSpy)
     await setImmediatePromise()
 
     newBlockEmitter.emit(NEW_BLOCK_EVENT_NAME, blockMock(11))
@@ -394,7 +346,9 @@ describe('PollingEventsEmitter', function () {
 
     contract.received(1).getPastEvents(Arg.all())
     expect(blockTracker.getLastFetchedBlock()).to.eql([11, '0x123'])
-    expect(spy.callCount).to.eql(1, 'Expected only one emitted event')
+    expect(newEventSpy).to.have.callCount(1)
+    expect(reorgSpy).to.have.callCount(0)
+    expect(reorgOutOfRangeSpy).to.have.callCount(0)
   })
 
   it('should wait for previous processing finished', async function () {
@@ -426,5 +380,150 @@ describe('PollingEventsEmitter', function () {
     // After the processingEvents() is finished
     await sleep(500)
     contract.received(2).getPastEvents(Arg.all())
+  })
+
+  describe('reorg handling', function () {
+    it('should handle reorg without nothing processed yet', async () => {
+      const eth = Substitute.for<Eth>()
+      eth.getBlock(10).resolves(blockMock(10, '0x321')) // Different hash ==> reorg
+
+      const events = [
+        {
+          contractAddress: '0x123',
+          event: 'testEvent',
+          blockNumber: 7,
+          transactionHash: '1',
+          targetConfirmation: 3,
+          emitted: true,
+          content: '{"event": "testEvent", "blockNumber": 7, "blockHash": "0x123"}'
+        },
+        {
+          contractAddress: '0x123',
+          event: 'testEvent',
+          blockNumber: 8,
+          transactionHash: '2',
+          targetConfirmation: 4,
+          emitted: false,
+          content: '{"event": "testEvent", "blockNumber": 8, "blockHash": "0x123"}'
+        },
+        {
+          contractAddress: '0x666',
+          event: 'niceEvent',
+          blockNumber: 9,
+          transactionHash: '3',
+          targetConfirmation: 2,
+          emitted: false,
+          content: '{"event": "niceEvent", "blockNumber": 9, "blockHash": "0x123"}'
+        }
+      ]
+      await Event.bulkCreate(events)
+
+      const contract = Substitute.for<Contract>()
+      contract.options.returns!({ jsonInterface: [{}] as AbiItem[], address: '0x123' })
+      contract.getPastEvents(Arg.all()).resolves(
+        [eventMock({ blockNumber: 11, transactionHash: '1', logIndex: 1 })]
+      )
+
+      const blockTracker = new BlockTracker({})
+      blockTracker.setLastFetchedBlock(10, '0x123')
+
+      const newBlockEmitter = new EventEmitter()
+      const options = { blockTracker, newBlockEmitter, confirmations: 1, confirmator: Substitute.for<Confirmator>() }
+      const newEventSpy = sinon.spy()
+      const reorgSpy = sinon.spy()
+      const reorgOutOfRangeSpy = sinon.spy()
+      const eventsEmitter = new PollingEventsEmitter(eth, contract, ['testEvent'], options)
+      eventsEmitter.on(DATA_EVENT_NAME, newEventSpy)
+      eventsEmitter.on(REORG_EVENT_NAME, reorgSpy)
+      eventsEmitter.on(REORG_OUT_OF_RANGE_EVENT_NAME, reorgOutOfRangeSpy)
+      await setImmediatePromise()
+
+      newBlockEmitter.emit(NEW_BLOCK_EVENT_NAME, blockMock(11))
+      await sleep(200)
+
+      contract.received(1).getPastEvents(Arg.all())
+      eth.received(1).getBlock(Arg.all())
+      expect(blockTracker.getLastFetchedBlock()).to.eql([11, '0x123'])
+      expect(newEventSpy).to.have.callCount(0)
+      expect(reorgSpy).to.have.callCount(1)
+      expect(reorgOutOfRangeSpy).to.have.callCount(0)
+      expect(await Event.count()).to.eql(2)
+    })
+
+    it('should handle reorg with already processed', async () => {
+      const eth = Substitute.for<Eth>()
+      eth.getBlock(10).resolves(blockMock(10, '0x321')) // Different hash ==> reorg
+      eth.getBlock(8).resolves(blockMock(8, '0x222')) // Same hash ==> reorg in confirmation range
+
+      const contract = Substitute.for<Contract>()
+      contract.options.returns!({ jsonInterface: [{}] as AbiItem[], address: '0x123' })
+      contract.getPastEvents(Arg.all()).resolves(
+        [eventMock({ blockNumber: 11, transactionHash: '1', logIndex: 1 })]
+      )
+
+      const blockTracker = new BlockTracker({})
+      blockTracker.setLastFetchedBlock(10, '0x123')
+      blockTracker.setLastProcessedBlockIfHigher(8, '0x222')
+
+      const newBlockEmitter = new EventEmitter()
+      const options = { blockTracker, newBlockEmitter, confirmations: 1, confirmator: Substitute.for<Confirmator>() }
+      const newEventSpy = sinon.spy()
+      const reorgSpy = sinon.spy()
+      const reorgOutOfRangeSpy = sinon.spy()
+      const eventsEmitter = new PollingEventsEmitter(eth, contract, ['testEvent'], options)
+      eventsEmitter.on(DATA_EVENT_NAME, newEventSpy)
+      eventsEmitter.on(REORG_EVENT_NAME, reorgSpy)
+      eventsEmitter.on(REORG_OUT_OF_RANGE_EVENT_NAME, reorgOutOfRangeSpy)
+      await setImmediatePromise()
+
+      newBlockEmitter.emit(NEW_BLOCK_EVENT_NAME, blockMock(11))
+      await sleep(200)
+
+      contract.received(1).getPastEvents(Arg.all())
+      eth.received(2).getBlock(Arg.all())
+      expect(blockTracker.getLastFetchedBlock()).to.eql([11, '0x123'])
+      expect(newEventSpy).to.have.callCount(0)
+      expect(reorgSpy).to.have.callCount(1)
+      expect(reorgOutOfRangeSpy).to.have.callCount(0)
+      expect(await Event.count()).to.eql(1)
+    })
+
+    it('should handle reorg and detect reorg outside of confirmation range', async () => {
+      const eth = Substitute.for<Eth>()
+      eth.getBlock(10).resolves(blockMock(10, '0x321')) // Different hash ==> reorg
+      eth.getBlock(8).resolves(blockMock(8, '0x33')) // Different hash ==> reorg OUTSIDE of confirmation range
+
+      const contract = Substitute.for<Contract>()
+      contract.options.returns!({ jsonInterface: [{}] as AbiItem[], address: '0x123' })
+      contract.getPastEvents(Arg.all()).resolves(
+        [eventMock({ blockNumber: 11, transactionHash: '1', logIndex: 1 })]
+      )
+
+      const blockTracker = new BlockTracker({})
+      blockTracker.setLastFetchedBlock(10, '0x123')
+      blockTracker.setLastProcessedBlockIfHigher(8, '0x222')
+
+      const newBlockEmitter = new EventEmitter()
+      const options = { blockTracker, newBlockEmitter, confirmations: 1, confirmator: Substitute.for<Confirmator>() }
+      const newEventSpy = sinon.spy()
+      const reorgSpy = sinon.spy()
+      const reorgOutOfRangeSpy = sinon.spy()
+      const eventsEmitter = new PollingEventsEmitter(eth, contract, ['testEvent'], options)
+      eventsEmitter.on(DATA_EVENT_NAME, newEventSpy)
+      eventsEmitter.on(REORG_EVENT_NAME, reorgSpy)
+      eventsEmitter.on(REORG_OUT_OF_RANGE_EVENT_NAME, reorgOutOfRangeSpy)
+      await setImmediatePromise()
+
+      newBlockEmitter.emit(NEW_BLOCK_EVENT_NAME, blockMock(11))
+      await sleep(200)
+
+      contract.received(1).getPastEvents(Arg.all())
+      eth.received(2).getBlock(Arg.all())
+      expect(blockTracker.getLastFetchedBlock()).to.eql([11, '0x123'])
+      expect(newEventSpy).to.have.callCount(0)
+      expect(reorgSpy).to.have.callCount(1)
+      expect(reorgOutOfRangeSpy).to.have.callCount(1)
+      expect(await Event.count()).to.eql(1)
+    })
   })
 })

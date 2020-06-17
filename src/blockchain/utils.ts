@@ -44,23 +44,3 @@ export function getEventsEmitterForService (serviceName: string, eth: Eth, contr
 
   return eventsEmitterFactory(eth, contract, eventsToListen, options)
 }
-
-interface LookupTableEvents {
-  transactionHash: string
-  logIndex: number
-  emitted?: boolean
-}
-
-export function createTransactionLookupTable (events: LookupTableEvents[], emittedOnly = false): Record<string, number[]> {
-  return events.reduce<Record<string, number[]>>((previousValue, currentValue) => {
-    if (emittedOnly && !currentValue.emitted) return previousValue
-
-    if (!previousValue[currentValue.transactionHash]) {
-      previousValue[currentValue.transactionHash] = [currentValue.logIndex]
-    } else {
-      previousValue[currentValue.transactionHash].push(currentValue.logIndex)
-    }
-
-    return previousValue
-  }, {})
-}

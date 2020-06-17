@@ -1,7 +1,7 @@
 import config from 'config'
 
 import Event from './event.model'
-import { asyncSplit, split } from '../utils'
+import { asyncSplit, setDifference, split } from '../utils'
 
 import type { EventData } from 'web3-eth-contract'
 import type { BlockHeader, Eth } from 'web3-eth'
@@ -117,6 +117,22 @@ export class Confirmator {
     this.logger.debug('Confirming event', event)
     this.blockTracker.setLastProcessedBlockIfHigher(event.blockNumber, event.blockHash)
     this.emitter.emit(NEW_EVENT_EVENT_NAME, event)
+  }
+
+  public async checkDroppedTransactions (newEvents: EventData[]): Promise<void> {
+    const currentEvents = await Event.findAll({
+      where: {
+        contractAddress: this.contractAddress
+      }
+    })
+
+    const newEventsTransactions = newEvents.reduce<Set<string>>((set, event) => set.add(event.transactionHash), new Set())
+    const oldEventsTransactions = currentEvents.reduce<Set<string>>((set, event) => set.add(event.transactionHash), new Set())
+    const droppedTransactions = setDifference(oldEventsTransactions, newEventsTransactions)
+
+    for (const droppedTransaction of droppedTransactions) {
+      this.emitter.emit(INVALID_CONFIRMATION_EVENT_NAME, { transactionHash: droppedTransaction })
+    }
   }
 }
 

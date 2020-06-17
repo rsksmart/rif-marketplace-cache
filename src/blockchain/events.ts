@@ -2,21 +2,26 @@ import { Contract, EventData } from 'web3-eth-contract'
 import { BlockHeader, Eth } from 'web3-eth'
 import { EventEmitter } from 'events'
 import { NotImplemented } from '@feathersjs/errors'
-import { Op } from 'sequelize'
 import { Sema } from 'async-sema'
 import { getObject as getStore } from 'sequelize-store'
 
 import { loggingFactory } from '../logger'
 import Event, { EventInterface } from './event.model'
 import { Logger, NewBlockEmitterOptions } from '../definitions'
-import { createTransactionLookupTable } from './utils'
 import { errorHandler } from '../utils'
 import { Confirmator } from './confirmator'
-import { AutoStartStopEventEmitter, ListeningNewBlockEmitter, NEW_BLOCK_EVENT_NAME, PollingNewBlockEmitter } from './new-block-emitters'
+import {
+  AutoStartStopEventEmitter,
+  ListeningNewBlockEmitter,
+  NEW_BLOCK_EVENT_NAME,
+  PollingNewBlockEmitter
+} from './new-block-emitters'
 import { BlockTracker, BlockTrackerStore } from './block-tracker'
 
-const NEW_EVENT_EVENT_NAME = 'newEvent'
-const INIT_FINISHED_EVENT_NAME = 'initFinished'
+export const NEW_EVENT_EVENT_NAME = 'newEvent'
+export const INIT_FINISHED_EVENT_NAME = 'initFinished'
+export const REORG_EVENT_NAME = 'reorg'
+export const REORG_OUT_OF_RANGE_EVENT_NAME = 'reorgOutOfRange'
 
 export enum EventsEmitterStrategy {
   POLLING = 1,
@@ -44,6 +49,9 @@ export interface EventsEmitterOptions {
 
   // Defines what strategy should emitter use to get events
   strategy?: EventsEmitterStrategy
+
+  // Instance of Confirmator that handles confirmations
+  confirmator?: Confirmator
 }
 
 /**
@@ -59,8 +67,8 @@ export abstract class BaseEventsEmitter extends AutoStartStopEventEmitter {
   protected readonly contract: Contract
   protected readonly eth: Eth
   protected readonly semaphore: Sema
+  protected readonly confirmations: number
   private readonly confirmator?: Confirmator
-  private readonly confirmations: number
   private isInitialized = false
   private confirmationRoutine?: (...args: any[]) => void
 
@@ -69,8 +77,8 @@ export abstract class BaseEventsEmitter extends AutoStartStopEventEmitter {
     this.eth = eth
     this.contract = contract
     this.events = events
-    this.startingBlock = options?.startingBlock || 'genesis'
-    this.confirmations = options?.confirmations || 0
+    this.startingBlock = options?.startingBlock ?? 'genesis'
+    this.confirmations = options?.confirmations ?? 0
     this.semaphore = new Sema(1) // Allow only one caller
 
     if (options?.blockTracker) {
@@ -101,7 +109,7 @@ export abstract class BaseEventsEmitter extends AutoStartStopEventEmitter {
     this.newBlockEmitter.on('error', (e) => this.emit('error', e))
 
     if (this.confirmations > 0) {
-      this.confirmator = new Confirmator(this, eth, contract.options.address, this.blockTracker, logger)
+      this.confirmator = options?.confirmator ?? new Confirmator(this, eth, contract.options.address, this.blockTracker, logger)
     }
   }
 
@@ -170,53 +178,6 @@ export abstract class BaseEventsEmitter extends AutoStartStopEventEmitter {
   }
 
   /**
-   * Adds the events to database for later on confirmation.
-   *
-   * Before adding the event it validates that there is no same Event **that was already not emitted/processed** present in the database.
-   * It identifies "same Event" using transaction hash and log index.
-   *
-   * @param events
-   */
-  private async processEventsToBeConfirmed (events: EventData[]): Promise<void> {
-    const sequelizeEvents = events.map(this.serializeEvent.bind(this))
-
-    const transactionHash = sequelizeEvents.map(value => value.transactionHash)
-    const existingEvents = await Event.findAll({
-      where: {
-        transactionHash: { [Op.in]: transactionHash }
-      }
-    })
-
-    if (existingEvents.length === 0) {
-      await Event.bulkCreate(sequelizeEvents)
-      return // No (potential) conflicts ==> only add events
-    }
-
-    // Optimization lookup table for identification of good transactionHash&logIndex tuple
-    const transactionLookupTable = createTransactionLookupTable(sequelizeEvents)
-
-    // Old events to be removed from DB
-    const eventsForDeletion = existingEvents.filter(event => !event.emitted && transactionLookupTable[event.transactionHash].includes(event.logIndex))
-
-    if (eventsForDeletion.length > 0) {
-      this.logger.warn(`Found ${eventsForDeletion.length} re-emitted events! Removing old ones!`)
-      await Promise.all(eventsForDeletion.map(event => {
-        this.logger.warn(`Detected duplicate event of block ${event.blockNumber} and transaction ${event.transactionHash}`)
-        return event.destroy()
-      }))
-    }
-
-    const existingEmittedEvents = createTransactionLookupTable(existingEvents, true)
-    const eventsThatDontHaveAlreadyEmittedCounterpart = sequelizeEvents.filter(
-      event => !(
-        existingEmittedEvents[event.transactionHash] &&
-        existingEmittedEvents[event.transactionHash].includes(event.logIndex)
-      )
-    )
-    await Event.bulkCreate(eventsThatDontHaveAlreadyEmittedCounterpart)
-  }
-
-  /**
    * Main method for processing events. It should be called after retrieving Events from blockchain.
    *
    * @param events
@@ -242,12 +203,21 @@ export abstract class BaseEventsEmitter extends AutoStartStopEventEmitter {
     }
 
     const thresholdBlock = currentBlockNumber - this.confirmations
-    this.logger.verbose(`Threshold block ${thresholdBlock},`)
+    this.logger.verbose(`Threshold block ${thresholdBlock}`)
 
     const eventsToBeConfirmed = events
       .filter(event => event.blockNumber > thresholdBlock)
     this.logger.info(`${eventsToBeConfirmed.length} events to be confirmed.`)
-    await this.processEventsToBeConfirmed(eventsToBeConfirmed)
+
+    try {
+      await Event.bulkCreate(eventsToBeConfirmed.map(this.serializeEvent.bind(this))) // Lets store them to DB
+    } catch (e) {
+      if (e.name === 'SequelizeUniqueConstraintError') {
+        throw new Error('Duplicated events!')
+      }
+
+      throw e
+    }
 
     const eventsToBeEmitted = events
       .filter(event => event.blockNumber <= thresholdBlock)
@@ -266,9 +236,13 @@ export abstract class BaseEventsEmitter extends AutoStartStopEventEmitter {
     await this.semaphore.acquire()
     try {
       const currentBlock = await this.eth.getBlock('latest')
+      let toHash: string
 
       if (to === 'latest') {
         to = currentBlock.number
+        toHash = currentBlock.hash
+      } else {
+        toHash = (await this.eth.getBlock(to)).hash
       }
 
       this.logger.info(`=> Processing past events from ${from} to ${to}`)
@@ -279,13 +253,62 @@ export abstract class BaseEventsEmitter extends AutoStartStopEventEmitter {
       }))
 
       await this.processEvents(events, currentBlock.number)
-      this.blockTracker.setLastFetchedBlock(currentBlock.number, currentBlock.hash)
+      this.blockTracker.setLastFetchedBlock(to as number, toHash)
 
       const [secondsLapsed] = process.hrtime(startTime)
       this.logger.info(`=> Finished processing past events in ${secondsLapsed}s`)
     } finally {
       this.semaphore.release()
     }
+  }
+
+  protected async isReorg (): Promise<boolean> {
+    const [lastFetchedBlockNumber, lastFetchedBlockHash] = this.blockTracker.getLastFetchedBlock()
+
+    if (!lastFetchedBlockNumber) {
+      return false // Nothing was fetched yet, no point in continue
+    }
+
+    const actualLastFetchedBlock = await this.eth.getBlock(lastFetchedBlockNumber)
+
+    if (actualLastFetchedBlock.hash === lastFetchedBlockHash) {
+      return false // No reorg detected
+    }
+    this.logger.warn(`Reorg happening! Old hash: ${lastFetchedBlockHash}; New hash: ${actualLastFetchedBlock.hash}`)
+
+    const [lastProcessedBlockNumber, lastProcessedBlockHash] = this.blockTracker.getLastProcessedBlock()
+
+    // If is undefined than nothing was yet processed and the reorg is not affecting our service
+    // as we are still awaiting for enough confirmations
+    if (lastProcessedBlockNumber) {
+      const actualLastProcessedBlock = await this.eth.getBlock(lastProcessedBlockNumber)
+
+      // The reorg is happening outside our confirmation range.
+      // We can't do anything about it except notify the consumer.
+      if (actualLastProcessedBlock.hash !== lastProcessedBlockHash) {
+        this.logger.error(`Reorg out of confirmation range! Old hash: ${lastProcessedBlockHash}; New hash: ${actualLastProcessedBlock.hash}`)
+        this.emit(REORG_OUT_OF_RANGE_EVENT_NAME, lastProcessedBlockNumber)
+      }
+    }
+
+    this.emit(REORG_EVENT_NAME)
+    return true
+  }
+
+  protected async handleReorg (currentBlock: BlockHeader): Promise<void> {
+    const [lastProcessedBlockNumber] = this.blockTracker.getLastProcessedBlock()
+
+    const newEvents = await this.contract.getPastEvents('allEvents', {
+      fromBlock: lastProcessedBlockNumber || this.startingBlock,
+      toBlock: currentBlock.number
+    })
+
+    await this.confirmator!.checkDroppedTransactions(newEvents)
+
+    // Remove all events that currently awaiting confirmation
+    await Event.destroy({ where: { contractAddress: this.contract.options.address } })
+    await this.processEvents(newEvents, currentBlock.number)
+    this.blockTracker.setLastFetchedBlock(currentBlock.number, currentBlock.hash)
   }
 }
 
@@ -310,6 +333,11 @@ export class PollingEventsEmitter extends BaseEventsEmitter {
     await this.semaphore.acquire()
     this.logger.verbose(`Received new block number ${currentBlock.number}`)
     try {
+      // Check if reorg did not happen since the last poll
+      if (this.confirmations && await this.isReorg()) {
+        return this.handleReorg(currentBlock)
+      }
+
       const [lastFetchedBlockNumber, lastFetchedBlockHash] = this.blockTracker.getLastFetchedBlock()
 
       // Nothing new, lets fast-forward
