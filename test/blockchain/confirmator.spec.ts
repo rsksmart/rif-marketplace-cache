@@ -11,7 +11,7 @@ import sinonChai from 'sinon-chai'
 import Event from '../../src/blockchain/event.model'
 import { sequelizeFactory } from '../../src/sequelize'
 import { Confirmator, ConfirmatorService } from '../../src/blockchain/confirmator'
-import { receiptMock, sleep } from '../utils'
+import { eventMock, receiptMock, sleep } from '../utils'
 import { loggingFactory } from '../../src/logger'
 import { BlockTracker } from '../../src/blockchain/block-tracker'
 
@@ -284,7 +284,13 @@ describe('Confirmator', function () {
       }
     })).to.be.not.null()
     expect(await Event.findOne({ where: { event: 'niceEvent', blockNumber: 13, transactionHash: '3' } })).to.be.null()
-    expect(await Event.findOne({ where: { event: 'otherEvent', blockNumber: 14, transactionHash: '3' } })).to.be.not.null()
+    expect(await Event.findOne({
+      where: {
+        event: 'otherEvent',
+        blockNumber: 14,
+        transactionHash: '3'
+      }
+    })).to.be.not.null()
     expect(await Event.findOne({
       where: {
         event: 'completelyDifferentEvent',
@@ -367,6 +373,67 @@ describe('Confirmator', function () {
     expect(invalidEventSpy).to.have.been.calledWithExactly({
       transactionHash: '4'
     })
+  })
+
+  it('should detect dropped out hashes', async () => {
+    const events = [
+      {
+        contractAddress: '0x666', // Different contract
+        event: 'testEvent',
+        blockNumber: 7,
+        transactionHash: '1',
+        targetConfirmation: 3,
+        emitted: true,
+        content: '{"event": "testEvent", "blockNumber": 7, "blockHash": "0x123"}'
+      },
+      {
+        contractAddress: '0x123',
+        event: 'testEvent',
+        blockNumber: 8,
+        transactionHash: '2',
+        targetConfirmation: 4,
+        emitted: false,
+        content: '{"event": "testEvent", "blockNumber": 8, "blockHash": "0x123"}'
+      },
+      {
+        contractAddress: '0x123',
+        event: 'niceEvent',
+        blockNumber: 9,
+        transactionHash: '3',
+        targetConfirmation: 2,
+        emitted: false,
+        content: '{"event": "niceEvent", "blockNumber": 9, "blockHash": "0x123"}'
+      },
+      {
+        contractAddress: '0x123',
+        event: 'otherEvent',
+        blockNumber: 9,
+        transactionHash: '4',
+        targetConfirmation: 2,
+        emitted: false,
+        content: '{"event": "otherEvent", "blockNumber": 9, "blockHash": "0x123"}'
+      },
+      {
+        contractAddress: '0x123',
+        event: 'completelyDifferentEvent',
+        blockNumber: 9,
+        transactionHash: '5',
+        targetConfirmation: 2,
+        emitted: true, // This event won't be emitted as it was already emitted previously
+        content: '{"event": "completelyDifferentEvent", "blockNumber": 9, "blockHash": "0x123"}'
+      }
+    ]
+    await Event.bulkCreate(events)
+
+    await confirmator.checkDroppedTransactions([
+      eventMock({ transactionHash: '4' }),
+      eventMock({ transactionHash: '5' })
+    ])
+
+    expect(invalidEventSpy).to.have.callCount(2)
+
+    expect(invalidEventSpy).to.have.been.calledWithExactly({ transactionHash: '2' })
+    expect(invalidEventSpy).to.have.been.calledWithExactly({ transactionHash: '3' })
   })
 })
 
