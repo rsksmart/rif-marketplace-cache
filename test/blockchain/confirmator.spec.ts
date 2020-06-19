@@ -110,12 +110,24 @@ describe('Confirmator', function () {
     await sleep(10)
 
     expect(invalidEventSpy).to.not.have.been.called()
-    expect(confirmedEventSpy).to.have.callCount(1)
+    expect(confirmedEventSpy).to.have.callCount(3)
     expect(confirmedEventSpy).to.have.been.calledWithExactly({
       confirmations: 3,
       event: 'testEvent',
       targetConfirmation: 4,
       transactionHash: '2'
+    })
+    expect(confirmedEventSpy).to.have.been.calledWithExactly({
+      confirmations: 2,
+      event: 'otherEvent',
+      targetConfirmation: 2,
+      transactionHash: '3'
+    })
+    expect(confirmedEventSpy).to.have.been.calledWithExactly({
+      confirmations: 2,
+      event: 'otherEvent',
+      targetConfirmation: 2,
+      transactionHash: '3'
     })
 
     expect(newEventSpy).to.have.callCount(2)
@@ -193,7 +205,13 @@ describe('Confirmator', function () {
     await sleep(10)
 
     expect(invalidEventSpy).to.not.have.been.called()
-    expect(confirmedEventSpy).to.have.callCount(1)
+    expect(confirmedEventSpy).to.have.callCount(2)
+    expect(confirmedEventSpy).to.have.been.calledWithExactly({
+      confirmations: 2,
+      event: 'niceEvent',
+      targetConfirmation: 2,
+      transactionHash: '3'
+    })
     expect(confirmedEventSpy).to.have.been.calledWithExactly({
       confirmations: 3,
       event: 'testEvent',
@@ -346,7 +364,13 @@ describe('Confirmator', function () {
     await confirmator.runConfirmationsRoutine(block)
     await sleep(10)
 
-    expect(confirmedEventSpy).to.have.callCount(0)
+    expect(confirmedEventSpy).to.have.callCount(1)
+    expect(confirmedEventSpy).to.have.been.calledWithExactly({
+      event: 'completelyDifferentEvent',
+      transactionHash: '5',
+      targetConfirmation: 2,
+      confirmations: 2
+    })
 
     expect(await Event.count()).to.eql(3)
 
