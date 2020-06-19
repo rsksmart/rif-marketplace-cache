@@ -140,6 +140,10 @@ API that caches several parts of the RNS and Domain Sail contracts. Supported ro
 
 API for getting information about confirmation status of transactions related to Marketplace.
 
+Confirmed events (eq. `confirmations >= targetConfirmaiton`) are retained for a configured amount of blocks, in order
+for the consumer of this API has enough time to detect that confirmation happened. See `waitBlockCountBeforeConfirmationRemoved`
+in [Config interface](https://github.com/rsksmart/rif-marketplace-cache/blob/master/src/definitions.ts)
+
 ```
 GET: /confirmations
 ```
@@ -163,7 +167,8 @@ There are also two events emitted for WebSocket connections.
 #### `newConfirmation` event
 
 Emitted when new confirmation was available. It is emitted with an object that has same
-structured as presented above for the `GET /confirmations` route.¨
+structured as presented above for the `GET /confirmations` route. `confirmations` can be higher then `targetConfirmation`.
+Once event reaches `confirmations >= targetConfirmations` once, then it is emitted one last time and from then point on ignored.
 
 ```json
 {
@@ -200,7 +205,7 @@ To run this caching server there is minimum configuration needed, which is suppo
  - Database connection
  - Blockchain connection
 
-For general overview of complete configuration options see [Config interface](https://github.com/rsksmart/rif-marketplace-cache/blob/master/src/types.ts)
+For general overview of complete configuration options see [Config interface](https://github.com/rsksmart/rif-marketplace-cache/blob/master/src/definitions.ts)
 that describe configuration object's properties. If you need advanced configuration you can build your own JSON configuration
 file and load that either using the `--config` CLI parameter or using environment variable `RIFM_CONFIG`.
 

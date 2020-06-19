@@ -217,11 +217,11 @@ describe('Confirmator', function () {
     expect(blockTracker.getLastProcessedBlock()).to.eql([9, '0x123'])
   })
 
-  it('should remove already confirmed events that exceed targetConfirmation*multiplier', async () => {
-    // Multiplayer = 1,5
+  it('should remove already confirmed events that exceed configured block count', async () => {
+    // waitBlockCountBeforeConfirmationRemoved = 10
 
     const events = [
-      { // Deleted; confirmations = 11
+      { // Deleted; confirmations = 21
         contractAddress: '0x123',
         event: 'testEvent',
         blockNumber: 7,
@@ -229,36 +229,28 @@ describe('Confirmator', function () {
         targetConfirmation: 3,
         emitted: true
       },
-      { // Not deleted as not emitted; confirmations = 8
-        contractAddress: '0x123',
-        event: 'testEvent',
-        blockNumber: 8,
-        transactionHash: '2',
-        targetConfirmation: 3,
-        emitted: false
-      },
-      { // Deleted; confirmations = 5
+      { // Deleted; confirmations = 13
         contractAddress: '0x123',
         event: 'niceEvent',
-        blockNumber: 13,
+        blockNumber: 15,
         transactionHash: '3',
         targetConfirmation: 3,
         emitted: true
       },
-      { // Not deleted; confirmations = 4
+      { // Not deleted; confirmations = 12
         contractAddress: '0x123',
         event: 'otherEvent',
-        blockNumber: 14,
+        blockNumber: 16,
         transactionHash: '3',
         targetConfirmation: 3,
         emitted: true
       },
-      { // Not deleted; confirmations = 3
+      { // Not deleted; confirmations = 13
         contractAddress: '0x123',
         event: 'completelyDifferentEvent',
         blockNumber: 15,
         transactionHash: '4',
-        targetConfirmation: 3,
+        targetConfirmation: 4,
         emitted: true
       }
     ]
@@ -266,7 +258,7 @@ describe('Confirmator', function () {
     eth.getTransactionReceipt('2').resolves(receiptMock(8))
 
     const block = Substitute.for<BlockHeader>()
-    block.number.returns!(18)
+    block.number.returns!(28)
     await confirmator.runConfirmationsRoutine(block)
     await sleep(10)
 
@@ -274,20 +266,19 @@ describe('Confirmator', function () {
     expect(invalidEventSpy).to.not.have.been.called()
     expect(confirmedEventSpy).to.not.have.been.called()
 
-    expect(await Event.count()).to.eql(3)
+    expect(await Event.count()).to.eql(2)
     expect(await Event.findOne({ where: { event: 'testEvent', blockNumber: 7, transactionHash: '1' } })).to.be.null()
     expect(await Event.findOne({
       where: {
-        event: 'testEvent',
-        blockNumber: 8,
-        transactionHash: '2'
+        event: 'niceEvent',
+        blockNumber: 15,
+        transactionHash: '3'
       }
-    })).to.be.not.null()
-    expect(await Event.findOne({ where: { event: 'niceEvent', blockNumber: 13, transactionHash: '3' } })).to.be.null()
+    })).to.be.null()
     expect(await Event.findOne({
       where: {
         event: 'otherEvent',
-        blockNumber: 14,
+        blockNumber: 16,
         transactionHash: '3'
       }
     })).to.be.not.null()

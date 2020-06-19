@@ -9,14 +9,12 @@ import type { Logger } from '../definitions'
 import type { ServiceMethods } from '@feathersjs/feathers'
 import type { BlockTracker } from './block-tracker'
 import type { EventEmitter } from 'events'
-
-function isAlreadyConfirmedClosure (currentBlockNumber: number) {
-  return (event: Event): boolean => event.getConfirmationsCount(currentBlockNumber) > event.targetConfirmation || event.emitted
-}
+import { literal, Op } from 'sequelize'
 
 function isConfirmedClosure (currentBlockNumber: number) {
   return (event: Event): boolean => event.getConfirmationsCount(currentBlockNumber) === event.targetConfirmation
 }
+
 const NEW_EVENT_EVENT_NAME = 'newEvent'
 const NEW_CONFIRMATION_EVENT_NAME = 'newConfirmation'
 const INVALID_CONFIRMATION_EVENT_NAME = 'invalidConfirmation'
@@ -46,14 +44,12 @@ export class Confirmator {
   public async runConfirmationsRoutine (currentBlock: BlockHeader): Promise<void> {
     const events = await Event.findAll({
       where: {
-        contractAddress: this.contractAddress
+        contractAddress: this.contractAddress,
+        emitted: false
       }
     })
 
-    const [alreadyConfirmed, awaitingConfirmation] = split(events, isAlreadyConfirmedClosure(currentBlock.number))
-    await this.handleAlreadyConfirmed(alreadyConfirmed, currentBlock.number)
-
-    const [valid, invalid] = await asyncSplit(awaitingConfirmation, this.eventHasValidReceipt.bind(this))
+    const [valid, invalid] = await asyncSplit(events, this.eventHasValidReceipt.bind(this))
     const [toBeEmitted, toBeConfirmed] = split(valid, isConfirmedClosure(currentBlock.number))
 
     toBeEmitted.forEach(this.confirmEvent.bind(this))
@@ -66,6 +62,16 @@ export class Confirmator {
       invalid.forEach(e => this.emitter.emit(INVALID_CONFIRMATION_EVENT_NAME, { transactionHash: e.transactionHash }))
       await Event.destroy({ where: { id: invalid.map(e => e.id) } })
     }
+
+    // Remove already too old confirmations
+    const waitingBlockCount = config.get<number>('blockchain.waitBlockCountBeforeConfirmationRemoved')
+    await Event.destroy({
+      where: {
+        emitted: true,
+        contractAddress: this.contractAddress,
+        blockNumber: { [Op.lte]: literal(`${currentBlock.number - waitingBlockCount} - targetConfirmation`) }
+      }
+    })
   }
 
   private async eventHasValidReceipt (event: Event): Promise<boolean> {
@@ -78,21 +84,6 @@ export class Confirmator {
       Block numbers: ${event.blockNumber} (event) vs ${reciept.blockNumber} (receipt) and receipt status: ${reciept.status} `)
       return false
     }
-  }
-
-  private async handleAlreadyConfirmed (events: Event[], currentBlockNumber: number): Promise<void> {
-    if (events.length === 0) {
-      return // Nothing to handle
-    }
-
-    const targetMultiplier = config.get<number>('blockchain.deleteTargetConfirmationsMultiplier')
-    const toBeDeleted = events.filter(
-      event => event.emitted &&
-        event.getConfirmationsCount(currentBlockNumber) >= event.targetConfirmation * targetMultiplier
-    )
-
-    this.logger.verbose(`Removing ${toBeDeleted.length} already confirmed events that exceeded number of required configuration * multiplier`)
-    await Event.destroy({ where: { id: toBeDeleted.map(e => e.id) } })
   }
 
   private emitNewConfirmationsClosure (currentBlockNumber: number) {
