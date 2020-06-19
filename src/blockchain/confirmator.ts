@@ -69,7 +69,7 @@ export class Confirmator {
       where: {
         emitted: true,
         contractAddress: this.contractAddress,
-        blockNumber: { [Op.lte]: literal(`${currentBlock.number - waitingBlockCount} - targetConfirmation`) }
+        blockNumber: { [Op.lte]: literal(`${currentBlock.number - waitingBlockCount} - \`targetConfirmation\``) }
       }
     })
   }
