@@ -106,11 +106,11 @@ export interface Config {
     // Address to where web3js should connect to. Should be WS endpoint.
     provider?: string
 
-    // Multiplier that is used for targetConfirmations that determines when an event
-    // from DB is supposed to be removed.
-    // Eq. if event is supposed to be confirmed after 5 blocks (eq. targetConfirmations)
-    // when this parameter is set to "2" then the event will be removed after 10 confirmations.
-    deleteTargetConfirmationsMultiplier?: number
+    // Number of blocks that is waited AFTER the event is confirmed before
+    // it is removed from database.
+    // Such parameter is needed for a REST API where a host could miss that an event has
+    // full confirmations as it could be removed from the DB before the endpoint is queried.
+    waitBlockCountBeforeConfirmationRemoved?: number
   }
 
   rates?: {

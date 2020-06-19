@@ -338,7 +338,7 @@ export class PollingEventsEmitter extends BaseEventsEmitter {
         return this.handleReorg(currentBlock)
       }
 
-      const [lastFetchedBlockNumber, lastFetchedBlockHash] = this.blockTracker.getLastFetchedBlock()
+      const [lastFetchedBlockNumber] = this.blockTracker.getLastFetchedBlock()
 
       // Nothing new, lets fast-forward
       if (lastFetchedBlockNumber === currentBlock.number) {
