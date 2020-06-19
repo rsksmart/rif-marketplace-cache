@@ -35,7 +35,9 @@ async function transferHandler (logger: Logger, eventData: EventData, eth: Eth, 
       if (name) {
         await Domain.upsert({ tokenId, name: `${name}.${tld}` })
 
-        if (domainsService.emit) domainsService.emit('patched', { tokenId })
+        if (domainsService.emit) {
+          domainsService.emit('patched', { tokenId })
+        }
       }
     }
   }
@@ -64,11 +66,17 @@ async function transferHandler (logger: Logger, eventData: EventData, eth: Eth, 
   if (domain) {
     await DomainOwner.upsert({ address: ownerAddress, tokenId })
 
-    if (domainsService.emit) domainsService.emit('patched', { tokenId })
+    if (domainsService.emit) {
+      domainsService.emit('patched', { tokenId })
+    }
     logger.info(`Transfer event: Updated DomainOwner ${ownerAddress} for tokenId ${tokenId}`)
   } else {
-    await domainsService.create({ tokenId })
+    await Domain.upsert({ tokenId })
     await DomainOwner.create({ tokenId, address: ownerAddress })
+
+    if (domainsService.emit) {
+      domainsService.emit('created', { tokenId })
+    }
     logger.info(`Transfer event: Created Domain ${tokenId} for owner ${ownerAddress}`)
   }
 }
@@ -92,12 +100,12 @@ async function expirationChangedHandler (logger: Logger, eventData: EventData, _
   if (currentExpiration) {
     await DomainExpiration.update({ expirationDate }, { where: { tokenId } })
 
-    if (domainsService.emit) domainsService.emit('patched', { tokenId })
+    if (domainsService.emit) {
+      domainsService.emit('patched', { tokenId })
+    }
     logger.info(`ExpirationChange event: DomainExpiration for token ${tokenId} updated`)
   } else {
-    const domain = await Domain.findByPk(tokenId)
-
-    if (!domain) await domainsService.create({ tokenId })
+    await Domain.upsert({ tokenId })
     await DomainExpiration.create({
       tokenId,
       date: expirationDate
