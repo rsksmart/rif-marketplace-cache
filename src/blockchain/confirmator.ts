@@ -15,7 +15,6 @@ function isConfirmedClosure (currentBlockNumber: number) {
   return (event: Event): boolean => event.getConfirmationsCount(currentBlockNumber) === event.targetConfirmation
 }
 
-const NEW_EVENT_EVENT_NAME = 'newEvent'
 const NEW_CONFIRMATION_EVENT_NAME = 'newConfirmation'
 const INVALID_CONFIRMATION_EVENT_NAME = 'invalidConfirmation'
 
@@ -107,7 +106,7 @@ export class Confirmator {
     const event = JSON.parse(data.content) as EventData
     this.logger.debug('Confirming event', event)
     this.blockTracker.setLastProcessedBlockIfHigher(event.blockNumber, event.blockHash)
-    this.emitter.emit(NEW_EVENT_EVENT_NAME, event)
+    this.emitter.emit(NEW_CONFIRMATION_EVENT_NAME, event)
   }
 
   public async checkDroppedTransactions (newEvents: EventData[]): Promise<void> {
