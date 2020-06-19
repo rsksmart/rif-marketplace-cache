@@ -1,7 +1,7 @@
 import config from 'config'
 
 import Event from './event.model'
-import { asyncSplit, setDifference, split } from '../utils'
+import { asyncSplit, setDifference } from '../utils'
 
 import type { EventData } from 'web3-eth-contract'
 import type { BlockHeader, Eth } from 'web3-eth'
@@ -15,6 +15,7 @@ function isConfirmedClosure (currentBlockNumber: number) {
   return (event: Event): boolean => event.getConfirmationsCount(currentBlockNumber) === event.targetConfirmation
 }
 
+const NEW_EVENT_EVENT_NAME = 'newEvent'
 const NEW_CONFIRMATION_EVENT_NAME = 'newConfirmation'
 const INVALID_CONFIRMATION_EVENT_NAME = 'invalidConfirmation'
 
@@ -49,13 +50,13 @@ export class Confirmator {
     })
 
     const [valid, invalid] = await asyncSplit(events, this.eventHasValidReceipt.bind(this))
-    const [toBeEmitted, toBeConfirmed] = split(valid, isConfirmedClosure(currentBlock.number))
+    const toBeEmitted = valid.filter(isConfirmedClosure(currentBlock.number))
 
     toBeEmitted.forEach(this.confirmEvent.bind(this))
     this.logger.info(`Confirmed ${toBeEmitted.length} events.`)
     await Event.update({ emitted: true }, { where: { id: toBeEmitted.map(e => e.id) } }) // Update DB that events were emitted
 
-    toBeConfirmed.forEach(this.emitNewConfirmationsClosure(currentBlock.number))
+    valid.forEach(this.emitNewConfirmationsClosure(currentBlock.number))
 
     if (invalid.length !== 0) {
       invalid.forEach(e => this.emitter.emit(INVALID_CONFIRMATION_EVENT_NAME, { transactionHash: e.transactionHash }))
@@ -106,7 +107,7 @@ export class Confirmator {
     const event = JSON.parse(data.content) as EventData
     this.logger.debug('Confirming event', event)
     this.blockTracker.setLastProcessedBlockIfHigher(event.blockNumber, event.blockHash)
-    this.emitter.emit(NEW_CONFIRMATION_EVENT_NAME, event)
+    this.emitter.emit(NEW_EVENT_EVENT_NAME, event)
   }
 
   public async checkDroppedTransactions (newEvents: EventData[]): Promise<void> {
