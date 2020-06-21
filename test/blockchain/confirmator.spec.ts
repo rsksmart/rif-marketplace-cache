@@ -125,7 +125,7 @@ describe('Confirmator', function () {
     })
     expect(confirmedEventSpy).to.have.been.calledWithExactly({
       confirmations: 2,
-      event: 'otherEvent',
+      event: 'niceEvent',
       targetConfirmation: 2,
       transactionHash: '3'
     })
@@ -143,6 +143,67 @@ describe('Confirmator', function () {
     })
 
     expect(await Event.count()).to.eql(5)
+    expect(blockTracker.getLastProcessedBlock()).to.eql([9, '0x123'])
+  })
+
+  it('should emit newEvent event when the targeted confirmation block is skipped', async () => {
+    const events = [
+      { // Emitted newEvent
+        contractAddress: '0x123',
+        event: 'niceEvent',
+        blockNumber: 9,
+        transactionHash: '3',
+        targetConfirmation: 2,
+        emitted: false,
+        content: '{"event": "niceEvent", "blockNumber": 9, "blockHash": "0x123"}'
+      },
+      { // Emitted newEvent
+        contractAddress: '0x123',
+        event: 'otherEvent',
+        blockNumber: 8,
+        transactionHash: '2',
+        targetConfirmation: 2,
+        emitted: false,
+        content: '{"event": "otherEvent", "blockNumber": 8, "blockHash": "0x123"}'
+      }
+    ]
+    await Event.bulkCreate(events)
+    eth.getTransactionReceipt('2').resolves(receiptMock(8))
+    eth.getTransactionReceipt('3').resolves(receiptMock(9))
+
+    const block = Substitute.for<BlockHeader>()
+    block.number.returns!(13)
+    await confirmator.runConfirmationsRoutine(block)
+    await sleep(10)
+
+    expect(invalidEventSpy).to.not.have.been.called()
+    expect(confirmedEventSpy).to.have.callCount(2)
+    expect(confirmedEventSpy).to.have.been.calledWithExactly({
+      confirmations: 5,
+      event: 'otherEvent',
+      targetConfirmation: 2,
+      transactionHash: '2'
+    })
+    expect(confirmedEventSpy).to.have.been.calledWithExactly({
+      confirmations: 4,
+      event: 'niceEvent',
+      targetConfirmation: 2,
+      transactionHash: '3'
+    })
+
+    expect(newEventSpy).to.have.callCount(2)
+    expect(newEventSpy).to.have.been.calledWithExactly({
+      event: 'otherEvent',
+      blockNumber: 8,
+      blockHash: '0x123'
+    })
+    expect(newEventSpy).to.have.been.calledWithExactly({
+      event: 'niceEvent',
+      blockNumber: 9,
+      blockHash: '0x123'
+    })
+
+    expect(await Event.count()).to.eql(2)
     expect(blockTracker.getLastProcessedBlock()).to.eql([9, '0x123'])
   })
 

@@ -12,7 +12,7 @@ import type { EventEmitter } from 'events'
 import { literal, Op } from 'sequelize'
 
 function isConfirmedClosure (currentBlockNumber: number) {
-  return (event: Event): boolean => event.getConfirmationsCount(currentBlockNumber) === event.targetConfirmation
+  return (event: Event): boolean => event.getConfirmationsCount(currentBlockNumber) >= event.targetConfirmation
 }
 
 const NEW_EVENT_EVENT_NAME = 'newEvent'
