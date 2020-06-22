@@ -7,7 +7,7 @@ import feathers from '@feathersjs/feathers'
 import express from '@feathersjs/express'
 import socketio from '@feathersjs/socketio'
 
-import { Application } from './definitions'
+import { Application, SupportedServices } from './definitions'
 import { loggingFactory } from './logger'
 import sequelize from './sequelize'
 import blockchain from './blockchain'
@@ -21,20 +21,10 @@ import rns from './services/rns'
 
 const logger = loggingFactory()
 
-export enum SupportedServices {
-  STORAGE = 'storage',
-  RATES = 'rates',
-  RNS = 'rns'
-}
-
 export const services = {
   [SupportedServices.STORAGE]: storage,
   [SupportedServices.RATES]: rates,
   [SupportedServices.RNS]: rns
-}
-
-export function isSupportedServices (value: any): value is SupportedServices {
-  return Object.values(SupportedServices).includes(value)
 }
 
 export async function appFactory (): Promise<Application> {

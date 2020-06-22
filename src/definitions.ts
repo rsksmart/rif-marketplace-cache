@@ -4,10 +4,20 @@ import * as Parser from '@oclif/parser'
 import { EventData } from 'web3-eth-contract'
 import { Eth } from 'web3-eth'
 
-import { OfferService } from './services/storage'
-import { RatesService } from './services/rates'
-import { RnsService } from './services/rns'
+import type { OfferService } from './services/storage'
+import type { RatesService } from './services/rates'
+import type { RnsService } from './services/rns'
 import { ConfirmatorService } from './blockchain/confirmator'
+
+export enum SupportedServices {
+  STORAGE = 'storage',
+  RATES = 'rates',
+  RNS = 'rns'
+}
+
+export function isSupportedServices (value: any): value is SupportedServices {
+  return Object.values(SupportedServices).includes(value)
+}
 
 export enum ServiceAddresses {
   RNS_DOMAINS = '/rns/v0/domains',

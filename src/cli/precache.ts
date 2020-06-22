@@ -1,8 +1,9 @@
-import { services, SupportedServices } from '../app'
+import { services } from '../app'
 import Listr from 'listr'
 import { sequelizeFactory } from '../sequelize'
 import { BaseCLICommand, capitalizeFirstLetter, validateServices } from '../utils'
 import { initStore } from '../store'
+import { SupportedServices } from '../definitions'
 
 export default class PreCache extends BaseCLICommand {
   static get description () {
