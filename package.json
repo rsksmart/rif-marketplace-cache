@@ -126,9 +126,13 @@
   "types": "types/index.d.ts",
   "contributors": [
     "Adam Uhlíř <adam@uhlir.dev>",
+    "Julian R <56316686+julianmrodri@users.noreply.github.com>",
     "Juraj <36888576+jurajpiar@users.noreply.github.com>",
+    "Juraj Piar <juraj@iovlabs.org>",
     "Leandro Yalet <leandro@iovlabs.org>",
     "Lucas <39061310+lucasvuotto@users.noreply.github.com>",
+    "Lucas Gabriel Vuotto <lucas@iovlabs.org>",
+    "Vojtech Simetka <vojtech@simetka.cz>",
     "dependabot-preview[bot] <27856297+dependabot-preview[bot]@users.noreply.github.com>"
   ],
   "oclif": {
