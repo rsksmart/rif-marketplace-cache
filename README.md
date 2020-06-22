@@ -64,6 +64,7 @@ It has following schema:
 [
   {
     "address": "string", // Hash, serves as ID
+    "peerId": "string?", // Optional PeerId of the Provider's node
     "totalCapacity": "number",
     "utilizedCapacity": "number",
     "availableCapacity": "number",

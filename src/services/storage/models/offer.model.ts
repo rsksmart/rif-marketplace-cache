@@ -24,6 +24,9 @@ export default class Offer extends Model {
   @Column
   totalCapacity!: number
 
+  @Column
+  peerId!: string
+
   @HasMany(() => BillingPlan)
   plans!: BillingPlan[]
 

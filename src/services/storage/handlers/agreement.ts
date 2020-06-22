@@ -1,31 +1,24 @@
 import { EventData } from 'web3-eth-contract'
-import { hexToAscii, soliditySha3 } from 'web3-utils'
+import { soliditySha3 } from 'web3-utils'
+import { Eth } from 'web3-eth'
 
 import { loggingFactory } from '../../../logger'
 import { Handler } from '../../../definitions'
 import { EventError } from '../../../errors'
+import { decodeByteArray } from '../../../utils'
+import { getBlockDate } from '../../../blockchain/utils'
 
 import Agreement from '../models/agreement.model'
 import BillingPlan from '../models/price.model'
-import { getBlockDate } from '../../../blockchain/utils'
-import { Eth } from 'web3-eth'
 import { StorageServices } from '../index'
 
 const logger = loggingFactory('storage:handler:request')
-
-function decodeDataReference (fileReference: string[]): string {
-  return fileReference
-    .map(hexToAscii)
-    .join('')
-    .trim()
-    .replace(/\0/g, '') // Remove null-characters
-}
 
 const handlers = {
   async NewAgreement (event: EventData, { agreementService }: StorageServices, eth: Eth): Promise<void> {
     const { provider: offerId, billingPeriod: period } = event.returnValues
     const id = soliditySha3(event.returnValues.agreementCreator, ...event.returnValues.dataReference)
-    const dataReference = decodeDataReference(event.returnValues.dataReference)
+    const dataReference = decodeByteArray(event.returnValues.dataReference)
 
     const plan = await BillingPlan.findOne({ where: { offerId, period } })
 
