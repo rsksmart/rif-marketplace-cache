@@ -4,8 +4,7 @@ import { readFile as readFileCb } from 'fs'
 import { promisify } from 'util'
 import config from 'config'
 
-import { Application, Config, Logger } from './definitions'
-import { isSupportedServices, SupportedServices } from './app'
+import { Application, Config, isSupportedServices, Logger, SupportedServices } from './definitions'
 
 const readFile = promisify(readFileCb)
 

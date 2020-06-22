@@ -1,9 +1,9 @@
 import config from 'config'
 import { flags } from '@oclif/command'
 
-import { appFactory, isSupportedServices, services, SupportedServices } from '../app'
+import { appFactory, services } from '../app'
 import { loggingFactory } from '../logger'
-import { Flags, Config } from '../definitions'
+import { Flags, Config, SupportedServices, isSupportedServices } from '../definitions'
 import { BaseCLICommand } from '../utils'
 import { sequelizeFactory } from '../sequelize'
 import Event from '../blockchain/event.model'
