@@ -3,6 +3,7 @@ import BillingPlan from '../models/price.model'
 import { EventData } from 'web3-eth-contract'
 import { loggingFactory } from '../../../logger'
 import { Handler } from '../../../definitions'
+import { StorageServices } from '../index'
 
 const logger = loggingFactory('storage:handler:offer')
 
@@ -19,9 +20,9 @@ function updatePrices (offer: Offer, period: number, price: number): Promise<Bil
   }
 }
 
-const handler: Handler = {
+const handler: Handler<StorageServices> = {
   events: ['TotalCapacitySet', 'MessageEmitted', 'BillingPlanSet'],
-  async handler (event: EventData): Promise<void> {
+  async process (event: EventData, { offerService }: StorageServices): Promise<void> {
     const provider = event.returnValues.provider
 
     // TODO: Ignored until https://github.com/sequelize/sequelize/pull/11924
@@ -49,6 +50,8 @@ const handler: Handler = {
     }
 
     await offer.save()
+
+    if (offerService.emit) offerService.emit(created ? 'created' : 'updated', offer.toJSON())
   }
 }
 

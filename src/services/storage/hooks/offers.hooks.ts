@@ -1,7 +1,9 @@
 import { HookContext } from '@feathersjs/feathers'
-import BillingPlan from './models/price.model'
-import Agreement from './models/agreement.model'
-import { disallow } from 'feathers-hooks-common'
+import BillingPlan from '../models/price.model'
+import { disallow, discard } from 'feathers-hooks-common'
+import Agreement from '../models/agreement.model'
+import { hooks } from 'feathers-sequelize'
+import dehydrate = hooks.dehydrate
 
 export default {
   before: {
@@ -29,7 +31,7 @@ export default {
   },
 
   after: {
-    all: [],
+    all: [dehydrate(), discard('agreements')],
     find: [],
     get: [],
     create: [],

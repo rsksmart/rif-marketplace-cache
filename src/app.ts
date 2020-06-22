@@ -44,13 +44,6 @@ export async function appFactory (): Promise<Application> {
   app.configure(express.rest())
   app.configure(socketio())
 
-  // Log errors in hooks
-  app.hooks({
-    error (context) {
-      logger.error(`Error in '${context.path}' service method '${context.method}'`, context.error.stack)
-    }
-  })
-
   // Custom general services
   app.configure(sequelize)
   app.configure(blockchain)
@@ -67,6 +60,13 @@ export async function appFactory (): Promise<Application> {
 
   // Wait for services to initialize
   await Promise.all(servicePromises)
+
+  // Log errors in hooks
+  app.hooks({
+    error (context) {
+      logger.error(`Error in '${context.path}' service method '${context.method}'`, context.error.stack)
+    }
+  })
 
   // Configure a middleware for 404s and the error handler
   app.use(express.notFound())
