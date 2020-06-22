@@ -36,7 +36,7 @@
     "url": "https://github.com/rsksmart/rif-marketplace-cache.git"
   },
   "scripts": {
-    "prepack": "oclif-dev manifest && sed -i '' 's#\"./src/cli\"#\"./lib/cli\"#g' package.json",
+    "prepack": "tasegir run --watch node_modules/.bin/oclif-dev -- manifest && sed -i '' 's#\"./src/cli\"#\"./lib/cli\"#g' package.json",
     "postpack": "sed -i '' 's#\"./lib/cli\"#\"./src/cli\"#g' package.json",
     "bin": "tasegir run --watch ./bin/run -- ",
     "compile": "tasegir compile",
