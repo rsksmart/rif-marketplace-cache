@@ -16,8 +16,9 @@
 
 ## Table of Contents
 
+- [Introduction](#introduction)
 - [Supported services](#supported-services)
-    - [RIF Storage](#rif-storage)
+    - [Storage](#storage)
     - [RNS](#rns)
     - [Rates](#rates)
     - [Confirmations](#confirmations)
@@ -33,9 +34,20 @@
     - [Development](#development)
 - [License](#license)
 
+## Introduction
+
+This is a backend service that caches different metrics from blockchain for the RIF services.
+It is build using [FeathersJS](https://www.feathersjs.com) and hence inherits lot of its features and properties.
+
+It supports both REST access and SocketIO WS connectivity. It is recommended to use [Feathers Client](https://docs.feathersjs.com/api/client.html)
+ for consuming services of this project.
+
+For querying the endpoints remember that you have available [Querying schema](https://docs.feathersjs.com/api/databases/querying.html)
+by FeathersJS.
+
 ## Supported services
 
-### RIF Storage
+### Storage
 
 For RIF Storage there is cached information about Pinning Contract and current Storage Offers.
 
@@ -43,7 +55,7 @@ For RIF Storage there is cached information about Pinning Contract and current S
 GET: /storage/v0/offers
 ```
 
-Returns JSON that represents currently active and available Pinning Contracts that customers can use to contract their
+Returns JSON that represents currently active and available Offers that customers can use to contract their
 pinning requests.
 
 It has following schema:
@@ -66,26 +78,37 @@ It has following schema:
         "createdAt": "Date",
         "updatedAt": "Date"
       }
-    ],
-    "agreements": [
-      {
-        "numberOfPrepaidPeriods": "number",
-        "periodsSinceLastPayout": "number",
-        "toBePayedOut": "number",
-        "hasSufficientFunds": "boolean",
-        "agreementReference": "string",
-        "dataReference": "string",
-        "consumer": "string",
-        "size": "number",
-        "isActive": "boolean", // False when agreement is stopped
-        "billingPeriod": "number",
-        "billingPrice": "number",
-        "availableFunds": "number",
-        "lastPayout": "Date",
-        "offerId": "string"
-      }
     ]
   }
+]
+```
+
+```
+GET: /storage/v0/agreements
+```
+
+Returns JSON that represent currently active Agreements.
+
+It has following schema:
+
+```json5
+[
+   {
+     "numberOfPrepaidPeriods": "number",
+     "periodsSinceLastPayout": "number",
+     "toBePayedOut": "number",
+     "hasSufficientFunds": "boolean",
+     "agreementReference": "string",
+     "dataReference": "string",
+     "consumer": "string",
+     "size": "number",
+     "isActive": "boolean", // False when agreement is stopped
+     "billingPeriod": "number",
+     "billingPrice": "number",
+     "availableFunds": "number",
+     "lastPayout": "Date",
+     "offerId": "string"
+   }
 ]
 ```
 

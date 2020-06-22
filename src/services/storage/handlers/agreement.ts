@@ -9,6 +9,7 @@ import Agreement from '../models/agreement.model'
 import BillingPlan from '../models/price.model'
 import { getBlockDate } from '../../../blockchain/utils'
 import { Eth } from 'web3-eth'
+import { StorageServices } from '../index'
 
 const logger = loggingFactory('storage:handler:request')
 
@@ -21,7 +22,7 @@ function decodeDataReference (fileReference: string[]): string {
 }
 
 const handlers = {
-  async NewAgreement (event: EventData, eth: Eth): Promise<void> {
+  async NewAgreement (event: EventData, { agreementService }: StorageServices, eth: Eth): Promise<void> {
     const { provider: offerId, billingPeriod: period } = event.returnValues
     const id = soliditySha3(event.returnValues.agreementCreator, ...event.returnValues.dataReference)
     const dataReference = decodeDataReference(event.returnValues.dataReference)
@@ -32,8 +33,7 @@ const handlers = {
       throw new EventError(`Price for period ${period} and offer ${offerId} not found when creating new request ${id}`, 'RequestMade')
     }
 
-    // TODO: Agreement might be already existing
-    const req = new Agreement({
+    const data = {
       agreementReference: id,
       dataReference,
       consumer: event.returnValues.agreementCreator,
@@ -43,12 +43,14 @@ const handlers = {
       billingPrice: plan.amount,
       availableFunds: event.returnValues.availableFunds,
       lastPayout: await getBlockDate(eth, event.blockNumber)
-    })
-    await req.save()
+    }
+    await Agreement.upsert(data) // Agreement might already exist
+
+    if (agreementService.emit) agreementService.emit('created', data)
     logger.info(`Created new Agreement with ID ${id} for offer ${offerId}`)
   },
 
-  async AgreementStopped (event: EventData): Promise<void> {
+  async AgreementStopped (event: EventData, { agreementService }: StorageServices): Promise<void> {
     const id = event.returnValues.agreementReference
     const agreement = await Agreement.findByPk(id)
 
@@ -58,10 +60,12 @@ const handlers = {
 
     agreement.isActive = false
     await agreement.save()
+
+    if (agreementService.emit) agreementService.emit('updated', agreement.toJSON())
     logger.info(`Agreement ${id} was stopped.`)
   },
 
-  async AgreementFundsDeposited (event: EventData): Promise<void> {
+  async AgreementFundsDeposited (event: EventData, { agreementService }: StorageServices): Promise<void> {
     const id = event.returnValues.agreementReference
     const agreement = await Agreement.findByPk(id)
 
@@ -71,10 +75,12 @@ const handlers = {
 
     agreement.availableFunds += parseInt(event.returnValues.amount)
     await agreement.save()
+
+    if (agreementService.emit) agreementService.emit('updated', agreement.toJSON())
     logger.info(`Agreement ${id} was topped up with ${event.returnValues.amount}.`)
   },
 
-  async AgreementFundsWithdrawn (event: EventData): Promise<void> {
+  async AgreementFundsWithdrawn (event: EventData, { agreementService }: StorageServices): Promise<void> {
     const id = event.returnValues.agreementReference
     const agreement = await Agreement.findByPk(id)
 
@@ -84,10 +90,12 @@ const handlers = {
 
     agreement.availableFunds -= parseInt(event.returnValues.amount)
     await agreement.save()
+
+    if (agreementService.emit) agreementService.emit('updated', agreement.toJSON())
     logger.info(`${event.returnValues.amount} was withdrawn from funds of Agreement ${id}.`)
   },
 
-  async AgreementFundsPayout (event: EventData, eth: Eth): Promise<void> {
+  async AgreementFundsPayout (event: EventData, { agreementService }: StorageServices, eth: Eth): Promise<void> {
     const id = event.returnValues.agreementReference
     const agreement = await Agreement.findByPk(id)
 
@@ -98,6 +106,8 @@ const handlers = {
     agreement.lastPayout = await getBlockDate(eth, event.blockNumber)
     agreement.availableFunds -= parseInt(event.returnValues.amount)
     await agreement.save()
+
+    if (agreementService.emit) agreementService.emit('updated', agreement.toJSON())
     logger.info(`${event.returnValues.amount} was payed out from funds of Agreement ${id}.`)
   }
 }
@@ -106,14 +116,14 @@ function isValidEvent (value: string): value is keyof typeof handlers {
   return value in handlers
 }
 
-const handler: Handler = {
+const handler: Handler<StorageServices> = {
   events: ['NewAgreement', 'AgreementFundsDeposited', 'AgreementFundsWithdrawn', 'AgreementFundsPayout', 'AgreementStopped'],
-  handler (event: EventData, eth: Eth): Promise<void> {
+  process (event: EventData, services: StorageServices, eth: Eth): Promise<void> {
     if (!isValidEvent(event.event)) {
       return Promise.reject(new Error(`Unknown event ${event.event}`))
     }
 
-    return handlers[event.event](event, eth)
+    return handlers[event.event](event, services, eth)
   }
 }
 export default handler

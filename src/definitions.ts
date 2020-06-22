@@ -4,7 +4,7 @@ import * as Parser from '@oclif/parser'
 import { EventData } from 'web3-eth-contract'
 import { Eth } from 'web3-eth'
 
-import type { OfferService } from './services/storage'
+import type { AgreementService, OfferService } from './services/storage'
 import type { RatesService } from './services/rates'
 import type { RnsService } from './services/rns'
 import { ConfirmatorService } from './blockchain/confirmator'
@@ -24,6 +24,7 @@ export enum ServiceAddresses {
   RNS_SOLD = '/rns/v0/sold',
   RNS_OFFERS = '/rns/v0/offers',
   STORAGE_OFFERS = '/storage/v0/offers',
+  STORAGE_AGREEMENTS = '/storage/v0/agreements',
   XR = '/rates/v0/',
   CONFIRMATIONS = '/confirmations'
 }
@@ -31,6 +32,7 @@ export enum ServiceAddresses {
 // A mapping of service names to types. Will be extended in service files.
 interface ServiceTypes {
   [ServiceAddresses.STORAGE_OFFERS]: OfferService & ServiceAddons<any>
+  [ServiceAddresses.STORAGE_AGREEMENTS]: AgreementService & ServiceAddons<any>
   [ServiceAddresses.XR]: RatesService & ServiceAddons<any>
   [ServiceAddresses.RNS_DOMAINS]: RnsService & ServiceAddons<any>
   [ServiceAddresses.RNS_SOLD]: RnsService & ServiceAddons<any>
@@ -204,7 +206,7 @@ export interface Logger {
 /**
  * Interface for more complex handling of events.
  */
-export interface Handler {
+export interface Handler<T> {
   events: string[]
-  handler: (event: EventData, eth: Eth) => Promise<void>
+  process: (event: EventData, services: T, eth: Eth) => Promise<void>
 }
