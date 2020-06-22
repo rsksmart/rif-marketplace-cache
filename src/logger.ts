@@ -144,7 +144,7 @@ function initLogging (): void {
         }
 
         if (Object.keys(rest).length > 0) {
-          message += '\n' + inspect(rest, false, 2, true)
+          message += '\n' + inspect(rest, false, 5, true)
         }
 
         return message
