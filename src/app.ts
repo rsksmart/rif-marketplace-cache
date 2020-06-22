@@ -40,6 +40,7 @@ export function isSupportedServices (value: any): value is SupportedServices {
 export async function appFactory (): Promise<Application> {
   const app: Application = express(feathers())
 
+  logger.verbose('Current configuration: ', config)
   const corsOptions: CorsOptionsDelegate = config.get('cors')
 
   // Enable security, CORS, compression and body parsing
