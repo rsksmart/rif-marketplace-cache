@@ -57,7 +57,12 @@ export async function processRskOwner (eth: Eth, logger: Logger, contractAbi: Ut
     const name = Utils.hexToAscii('0x' + decodedData.params[2].value.slice(218, decodedData.params[2].value.length))
     const tokenId = Utils.numberToHex(Utils.sha3(name) as string)
     const ownerAddress = rskOwnerEvent.returnValues.to.toLowerCase()
-    await Domain.upsert({ tokenId, name: `${name}.${tld}` })
+    try {
+      await Domain.upsert({ tokenId, name: `${name}.${tld}` })
+    } catch (e) {
+      await Domain.upsert({ tokenId })
+      logger.warn(`Domain name ${name}.${tld} for token ${tokenId} could not be stored.`)
+    }
     await DomainOwner.upsert({ tokenId, address: ownerAddress })
   }
 }
