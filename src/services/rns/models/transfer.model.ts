@@ -5,7 +5,7 @@ export default class Transfer extends Model {
   @Column({ primaryKey: true, type: DataType.STRING })
   id!: string
 
-  @Column(DataType.STRING)
+  @Column({ primaryKey: true, type: DataType.STRING })
   tokenId!: string
 
   @Column(DataType.STRING)
