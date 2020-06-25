@@ -6,25 +6,30 @@
     owner: {
       contractAddress: "0xca0a477e19bac7e0e172ccfd2e3c28a7200bdb71",
       eventsEmitter: {
+        startingBlock: 385433,
         confirmations: 3
       }
     },
     reverse: {
       contractAddress: "0x8587385ad60038bB181aFfDF687c4D1B80C4787e",
       eventsEmitter: {
+        startingBlock: 419976,
         confirmations: 3
       }
     },
     placement: {
       contractAddress: "0xe93EE0Ac6C97807F4c28f66cA44E1Ad18E485033",
       eventsEmitter: {
+        startingBlock: 829200,
         confirmations: 3
       }
     },
     registrar: {
+      startingBlock: 385324,
       contractAddress: "0x3d1a11c623bd21375f2b69f4eec814f4ceeb1d8d"
     },
     fifsAddrRegistrar: {
+      startingBlock: 385324,
       contractAddress: "0x90734bd6bf96250a7b262e2bc34284b0d47c1e8d"
     }
   }
