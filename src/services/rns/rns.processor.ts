@@ -33,7 +33,12 @@ async function transferHandler (logger: Logger, eventData: EventData, eth: Eth, 
       const name = Utils.hexToAscii('0x' + decodedData.params[2].value.slice(218, decodedData.params[2].value.length))
 
       if (name) {
-        await Domain.upsert({ tokenId, name: `${name}.${tld}` })
+        try {
+          await Domain.upsert({ tokenId, name: `${name}.${tld}` })
+        } catch (e) {
+          await Domain.upsert({ tokenId })
+          logger.warn(`Domain name ${name}.${tld} for token ${tokenId} could not be stored.`)
+        }
 
         if (domainsService.emit) {
           domainsService.emit('patched', { tokenId })
