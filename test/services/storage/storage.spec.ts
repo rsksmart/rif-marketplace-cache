@@ -54,15 +54,15 @@ describe('Storage services', function () {
         await sequelize.sync({ force: true })
       })
 
-      it('Should create new Offer if not exist yet', async () => {
+      it('Should create new Offer if not existed', async () => {
         const event = mockEventsFactory()
         await processor(event)
         const createdEvent = await Offer.findOne({ where: { address: event.returnValues.provider } })
 
-        expect(createdEvent).to.be.an('object')
+        expect(createdEvent).to.be.instanceOf(Offer)
         expect(offerServiceEmitSpy).to.have.been.calledWithMatch('created')
       })
-      it('Should update Offer', async () => {
+      it('Should update existing Offer', async () => {
         const event = mockEventsFactory({
           event: 'TotalCapacitySet',
           returnValues: {
@@ -75,9 +75,11 @@ describe('Storage services', function () {
         const updatedEventFromDB = await Offer.findOne({ where: { address: event.returnValues.provider } })
 
         expect(updatedEventFromDB?.updatedAt).to.be.gt(eventFromDb.updatedAt)
-        expect(eventFromDb).to.be.an('object')
+        expect(eventFromDb).to.be.instanceOf(Offer)
         expect(offerServiceEmitSpy).to.have.been.calledWithMatch('updated')
       })
+      // it ('Should update capacity on "TotalCapacitySet" event', () => {})
+      // it ('Should update prices on "BillingPlanSet" event', () => {})
     })
   })
 })

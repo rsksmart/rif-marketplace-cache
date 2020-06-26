@@ -66,6 +66,8 @@ const handler: Handler<StorageServices> = {
 
     await offer.save()
 
+    // @TODO if we receive an unknown message then update actually doesn't happens, because offer don't changed
+    // Should we emit `update` event then
     if (offerService.emit) offerService.emit(created ? 'created' : 'updated', offer.toJSON())
   }
 }
