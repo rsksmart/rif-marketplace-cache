@@ -299,7 +299,7 @@ export abstract class BaseEventsEmitter extends AutoStartStopEventEmitter {
     const [lastProcessedBlockNumber] = this.blockTracker.getLastProcessedBlock()
 
     const newEvents = await this.contract.getPastEvents('allEvents', {
-      fromBlock: lastProcessedBlockNumber || this.startingBlock,
+      fromBlock: (lastProcessedBlockNumber ? lastProcessedBlockNumber + 1 : false) || this.startingBlock,
       toBlock: currentBlock.number
     })
 

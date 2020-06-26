@@ -457,7 +457,7 @@ describe('PollingEventsEmitter', function () {
 
       const contract = Substitute.for<Contract>()
       contract.options.returns!({ jsonInterface: [{}] as AbiItem[], address: '0x123' })
-      contract.getPastEvents(Arg.all()).resolves(
+      contract.getPastEvents('allEvents', { fromBlock: 9, toBlock: 11 }).resolves( // 9 because we don't want to reprocess 8th already processed block
         [eventMock({ blockNumber: 11, transactionHash: '1', logIndex: 1 })]
       )
 
@@ -479,7 +479,7 @@ describe('PollingEventsEmitter', function () {
       newBlockEmitter.emit(NEW_BLOCK_EVENT_NAME, blockMock(11))
       await sleep(200)
 
-      contract.received(1).getPastEvents(Arg.all())
+      contract.received(1).getPastEvents('allEvents', { fromBlock: 9, toBlock: 11 })
       eth.received(2).getBlock(Arg.all())
       expect(blockTracker.getLastFetchedBlock()).to.eql([11, '0x123'])
       expect(newEventSpy).to.have.callCount(0)
