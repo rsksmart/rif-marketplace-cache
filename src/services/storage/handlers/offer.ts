@@ -51,7 +51,7 @@ const handler: Handler<StorageServices> = {
         const flag = firstMsg.substring(2, 4)
 
         if (flag === '01') { // PeerId definition
-          offer.peerId = decodeByteArray([firstMsg.substring(4), ...restMsg])
+          offer.peerId = decodeByteArray([`0x${firstMsg.substring(4)}`, ...restMsg])
           logger.info(`PeerId ${offer.peerId} defined (ID: ${offer.address})`)
         } else {
           throw new EventError(`Unknown message flag ${flag}!`, event.event)
@@ -62,7 +62,7 @@ const handler: Handler<StorageServices> = {
         await updatePrices(offer, event.returnValues.period, event.returnValues.price)
         break
       default:
-        throw new EventError('Unknown event', event.event)
+        break
     }
 
     await offer.save()
