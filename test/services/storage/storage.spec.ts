@@ -15,6 +15,7 @@ import { sequelizeFactory } from '../../../src/sequelize'
 import Offer from '../../../src/services/storage/models/offer.model'
 import { eventMock } from '../../utils'
 import { EventError } from '../../../src/errors'
+import BillingPlan from '../../../src/services/storage/models/price.model'
 
 chai.use(sinonChai)
 chai.use(chaiAsPromised)
@@ -29,18 +30,19 @@ describe('Storage services', function () {
   before(() => {
     sequelize = sequelizeFactory()
   })
+
   describe('Events Processor', () => {
     describe('Offer events', () => {
       let processor: (event: EventData) => Promise<void>
       let offerService: OfferService
       let offerServiceEmitSpy: sinon.SinonSpy
 
-      before(() => {
+      before(async () => {
         offerService = new OfferService({ Model: Offer })
         processor = eventProcessor({ offerService } as StorageServices, eth)
-      })
-      beforeEach(async () => {
         await sequelize.sync({ force: true })
+      })
+      beforeEach(() => {
         offerServiceEmitSpy = sinon.spy()
         offerService.emit = offerServiceEmitSpy
       })
@@ -61,7 +63,7 @@ describe('Storage services', function () {
           event: 'TotalCapacitySet',
           returnValues: {
             capacity: 1000,
-            provider
+            provider: 'test'
           }
         })
         const eventFromDb = await Offer.create({ address: event.returnValues.provider })
@@ -71,65 +73,129 @@ describe('Storage services', function () {
 
         expect(offerServiceEmitSpy).to.have.been.calledWithMatch('updated')
       })
-      it('should update capacity on `TotalCapacitySet`', async () => {
-        const event = eventMock({
-          event: 'TotalCapacitySet',
-          returnValues: {
-            capacity: 1000,
-            provider
-          }
+      describe('TotalCapacitySet', () => {
+        it('should update capacity', async () => {
+          const event = eventMock({
+            event: 'TotalCapacitySet',
+            returnValues: {
+              capacity: 1000,
+              provider
+            }
+          })
+
+          await processor(event)
+          const updatedEventFromDB = await Offer.findOne({ where: { address: event.returnValues.provider } })
+
+          expect(updatedEventFromDB?.totalCapacity).to.be.eql(event.returnValues.capacity)
         })
-
-        await processor(event)
-        const updatedEventFromDB = await Offer.findOne({ where: { address: event.returnValues.provider } })
-
-        expect(updatedEventFromDB?.totalCapacity).to.be.eql(event.returnValues.capacity)
       })
-      it('should not update Offer on `MessageEmitted` with empty message', async () => {
-        const event = eventMock({
-          event: 'MessageEmitted',
-          returnValues: {
-            message: '',
-            provider
-          }
+      describe('BillingPlanSet', () => {
+        let offer: Offer
+        let billingEvent: EventData
+        before(async () => {
+          billingEvent = eventMock({
+            event: 'BillingPlanSet',
+            returnValues: {
+              price: 1000,
+              period: 99,
+              provider
+            }
+          })
+          offer = (await Offer.findOrCreate({ where: { address: provider } }))[0]
         })
+        it('create new BillingPlan if not exist', async () => {
+          const event = eventMock({
+            event: 'BillingPlanSet',
+            returnValues: {
+              price: 1000,
+              period: 69696,
+              provider
+            }
+          })
 
-        await processor(event)
-        const updatedEventFromDB = await Offer.findOne({ where: { address: event.returnValues.provider } })
+          await processor(event)
 
-        expect(updatedEventFromDB?.peerId).to.be.eql(null)
+          const billingPlan = await BillingPlan.findOne({ where: { offerId: offer.address } })
+
+          expect(billingPlan).to.be.instanceOf(BillingPlan)
+          expect(billingPlan?.createdAt).to.be.eql(billingPlan?.updatedAt) // new instance
+          expect(billingPlan?.amount).to.be.eql(event.returnValues.price)
+          expect(billingPlan?.period).to.be.eql(event.returnValues.period)
+        })
+        it('create new BillingPlan if has one with different period`', async () => {
+          await processor(billingEvent)
+
+          const billingPlan = await BillingPlan.findOne({ where: { offerId: offer.address, period: 99 } })
+
+          expect(billingPlan).to.be.instanceOf(BillingPlan)
+          expect(billingPlan?.createdAt).to.be.eql(billingPlan?.updatedAt) // new instance
+          expect(billingPlan?.amount).to.be.eql(billingEvent.returnValues.price)
+          expect(billingPlan?.period).to.be.eql(billingEvent.returnValues.period)
+        })
+        it('update BillingPlan', async () => {
+          const newPrice = 99999
+          billingEvent.returnValues.price = newPrice
+
+          await processor(billingEvent)
+
+          const billingPlan = await BillingPlan.findOne({ where: { offerId: offer.address, period: 99 } })
+
+          expect(billingPlan).to.be.instanceOf(BillingPlan)
+          expect(billingPlan?.updatedAt).to.be.gt(billingPlan?.createdAt) // new instance
+          expect(billingPlan?.amount).to.be.eql(newPrice)
+          expect(billingPlan?.period).to.be.eql(billingEvent.returnValues.period)
+        })
       })
-      it('should update `peerId` on "MessageEmitted" event', async () => {
-        const testPeerId = 'FakePeerId'
-        const testPeerIdHex = asciiToHex(testPeerId, 32).replace('0x', '')
-        const nodeIdFlag = '01'
-        const message = `0x${nodeIdFlag}${testPeerIdHex}`
-        const event = eventMock({
-          event: 'MessageEmitted',
-          returnValues: {
-            message: [message],
-            provider
-          }
+      describe('MessageEmitted', () => {
+        it('should not update Offer if message is empty', async () => {
+          const event = eventMock({
+            event: 'MessageEmitted',
+            returnValues: {
+              message: [],
+              provider
+            }
+          })
+
+          await processor(event)
+          const updatedEventFromDB = await Offer.findOne({ where: { address: event.returnValues.provider } })
+
+          expect(updatedEventFromDB?.peerId).to.be.eql(null)
         })
+        it('should throw error on unknown message flag', async () => {
+          const testPeerId = 'FakePeerId'
+          const testPeerIdHex = asciiToHex(testPeerId, 32).replace('0x', '')
+          const unknownId = '02'
+          const event = eventMock({
+            event: 'MessageEmitted',
+            returnValues: {
+              message: [`0x${unknownId}${testPeerIdHex}`],
+              provider
+            }
+          })
 
-        await processor(event)
-        const updatedEventFromDB = await Offer.findOne({ where: { address: event.returnValues.provider } })
-
-        expect(updatedEventFromDB?.peerId).to.be.eql(testPeerId)
-      })
-      it('should throw error on unknown message flag of "MessageEmitted" event', async () => {
-        const testPeerId = 'FakePeerId'
-        const testPeerIdHex = asciiToHex(testPeerId, 32).replace('0x', '')
-        const unknownId = '02'
-        const event = eventMock({
-          event: 'MessageEmitted',
-          returnValues: {
-            message: [`0x${unknownId}${testPeerIdHex}`],
-            provider
-          }
+          await expect(processor(event)).to.eventually.be.rejectedWith(
+            EventError,
+            `During processing event MessageEmitted: Unknown message flag ${unknownId}!`
+          )
         })
+        it('should update `peerId`', async () => {
+          const testPeerId = 'FakePeerId'
+          const testPeerIdHex = asciiToHex(testPeerId, 32).replace('0x', '')
+          const nodeIdFlag = '01'
+          const message = `0x${nodeIdFlag}${testPeerIdHex}`
+          const event = eventMock({
+            event: 'MessageEmitted',
+            returnValues: {
+              message: [message],
+              provider
+            }
+          })
 
-        await expect(processor(event)).to.eventually.be.rejectedWith(EventError, `During processing event MessageEmitted: Unknown message flag ${unknownId}!`)
+          await processor(event)
+          const updatedEventFromDB = await Offer.findOne({ where: { address: event.returnValues.provider } })
+
+          expect(updatedEventFromDB?.peerId).to.be.eql(testPeerId)
+        })
       })
     })
   })
