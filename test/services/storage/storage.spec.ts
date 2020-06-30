@@ -12,26 +12,15 @@ import eventProcessor from '../../../src/services/storage/storage.processor'
 import { OfferService, StorageServices } from '../../../src/services/storage'
 import { sequelizeFactory } from '../../../src/sequelize'
 import Offer from '../../../src/services/storage/models/offer.model'
+import { eventMock } from '../../utils'
 
 chai.use(sinonChai)
 chai.use(chaiAsPromised)
 chai.use(dirtyChai)
 const expect = chai.expect
 
-const mockEventsFactory = (event: Record<string, unknown> = {}): EventData => Object.assign({
-  returnValues: { provider: 'ProviderAddress' },
-  raw: { data: 'data', topics: [] },
-  event: 'MessageEmitted',
-  signature: 'Sig',
-  logIndex: 2,
-  transactionIndex: 2,
-  transactionHash: 'TestTransactionHASH',
-  blockHash: 'TestBlockHASH',
-  blockNumber: 10,
-  address: 'testADdress'
-}, event) as EventData
-
 describe('Storage services', function () {
+  const provider = 'TestAddress'
   let sequelize: Sequelize
   let eth: SubstituteOf<Eth>
 
@@ -54,28 +43,29 @@ describe('Storage services', function () {
         await sequelize.sync({ force: true })
       })
 
-      it('Should create new Offer if not existed', async () => {
-        const event = mockEventsFactory()
+      it('should create new Offer if not existed', async () => {
+        const event = eventMock({
+          event: 'MessageEmitted',
+          returnValues: { provider }
+        })
         await processor(event)
         const createdEvent = await Offer.findOne({ where: { address: event.returnValues.provider } })
 
         expect(createdEvent).to.be.instanceOf(Offer)
         expect(offerServiceEmitSpy).to.have.been.calledWithMatch('created')
       })
-      it('Should update existing Offer', async () => {
-        const event = mockEventsFactory({
+      it('should update existing Offer', async () => {
+        const event = eventMock({
           event: 'TotalCapacitySet',
           returnValues: {
-            provider: 'TestAddress',
-            totalCapacity: 1000
+            capacity: 1000,
+            provider
           }
         })
-        const eventFromDb = await Offer.create({ address: event.returnValues.provider })
         await processor(event)
         const updatedEventFromDB = await Offer.findOne({ where: { address: event.returnValues.provider } })
 
-        expect(updatedEventFromDB?.updatedAt).to.be.gt(eventFromDb.updatedAt)
-        expect(eventFromDb).to.be.instanceOf(Offer)
+        expect(updatedEventFromDB?.totalCapacity).to.be.eql(event.returnValues.capacity)
         expect(offerServiceEmitSpy).to.have.been.calledWithMatch('updated')
       })
       // it ('Should update capacity on "TotalCapacitySet" event', () => {})
