@@ -62,6 +62,7 @@ const handler: Handler<StorageServices> = {
         await updatePrices(offer, event.returnValues.period, event.returnValues.price)
         break
       default:
+        logger.error(`Unknown event ${event.event}`)
         break
     }
 
