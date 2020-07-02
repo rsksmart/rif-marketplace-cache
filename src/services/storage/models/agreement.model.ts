@@ -10,25 +10,28 @@ export default class Agreement extends Model {
   @Column({ type: DataType.STRING(67), primaryKey: true })
   agreementReference!: string
 
-  @Column({ type: DataType.STRING() })
+  @Column({ type: DataType.STRING(), allowNull: false })
   dataReference!: string
 
   @Column({ type: DataType.STRING(64) })
   consumer!: string
 
-  @Column
+  @Column({ allowNull: false })
   size!: number
 
   @Column({ defaultValue: true })
   isActive!: boolean
 
-  @Column
+  /**
+   * Billing period IN SECONDS
+   */
+  @Column({ allowNull: false })
   billingPeriod!: number
 
-  @Column
+  @Column({ allowNull: false })
   billingPrice!: number
 
-  @Column
+  @Column({ allowNull: false })
   availableFunds!: number
 
   @Column
@@ -49,7 +52,10 @@ export default class Agreement extends Model {
 
   @Column(DataType.VIRTUAL)
   get periodsSinceLastPayout () {
-    return Math.floor((Date.now() - this.lastPayout.getTime()) / this.billingPeriod)
+    // Date.now = ms
+    // this.lastPayout.getTime = ms
+    // this.billingPeriod = seconds ==> * 1000
+    return Math.floor((Date.now() - this.lastPayout.getTime()) / (this.billingPeriod * 1000))
   }
 
   @Column(DataType.VIRTUAL)
