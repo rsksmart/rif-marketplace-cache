@@ -35,7 +35,7 @@ export default class Offer extends Model {
 
   @Column(DataType.VIRTUAL)
   get utilizedCapacity (): number {
-    return this.agreements.map(request => request.size).reduce((previousValue, currentValue) => previousValue + currentValue, 0)
+    return (this.agreements || []).map(request => request.size).reduce((previousValue, currentValue) => previousValue + currentValue, 0)
   }
 
   @Column(DataType.VIRTUAL)

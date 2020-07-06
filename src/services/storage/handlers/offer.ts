@@ -5,6 +5,7 @@ import { loggingFactory } from '../../../logger'
 import { Handler } from '../../../definitions'
 import { StorageServices } from '../index'
 import { decodeByteArray } from '../../../utils'
+import { EventError } from '../../../errors'
 
 const logger = loggingFactory('storage:handler:offer')
 
@@ -46,14 +47,14 @@ const handler: Handler<StorageServices> = {
           break
         }
 
-        const [firstMsg, ...restMsg] = msg[0].replace('0x', '')
-        const flag = firstMsg.substring(0, 2)
+        const [firstMsg, ...restMsg] = msg
+        const flag = firstMsg.substring(2, 4)
 
         if (flag === '01') { // PeerId definition
-          offer.peerId = decodeByteArray([firstMsg.substring(2), ...restMsg])
+          offer.peerId = decodeByteArray([`0x${firstMsg.substring(4)}`, ...restMsg])
           logger.info(`PeerId ${offer.peerId} defined (ID: ${offer.address})`)
         } else {
-          logger.error(`Unknown message flag ${flag}!`)
+          throw new EventError(`Unknown message flag ${flag}!`, event.event)
         }
         break
       }
@@ -62,10 +63,13 @@ const handler: Handler<StorageServices> = {
         break
       default:
         logger.error(`Unknown event ${event.event}`)
+        break
     }
 
     await offer.save()
 
+    // @TODO if we receive an unknown message then update actually doesn't happens, because offer don't changed
+    // Should we emit `update` event then???
     if (offerService.emit) offerService.emit(created ? 'created' : 'updated', offer.toJSON())
   }
 }
