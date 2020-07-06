@@ -58,8 +58,14 @@ export function eventMock (options?: Partial<EventData>): EventData {
   return testEvent
 }
 
-export function blockMock (blockNumber: number, blockHash = '0x123'): BlockTransactionString {
+export function blockMock (blockNumber: number, blockHash = '0x123', options: Partial<BlockTransactionString> = {}): BlockTransactionString {
   const block = Substitute.for<BlockTransactionString>()
+
+  Object.entries(options).forEach(([key, value]) => {
+    // @ts-ignore
+    block[key].returns!(value)
+  })
+
   block.number.returns!(blockNumber)
   block.hash.returns!(blockHash)
   return block

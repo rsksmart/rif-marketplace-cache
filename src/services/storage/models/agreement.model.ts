@@ -47,7 +47,7 @@ export default class Agreement extends Model {
   @Column(DataType.VIRTUAL)
   get numberOfPrepaidPeriods () {
     const totalPeriodPrice = this.size * this.billingPrice
-    return this.availableFunds / totalPeriodPrice
+    return totalPeriodPrice ? Math.floor(this.availableFunds / totalPeriodPrice) : 0
   }
 
   @Column(DataType.VIRTUAL)
