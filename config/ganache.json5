@@ -11,31 +11,31 @@
     owner: {
       contractAddress: "0x4bf749ec68270027C5910220CEAB30Cc284c7BA2",
       eventsEmitter: {
-        confirmations: 0
+        confirmations: 2
       }
     },
     reverse: {
       contractAddress: "0x9561C133DD8580860B6b7E504bC5Aa500f0f06a7",
       eventsEmitter: {
-        confirmations: 0
+        confirmations: 2
       }
     },
     placement: {
       contractAddress: "0x31630Dba815db73E9e0Fe16a4F42dF4bbFDB7Ba9",
       eventsEmitter: {
-        confirmations: 0
+        confirmations: 2
       }
     },
     registrar: {
       contractAddress: "0x2612Af3A521c2df9EAF28422Ca335b04AdF3ac66",
       eventsEmitter: {
-        confirmations: 0
+        confirmations: 2
       }
     },
     fifsAddrRegistrar: {
       contractAddress: "0xFF6049B87215476aBf744eaA3a476cBAd46fB1cA",
       eventsEmitter: {
-        confirmations: 0
+        confirmations: 2
       }
     }
   }
