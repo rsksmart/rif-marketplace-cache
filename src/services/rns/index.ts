@@ -1,4 +1,4 @@
-import simplePlacementsContractAbi from '@rsksmart/rif-marketplace-nfts/ERC721SimplePlacementsABI.json'
+import simplePlacementsContractAbi from '@rsksmart/rif-marketplace-nfts/ERC721SimplePlacementsV1Data.json'
 import auctionRegistrarContractAbi from '@rsksmart/rns-auction-registrar/TokenRegistrarData.json'
 import rnsReverseContractAbi from '@rsksmart/rns-reverse/NameResolverData.json'
 import rnsContractAbi from '@rsksmart/rns-rskregistrar/RSKOwnerData.json'
@@ -62,7 +62,7 @@ async function precache (eth?: Eth): Promise<void> {
 
   await fetchEventsForService(eth, 'rns.owner', rnsContractAbi.abi as AbiItem[], dataQueuePusher)
   await fetchEventsForService(eth, 'rns.reverse', rnsReverseContractAbi.abi as AbiItem[], dataQueuePusher)
-  await fetchEventsForService(eth, 'rns.placement', simplePlacementsContractAbi as AbiItem[], dataQueuePusher)
+  await fetchEventsForService(eth, 'rns.placement', simplePlacementsContractAbi.abi as AbiItem[], dataQueuePusher)
 
   // We need to sort the events in order to have valid sequence of Events
   eventsDataQueue.sort((a, b): number => {
@@ -137,7 +137,7 @@ const rns: CachedService = {
     rnsReverseEventsEmitter.on('newConfirmation', (data) => confirmationService.emit('newConfirmation', data))
     rnsReverseEventsEmitter.on('invalidConfirmation', (data) => confirmationService.emit('invalidConfirmation', data))
 
-    const rnsPlacementsEventsEmitter = getEventsEmitterForService('rns.placement', eth, simplePlacementsContractAbi as AbiItem[])
+    const rnsPlacementsEventsEmitter = getEventsEmitterForService('rns.placement', eth, simplePlacementsContractAbi.abi as AbiItem[])
     rnsPlacementsEventsEmitter.on('newEvent', errorHandler(eventProcessor(loggingFactory('rns.placement:processor'), eth, services), logger))
     rnsPlacementsEventsEmitter.on('error', (e: Error) => {
       logger.error(`There was unknown error in Events Emitter for rns.placement! ${e}`)
