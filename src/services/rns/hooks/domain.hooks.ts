@@ -60,7 +60,7 @@ export default {
               },
               {
                 model: DomainOffer,
-                attributes: placed ? ['paymentToken', 'price'] : [],
+                attributes: placed ? ['paymentToken', 'priceString'] : [],
                 as: 'offers',
                 required: false
               }

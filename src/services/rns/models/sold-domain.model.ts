@@ -36,6 +36,9 @@ export default class SoldDomain extends Model {
   @Column(DataType.DECIMAL)
   price!: number// selling price
 
+  @Column(DataType.STRING)
+  priceString!: string
+
   @Column(DataType.DATE)
   soldDate!: number // selling date
 }
