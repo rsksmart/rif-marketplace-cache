@@ -167,6 +167,7 @@ async function tokenPlacedHandler (logger: Logger, eventData: EventData, eth: Et
     tokenId: tokenId,
     paymentToken: paymentToken,
     price: cost,
+    priceString: `${cost}`,
     creationDate: await getBlockDate(eth, eventData.blockNumber)
   })
 
@@ -202,6 +203,7 @@ async function tokenSoldHandler (logger: Logger, eventData: EventData, eth: Eth,
       id: transactionHash,
       tokenId: tokenId,
       price: domainOffer.price,
+      priceString: domainOffer.priceString,
       paymentToken: domainOffer.paymentToken,
       soldDate: await getBlockDate(eth, eventData.blockNumber)
     })

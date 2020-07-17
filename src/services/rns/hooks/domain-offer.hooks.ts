@@ -31,6 +31,9 @@ export default {
         context.params.sequelize = {
           raw: false,
           nest: true,
+          attributes: {
+            exclude: ['price']
+          },
           include: {
             model: Domain,
             include: {

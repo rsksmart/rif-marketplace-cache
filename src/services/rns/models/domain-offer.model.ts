@@ -26,6 +26,9 @@ export default class DomainOffer extends Model {
   @Column(DataType.DECIMAL)
   price!: number
 
+  @Column(DataType.STRING)
+  priceString!: string
+
   @Column(DataType.DATE)
   creationDate!: number
 }
