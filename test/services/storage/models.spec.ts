@@ -153,11 +153,21 @@ const AGREEMENT_TEST_SCHEMA = [
           billingPeriod: toSecond(hour),
           lastPayout: new Date(Date.now() - day)
         },
-        true
+        false
       ],
       [
         {
           availableFunds: 100,
+          size: 10,
+          billingPrice: 10,
+          billingPeriod: toSecond(hour),
+          lastPayout: new Date(Date.now() - day)
+        },
+        false
+      ],
+      [
+        {
+          availableFunds: 120,
           size: 10,
           billingPrice: 10,
           billingPeriod: toSecond(hour),
