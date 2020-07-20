@@ -39,7 +39,9 @@ const handler: Handler<StorageServices> = {
       case 'TotalCapacitySet':
         offer.totalCapacity = event.returnValues.capacity
 
-        if (offerService.emit) offerService.emit('update', wrapEvent('TotalCapacitySet', offer.toJSON()))
+        if (offerService.emit) {
+          offerService.emit('updated', wrapEvent('TotalCapacitySet', offer.toJSON()))
+        }
         logger.info(`Updating capacity ${offer.totalCapacity} (ID: ${offer.address})`)
         break
       case 'MessageEmitted': {
@@ -55,7 +57,9 @@ const handler: Handler<StorageServices> = {
         if (flag === '01') { // PeerId definition
           offer.peerId = decodeByteArray([`0x${firstMsg.substring(4)}`, ...restMsg])
 
-          if (offerService.emit) offerService.emit('update', wrapEvent('MessageEmitted', offer.toJSON()))
+          if (offerService.emit) {
+            offerService.emit('updated', wrapEvent('MessageEmitted', offer.toJSON()))
+          }
           logger.info(`PeerId ${offer.peerId} defined (ID: ${offer.address})`)
         } else {
           throw new EventError(`Unknown message flag ${flag}!`, event.event)
@@ -72,7 +76,9 @@ const handler: Handler<StorageServices> = {
 
     await offer.save()
 
-    if (offerService.emit && created) offerService.emit('created', offer.toJSON())
+    if (offerService.emit && created) {
+      offerService.emit('created', offer.toJSON())
+    }
   }
 }
 

@@ -17,7 +17,7 @@ import { blockMock, eventMock } from '../../utils'
 import { EventError } from '../../../src/errors'
 import BillingPlan from '../../../src/services/storage/models/price.model'
 import Agreement from '../../../src/services/storage/models/agreement.model'
-import { decodeByteArray } from '../../../src/utils'
+import { decodeByteArray, wrapEvent } from '../../../src/utils'
 import { getBlockDate } from '../../../src/blockchain/utils'
 
 chai.use(sinonChai)
@@ -290,7 +290,7 @@ describe('Storage services: Events Processor', () => {
         expect(agreement?.billingPrice).to.be.eql(plan.amount)
         expect(agreement?.availableFunds).to.be.eql(event.returnValues.availableFunds)
         expect(agreement?.lastPayout).to.be.eql(await getBlockDate(eth, event.blockNumber))
-        expect(agreementServiceEmitSpy).to.have.been.calledOnceWith('created')
+        expect(agreementServiceEmitSpy).to.have.been.calledWith('created')
       })
     })
     describe('AgreementStopped', () => {
@@ -315,7 +315,7 @@ describe('Storage services: Events Processor', () => {
         const agreementAfterUpdate = await Agreement.findOne({ where: { agreementReference, offerId: event.returnValues.provider } })
 
         expect(agreementAfterUpdate?.isActive).to.be.eql(false)
-        expect(agreementServiceEmitSpy).to.have.been.calledOnceWith('updated', agreementAfterUpdate?.toJSON())
+        expect(agreementServiceEmitSpy).to.have.been.calledWith('updated', wrapEvent('AgreementStopped', agreementAfterUpdate?.toJSON() as object))
       })
     })
     describe('AgreementFundsDeposited', () => {
@@ -340,7 +340,7 @@ describe('Storage services: Events Processor', () => {
         const agreementAfterUpdate = await Agreement.findOne({ where: { agreementReference, offerId: event.returnValues.provider } })
 
         expect(agreementAfterUpdate?.availableFunds).to.be.eql(event.returnValues.amount + agreement.availableFunds)
-        expect(agreementServiceEmitSpy).to.have.been.calledOnceWith('updated', agreementAfterUpdate?.toJSON())
+        expect(agreementServiceEmitSpy).to.have.been.calledWith('updated', wrapEvent('AgreementFundsDeposited', agreementAfterUpdate?.toJSON() as object))
       })
     })
     describe('AgreementFundsWithdrawn', () => {
@@ -365,7 +365,7 @@ describe('Storage services: Events Processor', () => {
         const agreementAfterUpdate = await Agreement.findOne({ where: { agreementReference, offerId: event.returnValues.provider } })
 
         expect(agreementAfterUpdate?.availableFunds).to.be.eql(agreement.availableFunds - event.returnValues.amount)
-        expect(agreementServiceEmitSpy).to.have.been.calledOnceWith('updated', agreementAfterUpdate?.toJSON())
+        expect(agreementServiceEmitSpy).to.have.been.calledWith('updated', wrapEvent('AgreementFundsWithdrawn', agreementAfterUpdate?.toJSON() as object))
       })
     })
     describe('AgreementFundsPayout', () => {
@@ -394,7 +394,7 @@ describe('Storage services: Events Processor', () => {
 
         expect(agreementAfterUpdate?.availableFunds).to.be.eql(agreement.availableFunds - event.returnValues.amount)
         expect(agreementAfterUpdate?.lastPayout).to.be.eql(await getBlockDate(eth, blockNumber))
-        expect(agreementServiceEmitSpy).to.have.been.calledOnceWith('updated', agreementAfterUpdate?.toJSON())
+        expect(agreementServiceEmitSpy).to.have.been.calledWith('updated', wrapEvent('AgreementFundsPayout', agreementAfterUpdate?.toJSON() as object))
       })
     })
   })
