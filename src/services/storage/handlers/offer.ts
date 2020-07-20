@@ -4,7 +4,7 @@ import { EventData } from 'web3-eth-contract'
 import { loggingFactory } from '../../../logger'
 import { Handler } from '../../../definitions'
 import { StorageServices } from '../index'
-import { decodeByteArray } from '../../../utils'
+import { decodeByteArray, wrapEvent } from '../../../utils'
 import { EventError } from '../../../errors'
 
 const logger = loggingFactory('storage:handler:offer')
@@ -38,6 +38,8 @@ const handler: Handler<StorageServices> = {
     switch (event.event) {
       case 'TotalCapacitySet':
         offer.totalCapacity = event.returnValues.capacity
+
+        if (offerService.emit) offerService.emit('update', wrapEvent('TotalCapacitySet', offer.toJSON()))
         logger.info(`Updating capacity ${offer.totalCapacity} (ID: ${offer.address})`)
         break
       case 'MessageEmitted': {
@@ -52,6 +54,8 @@ const handler: Handler<StorageServices> = {
 
         if (flag === '01') { // PeerId definition
           offer.peerId = decodeByteArray([`0x${firstMsg.substring(4)}`, ...restMsg])
+
+          if (offerService.emit) offerService.emit('update', wrapEvent('MessageEmitted', offer.toJSON()))
           logger.info(`PeerId ${offer.peerId} defined (ID: ${offer.address})`)
         } else {
           throw new EventError(`Unknown message flag ${flag}!`, event.event)
@@ -68,9 +72,7 @@ const handler: Handler<StorageServices> = {
 
     await offer.save()
 
-    // @TODO if we receive an unknown message then update actually doesn't happens, because offer don't changed
-    // Should we emit `update` event then???
-    if (offerService.emit) offerService.emit(created ? 'created' : 'updated', offer.toJSON())
+    if (offerService.emit && created) offerService.emit('created', offer.toJSON())
   }
 }
 

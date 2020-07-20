@@ -5,7 +5,7 @@ import { Eth } from 'web3-eth'
 import { loggingFactory } from '../../../logger'
 import { Handler } from '../../../definitions'
 import { EventError } from '../../../errors'
-import { decodeByteArray } from '../../../utils'
+import { decodeByteArray, wrapEvent } from '../../../utils'
 import { getBlockDate } from '../../../blockchain/utils'
 
 import Agreement from '../models/agreement.model'
@@ -39,7 +39,7 @@ const handlers = {
     }
     await Agreement.upsert(data) // Agreement might already exist
 
-    if (agreementService.emit) agreementService.emit('created', data)
+    if (agreementService.emit) agreementService.emit('created', wrapEvent('NewAgreement', data))
     logger.info(`Created new Agreement with ID ${id} for offer ${offerId}`)
   },
 
@@ -54,7 +54,7 @@ const handlers = {
     agreement.isActive = false
     await agreement.save()
 
-    if (agreementService.emit) agreementService.emit('updated', agreement.toJSON())
+    if (agreementService.emit) agreementService.emit('updated', wrapEvent('AgreementStopped', agreement.toJSON()))
     logger.info(`Agreement ${id} was stopped.`)
   },
 
@@ -69,7 +69,7 @@ const handlers = {
     agreement.availableFunds += parseInt(event.returnValues.amount)
     await agreement.save()
 
-    if (agreementService.emit) agreementService.emit('updated', agreement.toJSON())
+    if (agreementService.emit) agreementService.emit('updated', wrapEvent('AgreementFundsDeposited', agreement.toJSON()))
     logger.info(`Agreement ${id} was topped up with ${event.returnValues.amount}.`)
   },
 
@@ -84,7 +84,7 @@ const handlers = {
     agreement.availableFunds -= parseInt(event.returnValues.amount)
     await agreement.save()
 
-    if (agreementService.emit) agreementService.emit('updated', agreement.toJSON())
+    if (agreementService.emit) agreementService.emit('updated', wrapEvent('AgreementFundsWithdrawn', agreement.toJSON()))
     logger.info(`${event.returnValues.amount} was withdrawn from funds of Agreement ${id}.`)
   },
 
@@ -100,7 +100,7 @@ const handlers = {
     agreement.availableFunds -= parseInt(event.returnValues.amount)
     await agreement.save()
 
-    if (agreementService.emit) agreementService.emit('updated', agreement.toJSON())
+    if (agreementService.emit) agreementService.emit('updated', wrapEvent('AgreementFundsPayout', agreement.toJSON()))
     logger.info(`${event.returnValues.amount} was payed out from funds of Agreement ${id}.`)
   }
 }

@@ -122,6 +122,18 @@ export async function waitForReadyApp (app: Application): Promise<void> {
   await app.get('sequelizeSync')
 }
 
+/**
+ * Helper for wrapping events
+ * @param {String} event
+ * @param {Object} payload
+ */
+export function wrapEvent (event: string, payload: Record<string, any>) {
+  return {
+    event,
+    payload
+  }
+}
+
 export abstract class BaseCLICommand extends Command {
   static flags = {
     config: flags.string({
