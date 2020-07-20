@@ -59,8 +59,12 @@ export default class Agreement extends Model {
     return price <= this.availableFunds ? price : this.availableFunds
   }
 
+  /**
+   * Helper which specifies if the Agreement has at the moment of the call
+   * sufficient funds for at least one more period.
+   */
   @Column(DataType.VIRTUAL)
   get hasSufficientFunds () {
-    return this.toBePayedOut !== this.availableFunds
+    return this.availableFunds - this.toBePayedOut >= this.size * this.billingPrice
   }
 }
