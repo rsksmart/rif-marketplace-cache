@@ -68,6 +68,11 @@ const handler: Handler<StorageServices> = {
       }
       case 'BillingPlanSet':
         await updatePrices(offer, event.returnValues.period, event.returnValues.price)
+
+        if (offerService.emit) {
+          const freshOffer = await Offer.findByPk(offer.address) as Offer
+          offerService.emit('updated', wrapEvent('BillingPlanSet', freshOffer.toJSON()))
+        }
         break
       default:
         logger.error(`Unknown event ${event.event}`)
