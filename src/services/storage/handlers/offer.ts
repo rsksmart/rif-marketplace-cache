@@ -3,7 +3,7 @@ import BillingPlan from '../models/price.model'
 import { EventData } from 'web3-eth-contract'
 import { loggingFactory } from '../../../logger'
 import { Handler } from '../../../definitions'
-import { StorageServices } from '../index'
+import { OfferService, StorageServices } from '../index'
 import { decodeByteArray, wrapEvent } from '../../../utils'
 import { EventError } from '../../../errors'
 
@@ -22,6 +22,46 @@ function updatePrices (offer: Offer, period: number, price: number): Promise<Bil
   }
 }
 
+const handlers: { [key: string]: Function } = {
+  TotalCapacitySet (event: EventData, offer: Offer, offerService: OfferService): void {
+    offer.totalCapacity = event.returnValues.capacity
+
+    if (offerService.emit) {
+      offerService.emit('updated', wrapEvent('TotalCapacitySet', offer.toJSON()))
+    }
+    logger.info(`Updating capacity ${offer.totalCapacity} (ID: ${offer.address})`)
+  },
+  MessageEmitted (event: EventData, offer: Offer, offerService: OfferService): void {
+    const msg = event.returnValues.message
+
+    if (!msg || msg.length === 0) {
+      return
+    }
+
+    const [firstMsg, ...restMsg] = msg
+    const flag = firstMsg.substring(2, 4)
+
+    if (flag === '01') { // PeerId definition
+      offer.peerId = decodeByteArray([`0x${firstMsg.substring(4)}`, ...restMsg])
+
+      if (offerService.emit) {
+        offerService.emit('updated', wrapEvent('MessageEmitted', offer.toJSON()))
+      }
+      logger.info(`PeerId ${offer.peerId} defined (ID: ${offer.address})`)
+    } else {
+      throw new EventError(`Unknown message flag ${flag}!`, event.event)
+    }
+  },
+  async BillingPlanSet (event: EventData, offer: Offer, offerService: OfferService): Promise<void> {
+    await updatePrices(offer, event.returnValues.period, event.returnValues.price)
+
+    if (offerService.emit) {
+      const freshOffer = await Offer.findByPk(offer.address) as Offer
+      offerService.emit('updated', wrapEvent('BillingPlanSet', freshOffer.toJSON()))
+    }
+  }
+}
+
 const handler: Handler<StorageServices> = {
   events: ['TotalCapacitySet', 'MessageEmitted', 'BillingPlanSet'],
   async process (event: EventData, { offerService }: StorageServices): Promise<void> {
@@ -35,49 +75,11 @@ const handler: Handler<StorageServices> = {
       logger.info(`Created new StorageOffer for ${provider}`)
     }
 
-    switch (event.event) {
-      case 'TotalCapacitySet':
-        offer.totalCapacity = event.returnValues.capacity
-
-        if (offerService.emit) {
-          offerService.emit('updated', wrapEvent('TotalCapacitySet', offer.toJSON()))
-        }
-        logger.info(`Updating capacity ${offer.totalCapacity} (ID: ${offer.address})`)
-        break
-      case 'MessageEmitted': {
-        const msg = event.returnValues.message
-
-        if (!msg || msg.length === 0) {
-          break
-        }
-
-        const [firstMsg, ...restMsg] = msg
-        const flag = firstMsg.substring(2, 4)
-
-        if (flag === '01') { // PeerId definition
-          offer.peerId = decodeByteArray([`0x${firstMsg.substring(4)}`, ...restMsg])
-
-          if (offerService.emit) {
-            offerService.emit('updated', wrapEvent('MessageEmitted', offer.toJSON()))
-          }
-          logger.info(`PeerId ${offer.peerId} defined (ID: ${offer.address})`)
-        } else {
-          throw new EventError(`Unknown message flag ${flag}!`, event.event)
-        }
-        break
-      }
-      case 'BillingPlanSet':
-        await updatePrices(offer, event.returnValues.period, event.returnValues.price)
-
-        if (offerService.emit) {
-          const freshOffer = await Offer.findByPk(offer.address) as Offer
-          offerService.emit('updated', wrapEvent('BillingPlanSet', freshOffer.toJSON()))
-        }
-        break
-      default:
-        logger.error(`Unknown event ${event.event}`)
-        break
+    if (!handlers[event.event]) {
+      logger.error(`Unknown event ${event.event}`)
     }
+
+    await handlers[event.event](event, offer, offerService)
 
     await offer.save()
 
