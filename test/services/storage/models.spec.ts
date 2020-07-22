@@ -13,7 +13,7 @@ const generateModelGettersTests = (
   modelFactory: (arg: object) => Sequelize.Model
 ) => schema.forEach(
   ({ fn, cases }) =>
-    describe(`Should properly calculate ${fn}`,
+    describe(`should properly calculate ${fn}`,
       () => cases.forEach(([arg, exp]) => {
         it(`${fn} for ${JSON.stringify(arg)} should be ${exp}`,
           () => {
