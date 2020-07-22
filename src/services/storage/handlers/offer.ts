@@ -23,15 +23,16 @@ function updatePrices (offer: Offer, period: number, price: number): Promise<Bil
 }
 
 const handlers: { [key: string]: Function } = {
-  TotalCapacitySet (event: EventData, offer: Offer, offerService: OfferService): void {
+  async TotalCapacitySet (event: EventData, offer: Offer, offerService: OfferService): Promise<void> {
     offer.totalCapacity = event.returnValues.capacity
+    await offer.save()
 
     if (offerService.emit) {
       offerService.emit('updated', wrapEvent('TotalCapacitySet', offer.toJSON()))
     }
     logger.info(`Updating capacity ${offer.totalCapacity} (ID: ${offer.address})`)
   },
-  MessageEmitted (event: EventData, offer: Offer, offerService: OfferService): void {
+  async MessageEmitted (event: EventData, offer: Offer, offerService: OfferService): Promise<void> {
     const msg = event.returnValues.message
 
     if (!msg || msg.length === 0) {
@@ -43,6 +44,8 @@ const handlers: { [key: string]: Function } = {
 
     if (flag === '01') { // PeerId definition
       offer.peerId = decodeByteArray([`0x${firstMsg.substring(4)}`, ...restMsg])
+
+      await offer.save()
 
       if (offerService.emit) {
         offerService.emit('updated', wrapEvent('MessageEmitted', offer.toJSON()))
@@ -75,17 +78,15 @@ const handler: Handler<StorageServices> = {
       logger.info(`Created new StorageOffer for ${provider}`)
     }
 
+    if (offerService.emit && created) {
+      offerService.emit('created', offer.toJSON())
+    }
+
     if (!handlers[event.event]) {
       logger.error(`Unknown event ${event.event}`)
     }
 
     await handlers[event.event](event, offer, offerService)
-
-    await offer.save()
-
-    if (offerService.emit && created) {
-      offerService.emit('created', offer.toJSON())
-    }
   }
 }
 
