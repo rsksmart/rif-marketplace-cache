@@ -48,6 +48,7 @@
     "start": "tasegir run --watch ./src/index.ts"
   },
   "dependencies": {
+    "@feathersjs/authentication": "^4.5.6",
     "@feathersjs/errors": "^4.5.3",
     "@feathersjs/express": "^4.5.4",
     "@feathersjs/feathers": "^4.5.1",

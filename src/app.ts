@@ -15,6 +15,8 @@ import healthcheck from './healthcheck'
 import { configureStore } from './store'
 import { errorHandler } from './utils'
 
+import authentication from './services/authentication'
+
 import storage from './services/storage'
 import rates from './services/rates'
 import rns from './services/rns'
@@ -27,7 +29,7 @@ export const services = {
   [SupportedServices.RNS]: rns
 }
 
-export async function appFactory (): Promise<Application> {
+export async function appFactory(): Promise<Application> {
   const app: Application = express(feathers())
 
   logger.verbose('Current configuration: ', config)
@@ -43,6 +45,9 @@ export async function appFactory (): Promise<Application> {
   // Set up Plugins and providers
   app.configure(express.rest())
   app.configure(socketio())
+
+  // Authenticatoin service
+  app.configure(authentication)
 
   // Custom general services
   app.configure(sequelize)
@@ -63,7 +68,7 @@ export async function appFactory (): Promise<Application> {
 
   // Log errors in hooks
   app.hooks({
-    error (context) {
+    error(context) {
       logger.error(`Error in '${context.path}' service method '${context.method}'`, context.error.stack)
     }
   })
