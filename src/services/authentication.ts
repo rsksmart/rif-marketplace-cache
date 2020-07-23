@@ -1,5 +1,5 @@
 import { ServiceAddons, Params } from '@feathersjs/feathers';
-import { AuthenticationService, JWTStrategy, AuthenticationResult } from '@feathersjs/authentication';
+import { AuthenticationService, JWTStrategy, AuthenticationResult, AuthenticationBaseStrategy } from '@feathersjs/authentication';
 import { Application } from '../definitions';
 
 declare module '../definitions' {
@@ -16,6 +16,19 @@ class MyJWT extends JWTStrategy {
         console.log(params)
         console.log('------------------------------')
         return super.authenticate(authentication, params)
+    }
+}
+class AnonymousStrategy extends AuthenticationBaseStrategy {
+    async authenticate(authentication, params) {
+
+        console.log('MyAuthService -> getPayload------------------------------')
+        console.log(authentication)
+        console.log('------------------------------')
+        console.log(params)
+        console.log('------------------------------')
+        return {
+            anonymous: true
+        }
     }
 }
 
@@ -45,17 +58,11 @@ export default function (app: Application) {
     app.set('authentication', {
         "secret": "8a58b86565c23c9ea90",
         "entity": null,
-        "authStrategies": ["jwt"],
-        "jwtOptions": {
-            "header": { "typ": "access" },
-            "audience": "https://yourdomain.com",
-            "issuer": "feathers",
-            "algorithm": "HS256",
-            "expiresIn": "1d"
-        }
+        "authStrategies": ["anonymous"],
     })
 
-    authentication.register('jwt', new MyJWT());
+    authentication.register('anonymous', new AnonymousStrategy());
+    // authentication.register('jwt', new MyJWT());
 
     app.use('/authentication', authentication);
 }
