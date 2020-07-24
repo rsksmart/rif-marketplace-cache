@@ -11,8 +11,9 @@ import Domain from './models/domain.model'
 import DomainExpiration from './models/expiration.model'
 import DomainOwner from './models/owner.model'
 import Transfer from './models/transfer.model'
+import SoldDomain from './models/sold-domain.model'
 
-async function transferHandler(logger: Logger, eventData: EventData, eth: Eth, services: RnsServices): Promise<void> {
+async function transferHandler (logger: Logger, eventData: EventData, eth: Eth, services: RnsServices): Promise<void> {
   const tokenId = Utils.numberToHex(eventData.returnValues.tokenId)
   const ownerAddress = eventData.returnValues.to.toLowerCase()
 
@@ -41,7 +42,7 @@ async function transferHandler(logger: Logger, eventData: EventData, eth: Eth, s
         }
 
         if (domainsService.emit) {
-          domainsService.emit('patched', { tokenId, })
+          domainsService.emit('patched', { tokenId })
         }
       }
     }
@@ -86,7 +87,7 @@ async function transferHandler(logger: Logger, eventData: EventData, eth: Eth, s
   }
 }
 
-async function expirationChangedHandler(logger: Logger, eventData: EventData, _: Eth, services: RnsServices): Promise<void> {
+async function expirationChangedHandler (logger: Logger, eventData: EventData, _: Eth, services: RnsServices): Promise<void> {
   // event ExpirationChanged(uint256 tokenId, uint expirationTime);
 
   const tokenId = Utils.numberToHex(eventData.returnValues.tokenId)
@@ -119,7 +120,7 @@ async function expirationChangedHandler(logger: Logger, eventData: EventData, _:
   }
 }
 
-async function nameChangedHandler(logger: Logger, eventData: EventData, _: Eth, services: RnsServices): Promise<void> {
+async function nameChangedHandler (logger: Logger, eventData: EventData, _: Eth, services: RnsServices): Promise<void> {
   const name = eventData.returnValues.name
   const domainsService = services.domains
 
@@ -137,7 +138,7 @@ async function nameChangedHandler(logger: Logger, eventData: EventData, _: Eth, 
   }
 }
 
-async function tokenPlacedHandler(logger: Logger, eventData: EventData, eth: Eth, services: RnsServices): Promise<void> {
+async function tokenPlacedHandler (logger: Logger, eventData: EventData, eth: Eth, services: RnsServices): Promise<void> {
   // event TokenPlaced(uint256 indexed tokenId, address indexed paymentToken, uint256 cost);
 
   const transactionHash = eventData.transactionHash
@@ -174,7 +175,7 @@ async function tokenPlacedHandler(logger: Logger, eventData: EventData, eth: Eth
   logger.info(`TokenPlaced event: ${tokenId} created`)
 }
 
-async function tokenUnplacedHandler(logger: Logger, eventData: EventData, eth: Eth, services: RnsServices): Promise<void> {
+async function tokenUnplacedHandler (logger: Logger, eventData: EventData, eth: Eth, services: RnsServices): Promise<void> {
   // event TokenUnplaced(uint256 indexed tokenId);
   const tokenId = Utils.numberToHex(eventData.returnValues.tokenId)
   const storedOffer = await DomainOffer.findOne({ where: { tokenId } })
@@ -188,29 +189,47 @@ async function tokenUnplacedHandler(logger: Logger, eventData: EventData, eth: E
   }
 }
 
-async function tokenSoldHandler(logger: Logger, eventData: EventData, eth: Eth, services: RnsServices): Promise<void> {
-  // event TokenSold(uint256 indexed tokenId);
-
-  const transactionHash = eventData.transactionHash
+async function tokenSoldHandler (
+  logger: Logger,
+  eventData: EventData,
+  eth: Eth,
+  { sold: soldService, offers: offersService }: RnsServices
+): Promise<void> {
+  const {
+    transactionHash,
+    blockNumber
+  } = eventData
   const tokenId = Utils.numberToHex(eventData.returnValues.tokenId)
   const domainOffer = await DomainOffer.findOne({ where: { tokenId } })
 
   if (domainOffer) {
     logger.info(`Found last offer for ${tokenId}`)
-    const soldService = services.sold
+    const {
+      ownerAddress,
+      price,
+      priceString,
+      paymentToken
+    } = domainOffer
 
-    const soldDomain = await soldService.create({
+    const soldDomain = await SoldDomain.create({
       id: transactionHash,
-      tokenId: tokenId,
-      price: domainOffer.price,
-      priceString: domainOffer.priceString,
-      paymentToken: domainOffer.paymentToken,
-      soldDate: await getBlockDate(eth, eventData.blockNumber)
+      tokenId,
+      price,
+      priceString,
+      paymentToken,
+      soldDate: await getBlockDate(eth, blockNumber)
     })
 
     if (soldDomain) {
-      const offersService = services.offers
+      if (soldService.emit) {
+        soldService.emit('created', { tokenId, ownerAddress })
+      }
+
       await offersService.remove(domainOffer.offerId)
+
+      if (offersService.emit) {
+        offersService.emit('created', { tokenId, ownerAddress })
+      }
       logger.info(`TokenSold event: Sold Domain ${tokenId} in transaction ${transactionHash}`)
     } else {
       logger.info(`TokenSold event: ${tokenId} not updated`)
@@ -227,11 +246,11 @@ const commands = {
   TokenSold: tokenSoldHandler
 }
 
-function isValidEvent(value: string): value is keyof typeof commands {
+function isValidEvent (value: string): value is keyof typeof commands {
   return value in commands
 }
 
-export default function rnsProcessorFactory(logger: Logger, eth: Eth, services: RnsServices) {
+export default function rnsProcessorFactory (logger: Logger, eth: Eth, services: RnsServices) {
   return async function (eventData: EventData): Promise<void> {
     if (isValidEvent(eventData.event)) {
       logger.info(`Processing event ${eventData.event}`)

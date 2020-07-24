@@ -29,7 +29,7 @@ export const services = {
   [SupportedServices.RNS]: rns
 }
 
-export async function appFactory(): Promise<Application> {
+export async function appFactory (): Promise<Application> {
   const app: Application = express(feathers())
 
   logger.verbose('Current configuration: ', config)
@@ -68,7 +68,7 @@ export async function appFactory(): Promise<Application> {
 
   // Log errors in hooks
   app.hooks({
-    error(context) {
+    error (context) {
       logger.error(`Error in '${context.path}' service method '${context.method}'`, context.error.stack)
     }
   })
