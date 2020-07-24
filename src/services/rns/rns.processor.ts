@@ -12,7 +12,7 @@ import DomainExpiration from './models/expiration.model'
 import DomainOwner from './models/owner.model'
 import Transfer from './models/transfer.model'
 
-async function transferHandler (logger: Logger, eventData: EventData, eth: Eth, services: RnsServices): Promise<void> {
+async function transferHandler(logger: Logger, eventData: EventData, eth: Eth, services: RnsServices): Promise<void> {
   const tokenId = Utils.numberToHex(eventData.returnValues.tokenId)
   const ownerAddress = eventData.returnValues.to.toLowerCase()
 
@@ -41,7 +41,7 @@ async function transferHandler (logger: Logger, eventData: EventData, eth: Eth, 
         }
 
         if (domainsService.emit) {
-          domainsService.emit('patched', { tokenId })
+          domainsService.emit('patched', { tokenId, })
         }
       }
     }
@@ -72,7 +72,7 @@ async function transferHandler (logger: Logger, eventData: EventData, eth: Eth, 
     await DomainOwner.upsert({ address: ownerAddress, tokenId })
 
     if (domainsService.emit) {
-      domainsService.emit('patched', { tokenId })
+      domainsService.emit('patched', { tokenId, ownerAddress })
     }
     logger.info(`Transfer event: Updated DomainOwner ${ownerAddress} for tokenId ${tokenId}`)
   } else {
@@ -80,13 +80,13 @@ async function transferHandler (logger: Logger, eventData: EventData, eth: Eth, 
     await DomainOwner.create({ tokenId, address: ownerAddress })
 
     if (domainsService.emit) {
-      domainsService.emit('created', { tokenId })
+      domainsService.emit('created', { tokenId, ownerAddress })
     }
     logger.info(`Transfer event: Created Domain ${tokenId} for owner ${ownerAddress}`)
   }
 }
 
-async function expirationChangedHandler (logger: Logger, eventData: EventData, _: Eth, services: RnsServices): Promise<void> {
+async function expirationChangedHandler(logger: Logger, eventData: EventData, _: Eth, services: RnsServices): Promise<void> {
   // event ExpirationChanged(uint256 tokenId, uint expirationTime);
 
   const tokenId = Utils.numberToHex(eventData.returnValues.tokenId)
@@ -119,7 +119,7 @@ async function expirationChangedHandler (logger: Logger, eventData: EventData, _
   }
 }
 
-async function nameChangedHandler (logger: Logger, eventData: EventData, _: Eth, services: RnsServices): Promise<void> {
+async function nameChangedHandler(logger: Logger, eventData: EventData, _: Eth, services: RnsServices): Promise<void> {
   const name = eventData.returnValues.name
   const domainsService = services.domains
 
@@ -137,7 +137,7 @@ async function nameChangedHandler (logger: Logger, eventData: EventData, _: Eth,
   }
 }
 
-async function tokenPlacedHandler (logger: Logger, eventData: EventData, eth: Eth, services: RnsServices): Promise<void> {
+async function tokenPlacedHandler(logger: Logger, eventData: EventData, eth: Eth, services: RnsServices): Promise<void> {
   // event TokenPlaced(uint256 indexed tokenId, address indexed paymentToken, uint256 cost);
 
   const transactionHash = eventData.transactionHash
@@ -174,7 +174,7 @@ async function tokenPlacedHandler (logger: Logger, eventData: EventData, eth: Et
   logger.info(`TokenPlaced event: ${tokenId} created`)
 }
 
-async function tokenUnplacedHandler (logger: Logger, eventData: EventData, eth: Eth, services: RnsServices): Promise<void> {
+async function tokenUnplacedHandler(logger: Logger, eventData: EventData, eth: Eth, services: RnsServices): Promise<void> {
   // event TokenUnplaced(uint256 indexed tokenId);
   const tokenId = Utils.numberToHex(eventData.returnValues.tokenId)
   const storedOffer = await DomainOffer.findOne({ where: { tokenId } })
@@ -188,7 +188,7 @@ async function tokenUnplacedHandler (logger: Logger, eventData: EventData, eth: 
   }
 }
 
-async function tokenSoldHandler (logger: Logger, eventData: EventData, eth: Eth, services: RnsServices): Promise<void> {
+async function tokenSoldHandler(logger: Logger, eventData: EventData, eth: Eth, services: RnsServices): Promise<void> {
   // event TokenSold(uint256 indexed tokenId);
 
   const transactionHash = eventData.transactionHash
@@ -227,11 +227,11 @@ const commands = {
   TokenSold: tokenSoldHandler
 }
 
-function isValidEvent (value: string): value is keyof typeof commands {
+function isValidEvent(value: string): value is keyof typeof commands {
   return value in commands
 }
 
-export default function rnsProcessorFactory (logger: Logger, eth: Eth, services: RnsServices) {
+export default function rnsProcessorFactory(logger: Logger, eth: Eth, services: RnsServices) {
   return async function (eventData: EventData): Promise<void> {
     if (isValidEvent(eventData.event)) {
       logger.info(`Processing event ${eventData.event}`)

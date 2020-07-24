@@ -20,11 +20,15 @@ class MyJWT extends JWTStrategy {
 }
 class AnonymousStrategy extends AuthenticationBaseStrategy {
     async authenticate(authentication, params) {
-
-        console.log('MyAuthService -> getPayload------------------------------')
+        const channels: [] = authentication.channels
+        console.log('AnonymousStrategy -> authenticate------------------------------')
         console.log(authentication)
         console.log('------------------------------')
-        console.log(params)
+        params.connection.ownerAddress = authentication.ownerAddress
+        channels.forEach(channel => {
+            this.app?.channel(channel).join(params.connection)
+        });
+        console.log('this.app.channels:', this.app.channels)
         console.log('------------------------------')
         return {
             anonymous: true
@@ -34,12 +38,6 @@ class AnonymousStrategy extends AuthenticationBaseStrategy {
 
 class MyAuthService extends AuthenticationService {
     async getPayload(authResult, params) {
-
-        console.log('MyAuthService -> getPayload------------------------------')
-        console.log(authResult)
-        console.log('------------------------------')
-        console.log(params)
-        console.log('------------------------------')
         // Call original `getPayload` first
         const payload = await super.getPayload(authResult, params);
         const { user } = authResult;
