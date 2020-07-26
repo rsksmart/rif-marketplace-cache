@@ -4,6 +4,7 @@ import config from 'config'
 import { ConfirmatorService } from './confirmator'
 import { Application, ServiceAddresses } from '../definitions'
 import { loggingFactory } from '../logger'
+import { NewBlockEmitterService } from './new-block-emitters'
 
 const logger = loggingFactory('blockchain')
 
@@ -31,6 +32,7 @@ export default function (app: Application): void {
   const eth = ethFactory()
   app.set('eth', eth)
   app.use(ServiceAddresses.CONFIRMATIONS, new ConfirmatorService(eth))
+  app.use(ServiceAddresses.NEW_BLOCK_EMITTER, new NewBlockEmitterService(eth))
 
   channelSetup(app)
 }

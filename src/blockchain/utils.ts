@@ -8,6 +8,7 @@ import { loggingFactory } from '../logger'
 import eventsEmitterFactory, { EventsEmitterOptions } from './events'
 import { NewBlockEmitterOptions } from '../definitions'
 import { BlockTracker } from './block-tracker'
+import { AutoStartStopEventEmitter, ListeningNewBlockEmitter, PollingNewBlockEmitter } from './new-block-emitters'
 
 function getBlockTracker (keyPrefix?: string): BlockTracker {
   const store = getObject(keyPrefix)
@@ -43,4 +44,13 @@ export function getEventsEmitterForService (serviceName: string, eth: Eth, contr
   )
 
   return eventsEmitterFactory(eth, contract, eventsToListen, options)
+}
+export function getNewBlockEmitter (eth: Eth): AutoStartStopEventEmitter {
+  const newBlockEmitterOptions = config.get<NewBlockEmitterOptions>('blockchain.newBlockEmitter')
+
+  if (newBlockEmitterOptions.polling) {
+    return new PollingNewBlockEmitter(eth, newBlockEmitterOptions.pollingInterval)
+  } else {
+    return new ListeningNewBlockEmitter(eth)
+  }
 }

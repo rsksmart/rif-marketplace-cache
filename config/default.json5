@@ -15,7 +15,13 @@
     // it is removed from database.
     // Such parameter is needed for a REST API where a host could miss that an event has
     // full confirmations as it could be removed from the DB before the endpoint is queried.
-    waitBlockCountBeforeConfirmationRemoved: 20
+    waitBlockCountBeforeConfirmationRemoved: 20,
+
+    // Specify behavior of NewBlockEmitter, that detects new blocks on blockchain.
+    newBlockEmitter: {
+      // If to use polling strategy, if false then listening is used.
+      polling: true
+    }
   },
 
   log: {
