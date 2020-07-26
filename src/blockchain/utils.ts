@@ -45,6 +45,7 @@ export function getEventsEmitterForService (serviceName: string, eth: Eth, contr
 
   return eventsEmitterFactory(eth, contract, eventsToListen, options)
 }
+
 export function getNewBlockEmitter (eth: Eth): AutoStartStopEventEmitter {
   const newBlockEmitterOptions = config.get<NewBlockEmitterOptions>('blockchain.newBlockEmitter')
 
