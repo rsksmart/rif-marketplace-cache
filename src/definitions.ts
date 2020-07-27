@@ -6,7 +6,7 @@ import { Eth } from 'web3-eth'
 
 import type { AgreementService, OfferService } from './services/storage'
 import type { RatesService } from './services/rates'
-import type { RnsService } from './services/rns'
+import type { RnsBaseService } from './services/rns'
 import { ConfirmatorService } from './blockchain/confirmator'
 
 export enum SupportedServices {
@@ -34,9 +34,9 @@ interface ServiceTypes {
   [ServiceAddresses.STORAGE_OFFERS]: OfferService & ServiceAddons<any>
   [ServiceAddresses.STORAGE_AGREEMENTS]: AgreementService & ServiceAddons<any>
   [ServiceAddresses.XR]: RatesService & ServiceAddons<any>
-  [ServiceAddresses.RNS_DOMAINS]: RnsService & ServiceAddons<any>
-  [ServiceAddresses.RNS_SOLD]: RnsService & ServiceAddons<any>
-  [ServiceAddresses.RNS_OFFERS]: RnsService & ServiceAddons<any>
+  [ServiceAddresses.RNS_DOMAINS]: RnsBaseService & ServiceAddons<any>
+  [ServiceAddresses.RNS_SOLD]: RnsBaseService & ServiceAddons<any>
+  [ServiceAddresses.RNS_OFFERS]: RnsBaseService & ServiceAddons<any>
   [ServiceAddresses.CONFIRMATIONS]: ConfirmatorService & ServiceAddons<any>
 }
 
