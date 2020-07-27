@@ -29,6 +29,7 @@ function channelSetup (app: Application): void {
     app.channel(CHANNEL_NAME).join(connection)
   })
   app.service(ServiceAddresses.CONFIRMATIONS).publish(() => app.channel(CHANNEL_NAME))
+  app.service(ServiceAddresses.NEW_BLOCK_EMITTER).publish(() => app.channel(CHANNEL_NAME))
 }
 
 function subscribeAndEmitNewBlocks (app: Application): void {
