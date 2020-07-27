@@ -1,10 +1,11 @@
-import Eth from 'web3-eth'
 import config from 'config'
+import Eth, { BlockHeader } from 'web3-eth'
 
 import { ConfirmatorService } from './confirmator'
 import { Application, ServiceAddresses } from '../definitions'
 import { loggingFactory } from '../logger'
 import { NewBlockEmitterService } from './new-block-emitters'
+import { getNewBlockEmitter } from './utils'
 
 const logger = loggingFactory('blockchain')
 
@@ -30,9 +31,17 @@ function channelSetup (app: Application): void {
 
 export default function (app: Application): void {
   const eth = ethFactory()
+  const newBlockEmitter = getNewBlockEmitter(eth)
+
   app.set('eth', eth)
   app.use(ServiceAddresses.CONFIRMATIONS, new ConfirmatorService(eth))
-  app.use(ServiceAddresses.NEW_BLOCK_EMITTER, new NewBlockEmitterService(eth))
+  app.use(ServiceAddresses.NEW_BLOCK_EMITTER, NewBlockEmitterService)
+  // Subscribe for new blocks
+  const newBlockEmitterService = app.service(ServiceAddresses.NEW_BLOCK_EMITTER)
+  newBlockEmitter.on('newBlock', (block: BlockHeader) => {
+    logger.info('New block: ', block)
+    newBlockEmitterService.emit('newBlock', block)
+  })
 
   channelSetup(app)
 }

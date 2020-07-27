@@ -3,7 +3,6 @@ import { loggingFactory } from '../logger'
 import { Subscription } from 'web3-core-subscriptions'
 import { EventEmitter } from 'events'
 import { Logger } from '../definitions'
-import { getNewBlockEmitter } from './utils'
 
 const DEFAULT_POLLING_INTERVAL = 5000
 export const NEW_BLOCK_EVENT_NAME = 'newBlock'
@@ -129,20 +128,8 @@ export class ListeningNewBlockEmitter extends AutoStartStopEventEmitter {
   }
 }
 
-export class NewBlockEmitterService extends EventEmitter {
-  private readonly eth: Eth
-  private readonly newBlockEmitter: EventEmitter
-  public currentBlock: BlockHeader | undefined
-
-  constructor (eth: Eth) {
-    super()
-    this.eth = eth
-    this.newBlockEmitter = getNewBlockEmitter(this.eth)
-    this.newBlockEmitter.on('newBlock', this.handleNewBlock)
-  }
-
-  handleNewBlock (block: BlockHeader): void {
-    this.emit('created', block)
-    this.currentBlock = block
+export const NewBlockEmitterService = {
+  get: () => {
+    return 1 // return block saved in store
   }
 }
