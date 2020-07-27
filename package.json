@@ -80,7 +80,7 @@
     "sequelize-store": "^0.3.1",
     "sequelize-typescript": "^1.1.0",
     "sql-formatter": "^2.3.3",
-    "sqlite3": "^4.2.0",
+    "sqlite3": "^5.0.0",
     "web3-core-subscriptions": "^1.2.9",
     "web3-eth": "^1.2.9",
     "web3-eth-contract": "^1.2.9",
