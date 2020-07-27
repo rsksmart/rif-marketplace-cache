@@ -3,7 +3,7 @@ import config from 'config'
 import { Eth } from 'web3-eth'
 import { EventData } from 'web3-eth-contract'
 import Utils from 'web3-utils'
-import { RnsService, RnsServices } from '.'
+import { RnsBaseService, RnsServices } from '.'
 import { getBlockDate } from '../../blockchain/utils'
 import { Logger } from '../../definitions'
 import DomainOffer from './models/domain-offer.model'
@@ -13,8 +13,10 @@ import DomainOwner from './models/owner.model'
 import Transfer from './models/transfer.model'
 import SoldDomain from './models/sold-domain.model'
 
-// registerTransfer: creates the transfer record and updates DomainOwner
-async function registerTransfer (transactionHash: string, tokenId: string, sellerAddress: string, buyerAddress: string, logger: Logger, domainsService: RnsService) {
+/**
+ * Creates the transfer record and updates DomainOwner
+ */
+async function registerTransfer (transactionHash: string, tokenId: string, sellerAddress: string, buyerAddress: string, logger: Logger, domainsService: RnsBaseService) {
   const transferDomain = await Transfer.create({
     id: transactionHash,
     tokenId,
@@ -52,7 +54,7 @@ async function transferHandler (logger: Logger, eventData: EventData, eth: Eth, 
 
   const fiftsAddr = config.get('rns.fifsAddrRegistrar.contractAddress')
   const registrar = config.get('rns.registrar.contractAddress')
-  const marketplace = config.get('rns.placement.contractAddress')
+  const marketplace = config.get<string>('rns.placement.contractAddress')
   const tld = config.get('rns.tld')
 
   const transactionHash = eventData.transactionHash
@@ -90,7 +92,7 @@ async function transferHandler (logger: Logger, eventData: EventData, eth: Eth, 
     return
   }
 
-  if (ownerAddress === (marketplace as string).toLowerCase() || from === (marketplace as string).toLowerCase()) {
+  if (ownerAddress === marketplace.toLowerCase() || from === marketplace.toLowerCase()) {
     return // Marketplace transfers are handled in TokenSold
   }
 

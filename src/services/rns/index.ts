@@ -27,13 +27,13 @@ import eventProcessor from './rns.processor'
 
 const logger = loggingFactory('rns')
 
-export class RnsService extends Service {
+export class RnsBaseService extends Service {
   emit?: Function
 }
 export interface RnsServices {
-  domains: RnsService & { emit?: Function }
-  sold: RnsService & { emit?: Function }
-  offers: RnsService & { emit?: Function }
+  domains: RnsBaseService & { emit?: Function }
+  sold: RnsBaseService & { emit?: Function }
+  offers: RnsBaseService & { emit?: Function }
 }
 
 function fetchEventsForService (eth: Eth, serviceName: string, abi: AbiItem[], dataPusher: (event: EventData) => void): Promise<void> {
@@ -76,9 +76,9 @@ async function precache (eth?: Eth): Promise<void> {
   })
 
   const sequelizeServices = {
-    domains: new RnsService({ Model: Domain }),
-    sold: new RnsService({ Model: SoldDomain }),
-    offers: new RnsService({ Model: DomainOffer, multi: true })
+    domains: new RnsBaseService({ Model: Domain }),
+    sold: new RnsBaseService({ Model: SoldDomain }),
+    offers: new RnsBaseService({ Model: DomainOffer, multi: true })
   }
 
   for (const event of eventsDataQueue) {
@@ -98,9 +98,9 @@ const rns: CachedService = {
     await waitForReadyApp(app)
 
     // Initialize feather's service
-    app.use(ServiceAddresses.RNS_DOMAINS, new RnsService({ Model: Domain }))
-    app.use(ServiceAddresses.RNS_SOLD, new RnsService({ Model: SoldDomain }))
-    app.use(ServiceAddresses.RNS_OFFERS, new RnsService({ Model: DomainOffer }))
+    app.use(ServiceAddresses.RNS_DOMAINS, new RnsBaseService({ Model: Domain }))
+    app.use(ServiceAddresses.RNS_SOLD, new RnsBaseService({ Model: SoldDomain }))
+    app.use(ServiceAddresses.RNS_OFFERS, new RnsBaseService({ Model: DomainOffer }))
 
     const domains = app.service(ServiceAddresses.RNS_DOMAINS)
     const sold = app.service(ServiceAddresses.RNS_SOLD)
