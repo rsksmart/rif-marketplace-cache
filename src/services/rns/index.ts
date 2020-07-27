@@ -1,4 +1,4 @@
-import simplePlacementsContractAbi from '@rsksmart/rif-marketplace-nfts/ERC721SimplePlacementsV1Data.json'
+import simplePlacementsContractAbi from '@rsksmart/rif-marketplace-nfts/RNSSimplePlacementsV1Data.json'
 import auctionRegistrarContractAbi from '@rsksmart/rns-auction-registrar/TokenRegistrarData.json'
 import rnsReverseContractAbi from '@rsksmart/rns-reverse/NameResolverData.json'
 import rnsContractAbi from '@rsksmart/rns-rskregistrar/RSKOwnerData.json'

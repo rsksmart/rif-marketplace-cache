@@ -3,7 +3,7 @@ import config from 'config'
 import { Eth } from 'web3-eth'
 import { EventData } from 'web3-eth-contract'
 import Utils from 'web3-utils'
-import { RnsServices } from '.'
+import { RnsService, RnsServices } from '.'
 import { getBlockDate } from '../../blockchain/utils'
 import { Logger } from '../../definitions'
 import DomainOffer from './models/domain-offer.model'
@@ -13,12 +13,46 @@ import DomainOwner from './models/owner.model'
 import Transfer from './models/transfer.model'
 import SoldDomain from './models/sold-domain.model'
 
+// registerTransfer: creates the transfer record and updates DomainOwner
+async function registerTransfer (transactionHash: string, tokenId: string, sellerAddress: string, buyerAddress: string, logger: Logger, domainsService: RnsService) {
+  const transferDomain = await Transfer.create({
+    id: transactionHash,
+    tokenId,
+    sellerAddress,
+    buyerAddress
+  })
+
+  if (transferDomain) {
+    logger.info(`Transfer event: Transfer ${tokenId} created`)
+  }
+
+  const domain = await Domain.findByPk(tokenId)
+
+  if (domain) {
+    await DomainOwner.upsert({ address: buyerAddress, tokenId })
+
+    if (domainsService.emit) {
+      domainsService.emit('patched', { tokenId, buyerAddress })
+    }
+    logger.info(`Transfer event: Updated DomainOwner ${buyerAddress} for tokenId ${tokenId}`)
+  } else {
+    await Domain.upsert({ tokenId })
+    await DomainOwner.create({ tokenId, address: buyerAddress })
+
+    if (domainsService.emit) {
+      domainsService.emit('created', { tokenId, buyerAddress })
+    }
+    logger.info(`Transfer event: Created Domain ${tokenId} for owner ${buyerAddress}`)
+  }
+}
+
 async function transferHandler (logger: Logger, eventData: EventData, eth: Eth, services: RnsServices): Promise<void> {
   const tokenId = Utils.numberToHex(eventData.returnValues.tokenId)
   const ownerAddress = eventData.returnValues.to.toLowerCase()
 
   const fiftsAddr = config.get('rns.fifsAddrRegistrar.contractAddress')
   const registrar = config.get('rns.registrar.contractAddress')
+  const marketplace = config.get('rns.placement.contractAddress')
   const tld = config.get('rns.tld')
 
   const transactionHash = eventData.transactionHash
@@ -56,35 +90,12 @@ async function transferHandler (logger: Logger, eventData: EventData, eth: Eth, 
     return
   }
 
-  const transferDomain = await Transfer.create({
-    id: transactionHash,
-    tokenId,
-    sellerAddress: from,
-    buyerAddress: ownerAddress
-  })
-
-  if (transferDomain) {
-    logger.info(`Transfer event: Transfer ${tokenId} created`)
+  if (ownerAddress === (marketplace as string).toLowerCase() || from === (marketplace as string).toLowerCase()) {
+    return // Marketplace transfers are handled in TokenSold
   }
 
-  const domain = await Domain.findByPk(tokenId)
-
-  if (domain) {
-    await DomainOwner.upsert({ address: ownerAddress, tokenId })
-
-    if (domainsService.emit) {
-      domainsService.emit('patched', { tokenId, ownerAddress })
-    }
-    logger.info(`Transfer event: Updated DomainOwner ${ownerAddress} for tokenId ${tokenId}`)
-  } else {
-    await Domain.upsert({ tokenId })
-    await DomainOwner.create({ tokenId, address: ownerAddress })
-
-    if (domainsService.emit) {
-      domainsService.emit('created', { tokenId, ownerAddress })
-    }
-    logger.info(`Transfer event: Created Domain ${tokenId} for owner ${ownerAddress}`)
-  }
+  // Register Transfer
+  registerTransfer(transactionHash, tokenId, from, ownerAddress, logger, domainsService)
 }
 
 async function expirationChangedHandler (logger: Logger, eventData: EventData, _: Eth, services: RnsServices): Promise<void> {
@@ -193,7 +204,7 @@ async function tokenSoldHandler (
   logger: Logger,
   eventData: EventData,
   eth: Eth,
-  { sold: soldService, offers: offersService }: RnsServices
+  { sold: soldService, offers: offersService, domains: domainsService }: RnsServices
 ): Promise<void> {
   const {
     transactionHash,
@@ -210,6 +221,11 @@ async function tokenSoldHandler (
       priceString,
       paymentToken
     } = domainOffer
+
+    // Register Transfer
+    const transaction = await eth.getTransaction(transactionHash)
+    const buyer = transaction.from.toLowerCase()
+    registerTransfer(transactionHash, tokenId, ownerAddress, buyer, logger, domainsService)
 
     const soldDomain = await SoldDomain.create({
       id: transactionHash,
