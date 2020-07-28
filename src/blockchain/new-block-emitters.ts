@@ -1,10 +1,11 @@
 import { BlockHeader, Eth } from 'web3-eth'
-import { loggingFactory } from '../logger'
 import { Subscription } from 'web3-core-subscriptions'
 import { EventEmitter } from 'events'
-import { Application, Logger } from '../definitions'
 import { getObject } from 'sequelize-store'
 import { ServiceMethods } from '@feathersjs/feathers'
+
+import { loggingFactory } from '../logger'
+import type { Logger } from '../definitions'
 
 const DEFAULT_POLLING_INTERVAL = 5000
 export const NEW_BLOCK_EVENT_NAME = 'newBlock'

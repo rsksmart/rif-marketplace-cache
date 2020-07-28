@@ -18,7 +18,8 @@ export function ethFactory (): Eth {
   return new Eth(provider)
 }
 
-const CHANNEL_NAME = 'confirmations'
+const CONFIRMATION_CHANNEL = 'confirmations'
+const NEW_BLOCK_EMITTER_CHANNEL = 'new-block'
 
 function channelSetup (app: Application): void {
   if (typeof app.channel !== 'function') {
@@ -26,10 +27,11 @@ function channelSetup (app: Application): void {
     return
   }
   app.on('connection', (connection: any) => {
-    app.channel(CHANNEL_NAME).join(connection)
+    app.channel(CONFIRMATION_CHANNEL).join(connection)
+    app.channel(NEW_BLOCK_EMITTER_CHANNEL).join(connection)
   })
-  app.service(ServiceAddresses.CONFIRMATIONS).publish(() => app.channel(CHANNEL_NAME))
-  app.service(ServiceAddresses.NEW_BLOCK_EMITTER).publish(() => app.channel(CHANNEL_NAME))
+  app.service(ServiceAddresses.CONFIRMATIONS).publish(() => app.channel(CONFIRMATION_CHANNEL))
+  app.service(ServiceAddresses.NEW_BLOCK_EMITTER).publish(() => app.channel(NEW_BLOCK_EMITTER_CHANNEL))
 }
 
 function subscribeAndEmitNewBlocks (app: Application): void {
