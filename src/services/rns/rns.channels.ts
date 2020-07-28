@@ -9,7 +9,7 @@ function filterByOwner (app: Application, data: any, channelName: RnsChannelName
       const connectedAccount: string = connection.ownerAddress
       const dataAccount: string = data.ownerAddress
 
-      return connectedAccount && dataAccount && connectedAccount.toLowerCase() === dataAccount.toLowerCase()
+      return Boolean(connectedAccount && dataAccount && connectedAccount.toLowerCase() === dataAccount.toLowerCase())
     })
 }
 
