@@ -1,8 +1,11 @@
 import { BlockHeader, Eth } from 'web3-eth'
-import { loggingFactory } from '../logger'
 import { Subscription } from 'web3-core-subscriptions'
 import { EventEmitter } from 'events'
-import { Logger } from '../definitions'
+import { getObject } from 'sequelize-store'
+import { ServiceMethods } from '@feathersjs/feathers'
+
+import { loggingFactory } from '../logger'
+import type { Logger } from '../definitions'
 
 const DEFAULT_POLLING_INTERVAL = 5000
 export const NEW_BLOCK_EVENT_NAME = 'newBlock'
@@ -125,5 +128,23 @@ export class ListeningNewBlockEmitter extends AutoStartStopEventEmitter {
 
   stop (): void {
     this.subscription?.unsubscribe(error => { this.logger.error(error) })
+  }
+}
+
+export class NewBlockEmitterService implements Partial<ServiceMethods<any>> {
+  emit?: Function
+  events: string[]
+
+  constructor () {
+    this.events = [NEW_BLOCK_EVENT_NAME]
+  }
+
+  // eslint-disable-next-line require-await
+  async find (): Promise<BlockHeader> {
+    return this.getLastBlock()
+  }
+
+  getLastBlock (): BlockHeader {
+    return getObject()['blockchain.lastFetchedBlock'] as BlockHeader
   }
 }

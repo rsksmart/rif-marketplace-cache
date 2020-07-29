@@ -51,8 +51,8 @@ export async function appFactory (): Promise<Application> {
 
   // Custom general services
   app.configure(sequelize)
-  app.configure(blockchain)
   app.configure(configureStore)
+  app.configure(blockchain)
   app.configure(healthcheck)
 
   /**********************************************************/

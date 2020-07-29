@@ -8,6 +8,7 @@ import type { AgreementService, OfferService } from './services/storage'
 import type { RatesService } from './services/rates'
 import type { RnsBaseService } from './services/rns'
 import { ConfirmatorService } from './blockchain/confirmator'
+import { NewBlockEmitterService } from './blockchain/new-block-emitters'
 
 export enum SupportedServices {
   STORAGE = 'storage',
@@ -26,7 +27,8 @@ export enum ServiceAddresses {
   STORAGE_OFFERS = '/storage/v0/offers',
   STORAGE_AGREEMENTS = '/storage/v0/agreements',
   XR = '/rates/v0/',
-  CONFIRMATIONS = '/confirmations'
+  CONFIRMATIONS = '/confirmations',
+  NEW_BLOCK_EMITTER = '/new-block'
 }
 
 // A mapping of service names to types. Will be extended in service files.
@@ -38,6 +40,7 @@ interface ServiceTypes {
   [ServiceAddresses.RNS_SOLD]: RnsBaseService & ServiceAddons<any>
   [ServiceAddresses.RNS_OFFERS]: RnsBaseService & ServiceAddons<any>
   [ServiceAddresses.CONFIRMATIONS]: ConfirmatorService & ServiceAddons<any>
+  [ServiceAddresses.NEW_BLOCK_EMITTER]: NewBlockEmitterService & ServiceAddons<any>
 }
 
 // The application instance type that will be used everywhere else
