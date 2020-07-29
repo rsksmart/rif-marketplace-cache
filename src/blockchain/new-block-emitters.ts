@@ -133,18 +133,18 @@ export class ListeningNewBlockEmitter extends AutoStartStopEventEmitter {
 
 export class NewBlockEmitterService implements Partial<ServiceMethods<any>> {
   emit?: Function
-  events: string[] = []
+  events: string[]
 
   constructor () {
     this.events = [NEW_BLOCK_EVENT_NAME]
   }
 
   // eslint-disable-next-line require-await
-  async find (): Promise<number> {
-    return this.getLastBlockNumber()
+  async find (): Promise<BlockHeader> {
+    return this.getLastBlock()
   }
 
-  getLastBlockNumber (): number {
-    return getObject()['blockchain.lastFetchedBlockNumber'] as number
+  getLastBlock (): BlockHeader {
+    return getObject()['blockchain.lastFetchedBlock'] as BlockHeader
   }
 }

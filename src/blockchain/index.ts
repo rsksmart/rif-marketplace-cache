@@ -44,7 +44,7 @@ function subscribeAndEmitNewBlocks (app: Application): void {
   newBlockEmitter.on(NEW_BLOCK_EVENT_NAME, (block: BlockHeader) => {
     logger.debug('New block: ', block)
     newBlockEmitterService?.emit(NEW_BLOCK_EVENT_NAME, block)
-    store['blockchain.lastFetchedBlockNumber'] = block.number
+    store['blockchain.lastFetchedBlock'] = block
   })
 }
 
