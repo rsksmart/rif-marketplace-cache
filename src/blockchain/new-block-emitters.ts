@@ -139,8 +139,9 @@ export class NewBlockEmitterService implements Partial<ServiceMethods<any>> {
     this.events = [NEW_BLOCK_EVENT_NAME]
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-empty-function
-  setup (): void {
+  // eslint-disable-next-line require-await
+  async find (): Promise<number> {
+    return this.getLastBlockNumber()
   }
 
   getLastBlockNumber (): number {
