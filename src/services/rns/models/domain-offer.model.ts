@@ -4,8 +4,11 @@ import Domain from './domain.model'
 
 @Table({ freezeTableName: true, tableName: 'rns_domain-offer', timestamps: false })
 export default class DomainOffer extends Model {
-  @Column({ primaryKey: true, type: DataType.STRING })
-  offerId!: string
+  @Column({ primaryKey: true, autoIncrement: true, type: DataType.INTEGER })
+  id!: number
+
+  @Column(DataType.STRING)
+  txHash!: string // transaction hash
 
   @ForeignKey(() => Domain)
   @Column(DataType.STRING)
