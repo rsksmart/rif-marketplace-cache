@@ -1,4 +1,4 @@
-import { AbiItem } from 'web3-utils'
+import { AbiItem, keccak256 } from 'web3-utils'
 import Eth from 'web3-eth'
 import { EventEmitter } from 'events'
 import config from 'config'
@@ -15,6 +15,11 @@ function getBlockTracker (keyPrefix?: string): BlockTracker {
   return new BlockTracker(store)
 }
 
+function hashTopics (topics?: string[]): string[] {
+  if (!topics) return []
+  return topics.map(e => keccak256(e))
+}
+
 export async function getBlockDate (eth: Eth, blockNumber: number): Promise<Date> {
   return new Date(((await eth.getBlock(blockNumber)).timestamp as number) * 1000)
 }
@@ -29,8 +34,10 @@ export function getEventsEmitterForService (serviceName: string, eth: Eth, contr
   const contract = new eth.Contract(contractAbi, contractAddresses)
   const logger = loggingFactory(`${serviceName}:blockchain`)
 
-  const eventsToListen = config.get<string[]>(`${serviceName}.events`)
-  logger.info(`For listening on service '${serviceName}' for events ${eventsToListen.join(', ')} using contract on address: ${contractAddresses}`)
+  const eventsToListen = config.has(`${serviceName}.events`) ? config.get<string[]>(`${serviceName}.events`) : undefined
+  const topicsToListen = config.has(`${serviceName}.topics`) ? config.get<string[]>(`${serviceName}.topics`) : undefined
+
+  logger.info(`For listening on service '${serviceName}' using contract on address: ${contractAddresses}`)
   const eventsEmitterOptions = config.get<EventsEmitterOptions>(`${serviceName}.eventsEmitter`)
   const newBlockEmitterOptions = config.get<NewBlockEmitterOptions>(`${serviceName}.newBlockEmitter`)
   const options = Object.assign(
@@ -43,7 +50,9 @@ export function getEventsEmitterForService (serviceName: string, eth: Eth, contr
     } as EventsEmitterOptions
   )
 
-  return eventsEmitterFactory(eth, contract, eventsToListen, options)
+  // The topics has to be nested because that represents "or" operation between the topics and not "and".
+  // https://eth.wiki/json-rpc/API#parameters-45
+  return eventsEmitterFactory(eth, contract, eventsToListen, [hashTopics(topicsToListen)], options)
 }
 
 export function getNewBlockEmitter (eth: Eth): AutoStartStopEventEmitter {

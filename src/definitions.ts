@@ -94,6 +94,9 @@ export interface BlockchainServiceOptions {
   // Address of deployed  contract
   contractAddress?: string
 
+  // Topics that will be listened to, if specified than has priority over "events" configuration
+  topics?: string[]
+
   // Events that will be listened to
   events?: string[]
 

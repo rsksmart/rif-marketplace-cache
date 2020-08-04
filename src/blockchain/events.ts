@@ -63,7 +63,7 @@ export abstract class BaseEventsEmitter extends AutoStartStopEventEmitter {
   public readonly blockTracker: BlockTracker
   protected readonly newBlockEmitter: EventEmitter
   protected readonly startingBlock: string | number
-  protected readonly events: string[]
+  protected readonly events?: string[]
   protected readonly contract: Contract
   protected readonly eth: Eth
   protected readonly semaphore: Sema
@@ -72,7 +72,7 @@ export abstract class BaseEventsEmitter extends AutoStartStopEventEmitter {
   private isInitialized = false
   private confirmationRoutine?: (...args: any[]) => void
 
-  protected constructor (eth: Eth, contract: Contract, events: string[], logger: Logger, options?: EventsEmitterOptions) {
+  protected constructor (eth: Eth, contract: Contract, logger: Logger, events?: string[], options?: EventsEmitterOptions) {
     super(logger, NEW_EVENT_EVENT_NAME)
     this.eth = eth
     this.contract = contract
@@ -190,7 +190,9 @@ export abstract class BaseEventsEmitter extends AutoStartStopEventEmitter {
       events = [events]
     }
 
-    events = events.filter(data => this.events.includes(data.event))
+    if (this.events) {
+      events = events.filter(data => this.events?.includes(data.event))
+    }
 
     if (events.length === 0) {
       this.logger.info('No events to be processed.')
@@ -323,10 +325,18 @@ export abstract class BaseEventsEmitter extends AutoStartStopEventEmitter {
  * @see ListeningNewBlockEmitter
  */
 export class PollingEventsEmitter extends BaseEventsEmitter {
-  constructor (eth: Eth, contract: Contract, events: string[], options?: EventsEmitterOptions) {
+  private readonly topics?: string[] | string[][]
+
+  constructor (eth: Eth, contract: Contract, events?: string[], topics?: string[] | string[][], options?: EventsEmitterOptions) {
     const loggerName = options?.loggerName || (options?.loggerBaseName ? `${options.loggerBaseName}:events:polling` : 'blockchain:events:polling')
     const logger = loggingFactory(loggerName)
-    super(eth, contract, events, logger, options)
+    super(eth, contract, logger, events, options)
+
+    if (!topics && !events) {
+      throw new Error('You have to specify topics or events!')
+    }
+
+    this.topics = topics
   }
 
   async poll (currentBlock: BlockHeader): Promise<void> {
@@ -347,10 +357,10 @@ export class PollingEventsEmitter extends BaseEventsEmitter {
       }
 
       this.logger.info(`Checking new events between blocks ${lastFetchedBlockNumber}-${currentBlock}`)
-      // TODO: Possible to filter-out the events with "topics" property directly from the node
       const events = await this.contract.getPastEvents('allEvents', {
         fromBlock: (lastFetchedBlockNumber as number) + 1, // +1 because both fromBlock and toBlock is "or equal"
-        toBlock: currentBlock.number
+        toBlock: currentBlock.number,
+        topics: this.topics
       })
       this.logger.debug('Received events: ', events)
 
@@ -379,7 +389,7 @@ export class PollingEventsEmitter extends BaseEventsEmitter {
 export class ListeningEventsEmitter extends BaseEventsEmitter {
   constructor (eth: Eth, contract: Contract, events: string[], options: EventsEmitterOptions) {
     const logger = loggingFactory('blockchain:events:listening')
-    super(eth, contract, events, logger, options)
+    super(eth, contract, logger, events, options)
   }
 
   startEvents (): void {
@@ -391,9 +401,9 @@ export class ListeningEventsEmitter extends BaseEventsEmitter {
   }
 }
 
-export default function eventsEmitterFactory (eth: Eth, contract: Contract, events: string[], options?: EventsEmitterOptions): BaseEventsEmitter {
+export default function eventsEmitterFactory (eth: Eth, contract: Contract, events?: string[], topics?: string[] | string[][], options?: EventsEmitterOptions): BaseEventsEmitter {
   if (!options?.strategy || options?.strategy === EventsEmitterStrategy.POLLING) {
-    return new PollingEventsEmitter(eth, contract, events, options)
+    return new PollingEventsEmitter(eth, contract, events, topics, options)
   }
 
   throw new NotImplemented('Listening for new events is not supported atm.')
