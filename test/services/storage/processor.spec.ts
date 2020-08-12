@@ -17,7 +17,7 @@ import { blockMock, eventMock } from '../../utils'
 import { EventError } from '../../../src/errors'
 import BillingPlan from '../../../src/services/storage/models/price.model'
 import Agreement from '../../../src/services/storage/models/agreement.model'
-import { decodeByteArray, wrapEvent } from '../../../src/utils'
+import { bn, decodeByteArray, wrapEvent } from '../../../src/utils'
 import { getBlockDate } from '../../../src/blockchain/utils'
 
 chai.use(sinonChai)
@@ -66,7 +66,7 @@ describe('Storage services: Events Processor', () => {
       const event = eventMock({
         event: 'TotalCapacitySet',
         returnValues: {
-          capacity: 1000,
+          capacity: bn(1000),
           provider: 'test'
         }
       })
@@ -82,7 +82,7 @@ describe('Storage services: Events Processor', () => {
         const event = eventMock({
           event: 'TotalCapacitySet',
           returnValues: {
-            capacity: 1000,
+            capacity: bn(1000),
             provider
           }
         })
@@ -97,8 +97,8 @@ describe('Storage services: Events Processor', () => {
       const billingEvent: EventData = eventMock({
         event: 'BillingPlanSet',
         returnValues: {
-          price: 1000,
-          period: 99,
+          price: bn(1000),
+          period: bn(99),
           provider
         }
       })
@@ -106,8 +106,8 @@ describe('Storage services: Events Processor', () => {
         const event = eventMock({
           event: 'BillingPlanSet',
           returnValues: {
-            price: 1000,
-            period: 69696,
+            price: bn(1000),
+            period: bn(69696),
             provider
           }
         })
@@ -124,7 +124,7 @@ describe('Storage services: Events Processor', () => {
       it('create new BillingPlan if has one with different period`', async () => {
         await processor(billingEvent)
 
-        const billingPlan = await BillingPlan.findOne({ where: { offerId: provider, period: 99 } })
+        const billingPlan = await BillingPlan.findOne({ where: { offerId: provider, period: '99' } })
 
         expect(billingPlan).to.be.instanceOf(BillingPlan)
         expect(billingPlan?.createdAt).to.be.eql(billingPlan?.updatedAt) // new instance
@@ -136,15 +136,15 @@ describe('Storage services: Events Processor', () => {
         const offer = await Offer.create({ address: provider })
         const billing = await BillingPlan.create({ offerId: offer.address, period: 99, amount: 1 })
         expect(offer).to.be.instanceOf(Offer)
-        expect(billing?.amount).to.be.eql(1)
+        expect(billing?.amount).to.be.eql(bn(1))
         expect(billing).to.be.instanceOf(BillingPlan)
 
-        const newPrice = 99999
+        const newPrice = bn(99999)
         billingEvent.returnValues.price = newPrice
 
         await processor(billingEvent)
 
-        const billingPlan = await BillingPlan.findOne({ where: { offerId: offer.address, period: 99 } })
+        const billingPlan = await BillingPlan.findOne({ where: { offerId: offer.address, period: '99' } })
 
         expect(billingPlan).to.be.instanceOf(BillingPlan)
         expect(billingPlan?.updatedAt).to.be.gt(billingPlan?.createdAt)
@@ -211,9 +211,9 @@ describe('Storage services: Events Processor', () => {
     let offer: Offer
     let plan: BillingPlan
     let agreementData: object
-    const billingPeriod = 99
-    const size = 100
-    const availableFunds = 100
+    const billingPeriod = bn(99)
+    const size = bn(100)
+    const availableFunds = bn(100)
     const agreementCreator = asciiToHex('AgreementCreator')
     const dataReference = ['Reference1', 'Reference2'].map(asciiToHex)
     const agreementReference = soliditySha3(agreementCreator, ...dataReference)
@@ -240,7 +240,7 @@ describe('Storage services: Events Processor', () => {
         offerId: provider,
         size,
         billingPeriod,
-        billingPrice: 100,
+        billingPrice: bn(100),
         availableFunds,
         lastPayout: await getBlockDate(eth, blockNumber)
       }
@@ -269,17 +269,16 @@ describe('Storage services: Events Processor', () => {
       })
 
       it('should throw error if billing plan not exist', async () => {
-        await expect(BillingPlan.destroy({ where: { offerId: provider, period: billingPeriod } })).to.eventually.become(1)
+        await expect(BillingPlan.destroy({ where: { offerId: provider, period: billingPeriod.toString() } })).to.eventually.become(1)
         await expect(processor(event)).to.eventually.be.rejectedWith(
           EventError,
-          `Price for period ${event.returnValues.billingPeriod} and offer ${provider} not found when creating new request ${agreementReference}`
+          `Price for period ${event.returnValues.billingPeriod.toString()} and offer ${provider} not found when creating new request ${agreementReference}`
         )
       })
       it('should create/overwrite new agreement', async () => {
         await processor(event)
 
         const agreement = await Agreement.findOne({ where: { agreementReference, offerId: event.returnValues.provider } })
-
         expect(agreement).to.be.instanceOf(Agreement)
         expect(agreement?.agreementReference).to.be.eql(agreementReference)
         expect(agreement?.dataReference).to.be.eql(decodeByteArray(event.returnValues.dataReference))
@@ -339,7 +338,7 @@ describe('Storage services: Events Processor', () => {
 
         const agreementAfterUpdate = await Agreement.findOne({ where: { agreementReference, offerId: event.returnValues.provider } })
 
-        expect(agreementAfterUpdate?.availableFunds).to.be.eql(event.returnValues.amount + agreement.availableFunds)
+        expect(agreementAfterUpdate?.availableFunds).to.be.eql(agreement.availableFunds.plus(event.returnValues.amount))
         expect(agreementServiceEmitSpy).to.have.been.calledOnceWith('updated', wrapEvent('AgreementFundsDeposited', agreementAfterUpdate?.toJSON() as object))
       })
     })
@@ -364,7 +363,7 @@ describe('Storage services: Events Processor', () => {
 
         const agreementAfterUpdate = await Agreement.findOne({ where: { agreementReference, offerId: event.returnValues.provider } })
 
-        expect(agreementAfterUpdate?.availableFunds).to.be.eql(agreement.availableFunds - event.returnValues.amount)
+        expect(agreementAfterUpdate?.availableFunds).to.be.eql(agreement.availableFunds.minus(event.returnValues.amount))
         expect(agreementServiceEmitSpy).to.have.been.calledOnceWith('updated', wrapEvent('AgreementFundsWithdrawn', agreementAfterUpdate?.toJSON() as object))
       })
     })
@@ -392,7 +391,7 @@ describe('Storage services: Events Processor', () => {
 
         const agreementAfterUpdate = await Agreement.findOne({ where: { agreementReference, offerId: event.returnValues.provider } })
 
-        expect(agreementAfterUpdate?.availableFunds).to.be.eql(agreement.availableFunds - event.returnValues.amount)
+        expect(agreementAfterUpdate?.availableFunds).to.be.eql(agreement.availableFunds.minus(event.returnValues.amount))
         expect(agreementAfterUpdate?.lastPayout).to.be.eql(await getBlockDate(eth, blockNumber))
         expect(agreementServiceEmitSpy).to.have.been.calledOnceWith('updated', wrapEvent('AgreementFundsPayout', agreementAfterUpdate?.toJSON() as object))
       })

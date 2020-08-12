@@ -4,6 +4,7 @@ import sinonChai from 'sinon-chai'
 import Agreement from '../../../src/services/storage/models/agreement.model'
 import { sequelizeFactory } from '../../../src/sequelize'
 import Sequelize from 'sequelize'
+import { bn } from '../../../src/utils'
 
 chai.use(sinonChai)
 const expect = chai.expect
@@ -47,24 +48,24 @@ const AGREEMENT_TEST_SCHEMA = [
   {
     fn: 'numberOfPrepaidPeriods',
     cases: [
-      [{ billingPrice: 10, size: 1, availableFunds: 10 }, 1],
-      [{ billingPrice: 100, size: 2, availableFunds: 100 }, 0],
-      [{ billingPrice: 1, size: 5, availableFunds: 10 }, 2],
-      [{ billingPrice: 1, size: 10, availableFunds: 1000 }, 100],
-      [{ billingPrice: 102222, size: 1, availableFunds: 10 }, 0]
+      [{ billingPrice: 10, size: 1, availableFunds: 10 }, bn(1)],
+      [{ billingPrice: 100, size: 2, availableFunds: 100 }, bn(0)],
+      [{ billingPrice: 1, size: 5, availableFunds: 10 }, bn(2)],
+      [{ billingPrice: 1, size: 10, availableFunds: 1000 }, bn(100)],
+      [{ billingPrice: 102222, size: 1, availableFunds: 10 }, bn(0)]
     ]
   },
   {
     fn: 'periodsSinceLastPayout',
     cases: [
-      [{ billingPeriod: toSecond(hour), lastPayout: new Date(Date.now() - day) }, 24],
-      [{ billingPeriod: toSecond(hour), lastPayout: new Date(Date.now() - hour) }, 1],
-      [{ billingPeriod: toSecond(hour), lastPayout: new Date(Date.now() - hour * 4) }, 4],
-      [{ billingPeriod: toSecond(hour), lastPayout: new Date(Date.now()) }, 0],
-      [{ billingPeriod: toSecond(day), lastPayout: new Date(Date.now() - day) }, 1],
-      [{ billingPeriod: toSecond(2 * day), lastPayout: new Date(Date.now() - 2 * day) }, 1],
-      [{ billingPeriod: toSecond(2 * day), lastPayout: new Date(Date.now() - 4 * day) }, 2],
-      [{ billingPeriod: toSecond(month), lastPayout: new Date(Date.now() - 4 * month) }, 4]
+      [{ billingPeriod: toSecond(hour), lastPayout: new Date(Date.now() - day) }, bn(24)],
+      [{ billingPeriod: toSecond(hour), lastPayout: new Date(Date.now() - hour) }, bn(1)],
+      [{ billingPeriod: toSecond(hour), lastPayout: new Date(Date.now() - hour * 4) }, bn(4)],
+      [{ billingPeriod: toSecond(hour), lastPayout: new Date(Date.now()) }, bn(0)],
+      [{ billingPeriod: toSecond(day), lastPayout: new Date(Date.now() - day) }, bn(1)],
+      [{ billingPeriod: toSecond(2 * day), lastPayout: new Date(Date.now() - 2 * day) }, bn(1)],
+      [{ billingPeriod: toSecond(2 * day), lastPayout: new Date(Date.now() - 4 * day) }, bn(2)],
+      [{ billingPeriod: toSecond(month), lastPayout: new Date(Date.now() - 4 * month) }, bn(4)]
     ]
   },
   {
@@ -78,7 +79,7 @@ const AGREEMENT_TEST_SCHEMA = [
           billingPeriod: toSecond(hour),
           lastPayout: new Date(Date.now() - day)
         },
-        48
+        bn(48)
       ],
       [
         {
@@ -88,7 +89,7 @@ const AGREEMENT_TEST_SCHEMA = [
           billingPeriod: toSecond(hour),
           lastPayout: new Date(Date.now() - day)
         },
-        47
+        bn(47)
       ],
       [
         {
@@ -98,7 +99,7 @@ const AGREEMENT_TEST_SCHEMA = [
           billingPeriod: toSecond(hour),
           lastPayout: new Date(Date.now() - day)
         },
-        100
+        bn(100)
       ],
       [
         {
@@ -108,7 +109,7 @@ const AGREEMENT_TEST_SCHEMA = [
           billingPeriod: toSecond(hour),
           lastPayout: new Date(Date.now() - day)
         },
-        2400
+        bn(2400)
       ],
       [
         {
@@ -118,7 +119,7 @@ const AGREEMENT_TEST_SCHEMA = [
           billingPeriod: toSecond(month),
           lastPayout: new Date(Date.now() - 4 * month)
         },
-        400
+        bn(400)
       ]
     ]
   },

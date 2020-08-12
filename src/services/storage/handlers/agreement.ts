@@ -20,7 +20,7 @@ const handlers = {
     const id = soliditySha3(event.returnValues.agreementCreator, ...event.returnValues.dataReference)
     const dataReference = decodeByteArray(event.returnValues.dataReference)
 
-    const plan = await BillingPlan.findOne({ where: { offerId, period } })
+    const plan = await BillingPlan.findOne({ where: { offerId, period: period.toString() } })
 
     if (!plan) {
       throw new EventError(`Price for period ${period} and offer ${offerId} not found when creating new request ${id}`, 'RequestMade')
@@ -66,7 +66,7 @@ const handlers = {
       throw new EventError(`Agreement with ID ${id} was not found!`, 'AgreementFundsDeposited')
     }
 
-    agreement.availableFunds += parseInt(event.returnValues.amount)
+    agreement.availableFunds = agreement.availableFunds.plus(event.returnValues.amount)
     await agreement.save()
 
     if (agreementService.emit) agreementService.emit('updated', wrapEvent('AgreementFundsDeposited', agreement.toJSON()))
@@ -81,7 +81,7 @@ const handlers = {
       throw new EventError(`Agreement with ID ${id} was not found!`, 'AgreementFundsWithdrawn')
     }
 
-    agreement.availableFunds -= parseInt(event.returnValues.amount)
+    agreement.availableFunds = agreement.availableFunds.minus(event.returnValues.amount)
     await agreement.save()
 
     if (agreementService.emit) agreementService.emit('updated', wrapEvent('AgreementFundsWithdrawn', agreement.toJSON()))
@@ -97,7 +97,7 @@ const handlers = {
     }
 
     agreement.lastPayout = await getBlockDate(eth, event.blockNumber)
-    agreement.availableFunds -= parseInt(event.returnValues.amount)
+    agreement.availableFunds = agreement.availableFunds.minus(event.returnValues.amount)
     await agreement.save()
 
     if (agreementService.emit) agreementService.emit('updated', wrapEvent('AgreementFundsPayout', agreement.toJSON()))

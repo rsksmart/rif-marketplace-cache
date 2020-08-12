@@ -4,10 +4,22 @@ import { readFile as readFileCb } from 'fs'
 import { promisify } from 'util'
 import config from 'config'
 import { hexToAscii } from 'web3-utils'
+import BigNumber from 'bignumber.js'
 
 import { Application, Config, isSupportedServices, Logger, SupportedServices } from './definitions'
 
 const readFile = promisify(readFileCb)
+
+/**
+ * Bignumber.js utils functions
+ */
+export function bn (v: any): BigNumber {
+  return new BigNumber(v)
+}
+
+export function bnFloor (v: any): BigNumber {
+  return v.integerValue(BigNumber.ROUND_FLOOR)
+}
 
 /**
  * Function that will split array into two groups based on callback that returns Promise.

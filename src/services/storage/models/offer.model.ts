@@ -1,7 +1,11 @@
 import { Table, DataType, Column, Model, HasMany, Scopes } from 'sequelize-typescript'
+import { Op } from 'sequelize'
+import BigNumber from 'bignumber.js'
+
 import BillingPlan from './price.model'
 import Agreement from './agreement.model'
-import { Op } from 'sequelize'
+import { bn } from '../../../utils'
+import { BigNumberStringType } from '../../../sequelize'
 
 @Scopes(() => ({
   active: {
@@ -21,8 +25,8 @@ export default class Offer extends Model {
   @Column({ primaryKey: true, type: DataType.STRING(64) })
   address!: string
 
-  @Column
-  totalCapacity!: number
+  @Column({ ...BigNumberStringType('totalCapacity') })
+  totalCapacity!: BigNumber
 
   @Column
   peerId!: string
@@ -34,12 +38,12 @@ export default class Offer extends Model {
   agreements!: Agreement[]
 
   @Column(DataType.VIRTUAL)
-  get utilizedCapacity (): number {
-    return (this.agreements || []).map(request => request.size).reduce((previousValue, currentValue) => previousValue + currentValue, 0)
+  get utilizedCapacity (): BigNumber {
+    return (this.agreements || []).map(request => request.size).reduce((previousValue, currentValue) => previousValue.plus(currentValue), bn(0))
   }
 
   @Column(DataType.VIRTUAL)
-  get availableCapacity (): number {
-    return this.totalCapacity - this.utilizedCapacity
+  get availableCapacity (): BigNumber {
+    return this.totalCapacity.minus(this.utilizedCapacity)
   }
 }
