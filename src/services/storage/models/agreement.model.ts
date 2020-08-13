@@ -20,6 +20,7 @@ export default class Agreement extends Model {
   @Column({ type: DataType.STRING(64) })
   consumer!: string
 
+  // In Megabytes
   @Column({ ...BigNumberStringType('size') })
   size!: BigNumber
 
