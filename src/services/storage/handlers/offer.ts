@@ -1,3 +1,5 @@
+import BigNumber from 'bignumber.js'
+
 import Offer from '../models/offer.model'
 import BillingPlan from '../models/price.model'
 import { EventData } from 'web3-eth-contract'
@@ -9,8 +11,8 @@ import { EventError } from '../../../errors'
 
 const logger = loggingFactory('storage:handler:offer')
 
-function updatePrices (offer: Offer, period: number, price: number): Promise<BillingPlan> {
-  const priceEntity = offer.plans && offer.plans.find(value => value.period === period)
+function updatePrices (offer: Offer, period: BigNumber, price: BigNumber): Promise<BillingPlan> {
+  const priceEntity = offer.plans && offer.plans.find(value => new BigNumber(value.period).eq(period))
   logger.info(`Updating period ${period} to price ${price} (ID: ${offer.address})`)
 
   if (priceEntity) {

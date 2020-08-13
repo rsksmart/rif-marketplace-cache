@@ -1,13 +1,16 @@
 import { Table, Column, Model, ForeignKey, BelongsTo } from 'sequelize-typescript'
+import BigNumber from 'bignumber.js'
+
 import Offer from './offer.model'
+import { BigNumberStringType } from '../../../sequelize'
 
 @Table({ freezeTableName: true, tableName: 'storage_billing-plan' })
 export default class BillingPlan extends Model {
-  @Column
-  period!: number
+  @Column({ ...BigNumberStringType('period') })
+  period!: BigNumber
 
-  @Column
-  amount!: number
+  @Column({ ...BigNumberStringType('amount') })
+  amount!: BigNumber
 
   @ForeignKey(() => Offer)
   @Column
