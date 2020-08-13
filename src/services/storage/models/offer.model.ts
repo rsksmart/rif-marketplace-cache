@@ -4,13 +4,12 @@ import BigNumber from 'bignumber.js'
 
 import BillingPlan from './price.model'
 import Agreement from './agreement.model'
-import { bn } from '../../../utils'
 import { BigNumberStringType } from '../../../sequelize'
 
 @Scopes(() => ({
   active: {
     where: {
-      totalCapacity: { [Op.and]: [{ [Op.ne]: null }, { [Op.gt]: 0 }] }
+      totalCapacity: { [Op.and]: [{ [Op.ne]: null }, { [Op.ne]: '0' }] }
     },
     include: [
       {
@@ -39,7 +38,9 @@ export default class Offer extends Model {
 
   @Column(DataType.VIRTUAL)
   get utilizedCapacity (): BigNumber {
-    return (this.agreements || []).map(request => request.size).reduce((previousValue, currentValue) => previousValue.plus(currentValue), bn(0))
+    return (this.agreements || [])
+      .map(request => request.size)
+      .reduce((previousValue, currentValue) => previousValue.plus(currentValue), new BigNumber(0))
   }
 
   @Column(DataType.VIRTUAL)

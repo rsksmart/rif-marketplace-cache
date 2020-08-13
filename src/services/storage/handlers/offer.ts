@@ -6,13 +6,13 @@ import { EventData } from 'web3-eth-contract'
 import { loggingFactory } from '../../../logger'
 import { Handler } from '../../../definitions'
 import { OfferService, StorageServices } from '../index'
-import { bn, decodeByteArray, wrapEvent } from '../../../utils'
+import { decodeByteArray, wrapEvent } from '../../../utils'
 import { EventError } from '../../../errors'
 
 const logger = loggingFactory('storage:handler:offer')
 
 function updatePrices (offer: Offer, period: BigNumber, price: BigNumber): Promise<BillingPlan> {
-  const priceEntity = offer.plans && offer.plans.find(value => bn(value.period).eq(period))
+  const priceEntity = offer.plans && offer.plans.find(value => new BigNumber(value.period).eq(period))
   logger.info(`Updating period ${period} to price ${price} (ID: ${offer.address})`)
 
   if (priceEntity) {

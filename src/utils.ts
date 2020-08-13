@@ -13,12 +13,8 @@ const readFile = promisify(readFileCb)
 /**
  * Bignumber.js utils functions
  */
-export function bn (v: any): BigNumber {
-  return new BigNumber(v)
-}
-
-export function bnFloor (v: any): BigNumber {
-  return v.integerValue(BigNumber.ROUND_FLOOR)
+export function bnFloor (v: string | number | BigNumber): BigNumber {
+  return new BigNumber(v).integerValue(BigNumber.ROUND_FLOOR)
 }
 
 /**

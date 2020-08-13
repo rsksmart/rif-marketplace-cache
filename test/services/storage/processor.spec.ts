@@ -1,3 +1,4 @@
+import BigNumber from 'bignumber.js'
 import chai from 'chai'
 import chaiAsPromised from 'chai-as-promised'
 import sinonChai from 'sinon-chai'
@@ -17,7 +18,7 @@ import { blockMock, eventMock } from '../../utils'
 import { EventError } from '../../../src/errors'
 import BillingPlan from '../../../src/services/storage/models/price.model'
 import Agreement from '../../../src/services/storage/models/agreement.model'
-import { bn, decodeByteArray, wrapEvent } from '../../../src/utils'
+import { decodeByteArray, wrapEvent } from '../../../src/utils'
 import { getBlockDate } from '../../../src/blockchain/utils'
 
 chai.use(sinonChai)
@@ -66,7 +67,7 @@ describe('Storage services: Events Processor', () => {
       const event = eventMock({
         event: 'TotalCapacitySet',
         returnValues: {
-          capacity: bn(1000),
+          capacity: 1000,
           provider: 'test'
         }
       })
@@ -82,7 +83,7 @@ describe('Storage services: Events Processor', () => {
         const event = eventMock({
           event: 'TotalCapacitySet',
           returnValues: {
-            capacity: bn(1000),
+            capacity: 1000,
             provider
           }
         })
@@ -90,15 +91,15 @@ describe('Storage services: Events Processor', () => {
         await processor(event)
         const updatedEventFromDB = await Offer.findOne({ where: { address: event.returnValues.provider } })
 
-        expect(updatedEventFromDB?.totalCapacity).to.be.eql(event.returnValues.capacity)
+        expect(updatedEventFromDB?.totalCapacity).to.be.eql(new BigNumber(event.returnValues.capacity))
       })
     })
     describe('BillingPlanSet', () => {
       const billingEvent: EventData = eventMock({
         event: 'BillingPlanSet',
         returnValues: {
-          price: bn(1000),
-          period: bn(99),
+          price: 1000,
+          period: 99,
           provider
         }
       })
@@ -106,8 +107,8 @@ describe('Storage services: Events Processor', () => {
         const event = eventMock({
           event: 'BillingPlanSet',
           returnValues: {
-            price: bn(1000),
-            period: bn(69696),
+            price: 1000,
+            period: 69696,
             provider
           }
         })
@@ -118,8 +119,8 @@ describe('Storage services: Events Processor', () => {
 
         expect(billingPlan).to.be.instanceOf(BillingPlan)
         expect(billingPlan?.createdAt).to.be.eql(billingPlan?.updatedAt) // new instance
-        expect(billingPlan?.amount).to.be.eql(event.returnValues.price)
-        expect(billingPlan?.period).to.be.eql(event.returnValues.period)
+        expect(billingPlan?.amount).to.be.eql(new BigNumber(event.returnValues.price))
+        expect(billingPlan?.period).to.be.eql(new BigNumber(event.returnValues.period))
       })
       it('create new BillingPlan if has one with different period`', async () => {
         await processor(billingEvent)
@@ -128,18 +129,18 @@ describe('Storage services: Events Processor', () => {
 
         expect(billingPlan).to.be.instanceOf(BillingPlan)
         expect(billingPlan?.createdAt).to.be.eql(billingPlan?.updatedAt) // new instance
-        expect(billingPlan?.amount).to.be.eql(billingEvent.returnValues.price)
-        expect(billingPlan?.period).to.be.eql(billingEvent.returnValues.period)
+        expect(billingPlan?.amount).to.be.eql(new BigNumber(billingEvent.returnValues.price))
+        expect(billingPlan?.period).to.be.eql(new BigNumber(billingEvent.returnValues.period))
       })
       it('update BillingPlan', async () => {
         // Create new offer and billing plan
         const offer = await Offer.create({ address: provider })
         const billing = await BillingPlan.create({ offerId: offer.address, period: 99, amount: 1 })
         expect(offer).to.be.instanceOf(Offer)
-        expect(billing?.amount).to.be.eql(bn(1))
+        expect(billing?.amount).to.be.eql(new BigNumber(1))
         expect(billing).to.be.instanceOf(BillingPlan)
 
-        const newPrice = bn(99999)
+        const newPrice = 99999
         billingEvent.returnValues.price = newPrice
 
         await processor(billingEvent)
@@ -148,8 +149,8 @@ describe('Storage services: Events Processor', () => {
 
         expect(billingPlan).to.be.instanceOf(BillingPlan)
         expect(billingPlan?.updatedAt).to.be.gt(billingPlan?.createdAt)
-        expect(billingPlan?.amount).to.be.eql(newPrice)
-        expect(billingPlan?.period).to.be.eql(billingEvent.returnValues.period)
+        expect(billingPlan?.amount).to.be.eql(new BigNumber(newPrice))
+        expect(billingPlan?.period).to.be.eql(new BigNumber(billingEvent.returnValues.period))
       })
     })
     describe('MessageEmitted', () => {
@@ -211,9 +212,9 @@ describe('Storage services: Events Processor', () => {
     let offer: Offer
     let plan: BillingPlan
     let agreementData: object
-    const billingPeriod = bn(99)
-    const size = bn(100)
-    const availableFunds = bn(100)
+    const billingPeriod = 99
+    const size = 100
+    const availableFunds = 100
     const agreementCreator = asciiToHex('AgreementCreator')
     const dataReference = ['Reference1', 'Reference2'].map(asciiToHex)
     const agreementReference = soliditySha3(agreementCreator, ...dataReference)
@@ -240,7 +241,7 @@ describe('Storage services: Events Processor', () => {
         offerId: provider,
         size,
         billingPeriod,
-        billingPrice: bn(100),
+        billingPrice: 100,
         availableFunds,
         lastPayout: await getBlockDate(eth, blockNumber)
       }
@@ -284,10 +285,10 @@ describe('Storage services: Events Processor', () => {
         expect(agreement?.dataReference).to.be.eql(decodeByteArray(event.returnValues.dataReference))
         expect(agreement?.consumer).to.be.eql(event.returnValues.agreementCreator)
         expect(agreement?.offerId).to.be.eql(provider)
-        expect(agreement?.size).to.be.eql(event.returnValues.size)
-        expect(agreement?.billingPeriod).to.be.eql(event.returnValues.billingPeriod)
-        expect(agreement?.billingPrice).to.be.eql(plan.amount)
-        expect(agreement?.availableFunds).to.be.eql(event.returnValues.availableFunds)
+        expect(agreement?.size).to.be.eql(new BigNumber(event.returnValues.size))
+        expect(agreement?.billingPeriod).to.be.eql(new BigNumber(event.returnValues.billingPeriod))
+        expect(agreement?.billingPrice).to.be.eql(new BigNumber(plan.amount))
+        expect(agreement?.availableFunds).to.be.eql(new BigNumber(event.returnValues.availableFunds))
         expect(agreement?.lastPayout).to.be.eql(await getBlockDate(eth, event.blockNumber))
         expect(agreementServiceEmitSpy).to.have.been.calledOnceWith('created')
       })

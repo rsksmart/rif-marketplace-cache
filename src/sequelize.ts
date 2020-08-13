@@ -1,13 +1,12 @@
 import { DataType, Model, Sequelize, SequelizeOptions } from 'sequelize-typescript'
 import { ModelAttributeColumnOptions } from 'sequelize'
+import BigNumber from 'bignumber.js'
 import path from 'path'
 import config from 'config'
 import sqlFormatter from 'sql-formatter'
-import BigNumber from 'bignumber.js'
 
 import { Application } from './definitions'
 import { loggingFactory } from './logger'
-import { bn } from './utils'
 
 const logger = loggingFactory('db')
 
@@ -39,15 +38,15 @@ export function BigNumberStringType (propName: string): Partial<ModelAttributeCo
   return {
     type: DataType.STRING(),
     get (this: Model): BigNumber {
-      return bn(this.getDataValue(propName as any))
+      return new BigNumber(this.getDataValue(propName as any))
     },
     set (this: Model, value: string | number | BigNumber): void {
-      const n = bn(value)
+      const n = new BigNumber(value)
 
       if (isNaN(n.toNumber())) {
         throw new Error(`${this.constructor.name + ' ' || ''}Model Error: ${propName} should be a one of [number, string(number), BigNumber]`)
       }
-      this.setDataValue(propName as any, bn(value).toString(10))
+      this.setDataValue(propName as any, n.toString(10))
     }
   }
 }

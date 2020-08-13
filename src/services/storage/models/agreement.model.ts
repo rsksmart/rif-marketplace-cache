@@ -3,7 +3,7 @@ import BigNumber from 'bignumber.js'
 
 import Offer from './offer.model'
 import { BigNumberStringType } from '../../../sequelize'
-import { bn, bnFloor } from '../../../utils'
+import { bnFloor } from '../../../utils'
 
 @Table({
   freezeTableName: true,
@@ -53,7 +53,7 @@ export default class Agreement extends Model {
   get numberOfPrepaidPeriods (): BigNumber {
     return this.periodPrice().gt(0)
       ? bnFloor(this.availableFunds.div(this.periodPrice()))
-      : bn(0)
+      : new BigNumber(0)
   }
 
   @Column(DataType.VIRTUAL)
@@ -61,7 +61,7 @@ export default class Agreement extends Model {
     // Date.now = ms
     // this.lastPayout.getTime = ms
     // this.billingPeriod = seconds ==> * 1000
-    return bnFloor(bn(Date.now() - this.lastPayout.getTime()).div(this.billingPeriod.times(1000)))
+    return bnFloor(new BigNumber(Date.now() - this.lastPayout.getTime()).div(this.billingPeriod.times(1000)))
   }
 
   @Column(DataType.VIRTUAL)

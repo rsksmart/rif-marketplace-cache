@@ -20,7 +20,7 @@ const handlers = {
     const id = soliditySha3(event.returnValues.agreementCreator, ...event.returnValues.dataReference)
     const dataReference = decodeByteArray(event.returnValues.dataReference)
 
-    const plan = await BillingPlan.findOne({ where: { offerId, period: period.toString() } })
+    const plan = await BillingPlan.findOne({ where: { offerId, period: period } })
 
     if (!plan) {
       throw new EventError(`Price for period ${period} and offer ${offerId} not found when creating new request ${id}`, 'RequestMade')
