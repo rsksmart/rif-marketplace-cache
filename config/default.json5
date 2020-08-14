@@ -1,5 +1,4 @@
 // For full syntax see /src/types.ts::Config interface
-
 {
   db: 'sqlite:db.sqlite',
 
