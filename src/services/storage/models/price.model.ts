@@ -10,7 +10,7 @@ export default class BillingPlan extends Model {
   period!: BigNumber
 
   @Column({ ...BigNumberStringType('amount') })
-  amount!: BigNumber
+  price!: BigNumber
 
   @ForeignKey(() => Offer)
   @Column

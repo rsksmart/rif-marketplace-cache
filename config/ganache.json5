@@ -5,7 +5,7 @@
   },
   storage: {
     enabled: true,
-    contractAddress: "0x47a2Db5D68751EeAdFBC44851E84AcDB4F7299Cc",
+    contractAddress: "0x970e1d481CEDbeaeFE776275F0d1b4E1B301bB3b",
     eventsEmitter: {
       confirmations: 2
     }

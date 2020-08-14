@@ -23,7 +23,7 @@ import { BigNumberStringType } from '../../../sequelize'
 @Table({ freezeTableName: true, tableName: 'storage_offer' })
 export default class Offer extends Model {
   @Column({ primaryKey: true, type: DataType.STRING(64) })
-  address!: string
+  provider!: string
 
   @Column({ ...BigNumberStringType('totalCapacity') })
   totalCapacity!: BigNumber
