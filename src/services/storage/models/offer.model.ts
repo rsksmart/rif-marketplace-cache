@@ -2,7 +2,7 @@ import { Table, DataType, Column, Model, HasMany, Scopes } from 'sequelize-types
 import { Op } from 'sequelize'
 import BigNumber from 'bignumber.js'
 
-import BillingPlan from './price.model'
+import BillingPlan from './billing-plan.model'
 import Agreement from './agreement.model'
 import { BigNumberStringType } from '../../../sequelize'
 

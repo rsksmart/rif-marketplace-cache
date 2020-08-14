@@ -1,7 +1,7 @@
 import BigNumber from 'bignumber.js'
 
 import Offer from '../models/offer.model'
-import BillingPlan from '../models/price.model'
+import BillingPlan from '../models/billing-plan.model'
 import { EventData } from 'web3-eth-contract'
 import { loggingFactory } from '../../../logger'
 import { Handler } from '../../../definitions'
@@ -19,8 +19,8 @@ function updatePrices (offer: Offer, period: BigNumber, price: BigNumber): Promi
     billingPlan.price = price
     return billingPlan.save()
   } else {
-    const newPriceEntity = new BillingPlan({ period, amount: price, offerId: offer.provider })
-    return newPriceEntity.save()
+    const newBillingPlanEntity = new BillingPlan({ period, price, offerId: offer.provider })
+    return newBillingPlanEntity.save()
   }
 }
 

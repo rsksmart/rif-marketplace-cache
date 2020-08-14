@@ -9,7 +9,7 @@ import { decodeByteArray, wrapEvent } from '../../../utils'
 import { getBlockDate } from '../../../blockchain/utils'
 
 import Agreement from '../models/agreement.model'
-import BillingPlan from '../models/price.model'
+import BillingPlan from '../models/billing-plan.model'
 import { StorageServices } from '../index'
 
 const logger = loggingFactory('storage:handler:request')
