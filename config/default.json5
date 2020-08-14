@@ -1,5 +1,4 @@
 // For full syntax see /src/types.ts::Config interface
-
 {
   db: 'sqlite:db.sqlite',
 
@@ -10,18 +9,6 @@
   },
 
   blockchain: {
-    // Topics that will be listened to
-    topics: [
-      'TotalCapacitySet(address,uin64)',
-      //      'BillingPlanSet(address,uint64,uint128)',
-      'MessageEmitted(address,bytes32[])',
-      'NewAgreement(bytes32,bytes32[],address,address,uint128,uint64,uint128,uint256)',
-      'AgreementFundsDeposited(bytes32,uint256)',
-      'AgreementFundsWithdrawn(bytes32,uint256)',
-      'AgreementFundsPayout(bytes32,uint256)',
-      'AgreementStopped(bytes32)',
-    ],
-
     // Number of blocks that is waited AFTER the event is confirmed before
     // it is removed from database.
     // Such parameter is needed for a REST API where a host could miss that an event has
@@ -56,10 +43,10 @@
 
     // Topics that will be listened to
     topics: [
-      'TotalCapacitySet(address,uin128)',
-      'BillingPlanSet(address,uint64,uint64)',
+      'TotalCapacitySet(address,uin64)',
+      'BillingPlanSet(address,uint64,uint128)',
       'MessageEmitted(address,bytes32[])',
-      'NewAgreement(bytes32,bytes32[],address,address,uint128,uint64,uint64,uint256)',
+      'NewAgreement(bytes32,bytes32[],address,address,uint128,uint64,uint128,uint256)',
       'AgreementFundsDeposited(bytes32,uint256)',
       'AgreementFundsWithdrawn(bytes32,uint256)',
       'AgreementFundsPayout(bytes32,uint256)',
