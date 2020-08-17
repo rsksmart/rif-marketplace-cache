@@ -9,7 +9,7 @@ import { decodeByteArray, wrapEvent } from '../../../utils'
 import { getBlockDate } from '../../../blockchain/utils'
 
 import Agreement from '../models/agreement.model'
-import BillingPlan from '../models/price.model'
+import BillingPlan from '../models/billing-plan.model'
 import { StorageServices } from '../index'
 
 const logger = loggingFactory('storage:handler:request')
@@ -20,7 +20,7 @@ const handlers = {
     const id = soliditySha3(event.returnValues.agreementCreator, ...event.returnValues.dataReference)
     const dataReference = decodeByteArray(event.returnValues.dataReference)
 
-    const plan = await BillingPlan.findOne({ where: { offerId, period: period } })
+    const plan = await BillingPlan.findOne({ where: { offerId, period } })
 
     if (!plan) {
       throw new EventError(`Price for period ${period} and offer ${offerId} not found when creating new request ${id}`, 'RequestMade')
@@ -33,7 +33,7 @@ const handlers = {
       offerId: offerId,
       size: event.returnValues.size,
       billingPeriod: event.returnValues.billingPeriod,
-      billingPrice: plan.amount,
+      billingPrice: plan.price,
       availableFunds: event.returnValues.availableFunds,
       lastPayout: await getBlockDate(eth, event.blockNumber)
     }

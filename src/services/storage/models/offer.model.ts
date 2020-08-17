@@ -2,7 +2,7 @@ import { Table, DataType, Column, Model, HasMany, Scopes } from 'sequelize-types
 import { Op } from 'sequelize'
 import BigNumber from 'bignumber.js'
 
-import BillingPlan from './price.model'
+import BillingPlan from './billing-plan.model'
 import Agreement from './agreement.model'
 import { BigNumberStringType } from '../../../sequelize'
 
@@ -23,7 +23,7 @@ import { BigNumberStringType } from '../../../sequelize'
 @Table({ freezeTableName: true, tableName: 'storage_offer' })
 export default class Offer extends Model {
   @Column({ primaryKey: true, type: DataType.STRING(64) })
-  address!: string
+  provider!: string
 
   @Column({ ...BigNumberStringType('totalCapacity') })
   totalCapacity!: BigNumber

@@ -1,5 +1,5 @@
 import { HookContext } from '@feathersjs/feathers'
-import BillingPlan from '../models/price.model'
+import BillingPlan from '../models/billing-plan.model'
 import { disallow, discard } from 'feathers-hooks-common'
 import Agreement from '../models/agreement.model'
 import { hooks } from 'feathers-sequelize'
