@@ -7,6 +7,7 @@ import sqlFormatter from 'sql-formatter'
 
 import { Application } from './definitions'
 import { loggingFactory } from './logger'
+import DbMigration from '../migrations'
 
 const logger = loggingFactory('db')
 
@@ -58,11 +59,15 @@ export function BigNumberStringType (propName: string): Partial<ModelAttributeCo
   }
 }
 
-export default function (app: Application): void {
+export default async function (app: Application): Promise<void> {
   const sequelize = sequelizeFactory()
   const oldSetup = app.setup
 
   app.set('sequelize', sequelize)
+
+  // Run migration
+  logger.info('Run DB Migrations')
+  await DbMigration.getInstance(app.get('sequelizeSync')).up()
 
   app.setup = function (...args): ReturnType<Application['setup']> {
     const result = oldSetup.apply(this, args)
