@@ -66,7 +66,9 @@ export default class DbMigrationCommand extends BaseCLICommand {
   ]
 
   protected resolveDbPath (db: string): string {
-    if (!db) return path.resolve(this.config.dataDir, config.get<string>('db'))
+    if (!db) {
+      return path.resolve(this.config.dataDir, config.get<string>('db'))
+    }
 
     const parsed = path.parse(db)
 
@@ -79,7 +81,9 @@ export default class DbMigrationCommand extends BaseCLICommand {
           : `${parsed.base}.sqlite`
       )
     } else {
-      if (db[db.length - 1] === '/') throw new Error('Path should include the file name')
+      if (db[db.length - 1] === '/') {
+        throw new Error('Path should include the file name')
+      }
       return path.resolve(`${db}${parsed.ext ? '' : '.sqlite'}`)
     }
   }
@@ -118,23 +122,31 @@ export default class DbMigrationCommand extends BaseCLICommand {
 
   async run (): Promise<void> {
     const { flags: originalFlags } = this.parse(DbMigrationCommand)
-    const flags = originalFlags as OutputFlags<typeof DbMigrationCommand.flags>
+    const parsedFlags = originalFlags as OutputFlags<typeof DbMigrationCommand.flags>
 
-    if (flags.db) {
-      config.util.extendDeep(config, { db: `sqlite://${this.resolveDbPath(flags.db)}` })
+    if (parsedFlags.db) {
+      config.util.extendDeep(config, { db: `sqlite://${this.resolveDbPath(parsedFlags.db)}` })
     }
 
-    if (flags.generate) this.generateMigration(flags.generate)
+    if (parsedFlags.generate) {
+      this.generateMigration(parsedFlags.generate)
+    }
 
     // Init database connection
     const sequelize = sequelizeFactory()
     DbMigration.getInstance(sequelize)
 
-    if (!flags.up && !flags.down && !flags.generate) throw new Error('One of \'--generate, --up, --down\'  required')
+    if (!parsedFlags.up && !parsedFlags.down && !parsedFlags.generate) {
+      throw new Error('One of \'--generate, --up, --down\'  required')
+    }
 
-    if (flags.up) await this.migrate(flags.migration, flags)
+    if (parsedFlags.up) {
+      await this.migrate(parsedFlags.migration, parsedFlags)
+    }
 
-    if (flags.down) await this.undo(flags.migration, flags)
+    if (parsedFlags.down) {
+      await this.undo(parsedFlags.migration, parsedFlags)
+    }
 
     this.exit()
   }

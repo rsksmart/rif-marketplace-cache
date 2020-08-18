@@ -6,8 +6,11 @@ import { Sequelize } from 'sequelize-typescript'
 
 const logger = loggingFactory('db:migrations')
 
+type UpOptions = string | string[] | Umzug.UpToOptions | Umzug.UpDownMigrationsOptions
+type DownOptions = string | string[] | Umzug.DownToOptions | Umzug.UpDownMigrationsOptions
+
 export class Migration {
-  private umzugIns: Umzug.Umzug
+  private readonly umzugIns: Umzug.Umzug
 
   constructor (sequelize: Sequelize) {
     this.umzugIns = new Umzug({
@@ -23,12 +26,12 @@ export class Migration {
   }
 
   // eslint-disable-next-line require-await
-  async up (options?: string | string[] | Umzug.UpToOptions | Umzug.UpDownMigrationsOptions): Promise<Umzug.Migration[]> {
+  async up (options?: UpOptions): Promise<Umzug.Migration[]> {
     return this.umzugIns.up(options as any)
   }
 
   // eslint-disable-next-line require-await
-  async down (options?: string | string[] | Umzug.DownToOptions | Umzug.UpDownMigrationsOptions): Promise<Umzug.Migration[]> {
+  async down (options?: DownOptions): Promise<Umzug.Migration[]> {
     return this.umzugIns.down(options as any)
   }
 
@@ -39,7 +42,9 @@ export class Migration {
   // eslint-disable-next-line require-await
   async pending (): Promise<Umzug.Migration[]> {
     return this.umzugIns.pending().catch(e => {
-      if (e.code === 'ENOENT') return []
+      if (e.code === 'ENOENT') {
+        return []
+      }
       throw e
     })
   }
@@ -55,7 +60,9 @@ export default class DbMigration {
 
   static getInstance (sequelize?: Sequelize): Migration {
     if (!DbMigration.ins) {
-      if (!sequelize) throw new Error('You need to provide Sequelize instance')
+      if (!sequelize) {
+        throw new Error('You need to provide Sequelize instance')
+      }
       DbMigration.ins = new Migration(sequelize)
     }
 

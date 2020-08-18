@@ -67,7 +67,7 @@ export default async function (app: Application): Promise<void> {
 
   // Run migration
   logger.info('Run DB Migrations')
-  await DbMigration.getInstance(app.get('sequelizeSync')).up()
+  await DbMigration.getInstance(sequelize).up()
 
   app.setup = function (...args): ReturnType<Application['setup']> {
     const result = oldSetup.apply(this, args)
