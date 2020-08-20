@@ -40,7 +40,7 @@ export default class DbMigrationCommand extends BaseCLICommand {
     }),
     generate: flags.string({
       char: 'd',
-      description: 'Generate migrations',
+      description: 'Generate migrations using template [--generate=migration_name]',
       exclusive: ['up', 'down']
     }),
     to: flags.string({

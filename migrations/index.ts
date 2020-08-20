@@ -45,7 +45,7 @@ export class Migration {
       if (e.code === 'ENOENT') {
         return []
       }
-      throw e
+      return Promise.reject(e)
     })
   }
 
