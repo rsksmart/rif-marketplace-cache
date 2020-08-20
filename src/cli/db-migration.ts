@@ -90,12 +90,22 @@ export default class DbMigrationCommand extends BaseCLICommand {
   }
 
   async migrate (migrations?: string[], options?: { to: string }): Promise<void> {
+    if (!(await DbMigration.getInstance().pending()).length) {
+      this.log('No pending migrations found')
+      this.exit()
+    }
+
     this.log('DB migrations')
     await DbMigration.getInstance().up(options)
     this.log('Done')
   }
 
   async undo (migrations?: string[], options?: { to: string }): Promise<void> {
+    if (!(await DbMigration.getInstance().executed()).length) {
+      this.log('No executed migrations found')
+      this.exit()
+    }
+
     this.log('Undo DB migrations')
     await DbMigration.getInstance().down(options)
     this.log('Done')
