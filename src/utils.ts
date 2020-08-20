@@ -133,7 +133,6 @@ export function errorHandler (fn: (...args: any[]) => Promise<any>, logger: Logg
  */
 export async function waitForReadyApp (app: Application): Promise<void> {
   await app.get('storeInit')
-  await app.get('sequelizeSync')
 }
 
 /**
