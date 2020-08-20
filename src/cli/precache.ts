@@ -5,7 +5,7 @@ import { sequelizeFactory } from '../sequelize'
 import { BaseCLICommand, capitalizeFirstLetter, validateServices } from '../utils'
 import { initStore } from '../store'
 import { SupportedServices } from '../definitions'
-import DbMigration from '../../migrations'
+import DbMigration from '../migrations'
 
 export default class PreCache extends BaseCLICommand {
   static get description () {

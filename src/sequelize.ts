@@ -7,7 +7,7 @@ import sqlFormatter from 'sql-formatter'
 
 import { Application } from './definitions'
 import { loggingFactory } from './logger'
-import DbMigration from '../migrations'
+import DbMigration from './migrations'
 
 const logger = loggingFactory('db')
 

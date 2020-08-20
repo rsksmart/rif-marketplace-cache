@@ -3,7 +3,7 @@ import path from 'path'
 import { flags } from '@oclif/command'
 import { OutputFlags } from '@oclif/parser'
 
-import DbMigration from '../../migrations'
+import DbMigration from '../migrations'
 import { BaseCLICommand } from '../utils'
 import { sequelizeFactory } from '../sequelize'
 import config from 'config'

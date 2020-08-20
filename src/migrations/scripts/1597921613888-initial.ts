@@ -602,11 +602,9 @@ function run (queryInterface: QueryInterface, _commands: (transaction: any) => C
 }
 
 export default {
-  // eslint-disable-next-line require-await
   async up (queryInterface: QueryInterface, sequelize: SequelizeTs): Promise<void> {
     await queryInterface.sequelize.transaction(run(queryInterface, migrationCommands))
   },
-  // eslint-disable-next-line require-await
   async down (queryInterface: QueryInterface, sequelize: SequelizeTs): Promise<void> {
     await queryInterface.sequelize.transaction(run(queryInterface, rollbackCommands))
   }

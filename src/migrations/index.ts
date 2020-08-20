@@ -1,7 +1,7 @@
 import path from 'path'
 import Umzug from 'umzug'
 
-import { loggingFactory } from '../src/logger'
+import { loggingFactory } from '../logger'
 import { Sequelize } from 'sequelize-typescript'
 
 const logger = loggingFactory('db:migrations')
