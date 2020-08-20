@@ -66,7 +66,8 @@ export default async function (app: Application): Promise<void> {
   app.set('sequelize', sequelize)
 
   if ((await DbMigration.getInstance(sequelize).pending()).length) {
-    throw new Error('DB Migration required. Please use \'db-migration\' command to proceed')
+    logger.error('DB Migration required. Please use \'db-migration\' command to proceed')
+    process.exit()
   }
 
   app.setup = function (...args): ReturnType<Application['setup']> {

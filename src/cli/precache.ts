@@ -5,6 +5,7 @@ import { sequelizeFactory } from '../sequelize'
 import { BaseCLICommand, capitalizeFirstLetter, validateServices } from '../utils'
 import { initStore } from '../store'
 import { SupportedServices } from '../definitions'
+import DbMigration from '../../migrations'
 
 export default class PreCache extends BaseCLICommand {
   static get description () {
@@ -40,6 +41,10 @@ ${formattedServices}`
 
     // Init database connection
     const sequelize = sequelizeFactory()
+
+    if ((await DbMigration.getInstance(sequelize).pending()).length) {
+      throw new Error('DB Migration required. Please use \'db-migration\' command to proceed')
+    }
 
     // Init Store
     await initStore(sequelize)
