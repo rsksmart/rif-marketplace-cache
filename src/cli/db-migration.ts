@@ -62,7 +62,8 @@ export default class DbMigrationCommand extends BaseCLICommand {
     '$ rif-marketplace-cache db --up --to 0-test',
     '$ rif-marketplace-cache --up --migrations 01-test --migrations 02-test',
     '$ rif-marketplace-cache --up --db ./test.sqlite --to 09-test',
-    '$ rif-marketplace-cache --down --db ./test.sqlite --to 09-test'
+    '$ rif-marketplace-cache --down --db ./test.sqlite --to 09-test',
+    '$ rif-pinning db --generate my_first_migration'
   ]
 
   protected resolveDbPath (db: string): string {
