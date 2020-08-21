@@ -278,7 +278,9 @@ export class DbBackUpJob {
   private backUpConfig: DbBackUpConfig
 
   constructor (newBlockEmitter: AutoStartStopEventEmitter) {
-    if (!config.has('dbBackUp')) throw new Error('DB Backup config not exist')
+    if (!config.has('dbBackUp')) {
+      throw new Error('DB Backup config not exist')
+    }
     this.backUpConfig = config.get<{ blocks: number, path: string }>('dbBackUp')
 
     const eventEmittersConfirmations = this.getEventEmittersConfigs()
@@ -302,7 +304,9 @@ export class DbBackUpJob {
       await fs.promises.rename(path.resolve(backupConfig.path, db), path.resolve(backupConfig.path, `${block.hash}:${block.number}-${db}`))
 
       // remove the oldest version
-      if (previousBackUp) await fs.promises.unlink(path.resolve(backupConfig.path, previousBackUp.name))
+      if (previousBackUp) {
+        await fs.promises.unlink(path.resolve(backupConfig.path, previousBackUp.name))
+      }
     }
   }
 
