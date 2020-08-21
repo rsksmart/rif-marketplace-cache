@@ -88,13 +88,8 @@ describe('RNS services: Events Processor', () => {
       })
 
       // Create domain with owner
-      const domain = await Domain.create({ tokenId: Utils.numberToHex(tokenId) })
-      const owner = await DomainOwner.create({ tokenId: Utils.numberToHex(tokenId), address: from })
-
-      expect(domain).to.be.instanceOf(Domain)
-      expect(domain?.tokenId).to.be.eql(Utils.numberToHex(tokenId))
-      expect(owner).to.be.instanceOf(DomainOwner)
-      expect(owner?.address).to.be.eql(from)
+      await Domain.create({ tokenId: Utils.numberToHex(tokenId) })
+      await DomainOwner.create({ tokenId: Utils.numberToHex(tokenId), address: from })
 
       // Transfer
       await processor(event)
@@ -120,13 +115,8 @@ describe('RNS services: Events Processor', () => {
       })
 
       // Create domain with owner
-      const domain = await Domain.create({ tokenId: Utils.numberToHex(tokenId) })
-      const owner = await DomainOwner.create({ tokenId: Utils.numberToHex(tokenId), address: from })
-
-      expect(domain).to.be.instanceOf(Domain)
-      expect(domain?.tokenId).to.be.eql(Utils.numberToHex(tokenId))
-      expect(owner).to.be.instanceOf(DomainOwner)
-      expect(owner?.address).to.be.eql(from)
+      await Domain.create({ tokenId: Utils.numberToHex(tokenId) })
+      await DomainOwner.create({ tokenId: Utils.numberToHex(tokenId), address: from })
 
       // Transfer
       await processor(event)
@@ -174,13 +164,8 @@ describe('RNS services: Events Processor', () => {
       })
 
       // Create domain with owner
-      const domain = await Domain.create({ tokenId: Utils.numberToHex(tokenId) })
-      const owner = await DomainOwner.create({ tokenId: Utils.numberToHex(tokenId), address: from })
-
-      expect(domain).to.be.instanceOf(Domain)
-      expect(domain?.tokenId).to.be.eql(Utils.numberToHex(tokenId))
-      expect(owner).to.be.instanceOf(DomainOwner)
-      expect(owner?.address).to.be.eql(from)
+      await Domain.create({ tokenId: Utils.numberToHex(tokenId) })
+      await DomainOwner.create({ tokenId: Utils.numberToHex(tokenId), address: from })
 
       await processor(event)
 
@@ -198,13 +183,8 @@ describe('RNS services: Events Processor', () => {
       })
 
       // Create domain with owner
-      const domain = await Domain.create({ tokenId: Utils.numberToHex(tokenId) })
-      const owner = await DomainOwner.create({ tokenId: Utils.numberToHex(tokenId), address: from })
-
-      expect(domain).to.be.instanceOf(Domain)
-      expect(domain?.tokenId).to.be.eql(Utils.numberToHex(tokenId))
-      expect(owner).to.be.instanceOf(DomainOwner)
-      expect(owner?.address).to.be.eql(from)
+      await Domain.create({ tokenId: Utils.numberToHex(tokenId) })
+      await DomainOwner.create({ tokenId: Utils.numberToHex(tokenId), address: from })
 
       // Setup expiration date
       await processor(event)
@@ -253,8 +233,7 @@ describe('RNS services: Events Processor', () => {
       })
 
       // Create domain
-      const domain = await Domain.create({ tokenId: Utils.numberToHex(tokenId) })
-      expect(domain).to.be.instanceOf(Domain)
+      await Domain.create({ tokenId: Utils.numberToHex(tokenId) })
 
       await processor(event)
 
@@ -297,13 +276,8 @@ describe('RNS services: Events Processor', () => {
       })
 
       // Create domain with owner
-      const domain = await Domain.create({ tokenId: Utils.numberToHex(tokenId) })
+      await Domain.create({ tokenId: Utils.numberToHex(tokenId) })
       const owner = await DomainOwner.create({ tokenId: Utils.numberToHex(tokenId), address: from })
-
-      expect(domain).to.be.instanceOf(Domain)
-      expect(domain?.tokenId).to.be.eql(Utils.numberToHex(tokenId))
-      expect(owner).to.be.instanceOf(DomainOwner)
-      expect(owner?.address).to.be.eql(from)
 
       await processor(event)
 
@@ -326,11 +300,6 @@ describe('RNS services: Events Processor', () => {
       // Create domain with owner
       const domain = await Domain.create({ tokenId: Utils.numberToHex(tokenId) })
       const owner = await DomainOwner.create({ tokenId: Utils.numberToHex(tokenId), address: from })
-
-      expect(domain).to.be.instanceOf(Domain)
-      expect(domain?.tokenId).to.be.eql(Utils.numberToHex(tokenId))
-      expect(owner).to.be.instanceOf(DomainOwner)
-      expect(owner?.address).to.be.eql(from)
 
       // Process first offer
       await processor(event)
@@ -379,22 +348,12 @@ describe('RNS services: Events Processor', () => {
       })
 
       // Create first domain with owner
-      const domain = await Domain.create({ tokenId: Utils.numberToHex(tokenId) })
+      await Domain.create({ tokenId: Utils.numberToHex(tokenId) })
       const owner = await DomainOwner.create({ tokenId: Utils.numberToHex(tokenId), address: from })
 
-      expect(domain).to.be.instanceOf(Domain)
-      expect(domain?.tokenId).to.be.eql(Utils.numberToHex(tokenId))
-      expect(owner).to.be.instanceOf(DomainOwner)
-      expect(owner?.address).to.be.eql(from)
-
       // Create second domain with owner
-      const otherDomain = await Domain.create({ tokenId: Utils.numberToHex(otherTokenId) })
+      await Domain.create({ tokenId: Utils.numberToHex(otherTokenId) })
       const otherOwner = await DomainOwner.create({ tokenId: Utils.numberToHex(otherTokenId), address: from })
-
-      expect(otherDomain).to.be.instanceOf(Domain)
-      expect(otherDomain?.tokenId).to.be.eql(Utils.numberToHex(otherTokenId))
-      expect(otherOwner).to.be.instanceOf(DomainOwner)
-      expect(otherOwner?.address).to.be.eql(from)
 
       // Process first offer
       await processor(event)
@@ -453,6 +412,8 @@ describe('RNS services: Events Processor', () => {
   describe('Sold events', () => {
     let processor: (event: EventData) => Promise<void>
     let soldService: RnsBaseService
+    let offersService: RnsBaseService
+    let domainService: RnsBaseService
     let soldServiceEmitSpy: sinon.SinonSpy
 
     const label = 'domain'
@@ -464,8 +425,11 @@ describe('RNS services: Events Processor', () => {
     const cost = 10000
 
     before(() => {
-      soldService = new RnsBaseService({ Model: DomainOffer })
-      processor = eventProcessor(logger, eth, { sold: soldService } as RnsServices)
+      soldService = new RnsBaseService({ Model: SoldDomain })
+      offersService = new RnsBaseService({ Model: DomainOffer })
+      domainService = new RnsBaseService({ Model: Domain })
+
+      processor = eventProcessor(logger, eth, { sold: soldService, offers: offersService, domains: domainService } as RnsServices)
       soldServiceEmitSpy = sinon.spy()
       soldService.emit = soldServiceEmitSpy
     })
@@ -477,11 +441,13 @@ describe('RNS services: Events Processor', () => {
     it('should sell a Domain', async () => {
       const event = eventMock({
         event: 'TokenSold',
+        transactionHash: 'tx_hash',
+        blockNumber: 1,
         returnValues: { tokenId, newOwner: to }
       })
 
       // Create domain, owner and offer
-      const domain = await Domain.create({ tokenId: Utils.numberToHex(tokenId) })
+      await Domain.create({ tokenId: Utils.numberToHex(tokenId) })
       const owner = await DomainOwner.create({ tokenId: Utils.numberToHex(tokenId), address: from })
       const offer = await DomainOffer.create({
         txHash: 'tx_hash',
@@ -493,20 +459,80 @@ describe('RNS services: Events Processor', () => {
         creationDate: (new Date()).getTime().toString()
       })
 
-      expect(domain).to.be.instanceOf(Domain)
-      expect(domain?.tokenId).to.be.eql(Utils.numberToHex(tokenId))
-      expect(owner).to.be.instanceOf(DomainOwner)
-      expect(owner?.address).to.be.eql(from)
-      expect(offer).to.be.instanceOf(DomainOffer)
-      
+      // Sell Domain
       await processor(event)
 
       const createdEvent = await DomainOffer.findOne({ where: { tokenId: Utils.numberToHex(tokenId) } })
-      expect(createdEvent).to.be.instanceOf(DomainOffer)
-      expect(createdEvent?.tokenId).to.be.eql(Utils.numberToHex(event.returnValues.tokenId))
-      expect(createdEvent?.ownerAddress).to.be.eql(owner?.address)
-      expect(createdEvent?.paymentToken).to.be.eql(event.returnValues.paymentToken)
-      expect(createdEvent?.priceString).to.be.eql(event.returnValues.cost.toString())
+      expect(createdEvent).to.be.eql(null)
+
+      const soldEvent = await SoldDomain.findOne({ where: { tokenId: Utils.numberToHex(tokenId) } })
+      expect(soldEvent).to.be.instanceOf(SoldDomain)
+      expect(soldEvent?.paymentToken).to.be.eql(offer?.paymentToken)
+      expect(soldEvent?.priceString).to.be.eql(offer?.priceString)
+      expect(soldServiceEmitSpy).to.have.been.calledOnceWith('created')
+    })
+
+    it('should handle multiple Sells in the same Transaction', async () => {
+      const event = eventMock({
+        event: 'TokenSold',
+        transactionHash: 'tx_hash',
+        blockNumber: 1,
+        returnValues: { tokenId, newOwner: to }
+      })
+
+      const newEvent = eventMock({
+        event: 'TokenSold',
+        transactionHash: 'tx_hash',
+        blockNumber: 1,
+        returnValues: { tokenId: otherTokenId, newOwner: to }
+      })
+
+      // Create the domains, owners and offers
+      await Domain.create({ tokenId: Utils.numberToHex(tokenId) })
+      const owner = await DomainOwner.create({ tokenId: Utils.numberToHex(tokenId), address: from })
+      const offer = await DomainOffer.create({
+        txHash: 'tx_hash',
+        ownerAddress: owner?.address,
+        tokenId: Utils.numberToHex(tokenId),
+        paymentToken,
+        price: cost,
+        priceString: cost.toString(),
+        creationDate: (new Date()).getTime().toString()
+      })
+
+      await Domain.create({ tokenId: Utils.numberToHex(otherTokenId) })
+      const otherOwner = await DomainOwner.create({ tokenId: Utils.numberToHex(otherTokenId), address: from })
+      const newOffer = await DomainOffer.create({
+        txHash: 'tx_hash',
+        ownerAddress: otherOwner?.address,
+        tokenId: Utils.numberToHex(otherTokenId),
+        paymentToken,
+        price: cost,
+        priceString: cost.toString(),
+        creationDate: (new Date()).getTime().toString()
+      })
+
+      // Sell Domain
+      await processor(event)
+
+      const createdEvent = await DomainOffer.findOne({ where: { tokenId: Utils.numberToHex(tokenId) } })
+      expect(createdEvent).to.be.eql(null)
+      const soldEvent = await SoldDomain.findOne({ where: { tokenId: Utils.numberToHex(tokenId) } })
+      expect(soldEvent).to.be.instanceOf(SoldDomain)
+      expect(soldEvent?.paymentToken).to.be.eql(offer?.paymentToken)
+      expect(soldEvent?.priceString).to.be.eql(offer?.priceString)
+      expect(soldServiceEmitSpy).to.have.been.calledWith('created', { ownerAddress: owner?.address, tokenId: tokenId })
+
+      // Sell second Domain in the same Transaction
+      await processor(newEvent)
+
+      const newCreatedEvent = await DomainOffer.findOne({ where: { tokenId: Utils.numberToHex(otherTokenId) } })
+      expect(newCreatedEvent).to.be.eql(null)
+      const newSoldEvent = await SoldDomain.findOne({ where: { tokenId: Utils.numberToHex(otherTokenId) } })
+      expect(newSoldEvent).to.be.instanceOf(SoldDomain)
+      expect(newSoldEvent?.paymentToken).to.be.eql(newOffer?.paymentToken)
+      expect(newSoldEvent?.priceString).to.be.eql(newOffer?.priceString)
+      expect(soldServiceEmitSpy).to.have.been.calledWith('created', { ownerAddress: otherOwner?.address, tokenId: otherTokenId })
     })
   })
 })
