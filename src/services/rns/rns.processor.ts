@@ -14,20 +14,9 @@ import Transfer from './models/transfer.model'
 import SoldDomain from './models/sold-domain.model'
 
 /**
- * Creates the transfer record and updates DomainOwner
+ * Updates Domain Owner
  */
-async function registerTransfer (transactionHash: string, tokenId: string, sellerAddress: string, buyerAddress: string, logger: Logger, domainsService: RnsBaseService) {
-  const transferDomain = await Transfer.create({
-    id: transactionHash,
-    tokenId,
-    sellerAddress,
-    buyerAddress
-  })
-
-  if (transferDomain) {
-    logger.info(`Transfer event: Transfer ${tokenId} created`)
-  }
-
+async function registerOwner (tokenId: string, buyerAddress: string, logger: Logger, domainsService: RnsBaseService) {
   const domain = await Domain.findByPk(tokenId)
 
   if (domain) {
@@ -46,6 +35,27 @@ async function registerTransfer (transactionHash: string, tokenId: string, selle
     }
     logger.info(`Transfer event: Created Domain ${tokenId} for owner ${buyerAddress}`)
   }
+}
+
+/**
+ * Creates the transfer record
+ */
+async function registerTransfer (transactionHash: string, tokenId: string, sellerAddress: string, buyerAddress: string, logger: Logger, domainsService: RnsBaseService): Promise<number> {
+  const transferDomain = await Transfer.create({
+    txHash: transactionHash,
+    tokenId,
+    sellerAddress,
+    buyerAddress
+  })
+
+  if (transferDomain) {
+    logger.info(`Transfer event: Transfer ${transferDomain.id} for ${tokenId} created`)
+  }
+
+  await registerOwner(tokenId, buyerAddress, logger, domainsService)
+
+  // Return transfer Id
+  return transferDomain.id
 }
 
 async function transferHandler (logger: Logger, eventData: EventData, eth: Eth, services: RnsServices): Promise<void> {
@@ -97,7 +107,7 @@ async function transferHandler (logger: Logger, eventData: EventData, eth: Eth, 
   }
 
   // Register Transfer
-  registerTransfer(transactionHash, tokenId, from, ownerAddress, logger, domainsService)
+  await registerTransfer(transactionHash, tokenId, from, ownerAddress, logger, domainsService)
 }
 
 async function expirationChangedHandler (logger: Logger, eventData: EventData, _: Eth, services: RnsServices): Promise<void> {
@@ -105,6 +115,8 @@ async function expirationChangedHandler (logger: Logger, eventData: EventData, _
 
   const tokenId = Utils.numberToHex(eventData.returnValues.tokenId)
   let normalizedTimestamp = eventData.returnValues.expirationTime as string
+
+  logger.info(`ExpirationDate: ${normalizedTimestamp}`)
 
   // For the old RNS register where timestamps start with 10000
   if (normalizedTimestamp.startsWith('10000')) {
@@ -117,7 +129,7 @@ async function expirationChangedHandler (logger: Logger, eventData: EventData, _
   const domainsService = services.domains
 
   if (currentExpiration) {
-    await DomainExpiration.update({ expirationDate }, { where: { tokenId } })
+    await DomainExpiration.update({ date: expirationDate }, { where: { tokenId } })
 
     if (domainsService.emit) {
       domainsService.emit('patched', { tokenId })
@@ -168,7 +180,7 @@ async function tokenPlacedHandler (logger: Logger, eventData: EventData, eth: Et
   const currentOffer = await DomainOffer.findOne({ where: { tokenId } })
 
   if (currentOffer) {
-    await offersService.remove(currentOffer.offerId)
+    await offersService.remove(currentOffer.id)
     logger.info(`TokenPlaced event: ${tokenId} previous placement removed`)
   } else {
     logger.info(`TokenPlaced event: ${tokenId} no previous placement`)
@@ -176,7 +188,7 @@ async function tokenPlacedHandler (logger: Logger, eventData: EventData, eth: Et
   const { address } = owner
 
   await offersService.create({
-    offerId: transactionHash,
+    txHash: transactionHash,
     ownerAddress: address,
     tokenId: tokenId,
     paymentToken: paymentToken,
@@ -195,7 +207,7 @@ async function tokenUnplacedHandler (logger: Logger, eventData: EventData, eth: 
 
   if (storedOffer) {
     const offersService = services.offers
-    await offersService.remove(storedOffer.offerId)
+    await offersService.remove(storedOffer.id)
     logger.info(`TokenUnplaced event: ${tokenId} removed from offers`)
   } else {
     logger.info(`TokenUnplaced event: ${tokenId} not found in offers`)
@@ -212,7 +224,9 @@ async function tokenSoldHandler (
     transactionHash,
     blockNumber
   } = eventData
+
   const tokenId = Utils.numberToHex(eventData.returnValues.tokenId)
+  const newOwner = eventData.returnValues.newOwner.toLowerCase()
   const domainOffer = await DomainOffer.findOne({ where: { tokenId } })
 
   if (domainOffer) {
@@ -225,13 +239,13 @@ async function tokenSoldHandler (
     } = domainOffer
 
     // Register Transfer
-    const transaction = await eth.getTransaction(transactionHash)
-    const buyer = transaction.from.toLowerCase()
-    registerTransfer(transactionHash, tokenId, ownerAddress, buyer, logger, domainsService)
+    const transferId = await registerTransfer(transactionHash, tokenId, ownerAddress, newOwner, logger, domainsService)
 
+    // Register Domain sold
     const soldDomain = await SoldDomain.create({
-      id: transactionHash,
+      txHash: transactionHash,
       tokenId,
+      transferId,
       price,
       priceString,
       paymentToken,
@@ -243,7 +257,7 @@ async function tokenSoldHandler (
         soldService.emit('created', { tokenId, ownerAddress })
       }
 
-      await offersService.remove(domainOffer.offerId)
+      await offersService.remove(domainOffer.id)
 
       if (offersService.emit) {
         offersService.emit('created', { tokenId, ownerAddress })
