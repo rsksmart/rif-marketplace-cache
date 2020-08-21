@@ -61,11 +61,12 @@ export function BigNumberStringType (propName: string): Partial<ModelAttributeCo
 
 export default async function (app: Application): Promise<void> {
   const sequelize = sequelizeFactory()
+  const migration = new DbMigration(sequelize)
   const oldSetup = app.setup
 
   app.set('sequelize', sequelize)
 
-  if ((await DbMigration.getInstance(sequelize).pending()).length) {
+  if ((await migration.pending()).length) {
     logger.error('DB Migration required. Please use \'db-migration\' command to proceed')
     process.exit()
   }

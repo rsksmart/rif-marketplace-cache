@@ -41,8 +41,9 @@ ${formattedServices}`
 
     // Init database connection
     const sequelize = sequelizeFactory()
+    const migration = new DbMigration(sequelize)
 
-    if ((await DbMigration.getInstance(sequelize).pending()).length) {
+    if ((await migration.pending()).length) {
       throw new Error('DB Migration required. Please use \'db-migration\' command to proceed')
     }
 

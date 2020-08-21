@@ -66,6 +66,8 @@ export default class DbMigrationCommand extends BaseCLICommand {
     '$ rif-pinning db --generate my_first_migration'
   ]
 
+  private migration: DbMigration | undefined
+
   protected resolveDbPath (db: string): string {
     if (!db) {
       const dbFromConfig = path.resolve(this.config.dataDir, config.get<string>('db'))
@@ -91,24 +93,24 @@ export default class DbMigrationCommand extends BaseCLICommand {
   }
 
   async migrate (migrations?: string[], options?: { to: string }): Promise<void> {
-    if (!(await DbMigration.getInstance().pending()).length) {
+    if (!(await this.migration!.pending()).length) {
       this.log('No pending migrations found')
       this.exit()
     }
 
     this.log('DB migrations')
-    await DbMigration.getInstance().up(options)
+    await this.migration!.up(options)
     this.log('Done')
   }
 
   async undo (migrations?: string[], options?: { to: string }): Promise<void> {
-    if (!(await DbMigration.getInstance().executed()).length) {
+    if (!(await this.migration!.executed()).length) {
       this.log('No executed migrations found')
       this.exit()
     }
 
     this.log('Undo DB migrations')
-    await DbMigration.getInstance().down(options)
+    await this.migration!.down(options)
     this.log('Done')
   }
 
@@ -146,7 +148,7 @@ export default class DbMigrationCommand extends BaseCLICommand {
 
     // Init database connection
     const sequelize = sequelizeFactory()
-    DbMigration.getInstance(sequelize)
+    this.migration = new DbMigration(sequelize)
 
     if (!parsedFlags.up && !parsedFlags.down && !parsedFlags.generate) {
       throw new Error('One of \'--generate, --up, --down\'  required')
