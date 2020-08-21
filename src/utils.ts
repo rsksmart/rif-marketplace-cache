@@ -259,11 +259,11 @@ export async function restoreDb (): Promise<void> {
   }
 
   // remove current db
-  fs.unlinkSync(db)
+  await fs.promises.unlink(db)
 
   // restore backup
-  fs.copyFileSync(path.resolve(backupConfig.path, previousBackUp.name), path.resolve(process.cwd()))
-  fs.renameSync(path.resolve(process.cwd(), previousBackUp.name), path.resolve(process.cwd(), db))
+  await fs.promises.copyFile(path.resolve(backupConfig.path, previousBackUp.name), path.resolve(process.cwd()))
+  await fs.promises.rename(path.resolve(process.cwd(), previousBackUp.name), path.resolve(process.cwd(), db))
 
   // Run pre-cache
   const toBePrecache = (Object.keys(services) as Array<keyof typeof services>)
@@ -291,18 +291,18 @@ export class DbBackUpJob {
     this.newBlockEmitter = newBlockEmitter
   }
 
-  private backupHandler (block: BlockHeader): void {
+  private async backupHandler (block: BlockHeader): Promise<void> {
     const db = config.get<string>('db')
     const backupConfig = config.get('dbBackUp') as { path: string, blocks: number }
     const [lastBackUp, previousBackUp] = getBackUps()
 
     if (block.number - backupConfig.blocks >= lastBackUp.block.number) {
       // copy and rename current db
-      fs.copyFileSync(db, backupConfig.path)
-      fs.renameSync(path.resolve(backupConfig.path, db), path.resolve(backupConfig.path, `${block.hash}:${block.number}-${db}`))
+      await fs.promises.copyFile(db, backupConfig.path)
+      await fs.promises.rename(path.resolve(backupConfig.path, db), path.resolve(backupConfig.path, `${block.hash}:${block.number}-${db}`))
 
       // remove the oldest version
-      if (previousBackUp) fs.unlinkSync(path.resolve(backupConfig.path, previousBackUp.name))
+      if (previousBackUp) await fs.promises.unlink(path.resolve(backupConfig.path, previousBackUp.name))
     }
   }
 
