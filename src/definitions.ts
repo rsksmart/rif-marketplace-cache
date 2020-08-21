@@ -107,12 +107,20 @@ export interface BlockchainServiceOptions {
   newBlockEmitter?: NewBlockEmitterOptions
 }
 
+export interface DbBackUpConfig {
+  blocks: number
+  path: string
+}
+
 export interface Config {
   host?: string
   port?: number
 
   // DB URI to connect to database
   db?: string
+
+  // DB backup config
+  dbBackUp?: DbBackUpConfig
 
   log?: {
     level?: string

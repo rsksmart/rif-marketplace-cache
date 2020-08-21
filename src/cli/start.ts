@@ -5,8 +5,9 @@ import { appFactory, services } from '../app'
 import { loggingFactory } from '../logger'
 import { Flags, Config, SupportedServices, isSupportedServices } from '../definitions'
 import { BaseCLICommand, DbBackUpJob, restoreDb } from '../utils'
-import { sequelizeFactory } from '../sequelize'
 import Event from '../blockchain/event.model'
+import { getNewBlockEmitter } from '../blockchain/utils'
+import { ethFactory } from '../blockchain'
 
 const logger = loggingFactory('cli:start')
 
@@ -108,7 +109,7 @@ ${formattedServices}`
       let stopCallback = (() => { throw new Error('No stop callback was assigned!') }) as () => void
 
       // Run backup job
-      const backUpJob = new DbBackUpJob()
+      const backUpJob = new DbBackUpJob(getNewBlockEmitter(ethFactory()))
       backUpJob.run()
 
       // Promise that resolves when reset callback is called

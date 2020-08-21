@@ -60,13 +60,13 @@ export async function appFactory (options: AppOptions): Promise<{ stop: () => vo
   /**********************************************************/
   // Configure each services
 
-  const servicePromises: Promise<void>[] = []
+  const servicePromises: Promise<{ stop: () => void }>[] = []
   for (const service of Object.values(services)) {
     app.configure((app) => servicePromises.push(errorHandler(service.initialize, logger)(app)))
   }
 
   // Wait for services to initialize
-  await Promise.all(servicePromises)
+  const servicesInstances = await Promise.all(servicePromises)
 
   // Log errors in hooks
   app.hooks({
@@ -97,6 +97,7 @@ export async function appFactory (options: AppOptions): Promise<{ stop: () => vo
   return {
     stop: () => {
       server.close()
+      servicesInstances.forEach(service => service.stop())
     }
   }
 }
