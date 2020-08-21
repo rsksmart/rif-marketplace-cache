@@ -460,6 +460,16 @@ Some tips for development:
  - for complete development environment please see https://github.com/rsksmart/rif-marketplace-dev
  - to use the CLI commands from the cloned repo use `npm run bin -- <cmd> <...args/flags>`
 
+### Troubleshooting
+
+You might have some problems during development, here are few pointers about what could be wrong.
+
+#### No events from Blockchain:
+
+ - make sure that the ABI in Cache is matching the contracts that are deployed in your Ganache/Testnet. The same version of contracts have to be everywhere.
+ - check if you have confirmations turned on (when you `start` cache the whole Config is logged in `VERBOSE` level) and if so emit empty blocks to get enough confirmations
+ - run Cache with log level `DEBUG` (you can filter out database logging with log filter `-db`) and see if events are incoming to Cache
+
 ## License
 
 [MIT](./LICENSE)
