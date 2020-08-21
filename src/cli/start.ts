@@ -4,7 +4,7 @@ import { flags } from '@oclif/command'
 import { appFactory, services } from '../app'
 import { loggingFactory } from '../logger'
 import { Flags, Config, SupportedServices, isSupportedServices } from '../definitions'
-import { BaseCLICommand } from '../utils'
+import { BaseCLICommand, DbBackUpJob, restoreDb } from '../utils'
 import { sequelizeFactory } from '../sequelize'
 import Event from '../blockchain/event.model'
 
@@ -103,23 +103,37 @@ ${formattedServices}`
     const configOverrides = this.buildConfigObject(flags)
     config.util.extendDeep(config, configOverrides)
 
-    if (flags.purge) {
-      sequelizeFactory()
-      await this.purge()
+    // An infinite loop which you can exit only with SIGINT/SIGKILL
+    while (true) {
+      let stopCallback = (() => { throw new Error('No stop callback was assigned!') }) as () => void
+
+      // Run backup job
+      const backUpJob = new DbBackUpJob()
+      backUpJob.run()
+
+      // Promise that resolves when reset callback is called
+      const resetPromise = new Promise(resolve => {
+        appFactory({
+          appResetCallBack: () => resolve()
+        }).then(value => {
+          // Lets save the function that stops the app
+          stopCallback = value.stop
+        })
+      })
+
+      // Let see if we have to restart the app at some point most probably because
+      // reorgs outside of confirmation range.
+      await resetPromise
+
+      logger.warn('Reorg detected outside of confirmation range. Rebuilding the service\'s state!')
+      logger.info('Stopping service')
+      stopCallback()
+      backUpJob.stop()
+
+      // Restore DB from backup
+      await restoreDb()
+
+      logger.info('Restarting the app')
     }
-
-    const app = await appFactory()
-    const port = config.get('port')
-    const server = app.listen(port)
-
-    process.on('unhandledRejection', err =>
-      logger.error(`Unhandled Rejection at: ${err}`)
-    )
-
-    server.on('listening', () =>
-      this.log('Server started on port %d', port)
-    )
-
-    return Promise.resolve()
   }
 }

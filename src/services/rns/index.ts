@@ -88,10 +88,10 @@ async function precache (eth?: Eth): Promise<void> {
 
 const rns: CachedService = {
   // eslint-disable-next-line require-await
-  async initialize (app: Application): Promise<void> {
+  async initialize (app: Application): Promise<{ stop: () => void }> {
     if (!config.get<boolean>('rns.enabled')) {
       logger.info('RNS service: disabled')
-      return Promise.resolve()
+      return { stop: () => undefined }
     }
     logger.info('RNS service: enabled')
 
@@ -145,7 +145,14 @@ const rns: CachedService = {
     rnsPlacementsEventsEmitter.on('newConfirmation', (data) => confirmationService.emit('newConfirmation', data))
     rnsPlacementsEventsEmitter.on('invalidConfirmation', (data) => confirmationService.emit('invalidConfirmation', data))
 
-    return Promise.resolve()
+    return {
+      stop: () => {
+        rnsPlacementsEventsEmitter.stop()
+        rnsReverseEventsEmitter.stop()
+        rnsEventsEmitter.stop()
+        confirmationService.removeAllListeners()
+      }
+    }
   },
 
   precache,

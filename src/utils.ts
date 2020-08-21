@@ -1,14 +1,20 @@
 import { Command, flags } from '@oclif/command'
 import { Input, OutputFlags } from '@oclif/parser'
-import { readFile as readFileCb } from 'fs'
 import { promisify } from 'util'
 import config from 'config'
+import fs from 'fs'
+import path from 'path'
 import { hexToAscii } from 'web3-utils'
 import BigNumber from 'bignumber.js'
+import { BlockHeader } from 'web3-eth'
 
 import { Application, Config, isSupportedServices, Logger, SupportedServices } from './definitions'
+import { getNewBlockEmitter } from './blockchain/utils'
+import { ethFactory } from './blockchain'
+import { AutoStartStopEventEmitter, NEW_BLOCK_EVENT_NAME } from './blockchain/new-block-emitters'
+import { services } from './app'
 
-const readFile = promisify(readFileCb)
+const readFile = promisify(fs.readFile)
 
 /**
  * Bignumber.js utils functions
@@ -115,7 +121,7 @@ export function validateServices (args: string[], onlyEnabledForAll = false): Su
  * @param fn
  * @param logger
  */
-export function errorHandler (fn: (...args: any[]) => Promise<void>, logger: Logger): (...args: any[]) => Promise<void> {
+export function errorHandler (fn: (...args: any[]) => Promise<any>, logger: Logger): (...args: any[]) => Promise<any> {
   return (...args) => {
     return fn(...args).catch(err => logger.error(err))
   }
@@ -195,4 +201,99 @@ export abstract class BaseCLICommand extends Command {
 
     return Promise.resolve()
   }
+}
+
+type BackUpEntry = { name: string, block: { hash: string, number: number } }
+
+function parseBackUps (backUpName: string): BackUpEntry {
+  const [block, name] = backUpName.split('.')[0].split('-')[0]
+  const [hash, blockNumber] = block.split(':')
+
+  return {
+    name: name,
+    block: { number: parseInt(blockNumber), hash }
+  }
+}
+
+function getBackUps (): BackUpEntry[] {
+  const backupConfig = config.get('dbBackUp') as { path: string }
+
+  const backups = fs.readdirSync(path.resolve(__dirname, '../../' + backupConfig.path))
+
+  if (backups.length) {
+    return backups
+      .map(parseBackUps)
+      .sort(
+        (a: Record<string, any>, b: Record<string, any>) =>
+          a.block.number > b.block.number ? 1 : -1
+      )
+  }
+
+  return []
+}
+
+export class DbBackUpJob {
+  private newBlockEmitter: AutoStartStopEventEmitter
+
+  constructor () {
+    this.newBlockEmitter = getNewBlockEmitter(ethFactory())
+  }
+
+  private backupHandler (block: BlockHeader): void {
+    const db = config.get<string>('db')
+    const backupConfig = config.get('dbBackUp') as { path: string, blocks: number }
+    const [lastBackUp, previousBackUp] = getBackUps()
+
+    if (block.number - backupConfig.blocks >= lastBackUp.block.number) {
+      // copy and rename current db
+      fs.copyFileSync(db, backupConfig.path)
+      fs.renameSync(path.resolve(backupConfig.path, db), path.resolve(backupConfig.path, `${block.hash}:${block.number}-${db}`))
+
+      // remove the oldest version
+      if (previousBackUp) fs.unlinkSync(path.resolve(backupConfig.path, previousBackUp.name))
+    }
+  }
+
+  public run (): void {
+    const newBlockEmitter = getNewBlockEmitter(ethFactory())
+    newBlockEmitter.on(NEW_BLOCK_EVENT_NAME, this.backupHandler)
+  }
+
+  public stop (): void {
+    this.newBlockEmitter.stop()
+  }
+}
+
+export async function restoreDb (): Promise<void> {
+  const db = config.get<string>('db')
+  const backupConfig = config.get<{ path: string }>('dbBackUp')
+
+  const eth = ethFactory()
+  const backUps = getBackUps()
+  const [latest, previousBackUp] = backUps
+
+  if (backUps.length < 2) {
+  // TODO Notify devOps
+    throw new Error('Back up not exist')
+  }
+
+  // Check if back up last processed block hash is valid
+  if (!(await eth.getBlock(backUps[1].block.hash))) {
+  // TODO Notify devOps
+    throw new Error('Invalid backup. Hash is not exist!')
+  }
+
+  // remove current db
+  fs.unlinkSync(db)
+
+  // restore backup
+  fs.copyFileSync(path.resolve(backupConfig.path, previousBackUp.name), path.resolve(process.cwd()))
+  fs.renameSync(path.resolve(process.cwd(), previousBackUp.name), path.resolve(process.cwd(), db))
+
+  // Run pre-cache
+  const toBePrecache = (Object.keys(services) as Array<keyof typeof services>)
+    .filter(service => config.get<boolean>(`${service}.enabled`))
+  await Promise.all(
+    toBePrecache.map((service) => services[service].precache(eth))
+  )
 }

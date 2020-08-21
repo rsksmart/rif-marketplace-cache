@@ -72,10 +72,10 @@ function precache (possibleEth?: Eth): Promise<void> {
 }
 
 const storage: CachedService = {
-  async initialize (app: Application): Promise<void> {
+  async initialize (app: Application): Promise<{ stop: () => void }> {
     if (!config.get<boolean>('storage.enabled')) {
       logger.info('Storage service: disabled')
-      return
+      return { stop: () => undefined }
     }
     logger.info('Storage service: enabled')
 
@@ -110,6 +110,12 @@ const storage: CachedService = {
     })
     eventsEmitter.on('newConfirmation', (data) => confirmationService.emit('newConfirmation', data))
     eventsEmitter.on('invalidConfirmation', (data) => confirmationService.emit('invalidConfirmation', data))
+
+    return {
+      stop: () => {
+        eventsEmitter.stop()
+      }
+    }
   },
 
   async purge (): Promise<void> {

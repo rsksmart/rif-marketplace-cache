@@ -49,7 +49,7 @@ export type Application = ExpressFeathers<ServiceTypes>;
 export interface CachedService {
   precache (eth?: Eth): Promise<void>
   purge (): Promise<void>
-  initialize (app: Application): Promise<void>
+  initialize (app: Application): Promise<{ stop: () => void }>
 }
 
 export enum RatesProvider {

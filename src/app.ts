@@ -29,7 +29,9 @@ export const services = {
   [SupportedServices.RNS]: rns
 }
 
-export async function appFactory (): Promise<Application> {
+type AppOptions = { appResetCallBack: (...args: any) => void }
+
+export async function appFactory (options: AppOptions): Promise<{ stop: () => void }> {
   const app: Application = express(feathers())
 
   logger.verbose('Current configuration: ', config)
@@ -73,9 +75,28 @@ export async function appFactory (): Promise<Application> {
     }
   })
 
+  // Subscribe for reorg event
+  // options.appResetCallBack()
+
   // Configure a middleware for 404s and the error handler
   app.use(express.notFound())
   app.use(express.errorHandler({ logger }))
 
-  return app
+  // Start server
+  const port = config.get('port')
+  const server = app.listen(port)
+
+  server.on('listening', () =>
+    logger.info('Server started on port %d', port)
+  )
+
+  process.on('unhandledRejection', err =>
+    logger.error(`Unhandled Rejection at: ${err}`)
+  )
+
+  return {
+    stop: () => {
+      server.close()
+    }
+  }
 }
