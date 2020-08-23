@@ -4,7 +4,7 @@ import sinonChai from 'sinon-chai'
 import dirtyChai from 'dirty-chai'
 import sinon from 'sinon'
 import { EventData } from 'web3-eth-contract'
-import Utils, { asciiToHex, soliditySha3 } from 'web3-utils'
+import Utils from 'web3-utils'
 
 import Eth from 'web3-eth'
 import { Substitute, SubstituteOf } from '@fluffy-spoon/substitute'

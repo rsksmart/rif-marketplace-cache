@@ -40,9 +40,15 @@ async function registerOwner (tokenId: string, buyerAddress: string, logger: Log
 /**
  * Creates the transfer record
  */
-async function registerTransfer (transactionHash: string, tokenId: string, sellerAddress: string, buyerAddress: string, logger: Logger, domainsService: RnsBaseService): Promise<number> {
+async function registerTransfer (
+  txHash: string,
+  tokenId: string,
+  sellerAddress: string,
+  buyerAddress: string,
+  logger: Logger,
+  domainsService: RnsBaseService): Promise<number> {
   const transferDomain = await Transfer.create({
-    txHash: transactionHash,
+    txHash,
     tokenId,
     sellerAddress,
     buyerAddress
