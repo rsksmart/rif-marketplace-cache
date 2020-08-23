@@ -65,7 +65,7 @@ describe('RNS services: Events Processor', () => {
     it('should create new Domain with Transfer', async () => {
       const event = eventMock({
         event: 'Transfer',
-        transactionHash: 'tx_hash',
+        transactionHash: 'TX_HASH',
         returnValues: { tokenId, from, to }
       })
 
@@ -83,7 +83,7 @@ describe('RNS services: Events Processor', () => {
     it('should update Domain Owner on Tranfer', async () => {
       const event = eventMock({
         event: 'Transfer',
-        transactionHash: 'tx_hash',
+        transactionHash: 'TX_HASH',
         returnValues: { tokenId, from, to }
       })
 
@@ -105,12 +105,12 @@ describe('RNS services: Events Processor', () => {
     it('should handle multiple Transfers in the same transaction', async () => {
       const event = eventMock({
         event: 'Transfer',
-        transactionHash: 'tx_hash',
+        transactionHash: 'TX_HASH',
         returnValues: { tokenId, from, to }
       })
       const newEvent = eventMock({
         event: 'Transfer',
-        transactionHash: 'tx_hash',
+        transactionHash: 'TX_HASH',
         returnValues: { tokenId, from: to, to: other }
       })
 
@@ -253,6 +253,8 @@ describe('RNS services: Events Processor', () => {
     const tokenId = Utils.sha3(label) as string
     const otherTokenId = Utils.sha3('other') as string
     const from = 'from_addr'
+    const placement = 'placement_addr'
+    const other = 'other_addr'
     const paymentToken = 'default_payment'
     const cost = 10000
 
@@ -270,7 +272,7 @@ describe('RNS services: Events Processor', () => {
     it('should create a new Offer', async () => {
       const event = eventMock({
         event: 'TokenPlaced',
-        transactionHash: 'tx_hash',
+        transactionHash: 'TX_HASH',
         blockNumber: 1,
         returnValues: { tokenId, paymentToken, cost }
       })
@@ -292,13 +294,13 @@ describe('RNS services: Events Processor', () => {
     it('should replace an existing Offer when updating', async () => {
       const event = eventMock({
         event: 'TokenPlaced',
-        transactionHash: 'tx_hash',
+        transactionHash: 'TX_HASH',
         blockNumber: 1,
         returnValues: { tokenId, paymentToken, cost }
       })
 
       // Create domain with owner
-      const domain = await Domain.create({ tokenId: Utils.numberToHex(tokenId) })
+      await Domain.create({ tokenId: Utils.numberToHex(tokenId) })
       const owner = await DomainOwner.create({ tokenId: Utils.numberToHex(tokenId), address: from })
 
       // Process first offer
@@ -312,11 +314,11 @@ describe('RNS services: Events Processor', () => {
       expect(createdEvent?.priceString).to.be.eql(event.returnValues.cost.toString())
 
       // Update offer
-      const newPaymentToken = 'other_payment'
+      const newPaymentToken = 'OTHER_PAYMENT'
       const newCost = 50000
       const newEvent = eventMock({
         event: 'TokenPlaced',
-        transactionHash: 'tx_hash',
+        transactionHash: 'TX_HASH',
         blockNumber: 1,
         returnValues: { tokenId, paymentToken: newPaymentToken, cost: newCost }
       })
@@ -335,14 +337,14 @@ describe('RNS services: Events Processor', () => {
     it('should handle multiple Offers in same transaction', async () => {
       const event = eventMock({
         event: 'TokenPlaced',
-        transactionHash: 'tx_hash',
+        transactionHash: 'TX_HASH',
         blockNumber: 1,
         returnValues: { tokenId, paymentToken, cost }
       })
 
       const newEvent = eventMock({
         event: 'TokenPlaced',
-        transactionHash: 'tx_hash',
+        transactionHash: 'TX_HASH',
         blockNumber: 1,
         returnValues: { tokenId: otherTokenId, paymentToken, cost }
       })
@@ -386,12 +388,13 @@ describe('RNS services: Events Processor', () => {
       const domain = await Domain.create({ tokenId: Utils.numberToHex(tokenId) })
       const owner = await DomainOwner.create({ tokenId: Utils.numberToHex(tokenId), address: from })
       const offer = await DomainOffer.create({
-        txHash: 'tx_hash',
+        txHash: 'TX_HASH',
         ownerAddress: owner?.address,
         tokenId: Utils.numberToHex(tokenId),
         paymentToken,
         price: cost,
         priceString: cost.toString(),
+        approved: true,
         creationDate: (new Date()).getTime().toString()
       })
 
@@ -407,6 +410,48 @@ describe('RNS services: Events Processor', () => {
       const createdEvent = await DomainOffer.findOne({ where: { tokenId: Utils.numberToHex(tokenId) } })
       expect(createdEvent).to.be.eql(null)
     })
+
+    it('should set approval on existing Offer', async () => {
+      const event = eventMock({
+        event: 'Approval',
+        returnValues: { tokenId, owner: from, approved: other }
+      })
+
+      const newEvent = eventMock({
+        event: 'Approval',
+        returnValues: { tokenId, owner: from, approved: placement }
+      })
+
+      // Create domain, owner and offer
+      await Domain.create({ tokenId: Utils.numberToHex(tokenId) })
+      const owner = await DomainOwner.create({ tokenId: Utils.numberToHex(tokenId), address: from })
+      await DomainOffer.create({
+        txHash: 'TX_HASH',
+        ownerAddress: owner?.address,
+        tokenId: Utils.numberToHex(tokenId),
+        paymentToken,
+        price: cost,
+        priceString: cost.toString(),
+        approved: true,
+        creationDate: (new Date()).getTime().toString()
+      })
+
+      // Process Approval for other address
+      await processor(event)
+
+      const createdEvent = await DomainOffer.findOne({ where: { tokenId: Utils.numberToHex(tokenId) } })
+      expect(createdEvent).to.be.instanceOf(DomainOffer)
+      expect(createdEvent?.approved).to.be.eql(false)
+      expect(offersServiceEmitSpy).to.have.been.calledOnceWith('patched')
+
+      // Process Approval back for marketplace address
+      await processor(newEvent)
+
+      const newCreatedEvent = await DomainOffer.findOne({ where: { tokenId: Utils.numberToHex(tokenId) } })
+      expect(newCreatedEvent).to.be.instanceOf(DomainOffer)
+      expect(newCreatedEvent?.approved).to.be.eql(true)
+      expect(offersServiceEmitSpy).to.have.been.calledTwice('patched')
+    })
   })
 
   describe('Sold events', () => {
@@ -418,7 +463,7 @@ describe('RNS services: Events Processor', () => {
 
     const label = 'domain'
     const tokenId = Utils.sha3(label) as string
-    const otherTokenId = Utils.sha3('othtoer') as string
+    const otherTokenId = Utils.sha3('other') as string
     const from = 'from_addr'
     const to = 'to_addr'
     const paymentToken = 'default_payment'
@@ -441,7 +486,7 @@ describe('RNS services: Events Processor', () => {
     it('should sell a Domain', async () => {
       const event = eventMock({
         event: 'TokenSold',
-        transactionHash: 'tx_hash',
+        transactionHash: 'TX_HASH',
         blockNumber: 1,
         returnValues: { tokenId, newOwner: to }
       })
@@ -450,12 +495,13 @@ describe('RNS services: Events Processor', () => {
       await Domain.create({ tokenId: Utils.numberToHex(tokenId) })
       const owner = await DomainOwner.create({ tokenId: Utils.numberToHex(tokenId), address: from })
       const offer = await DomainOffer.create({
-        txHash: 'tx_hash',
+        txHash: 'TX_HASH',
         ownerAddress: owner?.address,
         tokenId: Utils.numberToHex(tokenId),
         paymentToken,
         price: cost,
         priceString: cost.toString(),
+        approved: true,
         creationDate: (new Date()).getTime().toString()
       })
 
@@ -475,14 +521,14 @@ describe('RNS services: Events Processor', () => {
     it('should handle multiple Sells in the same Transaction', async () => {
       const event = eventMock({
         event: 'TokenSold',
-        transactionHash: 'tx_hash',
+        transactionHash: 'TX_HASH',
         blockNumber: 1,
         returnValues: { tokenId, newOwner: to }
       })
 
       const newEvent = eventMock({
         event: 'TokenSold',
-        transactionHash: 'tx_hash',
+        transactionHash: 'TX_HASH',
         blockNumber: 1,
         returnValues: { tokenId: otherTokenId, newOwner: to }
       })
@@ -491,24 +537,26 @@ describe('RNS services: Events Processor', () => {
       await Domain.create({ tokenId: Utils.numberToHex(tokenId) })
       const owner = await DomainOwner.create({ tokenId: Utils.numberToHex(tokenId), address: from })
       const offer = await DomainOffer.create({
-        txHash: 'tx_hash',
+        txHash: 'TX_HASH',
         ownerAddress: owner?.address,
         tokenId: Utils.numberToHex(tokenId),
         paymentToken,
         price: cost,
         priceString: cost.toString(),
+        approved: true,
         creationDate: (new Date()).getTime().toString()
       })
 
       await Domain.create({ tokenId: Utils.numberToHex(otherTokenId) })
       const otherOwner = await DomainOwner.create({ tokenId: Utils.numberToHex(otherTokenId), address: from })
       const newOffer = await DomainOffer.create({
-        txHash: 'tx_hash',
+        txHash: 'TX_HASH',
         ownerAddress: otherOwner?.address,
         tokenId: Utils.numberToHex(otherTokenId),
         paymentToken,
         price: cost,
         priceString: cost.toString(),
+        approved: true,
         creationDate: (new Date()).getTime().toString()
       })
 

@@ -71,6 +71,7 @@ async function transferHandler (logger: Logger, eventData: EventData, eth: Eth, 
   const from = eventData.returnValues.from.toLowerCase()
 
   const domainsService = services.domains
+  const offersService = services.offers
 
   if (from === '0x0000000000000000000000000000000000000000') {
     const transaction = await eth.getTransaction(transactionHash)
@@ -108,6 +109,19 @@ async function transferHandler (logger: Logger, eventData: EventData, eth: Eth, 
 
   // Register Transfer
   await registerTransfer(transactionHash, tokenId, from, ownerAddress, logger, domainsService)
+
+  // Handle existing offer
+  const currentOffer = await DomainOffer.findOne({ where: { tokenId } })
+
+  if (currentOffer) {
+    currentOffer.ownerAddress = ownerAddress
+    currentOffer.approved = false
+    await currentOffer.save()
+
+    if (offersService.emit) {
+      offersService.emit('patched', { tokenId })
+    }
+  }
 }
 
 async function expirationChangedHandler (logger: Logger, eventData: EventData, _: Eth, services: RnsServices): Promise<void> {
@@ -143,6 +157,28 @@ async function expirationChangedHandler (logger: Logger, eventData: EventData, _
     })
     logger.info(`ExpirationChange event: DomainExpiration for token ${tokenId} created`)
   }
+}
+
+async function approvalHandler (logger: Logger, eventData: EventData, eth: Eth, services: RnsServices): Promise<void> {
+  const tokenId = Utils.numberToHex(eventData.returnValues.tokenId)
+  const approvedAddress = eventData.returnValues.approved.toLowerCase()
+  const marketplace = config.get<string>('rns.placement.contractAddress').toLowerCase()
+  const offersService = services.offers
+
+  const currentOffer = await DomainOffer.findOne({ where: { tokenId } })
+
+  if (!currentOffer) {
+    return
+  }
+
+  currentOffer.approved = (approvedAddress === marketplace)
+  await currentOffer.save()
+
+  if (offersService.emit) {
+    offersService.emit('patched', { tokenId })
+  }
+
+  logger.info(`Approval event: ${tokenId} approved for ${approvedAddress}`)
 }
 
 async function nameChangedHandler (logger: Logger, eventData: EventData, _: Eth, services: RnsServices): Promise<void> {
@@ -194,6 +230,7 @@ async function tokenPlacedHandler (logger: Logger, eventData: EventData, eth: Et
     paymentToken: paymentToken,
     price: cost,
     priceString: `${cost}`,
+    approved: true,
     creationDate: await getBlockDate(eth, eventData.blockNumber)
   })
 
@@ -271,6 +308,7 @@ async function tokenSoldHandler (
 
 const commands = {
   Transfer: transferHandler,
+  Approval: approvalHandler,
   ExpirationChanged: expirationChangedHandler,
   NameChanged: nameChangedHandler,
   TokenPlaced: tokenPlacedHandler,
