@@ -32,6 +32,9 @@ export default class DomainOffer extends Model {
   @Column(DataType.STRING)
   priceString!: string
 
+  @Column(DataType.BOOLEAN)
+  approved!: boolean
+
   @Column(DataType.DATE)
   creationDate!: number
 }
