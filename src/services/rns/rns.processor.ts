@@ -222,7 +222,12 @@ async function tokenPlacedHandler (logger: Logger, eventData: EventData, eth: Et
   const currentOffer = await DomainOffer.findOne({ where: { tokenId } })
 
   if (currentOffer) {
-    await offersService.remove(currentOffer.id)
+    await currentOffer.destroy()
+
+    if (offersService.emit) {
+      offersService.emit('removed', { tokenId })
+    }
+
     logger.info(`TokenPlaced event: ${tokenId} previous placement removed`)
   } else {
     logger.info(`TokenPlaced event: ${tokenId} no previous placement`)
@@ -250,7 +255,13 @@ async function tokenUnplacedHandler (logger: Logger, eventData: EventData, eth: 
 
   if (storedOffer) {
     const offersService = services.offers
-    await offersService.remove(storedOffer.id)
+
+    await storedOffer.destroy()
+
+    if (offersService.emit) {
+      offersService.emit('removed', { tokenId })
+    }
+
     logger.info(`TokenUnplaced event: ${tokenId} removed from offers`)
   } else {
     logger.info(`TokenUnplaced event: ${tokenId} not found in offers`)
@@ -300,10 +311,10 @@ async function tokenSoldHandler (
         soldService.emit('created', { tokenId, ownerAddress })
       }
 
-      await offersService.remove(domainOffer.id)
+      await domainOffer.destroy()
 
       if (offersService.emit) {
-        offersService.emit('created', { tokenId, ownerAddress })
+        offersService.emit('removed', { tokenId })
       }
       logger.info(`TokenSold event: Sold Domain ${tokenId} in transaction ${transactionHash}`)
     } else {
