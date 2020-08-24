@@ -57,8 +57,8 @@ describe('DB back-up/restore', function () {
 
       eth.getBlock(Arg.all()).rejects(new Error('Not found'))
       const backupJob = new DbBackUpJob(eth)
-      fs.writeFileSync(path.resolve(backupPath, `0x0123:10-${db}`), 'First backup')
-      fs.writeFileSync(path.resolve(backupPath, `0x0123:20-${db}`), 'Second backup')
+      fs.writeFileSync(path.resolve(backupPath, `0x0123:10-${db}`), 'First ')
+      fs.writeFileSync(path.resolve(backupPath, `0x0123:20-${db}`), 'Second')
 
       expect(fs.readdirSync(backupPath).length).to.be.eql(2)
       await expect(backupJob.restoreDb(errorCallBack)).to.eventually.be.rejectedWith(
@@ -82,8 +82,8 @@ describe('DB back-up/restore', function () {
       const backupJob = new DbBackUpJob(eth)
       eth.getBlock('0x0123').resolves(blockMock(10))
 
-      fs.writeFileSync(path.resolve(backupPath, `0x0123:10-${db}`), 'First backup')
-      fs.writeFileSync(path.resolve(backupPath, `0x01234:20-${db}`), 'Second backup')
+      fs.writeFileSync(path.resolve(backupPath, `0x0123:10-${db}`), 'First db backup')
+      fs.writeFileSync(path.resolve(backupPath, `0x01234:20-${db}`), 'Second db backup')
 
       expect(fs.readdirSync(backupPath).length).to.be.eql(2)
       await backupJob.restoreDb(errorCallBack)

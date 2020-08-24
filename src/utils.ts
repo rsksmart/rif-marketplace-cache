@@ -225,7 +225,7 @@ function parseBackUps (backUpName: string): BackUpEntry {
 function getBackUps (): BackUpEntry[] {
   const backupConfig = config.get<DbBackUpConfig>('dbBackUp')
 
-  const backups = fs.readdirSync(path.resolve(__dirname, '../' + backupConfig.path))
+  const backups = fs.readdirSync(path.resolve(__dirname, `../${backupConfig.path}`))
 
   if (backups.length) {
     return backups
