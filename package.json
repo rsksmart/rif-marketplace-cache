@@ -44,7 +44,7 @@
     "types-check": "tasegir types-check",
     "lint": "tasegir lint",
     "release": "tasegir release",
-    "test": "tasegir test --target node",
+    "test": "cross-env ALLOW_CONFIG_MUTATIONS=true tasegir test --target node",
     "start": "tasegir run --watch ./src/index.ts"
   },
   "dependencies": {
@@ -113,6 +113,7 @@
     "@types/validator": "^13.0.0",
     "chai": "^4.2.0",
     "chai-as-promised": "^7.1.1",
+    "cross-env": "^7.0.2",
     "dirty-chai": "^2.0.1",
     "sinon": "^9.0.1",
     "sinon-chai": "^3.5.0",

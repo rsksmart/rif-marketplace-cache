@@ -290,22 +290,25 @@ export class DbBackUpJob {
       throw new Error(`Invalid db backup configuration. Number of backup blocks should be greater then confirmation blocks for ${invalidConfirmation.name} service`)
     }
 
+    if (!fs.existsSync(this.backUpConfig.path)) {
+      fs.mkdirSync(this.backUpConfig.path)
+    }
+
     this.newBlockEmitter = newBlockEmitter
   }
 
   private async backupHandler (block: BlockHeader): Promise<void> {
     const db = config.get<string>('db')
-    const backupConfig = config.get('dbBackUp') as { path: string, blocks: number }
     const [lastBackUp, previousBackUp] = getBackUps()
 
-    if (new BigNumber(block.number).minus(backupConfig.blocks).gte(lastBackUp.block.number)) {
+    if (new BigNumber(block.number).minus(this.backUpConfig.blocks).gte(lastBackUp.block.number)) {
       // copy and rename current db
-      await fs.promises.copyFile(db, backupConfig.path)
-      await fs.promises.rename(path.resolve(backupConfig.path, db), path.resolve(backupConfig.path, `${block.hash}:${block.number}-${db}`))
+      await fs.promises.copyFile(db, this.backUpConfig.path)
+      await fs.promises.rename(path.resolve(this.backUpConfig.path, db), path.resolve(this.backUpConfig.path, `${block.hash}:${block.number}-${db}`))
 
       // remove the oldest version
       if (previousBackUp) {
-        await fs.promises.unlink(path.resolve(backupConfig.path, previousBackUp.name))
+        await fs.promises.unlink(path.resolve(this.backUpConfig.path, previousBackUp.name))
       }
     }
   }
@@ -313,9 +316,26 @@ export class DbBackUpJob {
   private getEventEmittersConfigs (): { config: EventsEmitterOptions, name: string }[] {
     return Object.values(SupportedServices)
       .reduce((acc: { config: EventsEmitterOptions, name: string }[], serviceName: string) => {
-        if (config.has(`${serviceName}.eventsEmitter`)) {
-          const emitterConfig = config.get<EventsEmitterOptions>(`${serviceName}.eventsEmitter`)
-          return [...acc, { config: emitterConfig, name: serviceName }]
+        if (config.has(serviceName) && config.get(`${serviceName}.enabled`)) {
+          if (serviceName === SupportedServices.RNS) {
+            const rnsEmitters = ['owner', 'reverse', 'placement']
+              .reduce(
+                (acc: any[], contract: string) => {
+                  if (config.has(`${serviceName}.${contract}.eventsEmitter`)) {
+                    const emitterConfig = config.get<EventsEmitterOptions>(`${serviceName}.${contract}.eventsEmitter`)
+                    return [...acc, { config: emitterConfig, name: `${serviceName}.${contract}` }]
+                  }
+                  return acc
+                },
+                []
+              )
+            return [...acc, ...rnsEmitters]
+          }
+
+          if (config.has(`${serviceName}.eventsEmitter`)) {
+            const emitterConfig = config.get<EventsEmitterOptions>(`${serviceName}.eventsEmitter`)
+            return [...acc, { config: emitterConfig, name: serviceName }]
+          }
         }
         return acc
       }, [])
