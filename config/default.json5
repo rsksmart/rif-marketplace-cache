@@ -72,7 +72,7 @@
     owner: {
 
       // Events that will be listened to
-      events: ['Transfer', 'ExpirationChanged'],
+      events: ['Transfer', 'ExpirationChanged', 'Approval'],
 
       // Specify behavior of EventsEmitter, that retrieves events from blockchain and pass them onwards for further processing.
       eventsEmitter: {

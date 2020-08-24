@@ -15,8 +15,11 @@ import Transfer from './transfer.model'
 }))
 @Table({ freezeTableName: true, tableName: 'rns_sold-domain', timestamps: false })
 export default class SoldDomain extends Model {
-  @Column({ primaryKey: true, type: DataType.STRING })
-  id!: string
+  @Column({ primaryKey: true, autoIncrement: true, type: DataType.INTEGER })
+  id!: number
+
+  @Column(DataType.STRING)
+  txHash!: string // transaction hash
 
   @ForeignKey(() => Domain)
   @Column(DataType.STRING)
@@ -25,16 +28,18 @@ export default class SoldDomain extends Model {
   @BelongsTo(() => Domain)
   domain!: Domain
 
-  @BelongsTo(() => Transfer, {
-    foreignKey: 'id'
-  })
+  @ForeignKey(() => Transfer)
+  @Column(DataType.INTEGER)
+  transferId!: Transfer
+
+  @BelongsTo(() => Transfer)
   transfer!: Transfer
 
   @Column(DataType.STRING)
   paymentToken!: string // currency
 
   @Column(DataType.DECIMAL)
-  price!: number// selling price
+  price!: number // selling price
 
   @Column(DataType.STRING)
   priceString!: string

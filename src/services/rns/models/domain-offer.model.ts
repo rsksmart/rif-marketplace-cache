@@ -1,11 +1,22 @@
-import { Table, DataType, Column, Model, ForeignKey, BelongsTo } from 'sequelize-typescript'
+import { Table, DataType, Column, Model, ForeignKey, BelongsTo, Scopes } from 'sequelize-typescript'
+import { Op } from 'sequelize'
 
 import Domain from './domain.model'
 
+@Scopes(() => ({
+  approved: {
+    where: {
+      approved: { [Op.eq]: true }
+    }
+  }
+}))
 @Table({ freezeTableName: true, tableName: 'rns_domain-offer', timestamps: false })
 export default class DomainOffer extends Model {
-  @Column({ primaryKey: true, type: DataType.STRING })
-  offerId!: string
+  @Column({ primaryKey: true, autoIncrement: true, type: DataType.INTEGER })
+  id!: number
+
+  @Column(DataType.STRING)
+  txHash!: string // transaction hash
 
   @ForeignKey(() => Domain)
   @Column(DataType.STRING)
@@ -28,6 +39,9 @@ export default class DomainOffer extends Model {
 
   @Column(DataType.STRING)
   priceString!: string
+
+  @Column(DataType.BOOLEAN)
+  approved!: boolean
 
   @Column(DataType.DATE)
   creationDate!: number

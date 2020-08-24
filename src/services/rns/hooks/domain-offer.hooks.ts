@@ -12,6 +12,7 @@ export default {
         context.params.sequelize = {
           raw: false,
           nest: true,
+          scope: 'approved',
           include: {
             model: Domain,
             include: {
@@ -31,8 +32,9 @@ export default {
         context.params.sequelize = {
           raw: false,
           nest: true,
+          scope: 'approved',
           attributes: {
-            exclude: ['price']
+            exclude: ['price', 'approved']
           },
           include: {
             model: Domain,
