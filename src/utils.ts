@@ -210,7 +210,7 @@ export abstract class BaseCLICommand extends Command {
   }
 }
 
-type BackUpEntry = { name: string, block: { hash: string, number: number } }
+type BackUpEntry = { name: string, block: { hash: string, number: BigNumber } }
 
 function parseBackUps (backUpName: string): BackUpEntry {
   const [block, name] = backUpName.split('.')[0].split('-')[0]
@@ -218,7 +218,7 @@ function parseBackUps (backUpName: string): BackUpEntry {
 
   return {
     name: name,
-    block: { number: parseInt(blockNumber), hash }
+    block: { number: new BigNumber(blockNumber), hash }
   }
 }
 
@@ -232,7 +232,7 @@ function getBackUps (): BackUpEntry[] {
       .map(parseBackUps)
       .sort(
         (a: Record<string, any>, b: Record<string, any>) =>
-          a.block.number > b.block.number ? 1 : -1
+          a.block.number.gt(b.block.number) ? 1 : -1
       )
   }
 
@@ -249,7 +249,7 @@ export async function restoreDb (): Promise<void> {
 
   if (backUps.length < 2) {
     // TODO Notify devOps
-    throw new Error('Back up not exist')
+    throw new Error('Should be at least two backups')
   }
 
   // Check if back up last processed block hash is valid
@@ -298,7 +298,7 @@ export class DbBackUpJob {
     const backupConfig = config.get('dbBackUp') as { path: string, blocks: number }
     const [lastBackUp, previousBackUp] = getBackUps()
 
-    if (block.number - backupConfig.blocks >= lastBackUp.block.number) {
+    if (new BigNumber(block.number).minus(backupConfig.blocks).gte(lastBackUp.block.number)) {
       // copy and rename current db
       await fs.promises.copyFile(db, backupConfig.path)
       await fs.promises.rename(path.resolve(backupConfig.path, db), path.resolve(backupConfig.path, `${block.hash}:${block.number}-${db}`))
