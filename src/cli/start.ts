@@ -4,9 +4,8 @@ import { flags } from '@oclif/command'
 import { appFactory, services } from '../app'
 import { loggingFactory } from '../logger'
 import { Flags, Config, SupportedServices, isSupportedServices } from '../definitions'
-import { BaseCLICommand, DbBackUpJob, restoreDb } from '../utils'
+import { BaseCLICommand, DbBackUpJob } from '../utils'
 import Event from '../blockchain/event.model'
-import { getNewBlockEmitter } from '../blockchain/utils'
 import { ethFactory } from '../blockchain'
 
 const logger = loggingFactory('cli:start')
@@ -109,7 +108,7 @@ ${formattedServices}`
       let stopCallback = (() => { throw new Error('No stop callback was assigned!') }) as () => void
 
       // Run backup job
-      const backUpJob = new DbBackUpJob(getNewBlockEmitter(ethFactory()))
+      const backUpJob = new DbBackUpJob(ethFactory())
       backUpJob.run()
 
       // Promise that resolves when reset callback is called
@@ -132,7 +131,7 @@ ${formattedServices}`
       backUpJob.stop()
 
       // Restore DB from backup
-      await restoreDb()
+      await backUpJob.restoreDb(() => undefined)
 
       logger.info('Restarting the app')
     }

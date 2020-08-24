@@ -2,12 +2,15 @@ import path from 'path'
 import fs from 'fs'
 import config from 'config'
 import chai from 'chai'
+import sinon from 'sinon'
 import sinonChai from 'sinon-chai'
 import { Eth } from 'web3-eth'
 import { Substitute, Arg } from '@fluffy-spoon/substitute'
 
+import * as RateService from '../src/services/rns'
+import * as RnsService from '../src/services/rates'
+import * as StorageService from '../src/services/storage'
 import { DbBackUpJob } from '../src/utils'
-import { getNewBlockEmitter } from '../src/blockchain/utils'
 import { blockMock, sleep } from './utils'
 import { NEW_BLOCK_EVENT_NAME } from '../src/blockchain/new-block-emitters'
 import { DbBackUpConfig } from '../src/definitions'
@@ -25,20 +28,80 @@ function rmDir (folder: string) {
   }
 }
 
-describe('DB backUp/restore', () => {
+describe('DB back-up/restore', function () {
   const configBackUp = { db: config.get('db'), dbBackUp: config.get('dbBackUp') }
 
-  afterEach(() => {
-    config.util.extendDeep(config, configBackUp)
+  describe('Restore', () => {
+    before(() => fs.writeFileSync(config.get<string>('db'), 'Initial DB'))
+    after(() => fs.unlinkSync(config.get<string>('db')))
+    afterEach(() => rmDir(config.get<DbBackUpConfig>('dbBackUp').path))
 
-    rmDir(config.get<DbBackUpConfig>('dbBackUp').path)
+    it('should throw if not enough backups', async () => {
+      const eth = Substitute.for<Eth>()
+      const backupJob = new DbBackUpJob(eth)
+      const errorCallBack = sinon.spy()
+
+      expect(fs.readdirSync(config.get<DbBackUpConfig>('dbBackUp').path).length).to.be.eql(0)
+      await expect(backupJob.restoreDb(errorCallBack)).to.eventually.be.rejectedWith(
+        Error,
+        'Should be two backups to be able to restore'
+      )
+      expect(errorCallBack.calledOnce).to.be.true()
+      expect(errorCallBack.calledWith({ code: 1, message: 'Not enough backups' })).to.be.true()
+    })
+    it('should throw if backup block hash is not exist after reorg', async () => {
+      const eth = Substitute.for<Eth>()
+      const errorCallBack = sinon.spy()
+      const backupPath = config.get<DbBackUpConfig>('dbBackUp').path
+      const db = config.get<string>('db')
+
+      eth.getBlock(Arg.all()).rejects(new Error('Not found'))
+      const backupJob = new DbBackUpJob(eth)
+      fs.writeFileSync(path.resolve(backupPath, `0x0123:10-${db}`), 'First backup')
+      fs.writeFileSync(path.resolve(backupPath, `0x0123:20-${db}`), 'Second backup')
+
+      expect(fs.readdirSync(backupPath).length).to.be.eql(2)
+      await expect(backupJob.restoreDb(errorCallBack)).to.eventually.be.rejectedWith(
+        Error,
+        'Invalid backup. Block Hash is not valid!'
+      )
+      expect(errorCallBack.called).to.be.true()
+      expect(errorCallBack.calledWith({ code: 2, message: 'Invalid backup. Block Hash is not valid!' }))
+    })
+    it('should restore database and precache', async () => {
+      const eth = Substitute.for<Eth>()
+      const errorCallBack = sinon.spy()
+      const backupPath = config.get<DbBackUpConfig>('dbBackUp').path
+      const db = config.get<string>('db')
+
+      // Mock precache
+      const ratesStub = sinon.stub(RateService.default, 'precache').returns(Promise.resolve())
+      const rnsStub = sinon.stub(RnsService.default, 'precache').returns(Promise.resolve())
+      const storageStub = sinon.stub(StorageService.default, 'precache').returns(Promise.resolve())
+
+      const backupJob = new DbBackUpJob(eth)
+      eth.getBlock('0x0123').resolves(blockMock(10))
+
+      fs.writeFileSync(path.resolve(backupPath, `0x0123:10-${db}`), 'First backup')
+      fs.writeFileSync(path.resolve(backupPath, `0x01234:20-${db}`), 'Second backup')
+
+      expect(fs.readdirSync(backupPath).length).to.be.eql(2)
+      await backupJob.restoreDb(errorCallBack)
+      await sleep(1000)
+
+      expect(errorCallBack.called).to.be.false()
+      expect(ratesStub.called).to.be.true()
+      expect(rnsStub.called).to.be.true()
+      expect(storageStub.called).to.be.true()
+
+      expect(fs.readFileSync(db).toString()).to.be.eql('First backup')
+    })
   })
 
-  describe('Back Up', () => {
-    const eth = Substitute.for<Eth>()
-    const newBlockEmitter = getNewBlockEmitter(eth)
-
-    beforeEach(() => rmDir(config.get<DbBackUpConfig>('dbBackUp').path))
+  describe('Back Up Job', () => {
+    before(() => fs.writeFileSync(config.get<string>('db'), 'Initial DB'))
+    after(() => fs.unlinkSync(config.get<string>('db')))
+    afterEach(() => rmDir(config.get<DbBackUpConfig>('dbBackUp').path))
 
     it('should throw error if "dbBackUp" not in config', () => {
       // @ts-ignore
@@ -46,7 +109,7 @@ describe('DB backUp/restore', () => {
 
       expect(config.has('dbBackUp')).to.be.false()
 
-      expect(() => new DbBackUpJob(newBlockEmitter)).to.throw(
+      expect(() => new DbBackUpJob(Substitute.for<Eth>())).to.throw(
         Error,
         'DB Backup config not exist'
       )
@@ -62,7 +125,7 @@ describe('DB backUp/restore', () => {
 
       const invalidConfirmation = { name: 'rns.owner' }
 
-      expect(() => new DbBackUpJob(newBlockEmitter)).to.throw(
+      expect(() => new DbBackUpJob(Substitute.for<Eth>())).to.throw(
         Error,
         `Invalid db backup configuration. Number of backup blocks should be greater then confirmation blocks for ${invalidConfirmation.name} service`
       )
@@ -75,16 +138,16 @@ describe('DB backUp/restore', () => {
 
       expect(fs.existsSync(dbPath)).to.be.false()
 
-      const job = new DbBackUpJob(newBlockEmitter)
+      const job = new DbBackUpJob(Substitute.for<Eth>())
 
       expect(fs.existsSync(dbPath)).to.be.true()
     })
     it('should make backup if not exist', async () => {
+      const eth = Substitute.for<Eth>()
       eth.getBlock(Arg.all()).returns(Promise.resolve(blockMock(10)))
-      const emitter = getNewBlockEmitter(eth)
       const backUpPath = config.get<DbBackUpConfig>('dbBackUp').path
 
-      const job = new DbBackUpJob(emitter)
+      const job = new DbBackUpJob(eth)
 
       job.run()
       await sleep(300)
@@ -97,10 +160,9 @@ describe('DB backUp/restore', () => {
     it('should not make backup if blocks condition not met', async () => {
       const eth = Substitute.for<Eth>()
       eth.getBlock(Arg.all()).returns(Promise.resolve(blockMock(10)))
-      const emitter = getNewBlockEmitter(eth)
       const backUpPath = config.get<DbBackUpConfig>('dbBackUp').path
 
-      const job = new DbBackUpJob(emitter)
+      const job = new DbBackUpJob(eth)
 
       job.run()
       await sleep(300)
@@ -111,7 +173,7 @@ describe('DB backUp/restore', () => {
       expect(files).to.be.eql([`0x123:${10}-${config.get<string>('db')}`])
 
       // should skip this block as it's not met condition
-      emitter.emit(NEW_BLOCK_EVENT_NAME, blockMock(13))
+      job.newBlockEmitter.emit(NEW_BLOCK_EVENT_NAME, blockMock(13))
       await sleep(300)
 
       const files2 = fs.readdirSync(backUpPath)
@@ -121,10 +183,9 @@ describe('DB backUp/restore', () => {
     it('should add seconf backup', async () => {
       const eth = Substitute.for<Eth>()
       eth.getBlock(Arg.all()).returns(Promise.resolve(blockMock(10)))
-      const emitter = getNewBlockEmitter(eth)
       const backups = []
       const backUpPath = config.get<DbBackUpConfig>('dbBackUp').path
-      const job = new DbBackUpJob(emitter)
+      const job = new DbBackUpJob(eth)
 
       job.run()
       await sleep(300)
@@ -136,7 +197,7 @@ describe('DB backUp/restore', () => {
       expect(files).to.be.eql(backups)
 
       // should add another backe up
-      emitter.emit(NEW_BLOCK_EVENT_NAME, blockMock(30))
+      job.newBlockEmitter.emit(NEW_BLOCK_EVENT_NAME, blockMock(30))
       await sleep(300)
 
       const files2 = fs.readdirSync(backUpPath)
@@ -147,10 +208,9 @@ describe('DB backUp/restore', () => {
     it('should replace oldest back-up with fresh one', async () => {
       const eth = Substitute.for<Eth>()
       eth.getBlock(Arg.all()).returns(Promise.resolve(blockMock(10)))
-      const emitter = getNewBlockEmitter(eth)
       const backups = []
       const backUpPath = config.get<DbBackUpConfig>('dbBackUp').path
-      const job = new DbBackUpJob(emitter)
+      const job = new DbBackUpJob(eth)
 
       job.run()
       await sleep(300)
@@ -162,7 +222,7 @@ describe('DB backUp/restore', () => {
       expect(files).to.be.eql(backups)
 
       // should add another backe up
-      emitter.emit(NEW_BLOCK_EVENT_NAME, blockMock(30))
+      job.newBlockEmitter.emit(NEW_BLOCK_EVENT_NAME, blockMock(30))
       await sleep(300)
 
       const files2 = fs.readdirSync(backUpPath)
@@ -171,7 +231,7 @@ describe('DB backUp/restore', () => {
       expect(files2).to.be.eql(backups)
 
       // should replace the oldest backup with fresh one
-      emitter.emit(NEW_BLOCK_EVENT_NAME, blockMock(45))
+      job.newBlockEmitter.emit(NEW_BLOCK_EVENT_NAME, blockMock(45))
       await sleep(300)
 
       const files3 = fs.readdirSync(backUpPath)

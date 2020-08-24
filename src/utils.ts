@@ -6,7 +6,7 @@ import fs from 'fs'
 import path from 'path'
 import { hexToAscii } from 'web3-utils'
 import BigNumber from 'bignumber.js'
-import { BlockHeader } from 'web3-eth'
+import { BlockHeader, Eth } from 'web3-eth'
 
 import {
   Application,
@@ -17,9 +17,9 @@ import {
   EventsEmitterOptions,
   DbBackUpConfig
 } from './definitions'
-import { ethFactory } from './blockchain'
 import { AutoStartStopEventEmitter, NEW_BLOCK_EVENT_NAME } from './blockchain/new-block-emitters'
 import { services } from './app'
+import { getNewBlockEmitter } from './blockchain/utils'
 
 const readFile = promisify(fs.readFile)
 
@@ -239,46 +239,13 @@ function getBackUps (): BackUpEntry[] {
   return []
 }
 
-export async function restoreDb (): Promise<void> {
-  const db = config.get<string>('db')
-  const backupConfig = config.get<DbBackUpConfig>('dbBackUp')
-
-  const eth = ethFactory()
-  const backUps = getBackUps()
-  const [latest, previousBackUp] = backUps
-
-  if (backUps.length < 2) {
-    // TODO Notify devOps
-    throw new Error('Should be at least two backups')
-  }
-
-  // Check if back up last processed block hash is valid
-  if (!(await eth.getBlock(backUps[1].block.hash))) {
-    // TODO Notify devOps
-    throw new Error('Invalid backup. Hash is not exist!')
-  }
-
-  // remove current db
-  await fs.promises.unlink(db)
-
-  // restore backup
-  await fs.promises.copyFile(path.resolve(backupConfig.path, previousBackUp.name), path.resolve(process.cwd()))
-  await fs.promises.rename(path.resolve(process.cwd(), previousBackUp.name), path.resolve(process.cwd(), db))
-
-  // Run pre-cache
-  const toBePrecache = (Object.keys(services) as Array<keyof typeof services>)
-    .filter(service => config.get<boolean>(`${service}.enabled`))
-  await Promise.all(
-    toBePrecache.map((service) => services[service].precache(eth))
-  )
-}
-
 export class DbBackUpJob {
-  private readonly db: string
-  private readonly newBlockEmitter: AutoStartStopEventEmitter
-  private readonly backUpConfig: DbBackUpConfig
+  readonly newBlockEmitter: AutoStartStopEventEmitter
+  readonly db: string
+  readonly eth: Eth
+  readonly backUpConfig: DbBackUpConfig
 
-  constructor (newBlockEmitter: AutoStartStopEventEmitter) {
+  constructor (eth: Eth) {
     if (!config.has('dbBackUp')) {
       throw new Error('DB Backup config not exist')
     }
@@ -296,10 +263,16 @@ export class DbBackUpJob {
       fs.mkdirSync(this.backUpConfig.path)
     }
 
-    this.newBlockEmitter = newBlockEmitter
+    this.eth = eth
+    this.newBlockEmitter = getNewBlockEmitter(eth)
   }
 
-  private async backupHandler (block: BlockHeader): Promise<void> {
+  /**
+   * Back-up database if blocks condition met
+   * @return {Promise<void>}
+   * @param block
+   */
+  private async backupDb (block: BlockHeader): Promise<void> {
     const [lastBackUp, previousBackUp] = getBackUps()
 
     if (!lastBackUp || new BigNumber(block.number).minus(this.backUpConfig.blocks).gte(lastBackUp.block.number)) {
@@ -311,6 +284,42 @@ export class DbBackUpJob {
         await fs.promises.unlink(path.resolve(this.backUpConfig.path, previousBackUp.name))
       }
     }
+  }
+
+  /**
+   * Restore database backup
+   * @param {(message:any) => void} errorCallback
+   * @return {Promise<void>}
+   */
+  public async restoreDb (errorCallback: (message: any) => void): Promise<void> {
+    const backUps = getBackUps()
+    const [_, oldest] = backUps
+
+    if (backUps.length < 2) {
+      errorCallback({ code: 1, message: 'Not enough backups' })
+      throw new Error('Should be two backups to be able to restore')
+    }
+
+    // Check if back up block hash exist after reorg
+    const block = await this.eth.getBlock(oldest.block.hash).catch(_ => false)
+
+    if (!block) {
+      errorCallback({ code: 2, message: 'Invalid backup. Block Hash is not valid!' })
+      throw new Error('Invalid backup. Block Hash is not valid!')
+    }
+
+    // remove current db
+    await fs.promises.unlink(this.db)
+
+    // restore backup
+    await fs.promises.copyFile(path.resolve(this.backUpConfig.path, oldest.name), path.resolve(process.cwd(), this.db))
+
+    // Run pre-cache
+    const toBePrecache = (Object.keys(services) as Array<keyof typeof services>)
+      .filter(service => config.get<boolean>(`${service}.enabled`))
+    await Promise.all(
+      toBePrecache.map((service) => services[service].precache(this.eth))
+    )
   }
 
   private getEventEmittersConfigs (): { config: EventsEmitterOptions, name: string }[] {
@@ -342,7 +351,7 @@ export class DbBackUpJob {
   }
 
   public run (): void {
-    this.newBlockEmitter.on(NEW_BLOCK_EVENT_NAME, this.backupHandler.bind(this))
+    this.newBlockEmitter.on(NEW_BLOCK_EVENT_NAME, this.backupDb.bind(this))
   }
 
   public stop (): void {
