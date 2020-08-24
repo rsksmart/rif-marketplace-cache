@@ -213,11 +213,11 @@ export abstract class BaseCLICommand extends Command {
 type BackUpEntry = { name: string, block: { hash: string, number: BigNumber } }
 
 function parseBackUps (backUpName: string): BackUpEntry {
-  const [block, name] = backUpName.split('.')[0].split('-')[0]
+  const [block] = backUpName.split('.')[0].split('-')
   const [hash, blockNumber] = block.split(':')
 
   return {
-    name: name,
+    name: backUpName,
     block: { number: new BigNumber(blockNumber), hash }
   }
 }
@@ -232,7 +232,7 @@ function getBackUps (): BackUpEntry[] {
       .map(parseBackUps)
       .sort(
         (a: Record<string, any>, b: Record<string, any>) =>
-          a.block.number.gt(b.block.number) ? 1 : -1
+          a.block.number.gt(b.block.number) ? -1 : 1
       )
   }
 
@@ -274,14 +274,16 @@ export async function restoreDb (): Promise<void> {
 }
 
 export class DbBackUpJob {
-  private newBlockEmitter: AutoStartStopEventEmitter
-  private backUpConfig: DbBackUpConfig
+  private readonly db: string
+  private readonly newBlockEmitter: AutoStartStopEventEmitter
+  private readonly backUpConfig: DbBackUpConfig
 
   constructor (newBlockEmitter: AutoStartStopEventEmitter) {
     if (!config.has('dbBackUp')) {
       throw new Error('DB Backup config not exist')
     }
-    this.backUpConfig = config.get<{ blocks: number, path: string }>('dbBackUp')
+    this.backUpConfig = config.get<DbBackUpConfig>('dbBackUp')
+    this.db = config.get<string>('db')
 
     const eventEmittersConfirmations = this.getEventEmittersConfigs()
     const invalidConfirmation = eventEmittersConfirmations.find(c => c.config.confirmations && c.config.confirmations > this.backUpConfig.blocks)
@@ -298,13 +300,11 @@ export class DbBackUpJob {
   }
 
   private async backupHandler (block: BlockHeader): Promise<void> {
-    const db = config.get<string>('db')
     const [lastBackUp, previousBackUp] = getBackUps()
 
-    if (new BigNumber(block.number).minus(this.backUpConfig.blocks).gte(lastBackUp.block.number)) {
+    if (!lastBackUp || new BigNumber(block.number).minus(this.backUpConfig.blocks).gte(lastBackUp.block.number)) {
       // copy and rename current db
-      await fs.promises.copyFile(db, this.backUpConfig.path)
-      await fs.promises.rename(path.resolve(this.backUpConfig.path, db), path.resolve(this.backUpConfig.path, `${block.hash}:${block.number}-${db}`))
+      await fs.promises.copyFile(this.db, path.resolve(this.backUpConfig.path, `${block.hash}:${block.number}-${this.db}`))
 
       // remove the oldest version
       if (previousBackUp) {
@@ -342,7 +342,7 @@ export class DbBackUpJob {
   }
 
   public run (): void {
-    this.newBlockEmitter.on(NEW_BLOCK_EVENT_NAME, this.backupHandler)
+    this.newBlockEmitter.on(NEW_BLOCK_EVENT_NAME, this.backupHandler.bind(this))
   }
 
   public stop (): void {

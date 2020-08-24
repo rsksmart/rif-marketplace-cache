@@ -4,7 +4,7 @@ module.exports = {
   },
   depCheck: {
     ignore: [
-      'tasegir', 'reflect-metadata', '@types/*', 'sqlite3', '@oclif/*',
+      'cross-env', 'tasegir', 'reflect-metadata', '@types/*', 'sqlite3', '@oclif/*',
     ]
   }
 }
