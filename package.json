@@ -1,6 +1,6 @@
 {
   "name": "@rsksmart/rif-marketplace-cache",
-  "version": "0.3.0",
+  "version": "1.0.0-rc.0",
   "description": "Caching server for RIF Marketplace",
   "keywords": [
     "RIF",
