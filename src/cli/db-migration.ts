@@ -70,8 +70,7 @@ export default class DbMigrationCommand extends BaseCLICommand {
 
   protected resolveDbPath (db: string): string {
     if (!db) {
-      const dbFromConfig = path.resolve(this.config.dataDir, config.get<string>('db'))
-      return dbFromConfig.split(':')[1]
+      return path.resolve(this.config.dataDir, config.get<string>('db'))
     }
 
     const parsed = path.parse(db)
@@ -139,7 +138,7 @@ export default class DbMigrationCommand extends BaseCLICommand {
     const parsedFlags = originalFlags as OutputFlags<typeof DbMigrationCommand.flags>
 
     if (parsedFlags.db) {
-      config.util.extendDeep(config, { db: `sqlite:${this.resolveDbPath(parsedFlags.db)}` })
+      config.util.extendDeep(config, { db: this.resolveDbPath(parsedFlags.db) })
     }
 
     if (parsedFlags.generate) {
