@@ -106,7 +106,9 @@ ${formattedServices}`
     const backUpJob = new DbBackUpJob(ethFactory())
     // An infinite loop which you can exit only with SIGINT/SIGKILL
     while (true) {
-      let stopCallback = (() => { throw new Error('No stop callback was assigned!') }) as () => void
+      let stopCallback: () => void = () => {
+        throw new Error('No stop callback was assigned!')
+      }
 
       // Run backup job
       backUpJob.run()

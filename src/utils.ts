@@ -179,12 +179,12 @@ export abstract class BaseCLICommand extends Command {
     )
   }
 
-  async loadConfig (path?: string): Promise<Config> {
-    if (!path) {
+  async loadConfig (configPath?: string): Promise<Config> {
+    if (!configPath) {
       return {}
     }
 
-    const data = await readFile(path, 'utf-8')
+    const data = await readFile(configPath, 'utf-8')
     return JSON.parse(data) as Config
   }
 
@@ -301,7 +301,7 @@ export class DbBackUpJob {
     }
 
     // Check if back up block hash exist after reorg
-    const block = await this.eth.getBlock(oldest.block.hash).catch(_ => false)
+    const block = await this.eth.getBlock(oldest.block.hash).catch(() => false)
 
     if (!block) {
       errorCallback({ code: 2, message: 'Invalid backup. Block Hash is not valid!' })
@@ -329,12 +329,12 @@ export class DbBackUpJob {
           if (serviceName === SupportedServices.RNS) {
             const rnsEmitters = ['owner', 'reverse', 'placement']
               .reduce(
-                (acc: any[], contract: string) => {
+                (acc2: any[], contract: string) => {
                   if (config.has(`${serviceName}.${contract}.eventsEmitter`)) {
                     const emitterConfig = config.get<EventsEmitterOptions>(`${serviceName}.${contract}.eventsEmitter`)
-                    return [...acc, { config: emitterConfig, name: `${serviceName}.${contract}` }]
+                    return [...acc2, { config: emitterConfig, name: `${serviceName}.${contract}` }]
                   }
-                  return acc
+                  return acc2
                 },
                 []
               )
