@@ -18,9 +18,9 @@
       }
     },
     placement: {
-      contractAddress: "0xA5c1afA6A7928aa017E800fB6B89f11219836C58",
+      contractAddress: "0xFa5ade767a422C66cAFd94c3710f5b92467fB85e",
       eventsEmitter: {
-        startingBlock: 1027482,
+        startingBlock: 1121204,
         confirmations: 3
       }
     },
