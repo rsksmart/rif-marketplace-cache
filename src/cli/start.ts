@@ -103,12 +103,12 @@ ${formattedServices}`
     const configOverrides = this.buildConfigObject(flags)
     config.util.extendDeep(config, configOverrides)
 
+    const backUpJob = new DbBackUpJob(ethFactory())
     // An infinite loop which you can exit only with SIGINT/SIGKILL
     while (true) {
       let stopCallback = (() => { throw new Error('No stop callback was assigned!') }) as () => void
 
       // Run backup job
-      const backUpJob = new DbBackUpJob(ethFactory())
       backUpJob.run()
 
       // Promise that resolves when reset callback is called
