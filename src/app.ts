@@ -7,7 +7,7 @@ import feathers from '@feathersjs/feathers'
 import express from '@feathersjs/express'
 import socketio from '@feathersjs/socketio'
 
-import { Application, SupportedServices } from './definitions'
+import { Application, ServiceAddresses, SupportedServices } from './definitions'
 import { loggingFactory } from './logger'
 import sequelize from './sequelize'
 import blockchain from './blockchain'
@@ -20,6 +20,7 @@ import authentication from './services/authentication'
 import storage from './services/storage'
 import rates from './services/rates'
 import rns from './services/rns'
+import { REORG_EVENT } from './blockchain/reorg-emitter'
 
 const logger = loggingFactory()
 
@@ -75,9 +76,6 @@ export async function appFactory (options: AppOptions): Promise<{ stop: () => vo
     }
   })
 
-  // Subscribe for reorg event
-  // options.appResetCallBack()
-
   // Configure a middleware for 404s and the error handler
   app.use(express.notFound())
   app.use(express.errorHandler({ logger }))
@@ -87,12 +85,19 @@ export async function appFactory (options: AppOptions): Promise<{ stop: () => vo
   const server = app.listen(port)
 
   server.on('listening', () =>
-    logger.info('Server started on port %d', port)
+    logger.info(`Server started on port ${port}`)
   )
 
   process.on('unhandledRejection', err =>
     logger.error(`Unhandled Rejection at: ${err}`)
   )
+
+  // Subscribe for reorg event
+  const reorgService = app.service(ServiceAddresses.REORG_EMITTER)
+  reorgService.on(REORG_EVENT, () => {
+    // wait 5 seconds to be sure that reorg event received by connected services
+    setTimeout(() => options.appResetCallBack(), 5000)
+  })
 
   return {
     stop: () => {
