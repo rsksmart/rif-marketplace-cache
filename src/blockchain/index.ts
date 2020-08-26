@@ -8,6 +8,7 @@ import { loggingFactory } from '../logger'
 import { NEW_BLOCK_EVENT_NAME, NewBlockEmitterService } from './new-block-emitters'
 import { getNewBlockEmitter } from './utils'
 import { waitForReadyApp } from '../utils'
+import { ReorgEmitterService } from './reorg-emitter'
 
 const logger = loggingFactory('blockchain')
 
@@ -20,6 +21,7 @@ export function ethFactory (): Eth {
 
 const CONFIRMATION_CHANNEL = 'confirmations'
 const NEW_BLOCK_EMITTER_CHANNEL = 'new-block'
+const REORG_CHANNEL = 'reorg'
 
 function channelSetup (app: Application): void {
   if (typeof app.channel !== 'function') {
@@ -29,9 +31,11 @@ function channelSetup (app: Application): void {
   app.on('connection', (connection: any) => {
     app.channel(CONFIRMATION_CHANNEL).join(connection)
     app.channel(NEW_BLOCK_EMITTER_CHANNEL).join(connection)
+    app.channel(REORG_CHANNEL).join(connection)
   })
   app.service(ServiceAddresses.CONFIRMATIONS).publish(() => app.channel(CONFIRMATION_CHANNEL))
   app.service(ServiceAddresses.NEW_BLOCK_EMITTER).publish(() => app.channel(NEW_BLOCK_EMITTER_CHANNEL))
+  app.service(ServiceAddresses.REORG_EMITTER).publish(() => app.channel(REORG_CHANNEL))
 }
 
 function subscribeAndEmitNewBlocks (app: Application): void {
@@ -55,6 +59,7 @@ export default async function (app: Application): Promise<void> {
   app.set('eth', eth)
   app.use(ServiceAddresses.CONFIRMATIONS, new ConfirmatorService(eth))
   app.use(ServiceAddresses.NEW_BLOCK_EMITTER, new NewBlockEmitterService())
+  app.use(ServiceAddresses.REORG_EMITTER, new ReorgEmitterService())
 
   subscribeAndEmitNewBlocks(app)
   channelSetup(app)

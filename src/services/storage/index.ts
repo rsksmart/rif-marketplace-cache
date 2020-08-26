@@ -8,6 +8,7 @@ import { AbiItem } from 'web3-utils'
 
 import { ethFactory } from '../../blockchain'
 import { getEventsEmitterForService, isServiceInitialized } from '../../blockchain/utils'
+import { REORG_OUT_OF_RANGE_EVENT_NAME } from '../../blockchain/events'
 import { Application, CachedService, ServiceAddresses } from '../../definitions'
 import { loggingFactory } from '../../logger'
 import { errorHandler, waitForReadyApp } from '../../utils'
@@ -95,6 +96,8 @@ const storage: CachedService = {
 
     app.configure(storageChannels)
 
+    const reorgEmitterService = app.service(ServiceAddresses.REORG_EMITTER)
+
     // We require services to be precached before running server
     if (!isServiceInitialized(SERVICE_NAME)) {
       return logger.critical('Storage service is not initialized! Run precache command.')
@@ -110,6 +113,7 @@ const storage: CachedService = {
     })
     eventsEmitter.on('newConfirmation', (data) => confirmationService.emit('newConfirmation', data))
     eventsEmitter.on('invalidConfirmation', (data) => confirmationService.emit('invalidConfirmation', data))
+    eventsEmitter.on(REORG_OUT_OF_RANGE_EVENT_NAME, (blockNumber: number) => reorgEmitterService.emitReorg(blockNumber, 'storage'))
 
     return {
       stop: () => {
