@@ -97,6 +97,14 @@ ${formattedServices}`
     await Event.destroy({ where: {}, truncate: true, cascade: true })
   }
 
+  async precache () {
+    const toBePrecache = (Object.keys(services) as Array<keyof typeof services>)
+      .filter(service => config.get<boolean>(`${service}.enabled`))
+    await Promise.all(
+      toBePrecache.map((service) => services[service].precache(ethFactory()))
+    )
+  }
+
   async run (): Promise<void> {
     const { flags } = this.parse(StartServer)
 
@@ -134,6 +142,9 @@ ${formattedServices}`
 
       // Restore DB from backup
       await backUpJob.restoreDb(() => undefined)
+
+      // Run pre-cache
+      await this.precache()
 
       logger.info('Restarting the app')
     }

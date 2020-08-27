@@ -313,13 +313,6 @@ export class DbBackUpJob {
 
     // restore backup
     await fs.promises.copyFile(path.resolve(this.backUpConfig.path, oldest.name), path.resolve(process.cwd(), this.db))
-
-    // Run pre-cache
-    const toBePrecache = (Object.keys(services) as Array<keyof typeof services>)
-      .filter(service => config.get<boolean>(`${service}.enabled`))
-    await Promise.all(
-      toBePrecache.map((service) => services[service].precache(this.eth))
-    )
   }
 
   private getEventEmittersConfigs (): { config: EventsEmitterOptions, name: string }[] {
