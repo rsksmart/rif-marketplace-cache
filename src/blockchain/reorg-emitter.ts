@@ -1,10 +1,10 @@
 import { ServiceMethods } from '@feathersjs/feathers'
 
 import { loggingFactory } from '../logger'
+import { REORG_OUT_OF_RANGE_EVENT_NAME } from './events'
 
 const logger = loggingFactory('blockchain:reorg-service')
 const DEFAULT_DEBOUNCE_TIME = 5000
-export const REORG_EVENT = 'reorg-event'
 
 export class ReorgEmitterService implements Partial<ServiceMethods<any>> {
   private readonly debounceTime: number
@@ -16,7 +16,7 @@ export class ReorgEmitterService implements Partial<ServiceMethods<any>> {
 
   constructor (debounceTime?: number) {
     this.debounceTime = debounceTime || DEFAULT_DEBOUNCE_TIME
-    this.events = [REORG_EVENT]
+    this.events = [REORG_OUT_OF_RANGE_EVENT_NAME]
   }
 
   // eslint-disable-next-line require-await
@@ -32,7 +32,7 @@ export class ReorgEmitterService implements Partial<ServiceMethods<any>> {
     if (!this.timeoutStarted) {
       setTimeout(() => {
         if (this.emit) {
-          this.emit(REORG_EVENT, { contracts: this.reorgContract, lastProcessedBlockNumber: this.lastProcessedBlockNumber })
+          this.emit(REORG_OUT_OF_RANGE_EVENT_NAME, { contracts: this.reorgContract, lastProcessedBlockNumber: this.lastProcessedBlockNumber })
         }
         this.reorgContract = []
         this.lastProcessedBlockNumber = 0

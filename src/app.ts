@@ -20,7 +20,7 @@ import authentication from './services/authentication'
 import storage from './services/storage'
 import rates from './services/rates'
 import rns from './services/rns'
-import { REORG_EVENT } from './blockchain/reorg-emitter'
+import { REORG_OUT_OF_RANGE_EVENT_NAME } from './blockchain/events'
 
 const logger = loggingFactory()
 
@@ -94,7 +94,7 @@ export async function appFactory (options: AppOptions): Promise<{ stop: () => vo
 
   // Subscribe for reorg event
   const reorgService = app.service(ServiceAddresses.REORG_EMITTER)
-  reorgService.on(REORG_EVENT, () => {
+  reorgService.on(REORG_OUT_OF_RANGE_EVENT_NAME, () => {
     // wait 5 seconds to be sure that reorg event received by connected services
     setTimeout(() => options.appResetCallBack(), 5000)
   })
