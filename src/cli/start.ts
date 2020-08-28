@@ -5,7 +5,6 @@ import { appFactory, services } from '../app'
 import { loggingFactory } from '../logger'
 import { Flags, Config, SupportedServices, isSupportedServices } from '../definitions'
 import { BaseCLICommand, DbBackUpJob } from '../utils'
-import Event from '../blockchain/event.model'
 import { ethFactory } from '../blockchain'
 
 const logger = loggingFactory('cli:start')

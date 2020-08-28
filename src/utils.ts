@@ -18,7 +18,6 @@ import {
   DbBackUpConfig
 } from './definitions'
 import { AutoStartStopEventEmitter, NEW_BLOCK_EVENT_NAME } from './blockchain/new-block-emitters'
-import { services } from './app'
 import { getNewBlockEmitter } from './blockchain/utils'
 
 const readFile = promisify(fs.readFile)
