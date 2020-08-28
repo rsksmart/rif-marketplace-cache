@@ -12,16 +12,34 @@ import { EventError } from '../../../errors'
 const logger = loggingFactory('storage:handler:offer')
 
 function updatePrices (offer: Offer, period: BigNumber, price: BigNumber): Promise<BillingPlan> {
-  const billingPlan = offer.plans && offer.plans.find(value => new BigNumber(value.period).eq(period))
-  logger.info(`Updating period ${period} to price ${price} (ID: ${offer.provider})`)
+  const {
+    plans,
+    provider
+  } = offer
+
+  const billingPlan = plans && plans.find(value => new BigNumber(value.period).eq(period))
+  logger.info(`Updating period ${period} to price ${price} (ID: ${provider})`)
 
   if (billingPlan) {
     billingPlan.price = price
     return billingPlan.save()
   } else {
-    const newBillingPlanEntity = new BillingPlan({ period, price, offerId: offer.provider })
+    const newBillingPlanEntity = new BillingPlan({ period, price, offerId: provider })
     return newBillingPlanEntity.save()
   }
+}
+
+export function weightedCumulativeAverage (newValue: number, valuesCt: number, currentAvg: number): number {
+  const values = [currentAvg || 0, newValue]
+  const newValueWeigh = 1 / valuesCt
+  const curAvgWeight = 1 - newValueWeigh
+  const weights = [curAvgWeight, newValueWeigh]
+
+  const average = values.reduce((avg, x, i) => avg + x * weights[i], 0)
+
+  const weightsSum = weights.reduce((sum, w) => sum + w)
+
+  return weightsSum === 1 ? average : average / weightsSum
 }
 
 const handlers: { [key: string]: Function } = {
@@ -57,8 +75,15 @@ const handlers: { [key: string]: Function } = {
       throw new EventError(`Unknown message flag ${flag}!`, event.event)
     }
   },
-  async BillingPlanSet (event: EventData, offer: Offer, offerService: OfferService): Promise<void> {
-    await updatePrices(offer, event.returnValues.period, event.returnValues.price)
+  async BillingPlanSet ({ returnValues: { period, price } }: EventData, offer: Offer, offerService: OfferService): Promise<void> {
+    const plan = await updatePrices(offer, period, price)
+
+    const { plans, averagePrice } = offer
+    const planPrice = Math.round(plan.price.toNumber())
+
+    const newAvgPrice = plans && weightedCumulativeAverage(planPrice, plans.length, averagePrice)
+    offer.averagePrice = newAvgPrice || planPrice
+    offer.save()
 
     if (offerService.emit) {
       const freshOffer = await Offer.findByPk(offer.provider) as Offer
