@@ -72,7 +72,9 @@ describe('CLI', function () {
     expect(await Rate.findByPk(123456789012345)).to.be.ok()
 
     // Mock the dependencies
-    let appResetCallback = (() => { throw new Error('AppResetCallback was not assigned!') }) as () => void
+    let appResetCallback = (() => {
+      throw new Error('AppResetCallback was not assigned!')
+    }) as () => void
     const stopSpy = sinon.spy()
     const initAppStub = sinon.stub(AppModule, 'appFactory')
     initAppStub.callsFake((options: AppModule.AppOptions): Promise<{ stop: () => void }> => {
@@ -80,7 +82,7 @@ describe('CLI', function () {
 
       return Promise.resolve({ stop: stopSpy })
     })
-    const ethStub = sinon.stub(blockchainUtils, 'ethFactory').returns({
+    sinon.stub(blockchainUtils, 'ethFactory').returns({
       getBlock: sinon.stub().resolves(true)
     } as unknown as Eth)
     const rnsPrecacheStub = sinon.stub(RnsService, 'precache').resolves()
@@ -105,10 +107,5 @@ describe('CLI', function () {
     expect(await Rate.findByPk('123456789012345')).to.be.eql(null)
 
     sinon.reset()
-    // rnsPrecacheStub.reset()
-    // storagePrecacheStub.reset()
-    // storagePrecacheStub.restore()
-    // rnsPrecacheStub.restore()
-    // ethStub.restore()
   })
 })
