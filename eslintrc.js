@@ -1,1 +1,0 @@
-node_modules/tasegir/src/config/eslintrc.js
