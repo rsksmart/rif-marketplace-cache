@@ -29,17 +29,13 @@ function updatePrices (offer: Offer, period: BigNumber, price: BigNumber): Promi
   }
 }
 
-export function weightedCumulativeAverage (newValue: number, valuesCt: number, currentAvg: number): number {
-  const values = [currentAvg || 0, newValue]
-  const newValueWeigh = 1 / valuesCt
-  const curAvgWeight = 1 - newValueWeigh
-  const weights = [curAvgWeight, newValueWeigh]
+export function weightedCumulativeAverage (newValue: number, valuesCt: number, currentAvg = 0): number {
+  const values = [currentAvg, newValue]
+  const newValueWeight = 1 / valuesCt
+  const curAvgWeight = 1 - newValueWeight
+  const weights = [curAvgWeight, newValueWeight]
 
-  const average = values.reduce((avg, x, i) => avg + x * weights[i], 0)
-
-  const weightsSum = weights.reduce((sum, w) => sum + w)
-
-  return weightsSum === 1 ? average : average / weightsSum
+  return values.reduce((avg, x, i) => avg + x * weights[i], 0)
 }
 
 const handlers: { [key: string]: Function } = {
