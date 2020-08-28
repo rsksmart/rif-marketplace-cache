@@ -7,26 +7,13 @@ import sinonChai from 'sinon-chai'
 import { Eth } from 'web3-eth'
 import { Substitute, Arg } from '@fluffy-spoon/substitute'
 
-import * as RateService from '../src/services/rns'
-import * as RnsService from '../src/services/rates'
-import * as StorageService from '../src/services/storage'
 import { DbBackUpJob } from '../src/utils'
-import { blockMock, sleep } from './utils'
+import { blockMock, rmDir, sleep } from './utils'
 import { NEW_BLOCK_EVENT_NAME } from '../src/blockchain/new-block-emitters'
 import { DbBackUpConfig } from '../src/definitions'
 
 chai.use(sinonChai)
 const expect = chai.expect
-
-function rmDir (folder: string) {
-  if (fs.existsSync(folder)) {
-    for (const file of fs.readdirSync(folder)) {
-      fs.unlinkSync(path.join(folder, file))
-    }
-
-    fs.rmdirSync(config.get<DbBackUpConfig>('dbBackUp').path, { recursive: true })
-  }
-}
 
 describe('DB back-up/restore', function () {
   const configBackUp = { db: config.get('db'), dbBackUp: config.get('dbBackUp') }
@@ -68,16 +55,11 @@ describe('DB back-up/restore', function () {
       expect(errorCallBack.called).to.be.true()
       expect(errorCallBack.calledWith({ code: 2, message: 'Invalid backup. Block Hash is not valid!' }))
     })
-    it('should restore database and precache', async () => {
+    it('should restore database', async () => {
       const eth = Substitute.for<Eth>()
       const errorCallBack = sinon.spy()
       const backupPath = config.get<DbBackUpConfig>('dbBackUp').path
       const db = config.get<string>('db')
-
-      // Mock precache
-      const ratesStub = sinon.stub(RateService.default, 'precache').returns(Promise.resolve())
-      const rnsStub = sinon.stub(RnsService.default, 'precache').returns(Promise.resolve())
-      const storageStub = sinon.stub(StorageService.default, 'precache').returns(Promise.resolve())
 
       const backupJob = new DbBackUpJob(eth)
       eth.getBlock('0x0123').resolves(blockMock(10))
@@ -90,11 +72,8 @@ describe('DB back-up/restore', function () {
       await sleep(1000)
 
       expect(errorCallBack.called).to.be.false()
-      expect(ratesStub.called).to.be.true()
-      expect(rnsStub.called).to.be.true()
-      expect(storageStub.called).to.be.true()
 
-      expect(fs.readFileSync(db).toString()).to.be.eql('First backup')
+      expect(fs.readFileSync(db).toString()).to.be.eql('First db backup')
     })
   })
 

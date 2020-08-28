@@ -30,7 +30,7 @@ export const services = {
   [SupportedServices.RNS]: rns
 }
 
-type AppOptions = { appResetCallBack: (...args: any) => void }
+export type AppOptions = { appResetCallBack: (...args: any) => void }
 
 export async function appFactory (options: AppOptions): Promise<{ stop: () => void }> {
   const app: Application = express(feathers())

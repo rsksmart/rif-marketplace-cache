@@ -84,20 +84,7 @@ ${formattedServices}`
     return output
   }
 
-  private async purge (): Promise<void> {
-    const toBePurgedServices = (Object.keys(services) as Array<keyof typeof services>)
-      .filter(service => config.get<boolean>(`${service}.enabled`))
-
-    logger.info(`Purging services: ${toBePurgedServices.join(', ')}`)
-
-    await Promise.all(
-      toBePurgedServices.map((service) => services[service].purge())
-    )
-
-    await Event.destroy({ where: {}, truncate: true, cascade: true })
-  }
-
-  async precache () {
+  public async precache () {
     const toBePrecache = (Object.keys(services) as Array<keyof typeof services>)
       .filter(service => config.get<boolean>(`${service}.enabled`))
     await Promise.all(
