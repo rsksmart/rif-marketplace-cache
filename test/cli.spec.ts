@@ -92,11 +92,11 @@ describe('CLI', function () {
     // @ts-ignore
     StartCommand.run([]).then(() => null, (e) => expect.fail(e))
 
-    await sleep(2000)
+    await sleep(3000)
     //
     appResetCallback() // Trigger reset
     //
-    await sleep(2000)
+    await sleep(3000)
 
     // Precache called
     expect(rnsPrecacheStub.called).to.be.true()
