@@ -28,7 +28,6 @@ export default {
         if (context.params.query) {
           const { averagePrice, totalCapacity, periods } = context.params.query
 
-          if (!(averagePrice || totalCapacity || periods)) return
           context.params.sequelize = {
             raw: false,
             nest: true,
@@ -40,13 +39,22 @@ export default {
               {
                 model: Agreement
               }
-            ],
-            where: {
-              '$plans.period$': periods?.length
-                ? { [Op.in]: periods } : true,
-              averagePrice,
-              totalCapacity
+            ]
+          }
+
+          if ((averagePrice || totalCapacity)) {
+            context.params.sequelize.where = {
+              averagePrice: averagePrice && {
+                [Op.between]: [averagePrice.min, averagePrice.max]
+              },
+              totalCapacity: totalCapacity && {
+                [Op.between]: [totalCapacity.min, totalCapacity.max]
+              }
             }
+          }
+
+          if (periods?.length) {
+            context.params.sequelize.where['$plans.period$'] = { [Op.in]: periods }
           }
         }
       }
