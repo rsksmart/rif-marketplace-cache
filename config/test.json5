@@ -1,6 +1,5 @@
 {
   db: 'db_test.sqlite',
-  dbBackUp: { blocks: 10, path: 'db-backups' },
   blockchain: {
     provider: 'ws://localhost:8545',
     waitBlockCountBeforeConfirmationRemoved: 10
