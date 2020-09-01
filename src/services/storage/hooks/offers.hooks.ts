@@ -3,6 +3,7 @@ import BillingPlan from '../models/billing-plan.model'
 import { disallow, discard } from 'feathers-hooks-common'
 import Agreement from '../models/agreement.model'
 import { hooks } from 'feathers-sequelize'
+import { Op } from 'sequelize'
 import dehydrate = hooks.dehydrate
 
 export default {
@@ -22,7 +23,34 @@ export default {
         }
       }
     ],
-    find: [],
+    find: [
+      (context: HookContext) => {
+        if (context.params.query) {
+          const { averagePrice, totalCapacity, periods } = context.params.query
+
+          if (!(averagePrice || totalCapacity || periods)) return
+          context.params.sequelize = {
+            raw: false,
+            nest: true,
+            include: [
+              {
+                model: BillingPlan,
+                as: 'plans'
+              },
+              {
+                model: Agreement
+              }
+            ],
+            where: {
+              '$plans.period$': periods?.length
+                ? { [Op.in]: periods } : true,
+              averagePrice,
+              totalCapacity
+            }
+          }
+        }
+      }
+    ],
     get: [],
     create: disallow('external'),
     update: disallow('external'),
