@@ -29,7 +29,7 @@ function updatePrices (offer: Offer, period: BigNumber, price: BigNumber): Promi
   }
 }
 
-export function weightedCumulativeAverage (newValue: number, currentCt: number, currentAvg): number {
+export function weightedCumulativeAverage (newValue: number, currentCt: number, currentAvg: number): number {
   if (!currentAvg) return newValue
 
   const values = [currentAvg, newValue]
@@ -77,7 +77,7 @@ const handlers: { [key: string]: Function } = {
     const plan = await updatePrices(offer, period, price)
 
     const { plans, averagePrice } = offer
-    const planPrice = Math.round(plan.price.toNumber())
+    const planPrice = Math.round(plan.price.div(1024 ** 3).toNumber())
 
     const newAvgPrice = plans && weightedCumulativeAverage(planPrice, plans.length, averagePrice)
     offer.averagePrice = newAvgPrice || planPrice
