@@ -9,8 +9,8 @@ import { BigNumberStringType } from '../../../sequelize'
 @Scopes(() => ({
   active: {
     where: {
-      totalCapacity: { [Op.and]: [{ [Op.ne]: null }, { [Op.ne]: '0' }] },
-      peerId: { [Op.ne]: null }
+      totalCapacity: { [Op.and]: [{ [Op.ne]: null }, { [Op.ne]: '0' }] }
+      // peerId: { [Op.ne]: null } // Disabled until used in tx to prevent empty results
     },
     include: [
       {
