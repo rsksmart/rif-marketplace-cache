@@ -43,7 +43,7 @@
 
     // Topics that will be listened to
     topics: [
-      'TotalCapacitySet(address,uin64)',
+      'TotalCapacitySet(address,uint64)',
       'BillingPlanSet(address,uint64,uint128)',
       'MessageEmitted(address,bytes32[])',
       'NewAgreement(bytes32,bytes32[],address,address,uint128,uint64,uint128,uint256)',
