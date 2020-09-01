@@ -30,7 +30,7 @@ function updatePrices (offer: Offer, period: BigNumber, price: BigNumber): Promi
 }
 
 export function weightedCumulativeAverage (newValue: number, currentCt: number, currentAvg: number): number {
-  if (!currentAvg) return newValue
+  if (!currentAvg) { return newValue }
 
   const values = [currentAvg, newValue]
   const newValueWeight = 1 / (currentCt + 1)
