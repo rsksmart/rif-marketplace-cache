@@ -26,7 +26,7 @@ export default {
     find: [
       (context: HookContext) => {
         if (context.params.query) {
-          const { averagePrice, totalCapacity, periods, $limit } = context.params.query
+          const { averagePrice, totalCapacity, periods, provider, $limit } = context.params.query
 
           if (!$limit) {
             context.params.sequelize = {
@@ -41,17 +41,25 @@ export default {
                   model: Agreement
                 }
               ],
-              order: [['plans', 'period', 'ASC']]
+              order: [['plans', 'period', 'ASC']],
+              where: {}
             }
 
-            if ((averagePrice || totalCapacity)) {
-              context.params.sequelize.where = {
-                averagePrice: averagePrice && {
-                  [Op.between]: [averagePrice.min, averagePrice.max]
-                },
-                totalCapacity: totalCapacity && {
-                  [Op.between]: [totalCapacity.min, totalCapacity.max]
-                }
+            if (provider && provider.$like) {
+              context.params.sequelize.where.provider = {
+                [Op.like]: `%${provider.$like}%`
+              }
+            }
+
+            if (averagePrice) {
+              context.params.sequelize.where.averagePrice = {
+                [Op.between]: [averagePrice.min, averagePrice.max]
+              }
+            }
+
+            if (totalCapacity) {
+              context.params.sequelize.where.totalCapacity = {
+                [Op.between]: [totalCapacity.min, totalCapacity.max]
               }
             }
 
