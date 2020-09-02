@@ -26,35 +26,38 @@ export default {
     find: [
       (context: HookContext) => {
         if (context.params.query) {
-          const { averagePrice, totalCapacity, periods } = context.params.query
+          const { averagePrice, totalCapacity, periods, $limit } = context.params.query
 
-          context.params.sequelize = {
-            raw: false,
-            nest: true,
-            include: [
-              {
-                model: BillingPlan,
-                as: 'plans'
-              },
-              {
-                model: Agreement
-              }
-            ]
-          }
+          if (!$limit) {
+            context.params.sequelize = {
+              raw: false,
+              nest: true,
+              include: [
+                {
+                  model: BillingPlan,
+                  as: 'plans'
+                },
+                {
+                  model: Agreement
+                }
+              ],
+              order: [['plans', 'period', 'ASC']]
+            }
 
-          if ((averagePrice || totalCapacity)) {
-            context.params.sequelize.where = {
-              averagePrice: averagePrice && {
-                [Op.between]: [averagePrice.min, averagePrice.max]
-              },
-              totalCapacity: totalCapacity && {
-                [Op.between]: [totalCapacity.min, totalCapacity.max]
+            if ((averagePrice || totalCapacity)) {
+              context.params.sequelize.where = {
+                averagePrice: averagePrice && {
+                  [Op.between]: [averagePrice.min, averagePrice.max]
+                },
+                totalCapacity: totalCapacity && {
+                  [Op.between]: [totalCapacity.min, totalCapacity.max]
+                }
               }
             }
-          }
 
-          if (periods?.length) {
-            context.params.sequelize.where['$plans.period$'] = { [Op.in]: periods }
+            if (periods?.length) {
+              context.params.sequelize.where['$plans.period$'] = { [Op.in]: periods }
+            }
           }
         }
       }
