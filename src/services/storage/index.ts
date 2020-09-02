@@ -40,12 +40,14 @@ const logger = loggingFactory(SERVICE_NAME)
 function precache (possibleEth?: Eth): Promise<void> {
   return new Promise<void>((resolve, reject) => {
     const eth = possibleEth || ethFactory()
-    const eventsEmitter = getEventsEmitterForService(SERVICE_NAME, eth, storageManagerContract.abi as AbiItem[])
+    const eventsEmitter = getEventsEmitterForService(`${SERVICE_NAME}.storageManager`, eth, storageManagerContract.abi as AbiItem[])
+    // const eventsEmitter = getEventsEmitterForService(`${SERVICE_NAME}.stake`, eth, storageManagerContract.abi as AbiItem[])
 
     const dataQueue: EventData[] = []
     const dataQueuePusher = (event: EventData): void => { dataQueue.push(event) }
 
     const services: StorageServices = {
+      // stakeService: new StakeService({ Model: Stake }),
       offerService: new OfferService({ Model: Offer }),
       agreementService: new AgreementService({ Model: Agreement })
     }
@@ -91,27 +93,42 @@ const storage: CachedService = {
     const agreementService = app.service(ServiceAddresses.STORAGE_AGREEMENTS)
     agreementService.hooks(agreementHooks)
 
-    const services = { offerService, agreementService }
+    // Initialize Staking service
+    // app.use(ServiceAddresses.STORAGE_STAKES, new StakingService({ Model: Staking }))
+    // const stakingService = app.service(ServiceAddresses.STORAGE_STAKES)
+    // stakingService.hooks(stakingHooks)
+
+    const services = { offerService, agreementService } // stakingService
 
     app.configure(storageChannels)
 
     const reorgEmitterService = app.service(ServiceAddresses.REORG_EMITTER)
 
     // We require services to be precached before running server
-    if (!isServiceInitialized(SERVICE_NAME)) {
+    if (!isServiceInitialized(`${SERVICE_NAME}.storageManager`)) {
       return logger.critical('Storage service is not initialized! Run precache command.')
     }
 
-    // Initialize blockchain watcher
     const eth = app.get('eth') as Eth
     const confirmationService = app.service(ServiceAddresses.CONFIRMATIONS)
-    const eventsEmitter = getEventsEmitterForService(SERVICE_NAME, eth, storageManagerContract.abi as AbiItem[])
-    eventsEmitter.on('newEvent', errorHandler(eventProcessor(services, eth), logger))
-    eventsEmitter.on('error', (e: Error) => {
+
+    // Storage Manager watcher
+    const storageManagerEventsEmitter = getEventsEmitterForService(`${SERVICE_NAME}.storageManager`, eth, storageManagerContract.abi as AbiItem[])
+    storageManagerEventsEmitter.on('newEvent', errorHandler(eventProcessor(services, eth), logger))
+    storageManagerEventsEmitter.on('error', (e: Error) => {
       logger.error(`There was unknown error in Events Emitter! ${e}`)
     })
-    eventsEmitter.on('newConfirmation', (data) => confirmationService.emit('newConfirmation', data))
-    eventsEmitter.on('invalidConfirmation', (data) => confirmationService.emit('invalidConfirmation', data))
+    storageManagerEventsEmitter.on('newConfirmation', (data) => confirmationService.emit('newConfirmation', data))
+    storageManagerEventsEmitter.on('invalidConfirmation', (data) => confirmationService.emit('invalidConfirmation', data))
+
+    // // Staking watcher
+    // const stakingEventsEmitter = getEventsEmitterForService(`${SERVICE_NAME}.staking`, eth, stakingContract.abi as AbiItem[])
+    // stakingEventsEmitter.on('newEvent', errorHandler(eventProcessor(services, eth), logger))
+    // stakingEventsEmitter.on('error', (e: Error) => {
+    //   logger.error(`There was unknown error in Events Emitter! ${e}`)
+    // })
+    // stakingEventsEmitter.on('newConfirmation', (data) => confirmationService.emit('newConfirmation', data))
+    // stakingEventsEmitter.on('invalidConfirmation', (data) => confirmationService.emit('invalidConfirmation', data))
     eventsEmitter.on(REORG_OUT_OF_RANGE_EVENT_NAME, (blockNumber: number) => reorgEmitterService.emitReorg(blockNumber, 'storage'))
 
     return {
@@ -126,6 +143,7 @@ const storage: CachedService = {
     const priceCount = await BillingPlan.destroy({ where: {}, truncate: true, cascade: true })
     const agreementsCount = await Agreement.destroy({ where: {}, truncate: true, cascade: true })
     const offersCount = await Offer.destroy({ where: {}, truncate: true, cascade: true })
+    // const stakeCount = await Stake.destroy({ where: {}, truncate: true, cascade: true })
     logger.info(`Removed ${priceCount} billing plans entries, ${offersCount} offers and ${agreementsCount} agreements`)
 
     const store = getObject()

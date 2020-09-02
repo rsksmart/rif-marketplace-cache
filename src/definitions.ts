@@ -27,6 +27,7 @@ export enum ServiceAddresses {
   RNS_OFFERS = '/rns/v0/offers',
   STORAGE_OFFERS = '/storage/v0/offers',
   STORAGE_AGREEMENTS = '/storage/v0/agreements',
+  STORAGE_STAKES = '/storage/v0/stakes',
   XR = '/rates/v0/',
   CONFIRMATIONS = '/confirmations',
   NEW_BLOCK_EMITTER = '/new-block',
@@ -37,6 +38,7 @@ export enum ServiceAddresses {
 interface ServiceTypes {
   [ServiceAddresses.STORAGE_OFFERS]: OfferService & ServiceAddons<any>
   [ServiceAddresses.STORAGE_AGREEMENTS]: AgreementService & ServiceAddons<any>
+  // [ServiceAddresses.STORAGE_STAKES]: StakeService & ServiceAddons<any>
   [ServiceAddresses.XR]: RatesService & ServiceAddons<any>
   [ServiceAddresses.RNS_DOMAINS]: RnsBaseService & ServiceAddons<any>
   [ServiceAddresses.RNS_SOLD]: RnsBaseService & ServiceAddons<any>
