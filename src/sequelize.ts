@@ -34,6 +34,13 @@ export function sequelizeFactory (): Sequelize {
   return new Sequelize(`sqlite:${config.get('db')}`, dbSettings)
 }
 
+/**
+ * consider that the field will be stored as string in the data base,
+ * so you not be able to use number comparision when querying
+ * BigNumberStringType for sequelize models
+ * @param propName
+ * @constructor
+ */
 export function BigNumberStringType (propName: string): Partial<ModelAttributeColumnOptions> {
   return {
     type: DataType.STRING(),

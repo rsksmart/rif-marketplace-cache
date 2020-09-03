@@ -1,5 +1,5 @@
 import { Table, DataType, Column, Model, HasMany, Scopes } from 'sequelize-typescript'
-import { Op } from 'sequelize'
+import { Op, literal } from 'sequelize'
 import BigNumber from 'bignumber.js'
 
 import BillingPlan from './billing-plan.model'
@@ -9,8 +9,8 @@ import { BigNumberStringType } from '../../../sequelize'
 @Scopes(() => ({
   active: {
     where: {
-      totalCapacity: { [Op.and]: [{ [Op.ne]: null }, { [Op.ne]: '0' }] }
-      // peerId: { [Op.ne]: null } // Disabled until used in tx to prevent empty results
+      [Op.and]: [literal('cast(totalCapacity as integer) > 0')],
+      // peerId: { [Op.ne]: null }
     },
     include: [
       {
