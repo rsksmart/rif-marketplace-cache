@@ -74,8 +74,7 @@ const handlers: { [key: string]: Function } = {
   async BillingPlanSet ({ returnValues: { period, price } }: EventData, offer: Offer, offerService: OfferService): Promise<void> {
     const plan = await updatePrices(offer, period, price)
 
-    const { plans } = offer
-    const updatedPlans = [...plans, plan]
+    const updatedPlans = [...offer.plans || [], plan]
 
     const newAvgPrice = updatedPlans?.length && calculateAverage(updatedPlans)
     offer.averagePrice = newAvgPrice || 0
