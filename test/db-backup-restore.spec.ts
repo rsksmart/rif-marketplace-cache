@@ -2,7 +2,6 @@ import path from 'path'
 import fs from 'fs'
 import config from 'config'
 import chai from 'chai'
-import sinon from 'sinon'
 import sinonChai from 'sinon-chai'
 import { Eth } from 'web3-eth'
 import { Substitute, Arg } from '@fluffy-spoon/substitute'
@@ -26,19 +25,15 @@ describe('DB back-up/restore', function () {
     it('should throw if not enough backups', async () => {
       const eth = Substitute.for<Eth>()
       const backupJob = new DbBackUpJob(eth)
-      const errorCallBack = sinon.spy()
 
       expect(fs.readdirSync(config.get<DbBackUpConfig>('dbBackUp').path).length).to.be.eql(0)
       await expect(backupJob.restoreDb()).to.eventually.be.rejectedWith(
         Error,
         'Should be two backups to be able to restore'
       )
-      expect(errorCallBack.calledOnce).to.be.true()
-      expect(errorCallBack.calledWith({ code: 1, message: 'Not enough backups' })).to.be.true()
     })
     it('should throw if backup block hash is not exist after reorg', async () => {
       const eth = Substitute.for<Eth>()
-      const errorCallBack = sinon.spy()
       const backupPath = config.get<DbBackUpConfig>('dbBackUp').path
       const db = config.get<string>('db')
 
@@ -52,12 +47,9 @@ describe('DB back-up/restore', function () {
         Error,
         'Invalid backup. Block Hash is not valid!'
       )
-      expect(errorCallBack.called).to.be.true()
-      expect(errorCallBack.calledWith({ code: 2, message: 'Invalid backup. Block Hash is not valid!' }))
     })
     it('should restore database', async () => {
       const eth = Substitute.for<Eth>()
-      const errorCallBack = sinon.spy()
       const backupPath = config.get<DbBackUpConfig>('dbBackUp').path
       const db = config.get<string>('db')
 
@@ -70,8 +62,6 @@ describe('DB back-up/restore', function () {
       expect(fs.readdirSync(backupPath).length).to.be.eql(2)
       await backupJob.restoreDb()
       await sleep(1000)
-
-      expect(errorCallBack.called).to.be.false()
 
       expect(fs.readFileSync(db).toString()).to.be.eql('First db backup')
     })
@@ -95,22 +85,6 @@ describe('DB back-up/restore', function () {
 
       // @ts-ignore
       config.util.extendDeep(config, configBackUp)
-    })
-    it('should throw error if confirmation range greater the backup range', () => {
-      // @ts-ignore
-      config.util.extendDeep(config, {
-        rns: { enabled: true, owner: { eventsEmitter: { confirmations: 11 } } }
-      })
-
-      const invalidConfirmation = { name: 'rns.owner' }
-
-      expect(() => new DbBackUpJob(Substitute.for<Eth>())).to.throw(
-        Error,
-        `Invalid db backup configuration. Number of backup blocks should be greater then confirmation blocks for ${invalidConfirmation.name} service`
-      )
-
-      // @ts-ignore
-      config.util.extendDeep(config, { rns: { enabled: false } })
     })
     it('should create back-up folder if not exist', () => {
       const dbPath = config.get<string>('dbBackUp.path')

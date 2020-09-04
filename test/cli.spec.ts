@@ -52,7 +52,7 @@ describe('CLI', function () {
   it('should restart when appResetCallback is triggered', async () => {
     // create backups
     const db = config.get<string>('db')
-    const backupPath = config.get<string>('dbBackUp.path')
+    const backupPath = path.resolve(process.cwd(), config.get<string>('dbBackUp.path'))
     mkdirSync(config.get<DbBackUpConfig>('dbBackUp').path)
     copyFileSync(db, path.resolve(backupPath, `0x0123:10-${db}`))
     copyFileSync(db, path.resolve(backupPath, `0x0123:20-${db}`))
@@ -76,7 +76,7 @@ describe('CLI', function () {
       throw new Error('AppResetCallback was not assigned!')
     }) as () => void
     const stopSpy = sinon.spy()
-    const initAppStub = sinon.stub(AppModule, 'appFactory')
+    const initAppStub = sinon.stub(AppModule, 'startApp')
     initAppStub.callsFake((options: AppModule.AppOptions): Promise<{ stop: () => void }> => {
       appResetCallback = options.appResetCallBack
 
@@ -106,6 +106,7 @@ describe('CLI', function () {
     // db restored
     expect(await Rate.findByPk('123456789012345')).to.be.eql(null)
 
+    rmDir(backupPath)
     sinon.reset()
   })
 })
