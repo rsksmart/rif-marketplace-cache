@@ -29,17 +29,13 @@ function updatePrices (offer: Offer, period: BigNumber, price: BigNumber): Promi
   }
 }
 
-export function weightedCumulativeAverage (newValue: number, currentCt: number, currentAvg: number): number {
-  if (!currentAvg) {
-    return newValue
-  }
-
-  const values = [currentAvg, newValue]
-  const newValueWeight = 1 / (currentCt + 1)
-  const curAvgWeight = 1 - newValueWeight
-  const weights = [curAvgWeight, newValueWeight]
-
-  return values.reduce((avg, x, i) => avg + x * weights[i], 0)
+export function calculateAverage (plans: BillingPlan[]): number {
+  return plans.map(({ price, period }: BillingPlan) => {
+    const priceMBPPeriod = price
+    const priceGBPPeriod = priceMBPPeriod.times(1024)
+    const priceGBPSec = priceGBPPeriod.div(period)
+    return priceGBPSec.times(3600 * 24)
+  }).reduce((sum, x) => sum.plus(x)).toNumber() / plans.length
 }
 
 const handlers: { [key: string]: Function } = {
@@ -78,11 +74,11 @@ const handlers: { [key: string]: Function } = {
   async BillingPlanSet ({ returnValues: { period, price } }: EventData, offer: Offer, offerService: OfferService): Promise<void> {
     const plan = await updatePrices(offer, period, price)
 
-    const { plans, averagePrice } = offer
-    const planPrice = plan.price.times(1024).toNumber()
+    const { plans } = offer
+    const updatedPlans = [...plans, plan]
 
-    const newAvgPrice = plans && weightedCumulativeAverage(planPrice, plans.length, averagePrice)
-    offer.averagePrice = newAvgPrice || planPrice
+    const newAvgPrice = updatedPlans?.length && calculateAverage(updatedPlans)
+    offer.averagePrice = newAvgPrice || 0
     offer.save()
 
     if (offerService.emit) {
