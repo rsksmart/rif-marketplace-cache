@@ -1,5 +1,5 @@
-import { appFactory } from './app'
+import { startApp } from './app'
 
 (async function (): Promise<void> {
-  await appFactory({ appResetCallBack: () => { throw new Error('Reset callback not implemented') } })
+  await startApp({ appResetCallBack: () => { throw new Error('Reset callback not implemented') } })
 })()

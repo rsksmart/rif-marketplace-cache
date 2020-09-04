@@ -117,6 +117,7 @@ const storage: CachedService = {
 
     return {
       stop: () => {
+        confirmationService.removeAllListeners()
         eventsEmitter.stop()
       }
     }

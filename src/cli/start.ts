@@ -1,10 +1,11 @@
 import config from 'config'
 import { flags } from '@oclif/command'
 
-import { appFactory, services } from '../app'
+import { startApp, services } from '../app'
 import { loggingFactory } from '../logger'
 import { Flags, Config, SupportedServices, isSupportedServices } from '../definitions'
-import { BaseCLICommand, DbBackUpJob } from '../utils'
+import { BaseCLICommand } from '../utils'
+import DbBackUpJob from '../db-backup'
 import { ethFactory } from '../blockchain'
 
 const logger = loggingFactory('cli:start')
@@ -25,10 +26,6 @@ ${formattedServices}`
     port: flags.integer({ char: 'p', description: 'port to attach the server to' }),
     db: flags.string({ description: 'database connection URI', env: 'RIFM_DB' }),
     provider: flags.string({ description: 'blockchain provider connection URI', env: 'RIFM_PROVIDER' }),
-    purge: flags.boolean({
-      char: 'u',
-      description: 'will purge services that should be lunched (eq. enable/disable is applied)'
-    }),
     enable: flags.string({ char: 'e', multiple: true, description: 'enable specific service' }),
     disable: flags.string({ char: 'd', multiple: true, description: 'disable specific service' })
   }
@@ -109,7 +106,7 @@ ${formattedServices}`
 
       // Promise that resolves when reset callback is called
       const resetPromise = new Promise(resolve => {
-        appFactory({
+        startApp({
           appResetCallBack: () => resolve()
         }).then(value => {
           // Lets save the function that stops the app
@@ -127,7 +124,7 @@ ${formattedServices}`
       backUpJob.stop()
 
       // Restore DB from backup
-      await backUpJob.restoreDb(() => undefined)
+      await backUpJob.restoreDb()
 
       // Run pre-cache
       await this.precache()

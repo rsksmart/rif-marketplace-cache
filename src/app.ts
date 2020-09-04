@@ -32,7 +32,7 @@ export const services = {
 
 export type AppOptions = { appResetCallBack: (...args: any) => void }
 
-export async function appFactory (options: AppOptions): Promise<{ stop: () => void }> {
+export async function startApp (options: AppOptions): Promise<{ stop: () => void }> {
   const app: Application = express(feathers())
 
   logger.verbose('Current configuration: ', config)

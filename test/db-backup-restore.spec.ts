@@ -7,7 +7,7 @@ import sinonChai from 'sinon-chai'
 import { Eth } from 'web3-eth'
 import { Substitute, Arg } from '@fluffy-spoon/substitute'
 
-import { DbBackUpJob } from '../src/utils'
+import DbBackUpJob from '../src/db-backup'
 import { blockMock, rmDir, sleep } from './utils'
 import { NEW_BLOCK_EVENT_NAME } from '../src/blockchain/new-block-emitters'
 import { DbBackUpConfig } from '../src/definitions'
@@ -29,7 +29,7 @@ describe('DB back-up/restore', function () {
       const errorCallBack = sinon.spy()
 
       expect(fs.readdirSync(config.get<DbBackUpConfig>('dbBackUp').path).length).to.be.eql(0)
-      await expect(backupJob.restoreDb(errorCallBack)).to.eventually.be.rejectedWith(
+      await expect(backupJob.restoreDb()).to.eventually.be.rejectedWith(
         Error,
         'Should be two backups to be able to restore'
       )
@@ -48,7 +48,7 @@ describe('DB back-up/restore', function () {
       fs.writeFileSync(path.resolve(backupPath, `0x0123:20-${db}`), 'Second')
 
       expect(fs.readdirSync(backupPath).length).to.be.eql(2)
-      await expect(backupJob.restoreDb(errorCallBack)).to.eventually.be.rejectedWith(
+      await expect(backupJob.restoreDb()).to.eventually.be.rejectedWith(
         Error,
         'Invalid backup. Block Hash is not valid!'
       )
@@ -68,7 +68,7 @@ describe('DB back-up/restore', function () {
       fs.writeFileSync(path.resolve(backupPath, `0x01234:20-${db}`), 'Second db backup')
 
       expect(fs.readdirSync(backupPath).length).to.be.eql(2)
-      await backupJob.restoreDb(errorCallBack)
+      await backupJob.restoreDb()
       await sleep(1000)
 
       expect(errorCallBack.called).to.be.false()

@@ -31,9 +31,8 @@ export class ReorgEmitterService implements Partial<ServiceMethods<any>> {
 
     if (!this.timeoutStarted) {
       setTimeout(() => {
-        if (this.emit) {
-          this.emit(REORG_OUT_OF_RANGE_EVENT_NAME, { contracts: this.reorgContract, lastProcessedBlockNumber: this.lastProcessedBlockNumber })
-        }
+        logger.warn(`Reorg outside of confirmation range happens on block number ${lastProcessedBlockNumber} for [${this.reorgContract}] contracts`)
+        this.emit!(REORG_OUT_OF_RANGE_EVENT_NAME, { contracts: this.reorgContract, lastProcessedBlockNumber: this.lastProcessedBlockNumber })
         this.reorgContract = []
         this.lastProcessedBlockNumber = 0
       }, this.debounceTime)
@@ -42,7 +41,5 @@ export class ReorgEmitterService implements Partial<ServiceMethods<any>> {
 
     this.reorgContract = [...this.reorgContract, contractName]
     this.lastProcessedBlockNumber = lastProcessedBlockNumber
-
-    logger.info(`Reorg happens on block number ${lastProcessedBlockNumber} for ${contractName} contract`)
   }
 }
