@@ -1,0 +1,36 @@
+{
+  storage: {
+    enabled: false,
+  },
+  rns: {
+    owner: {
+      contractAddress: "0x45d3e4fb311982a06ba52359d44cb4f5980e0ef1",
+      eventsEmitter: {
+        startingBlock: 1891388,
+        confirmations: 4
+      }
+    },
+    reverse: {
+      contractAddress: "0x4b1a11bf6723e60b9d2e02aa3ece34e24bde77d9",
+      eventsEmitter: {
+        startingBlock: 1721969,
+        confirmations: 4
+      }
+    },
+    placement: {
+      contractAddress: "0xa966Be39A13723d991dFA92B2B0CF6b0c7416eE5",
+      eventsEmitter: {
+        startingBlock: 2670871,
+        confirmations: 4
+      }
+    },
+    registrar: {
+      startingBlock: 905033,
+      contractAddress: "0x5269f5bc51cdd8aa62755c97229b7eeddd8e69a6"
+    },
+    fifsAddrRegistrar: {
+      startingBlock: 2086382,
+      contractAddress: "0xd9c79ced86ecf49f5e4a973594634c83197c35ab"
+    }
+  }
+}
