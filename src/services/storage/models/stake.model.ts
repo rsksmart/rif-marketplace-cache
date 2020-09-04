@@ -1,7 +1,6 @@
-import { Table, Column, Model, ForeignKey, BelongsTo } from 'sequelize-typescript'
+import { Table, Column, Model } from 'sequelize-typescript'
 import BigNumber from 'bignumber.js'
 
-import Offer from './offer.model'
 import { BigNumberStringType } from '../../../sequelize'
 
 @Table({ freezeTableName: true, tableName: 'storage_stakes' })
@@ -10,12 +9,11 @@ export default class StakeModel extends Model {
   total!: BigNumber
 
   @Column
-  currencyId!: number
+  tokenName!: string
 
-  @ForeignKey(() => Offer)
   @Column
-  offerId!: string
+  tokenAddress?: string
 
-  @BelongsTo(() => Offer)
-  offer!: Offer
+  @Column
+  account!: string
 }

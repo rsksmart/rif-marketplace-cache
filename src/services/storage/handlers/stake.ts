@@ -1,5 +1,4 @@
 import { EventData } from 'web3-eth-contract'
-import { Eth } from 'web3-eth'
 
 import { loggingFactory } from '../../../logger'
 import { Handler } from '../../../definitions'
@@ -10,21 +9,21 @@ const logger = loggingFactory('storage:handler:stake')
 
 const handlers = {
   async Staked (event: EventData, { stakeService }: StorageServices): Promise<void> {
-    const { user: offerId, total } = event.returnValues
+    const { user: account, total, data, amount } = event.returnValues
 
-    // TODO Update specific stake based on currency
-    const [, [stake]] = await StakeModel.update({ total }, { where: { offerId } })
-    logger.info(`Update stake for offer = ${offerId}`)
+    // TODO Update specific stake based on token
+    const [, [stake]] = await StakeModel.update({ total }, { where: { account, tokenAddress: data } })
+    logger.info(`Account ${account} stake amount ${amount}, final balance ${total}`)
 
     if (stakeService.emit) stakeService.emit('updated', stake.toJSON())
   },
 
-  async Unstacked (event: EventData, { stakeService }: StorageServices): Promise<void> {
-    const { user: offerId, total } = event.returnValues
+  async Unstaked (event: EventData, { stakeService }: StorageServices): Promise<void> {
+    const { user: account, total, data, amount } = event.returnValues
 
-    // TODO Update specific stake based on currency
-    const [, [stake]] = await StakeModel.update({ total }, { where: { offerId } })
-    logger.info(`Update stake for offer = ${offerId}`)
+    // TODO Update specific stake based on token
+    const [, [stake]] = await StakeModel.update({ total }, { where: { account, tokenAddress: data } })
+    logger.info(`Account ${account} unstack amount ${amount}, final balance ${total}`)
 
     if (stakeService.emit) stakeService.emit('updated', stake.toJSON())
   }
@@ -35,7 +34,7 @@ function isValidEvent (value: string): value is keyof typeof handlers {
 }
 
 const handler: Handler<StorageServices> = {
-  events: ['Stacked', 'Unstacked'],
+  events: ['Staked', 'Unstaked'],
   process (event: EventData, services: StorageServices): Promise<void> {
     if (!isValidEvent(event.event)) {
       return Promise.reject(new Error(`Unknown event ${event.event}`))

@@ -17,8 +17,11 @@ import Offer from './models/offer.model'
 import BillingPlan from './models/billing-plan.model'
 import offerHooks from './hooks/offers.hooks'
 import agreementHooks from './hooks/agreements.hooks'
+import stakeHooks from './hooks/stakes.hook'
 import eventProcessor from './storage.processor'
 import storageChannels from './storage.channels'
+import { sleep } from '../../../test/utils'
+import StakeModel from './models/stake.model'
 
 export class OfferService extends Service {
   emit?: Function
@@ -28,9 +31,14 @@ export class AgreementService extends Service {
   emit?: Function
 }
 
+export class StakeService extends Service {
+  emit?: Function
+}
+
 export interface StorageServices {
   agreementService: AgreementService
   offerService: OfferService
+  stakeService: StakeService
 }
 
 const SERVICE_NAME = 'storage'
@@ -47,7 +55,7 @@ function precache (possibleEth?: Eth): Promise<void> {
     const dataQueuePusher = (event: EventData): void => { dataQueue.push(event) }
 
     const services: StorageServices = {
-      // stakeService: new StakeService({ Model: Stake }),
+      stakeService: new StakeService({ Model: StakeModel }),
       offerService: new OfferService({ Model: Offer }),
       agreementService: new AgreementService({ Model: Agreement })
     }
@@ -94,11 +102,11 @@ const storage: CachedService = {
     agreementService.hooks(agreementHooks)
 
     // Initialize Staking service
-    // app.use(ServiceAddresses.STORAGE_STAKES, new StakingService({ Model: Staking }))
-    // const stakingService = app.service(ServiceAddresses.STORAGE_STAKES)
-    // stakingService.hooks(stakingHooks)
+    app.use(ServiceAddresses.STORAGE_STAKES, new StakeService({ Model: StakeModel }))
+    const stakeService = app.service(ServiceAddresses.STORAGE_STAKES)
+    stakeService.hooks(stakeHooks)
 
-    const services = { offerService, agreementService } // stakingService
+    const services = { offerService, agreementService, stakeService } // stakingService
 
     app.configure(storageChannels)
 
@@ -121,14 +129,14 @@ const storage: CachedService = {
     storageManagerEventsEmitter.on('newConfirmation', (data) => confirmationService.emit('newConfirmation', data))
     storageManagerEventsEmitter.on('invalidConfirmation', (data) => confirmationService.emit('invalidConfirmation', data))
 
-    // // Staking watcher
-    // const stakingEventsEmitter = getEventsEmitterForService(`${SERVICE_NAME}.staking`, eth, stakingContract.abi as AbiItem[])
-    // stakingEventsEmitter.on('newEvent', errorHandler(eventProcessor(services, eth), logger))
-    // stakingEventsEmitter.on('error', (e: Error) => {
-    //   logger.error(`There was unknown error in Events Emitter! ${e}`)
-    // })
-    // stakingEventsEmitter.on('newConfirmation', (data) => confirmationService.emit('newConfirmation', data))
-    // stakingEventsEmitter.on('invalidConfirmation', (data) => confirmationService.emit('invalidConfirmation', data))
+    // Staking watcher
+    const stakingEventsEmitter = getEventsEmitterForService(`${SERVICE_NAME}.staking`, eth, stakingContract.abi as AbiItem[])
+    stakingEventsEmitter.on('newEvent', errorHandler(eventProcessor(services, eth), logger))
+    stakingEventsEmitter.on('error', (e: Error) => {
+      logger.error(`There was unknown error in Events Emitter! ${e}`)
+    })
+    stakingEventsEmitter.on('newConfirmation', (data) => confirmationService.emit('newConfirmation', data))
+    stakingEventsEmitter.on('invalidConfirmation', (data) => confirmationService.emit('invalidConfirmation', data))
     eventsEmitter.on(REORG_OUT_OF_RANGE_EVENT_NAME, (blockNumber: number) => reorgEmitterService.emitReorg(blockNumber, 'storage'))
 
     return {
@@ -143,12 +151,14 @@ const storage: CachedService = {
     const priceCount = await BillingPlan.destroy({ where: {}, truncate: true, cascade: true })
     const agreementsCount = await Agreement.destroy({ where: {}, truncate: true, cascade: true })
     const offersCount = await Offer.destroy({ where: {}, truncate: true, cascade: true })
-    // const stakeCount = await Stake.destroy({ where: {}, truncate: true, cascade: true })
-    logger.info(`Removed ${priceCount} billing plans entries, ${offersCount} offers and ${agreementsCount} agreements`)
+    const stakeCount = await StakeModel.destroy({ where: {}, truncate: true, cascade: true })
+    logger.info(`Removed ${priceCount} billing plans entries, ${stakeCount} stakes, ${offersCount} offers and ${agreementsCount} agreements`)
 
     const store = getObject()
     delete store['storage.lastFetchedBlockNumber']
     delete store['storage.lastFetchedBlockHash']
+
+    await sleep(1000)
   },
 
   precache

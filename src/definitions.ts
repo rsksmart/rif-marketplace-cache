@@ -4,7 +4,7 @@ import * as Parser from '@oclif/parser'
 import { EventData } from 'web3-eth-contract'
 import { Eth } from 'web3-eth'
 
-import type { AgreementService, OfferService } from './services/storage'
+import type { AgreementService, OfferService, StakeService } from './services/storage'
 import type { RatesService } from './services/rates'
 import type { RnsBaseService } from './services/rns'
 import { ConfirmatorService } from './blockchain/confirmator'
@@ -38,7 +38,7 @@ export enum ServiceAddresses {
 interface ServiceTypes {
   [ServiceAddresses.STORAGE_OFFERS]: OfferService & ServiceAddons<any>
   [ServiceAddresses.STORAGE_AGREEMENTS]: AgreementService & ServiceAddons<any>
-  // [ServiceAddresses.STORAGE_STAKES]: StakeService & ServiceAddons<any>
+  [ServiceAddresses.STORAGE_STAKES]: StakeService & ServiceAddons<any>
   [ServiceAddresses.XR]: RatesService & ServiceAddons<any>
   [ServiceAddresses.RNS_DOMAINS]: RnsBaseService & ServiceAddons<any>
   [ServiceAddresses.RNS_SOLD]: RnsBaseService & ServiceAddons<any>
