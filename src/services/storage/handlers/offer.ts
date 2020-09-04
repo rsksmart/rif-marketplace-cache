@@ -79,7 +79,7 @@ const handlers: { [key: string]: Function } = {
     const plan = await updatePrices(offer, period, price)
 
     const { plans, averagePrice } = offer
-    const planPrice = plan.price.div(1024 ** 3).toNumber()
+    const planPrice = plan.price.times(1024).toNumber()
 
     const newAvgPrice = plans && weightedCumulativeAverage(planPrice, plans.length, averagePrice)
     offer.averagePrice = newAvgPrice || planPrice
