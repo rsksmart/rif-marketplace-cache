@@ -4,6 +4,7 @@ import { disallow, discard } from 'feathers-hooks-common'
 import Agreement from '../models/agreement.model'
 import { hooks } from 'feathers-sequelize'
 import { Op } from 'sequelize'
+import Sequelize from 'sequelize/lib/sequelize'
 import dehydrate = hooks.dehydrate
 
 export default {
@@ -58,9 +59,10 @@ export default {
             }
 
             if (totalCapacity) {
-              context.params.sequelize.where.totalCapacity = {
-                [Op.between]: [totalCapacity.min, totalCapacity.max]
-              }
+              const rawQ = 'cast(totalCapacity as integer) BETWEEN ' +
+                  totalCapacity.min + ' AND ' + totalCapacity.max
+              context.params.sequelize.where.totalCapacity =
+                Sequelize.literal(rawQ)
             }
 
             if (periods?.length) {
