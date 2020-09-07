@@ -32,7 +32,7 @@ export const services = {
 
 export type AppOptions = { appResetCallBack: (...args: any) => void }
 
-export async function startApp (options: AppOptions): Promise<{ stop: () => void }> {
+export async function appFactory (options: AppOptions): Promise<{ app: Application, stop: () => void }> {
   const app: Application = express(feathers())
 
   logger.verbose('Current configuration: ', config)
@@ -80,18 +80,6 @@ export async function startApp (options: AppOptions): Promise<{ stop: () => void
   app.use(express.notFound())
   app.use(express.errorHandler({ logger }))
 
-  // Start server
-  const port = config.get('port')
-  const server = app.listen(port)
-
-  server.on('listening', () =>
-    logger.info(`Server started on port ${port}`)
-  )
-
-  process.on('unhandledRejection', err =>
-    logger.error(`Unhandled Rejection at: ${err}`)
-  )
-
   // Subscribe for reorg event
   const reorgService = app.service(ServiceAddresses.REORG_EMITTER)
   reorgService.on(REORG_OUT_OF_RANGE_EVENT_NAME, () => {
@@ -99,10 +87,5 @@ export async function startApp (options: AppOptions): Promise<{ stop: () => void
     setTimeout(() => options.appResetCallBack(), 5000)
   })
 
-  return {
-    stop: () => {
-      server.close()
-      servicesInstances.forEach(service => service.stop())
-    }
-  }
+  return { app, stop: () => servicesInstances.forEach(service => service.stop()) }
 }

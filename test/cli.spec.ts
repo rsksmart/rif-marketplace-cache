@@ -16,7 +16,7 @@ import sinonChai from 'sinon-chai'
 import * as blockchainUtils from '../src/blockchain'
 import { Eth } from 'web3-eth'
 import Rate from '../src/services/rates/rates.model'
-import { DbBackUpConfig } from '../src/definitions'
+import { Application, DbBackUpConfig } from '../src/definitions'
 
 chai.use(sinonChai)
 const expect = chai.expect
@@ -38,7 +38,6 @@ describe('CLI', function () {
         throw e
       }
     }
-    process.env.RIFS_DB = dbPath
 
     // Init the DB
     const sequelize = sequelizeFactory()
@@ -76,11 +75,11 @@ describe('CLI', function () {
       throw new Error('AppResetCallback was not assigned!')
     }) as () => void
     const stopSpy = sinon.spy()
-    const initAppStub = sinon.stub(AppModule, 'startApp')
-    initAppStub.callsFake((options: AppModule.AppOptions): Promise<{ stop: () => void }> => {
+    const initAppStub = sinon.stub(AppModule, 'appFactory')
+    initAppStub.callsFake((options: AppModule.AppOptions): Promise<{ app: Application, stop: () => void }> => {
       appResetCallback = options.appResetCallBack
 
-      return Promise.resolve({ stop: stopSpy })
+      return Promise.resolve({ app: {} as Application, stop: stopSpy })
     })
     sinon.stub(blockchainUtils, 'ethFactory').returns({
       getBlock: sinon.stub().resolves(true)

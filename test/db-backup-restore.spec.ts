@@ -133,11 +133,11 @@ describe('DB back-up/restore', function () {
       expect(files2.length).to.be.eql(1)
       expect(files2).to.be.eql([`0x123:${10}-${config.get<string>('db')}`])
     })
-    it('should add seconf backup', async () => {
+    it('should add second backup', async () => {
       const eth = Substitute.for<Eth>()
       eth.getBlock(Arg.all()).returns(Promise.resolve(blockMock(10)))
       const backups = []
-      const backUpPath = config.get<DbBackUpConfig>('dbBackUp').path
+      const backUpPath = path.resolve(config.get<DbBackUpConfig>('dbBackUp').path)
       const job = new DbBackUpJob(eth)
 
       job.run()

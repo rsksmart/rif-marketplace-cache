@@ -1,7 +1,7 @@
 import config from 'config'
 import { flags } from '@oclif/command'
 
-import { startApp, services } from '../app'
+import { appFactory, services } from '../app'
 import { loggingFactory } from '../logger'
 import { Flags, Config, SupportedServices, isSupportedServices } from '../definitions'
 import { BaseCLICommand } from '../utils'
@@ -106,11 +106,23 @@ ${formattedServices}`
 
       // Promise that resolves when reset callback is called
       const resetPromise = new Promise(resolve => {
-        startApp({
+        appFactory({
           appResetCallBack: () => resolve()
-        }).then(value => {
+        }).then(({ app, stop }) => {
           // Lets save the function that stops the app
-          stopCallback = value.stop
+          stopCallback = stop
+
+          // Start server
+          const port = config.get('port')
+          const server = app.listen(port)
+
+          server.on('listening', () =>
+            logger.info(`Server started on port ${port}`)
+          )
+
+          process.on('unhandledRejection', err =>
+            logger.error(`Unhandled Rejection at: ${err}`)
+          )
         })
       })
 
@@ -119,12 +131,15 @@ ${formattedServices}`
       await resetPromise
 
       logger.warn('Reorg detected outside of confirmation range. Rebuilding the service\'s state!')
-      logger.info('Stopping service')
+      logger.info('Stopping the app')
       stopCallback()
       backUpJob.stop()
 
       // Restore DB from backup
-      await backUpJob.restoreDb()
+      await backUpJob.restoreDb().catch(e => {
+        // TODO send notification to devops
+        logger.error(e)
+      })
 
       // Run pre-cache
       await this.precache()

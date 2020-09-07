@@ -23,7 +23,7 @@ export function parseBackUps (backUpName: string): BackUpEntry {
 export function getBackUps (): BackUpEntry[] {
   const backupConfig = config.get<DbBackUpConfig>('dbBackUp')
 
-  const backups = fs.readdirSync(path.resolve(process.cwd(), `./${backupConfig.path}`))
+  const backups = fs.readdirSync(path.resolve(backupConfig.path))
 
   if (backups.length) {
     return backups
@@ -50,8 +50,8 @@ export class DbBackUpJob {
     this.backUpConfig = config.get<DbBackUpConfig>('dbBackUp')
     this.db = config.get<string>('db')
 
-    if (!fs.existsSync(this.backUpConfig.path)) {
-      fs.mkdirSync(this.backUpConfig.path)
+    if (!fs.existsSync(path.resolve(this.backUpConfig.path))) {
+      fs.mkdirSync(path.resolve(this.backUpConfig.path))
     }
 
     this.eth = eth
