@@ -9,20 +9,18 @@ const logger = loggingFactory('storage:handler:stake')
 
 const handlers = {
   async Staked (event: EventData, { stakeService }: StorageServices): Promise<void> {
-    const { user: account, total, data, amount } = event.returnValues
+    const { user: account, total, token, amount } = event.returnValues
 
-    // TODO Update specific stake based on token
-    const [, [stake]] = await StakeModel.update({ total }, { where: { account, tokenAddress: data } })
+    const [, [stake]] = await StakeModel.update({ total }, { where: { account, tokenAddress: token } })
     logger.info(`Account ${account} stake amount ${amount}, final balance ${total}`)
 
     if (stakeService.emit) stakeService.emit('updated', stake.toJSON())
   },
 
   async Unstaked (event: EventData, { stakeService }: StorageServices): Promise<void> {
-    const { user: account, total, data, amount } = event.returnValues
+    const { user: account, total, token, amount } = event.returnValues
 
-    // TODO Update specific stake based on token
-    const [, [stake]] = await StakeModel.update({ total }, { where: { account, tokenAddress: data } })
+    const [, [stake]] = await StakeModel.update({ total }, { where: { account, tokenAddress: token } })
     logger.info(`Account ${account} unstack amount ${amount}, final balance ${total}`)
 
     if (stakeService.emit) stakeService.emit('updated', stake.toJSON())
