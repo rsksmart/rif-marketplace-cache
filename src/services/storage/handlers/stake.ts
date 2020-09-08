@@ -11,19 +11,45 @@ const handlers = {
   async Staked (event: EventData, { stakeService }: StorageServices): Promise<void> {
     const { user: account, total, token, amount } = event.returnValues
 
-    const [, [stake]] = await StakeModel.update({ total }, { where: { account, tokenAddress: token } })
-    logger.info(`Account ${account} stake amount ${amount}, final balance ${total}`)
+    const stakeData = {
+      total,
+      token,
+      account
+    }
+    await StakeModel.upsert(stakeData)
+    const stake = await StakeModel.findOne({ where: { token } })
 
-    if (stakeService.emit) stakeService.emit('updated', stake.toJSON())
+    if (!stake) {
+      throw new Error(`Stake for token ${stakeData.token} was not created`)
+    }
+
+    logger.info(`Account ${stake.account} stake amount ${amount}, final balance ${stake.total}`)
+
+    if (stakeService.emit) {
+      stakeService.emit('updated', stake.toJSON())
+    }
   },
 
   async Unstaked (event: EventData, { stakeService }: StorageServices): Promise<void> {
     const { user: account, total, token, amount } = event.returnValues
 
-    const [, [stake]] = await StakeModel.update({ total }, { where: { account, tokenAddress: token } })
-    logger.info(`Account ${account} unstack amount ${amount}, final balance ${total}`)
+    const stakeData = {
+      total,
+      token,
+      account
+    }
+    await StakeModel.upsert(stakeData)
+    const stake = await StakeModel.findOne({ where: { token } })
 
-    if (stakeService.emit) stakeService.emit('updated', stake.toJSON())
+    if (!stake) {
+      throw new Error(`Stake for token ${stakeData.token} was not created`)
+    }
+
+    logger.info(`Account ${stake.account} unstack amount ${amount}, final balance ${stake.total}`)
+
+    if (stakeService.emit) {
+      stakeService.emit('updated', stake.toJSON())
+    }
   }
 }
 
@@ -41,4 +67,5 @@ const handler: Handler<StorageServices> = {
     return handlers[event.event](event, services)
   }
 }
+
 export default handler

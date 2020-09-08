@@ -9,10 +9,10 @@ export default class StakeModel extends Model {
   total!: BigNumber
 
   @Column
-  tokenName!: string
+  tokenName?: string
 
   @Column
-  tokenAddress?: string
+  token!: string
 
   @Column
   account!: string

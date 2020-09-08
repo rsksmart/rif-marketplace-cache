@@ -1,10 +1,12 @@
 import storageManagerContract from '@rsksmart/rif-marketplace-storage/build/contracts/StorageManager.json'
+import stakingContract from '@rsksmart/rif-marketplace-storage/build/contracts/Staking.json'
 import config from 'config'
 import { Service } from 'feathers-sequelize'
 import { getObject } from 'sequelize-store'
 import Eth from 'web3-eth'
 import { EventData } from 'web3-eth-contract'
 import { AbiItem } from 'web3-utils'
+import { EventEmitter } from 'events'
 
 import { ethFactory } from '../../blockchain'
 import { getEventsEmitterForService, isServiceInitialized } from '../../blockchain/utils'
@@ -42,26 +44,18 @@ export interface StorageServices {
 }
 
 const SERVICE_NAME = 'storage'
+const STORAGE_MANAGER = 'storageManager'
+const STAKING = 'staking'
 
 const logger = loggingFactory(SERVICE_NAME)
 
-function precache (possibleEth?: Eth): Promise<void> {
+function precacheContract (eventEmitter: EventEmitter, services: StorageServices, eth: Eth): Promise<void> {
   return new Promise<void>((resolve, reject) => {
-    const eth = possibleEth || ethFactory()
-    const eventsEmitter = getEventsEmitterForService(`${SERVICE_NAME}.storageManager`, eth, storageManagerContract.abi as AbiItem[])
-    // const eventsEmitter = getEventsEmitterForService(`${SERVICE_NAME}.stake`, eth, storageManagerContract.abi as AbiItem[])
-
     const dataQueue: EventData[] = []
     const dataQueuePusher = (event: EventData): void => { dataQueue.push(event) }
 
-    const services: StorageServices = {
-      stakeService: new StakeService({ Model: StakeModel }),
-      offerService: new OfferService({ Model: Offer }),
-      agreementService: new AgreementService({ Model: Agreement })
-    }
-
-    eventsEmitter.on('initFinished', async () => {
-      eventsEmitter.off('newEvent', dataQueuePusher)
+    eventEmitter.on('initFinished', async () => {
+      eventEmitter.off('newEvent', dataQueuePusher)
 
       // Needs to be sequentially processed
       const processor = eventProcessor(services, eth)
@@ -74,11 +68,29 @@ function precache (possibleEth?: Eth): Promise<void> {
         reject(e)
       }
     })
-    eventsEmitter.on('newEvent', dataQueuePusher)
-    eventsEmitter.on('error', (e: Error) => {
+    eventEmitter.on('newEvent', dataQueuePusher)
+    eventEmitter.on('error', (e: Error) => {
       logger.error(`There was unknown error in Events Emitter! ${e}`)
     })
   })
+}
+
+async function precache (possibleEth?: Eth): Promise<void> {
+  const eth = possibleEth || ethFactory()
+  const storageEventsEmitter = getEventsEmitterForService(`${SERVICE_NAME}.${STORAGE_MANAGER}`, eth, storageManagerContract.abi as AbiItem[])
+  const stakingEventsEmitter = getEventsEmitterForService(`${SERVICE_NAME}.${STAKING}`, eth, stakingContract.abi as AbiItem[])
+
+  const services: StorageServices = {
+    stakeService: new StakeService({ Model: StakeModel }),
+    offerService: new OfferService({ Model: Offer }),
+    agreementService: new AgreementService({ Model: Agreement })
+  }
+
+  // Precache Storage Manager
+  await precacheContract(storageEventsEmitter, services, eth)
+
+  // Precache Staking
+  await precacheContract(stakingEventsEmitter, services, eth)
 }
 
 const storage: CachedService = {
@@ -121,7 +133,7 @@ const storage: CachedService = {
     const confirmationService = app.service(ServiceAddresses.CONFIRMATIONS)
 
     // Storage Manager watcher
-    const storageManagerEventsEmitter = getEventsEmitterForService(`${SERVICE_NAME}.storageManager`, eth, storageManagerContract.abi as AbiItem[])
+    const storageManagerEventsEmitter = getEventsEmitterForService(`${SERVICE_NAME}.${STORAGE_MANAGER}`, eth, storageManagerContract.abi as AbiItem[])
     storageManagerEventsEmitter.on('newEvent', errorHandler(eventProcessor(services, eth), logger))
     storageManagerEventsEmitter.on('error', (e: Error) => {
       logger.error(`There was unknown error in Events Emitter! ${e}`)
@@ -130,7 +142,7 @@ const storage: CachedService = {
     storageManagerEventsEmitter.on('invalidConfirmation', (data) => confirmationService.emit('invalidConfirmation', data))
 
     // Staking watcher
-    const stakingEventsEmitter = getEventsEmitterForService(`${SERVICE_NAME}.staking`, eth, stakingContract.abi as AbiItem[])
+    const stakingEventsEmitter = getEventsEmitterForService(`${SERVICE_NAME}.${STAKING}`, eth, stakingContract.abi as AbiItem[])
     stakingEventsEmitter.on('newEvent', errorHandler(eventProcessor(services, eth), logger))
     stakingEventsEmitter.on('error', (e: Error) => {
       logger.error(`There was unknown error in Events Emitter! ${e}`)
