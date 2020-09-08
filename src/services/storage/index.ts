@@ -125,7 +125,7 @@ const storage: CachedService = {
     const reorgEmitterService = app.service(ServiceAddresses.REORG_EMITTER)
 
     // We require services to be precached before running server
-    if (!isServiceInitialized(`${SERVICE_NAME}.storageManager`)) {
+    if (!isServiceInitialized(`${SERVICE_NAME}.${STORAGE_MANAGER}`)) {
       return logger.critical('Storage service is not initialized! Run precache command.')
     }
 
@@ -140,6 +140,7 @@ const storage: CachedService = {
     })
     storageManagerEventsEmitter.on('newConfirmation', (data) => confirmationService.emit('newConfirmation', data))
     storageManagerEventsEmitter.on('invalidConfirmation', (data) => confirmationService.emit('invalidConfirmation', data))
+    storageManagerEventsEmitter.on(REORG_OUT_OF_RANGE_EVENT_NAME, (blockNumber: number) => reorgEmitterService.emitReorg(blockNumber, 'storage'))
 
     // Staking watcher
     const stakingEventsEmitter = getEventsEmitterForService(`${SERVICE_NAME}.${STAKING}`, eth, stakingContract.abi as AbiItem[])
@@ -149,12 +150,13 @@ const storage: CachedService = {
     })
     stakingEventsEmitter.on('newConfirmation', (data) => confirmationService.emit('newConfirmation', data))
     stakingEventsEmitter.on('invalidConfirmation', (data) => confirmationService.emit('invalidConfirmation', data))
-    eventsEmitter.on(REORG_OUT_OF_RANGE_EVENT_NAME, (blockNumber: number) => reorgEmitterService.emitReorg(blockNumber, 'storage'))
+    stakingEventsEmitter.on(REORG_OUT_OF_RANGE_EVENT_NAME, (blockNumber: number) => reorgEmitterService.emitReorg(blockNumber, 'storage'))
 
     return {
       stop: () => {
         confirmationService.removeAllListeners()
-        eventsEmitter.stop()
+        stakingEventsEmitter.stop()
+        storageManagerEventsEmitter.stop()
       }
     }
   },
@@ -167,8 +169,10 @@ const storage: CachedService = {
     logger.info(`Removed ${priceCount} billing plans entries, ${stakeCount} stakes, ${offersCount} offers and ${agreementsCount} agreements`)
 
     const store = getObject()
-    delete store['storage.lastFetchedBlockNumber']
-    delete store['storage.lastFetchedBlockHash']
+    delete store['storage.storageManager.lastFetchedBlockNumber']
+    delete store['storage.staking.lastFetchedBlockNumber']
+    delete store['storage.storageManager.lastFetchedBlockHash']
+    delete store['storage.staking.lastFetchedBlockHash']
 
     await sleep(1000)
   },

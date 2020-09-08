@@ -52,7 +52,7 @@ describe('CLI', function () {
     // create backups
     const db = config.get<string>('db')
     const backupPath = path.resolve(process.cwd(), config.get<string>('dbBackUp.path'))
-    mkdirSync(config.get<DbBackUpConfig>('dbBackUp').path)
+    mkdirSync(path.resolve(config.get<DbBackUpConfig>('dbBackUp').path))
     copyFileSync(db, path.resolve(backupPath, `0x0123:10-${db}`))
     copyFileSync(db, path.resolve(backupPath, `0x0123:20-${db}`))
 
@@ -79,7 +79,7 @@ describe('CLI', function () {
     initAppStub.callsFake((options: AppModule.AppOptions): Promise<{ app: Application, stop: () => void }> => {
       appResetCallback = options.appResetCallBack
 
-      return Promise.resolve({ app: {} as Application, stop: stopSpy })
+      return Promise.resolve({ app: { listen: () => ({ on: () => undefined }) } as unknown as Application, stop: stopSpy })
     })
     sinon.stub(blockchainUtils, 'ethFactory').returns({
       getBlock: sinon.stub().resolves(true)

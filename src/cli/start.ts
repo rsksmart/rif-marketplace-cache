@@ -3,7 +3,7 @@ import { flags } from '@oclif/command'
 
 import { appFactory, services } from '../app'
 import { loggingFactory } from '../logger'
-import { Flags, Config, SupportedServices, isSupportedServices } from '../definitions'
+import { Flags, Config, SupportedServices, isSupportedServices, Application } from '../definitions'
 import { BaseCLICommand } from '../utils'
 import DbBackUpJob from '../db-backup'
 import { ethFactory } from '../blockchain'
@@ -108,13 +108,13 @@ ${formattedServices}`
       const resetPromise = new Promise(resolve => {
         appFactory({
           appResetCallBack: () => resolve()
-        }).then(({ app, stop }) => {
+        }).then((application: { app: Application, stop: () => void }) => {
           // Lets save the function that stops the app
-          stopCallback = stop
+          stopCallback = application.stop
 
           // Start server
           const port = config.get('port')
-          const server = app.listen(port)
+          const server = application.app.listen(port)
 
           server.on('listening', () =>
             logger.info(`Server started on port ${port}`)

@@ -5,10 +5,14 @@ import type { Sequelize } from 'sequelize'
 export function initStore (sequelize: Sequelize): Promise<void> {
   return init(sequelize, {
     'blockchain.lastFetchedBlock': 'json',
-    'storage.lastFetchedBlockNumber': 'int',
-    'storage.lastFetchedBlockHash': 'string',
-    'storage.lastProcessedBlockNumber': 'int',
-    'storage.lastProcessedBlockHash': 'string',
+    'storage.storageManager.lastFetchedBlockNumber': 'int',
+    'storage.storageManager.lastFetchedBlockHash': 'string',
+    'storage.storageManager.lastProcessedBlockNumber': 'int',
+    'storage.storageManager.lastProcessedBlockHash': 'string',
+    'storage.staking.lastFetchedBlockNumber': 'int',
+    'storage.staking.lastFetchedBlockHash': 'string',
+    'storage.staking.lastProcessedBlockNumber': 'int',
+    'storage.staking.lastProcessedBlockHash': 'string',
     'rates.lastUpdate': 'int',
     'rns.owner.lastFetchedBlockNumber': 'int',
     'rns.owner.lastFetchedBlockHash': 'string',

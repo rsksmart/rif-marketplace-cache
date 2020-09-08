@@ -89,7 +89,7 @@ export function transactionMock (hash: string, input: string, options: Partial<T
   return transaction
 }
 
-export function rmDir (folder: string) {
+export function rmDir (folder: string): void {
   if (fs.existsSync(folder)) {
     for (const file of fs.readdirSync(folder)) {
       fs.unlinkSync(path.join(folder, file))
