@@ -150,7 +150,7 @@ const storage: CachedService = {
     })
     stakingEventsEmitter.on('newConfirmation', (data) => confirmationService.emit('newConfirmation', data))
     stakingEventsEmitter.on('invalidConfirmation', (data) => confirmationService.emit('invalidConfirmation', data))
-    stakingEventsEmitter.on(REORG_OUT_OF_RANGE_EVENT_NAME, (blockNumber: number) => reorgEmitterService.emitReorg(blockNumber, 'storage'))
+    stakingEventsEmitter.on(REORG_OUT_OF_RANGE_EVENT_NAME, (blockNumber: number) => reorgEmitterService.emitReorg(blockNumber, 'staking'))
 
     return {
       stop: () => {
