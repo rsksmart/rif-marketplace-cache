@@ -5,10 +5,12 @@
   },
   storage: {
     enabled: true,
-    contractAddress: "0x47a2Db5D68751EeAdFBC44851E84AcDB4F7299Cc",
-    eventsEmitter: {
-      confirmations: 2
-    }
+    storageManager: {
+      contractAddress: "0x47a2Db5D68751EeAdFBC44851E84AcDB4F7299Cc",
+      eventsEmitter: {
+        confirmations: 2
+      }
+    },
   },
   rns: {
     enabled: true,
