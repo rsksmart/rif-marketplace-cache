@@ -458,7 +458,7 @@ describe('Storage services: Events Processor', () => {
         const updatedStake = await StakeModel.findOne({ where: { token, account } })
 
         expect(updatedStake?.total).to.be.eql(new BigNumber(event.returnValues.total))
-        expect(stakeServiceEmitSpy).to.have.been.calledWith('updated', updatedStake!.toJSON())
+        expect(stakeServiceEmitSpy).to.have.been.calledWith('updated', updatedStake?.toJSON())
       })
     })
     describe('Unstaked', () => {
@@ -476,7 +476,7 @@ describe('Storage services: Events Processor', () => {
         await processor(event)
         const updatedStake = await StakeModel.findOne({ where: { token, account } })
 
-        expect(stakeServiceEmitSpy).to.have.been.calledWith('updated', updatedStake!.toJSON())
+        expect(stakeServiceEmitSpy).to.have.been.calledWith('updated', updatedStake?.toJSON())
         expect(updatedStake?.total).to.be.eql(new BigNumber(event.returnValues.total))
       })
     })

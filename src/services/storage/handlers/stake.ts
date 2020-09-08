@@ -13,12 +13,16 @@ const handlers = {
 
     const stake = await StakeModel.findOne({ where: { token, account } })
 
-    stake!.total = total
-    await stake!.save()
+    if (!stake) {
+      throw new Error(`Stake for acoount ${account}, token ${token} not created`)
+    }
+
+    stake.total = total
+    await stake.save()
     logger.info(`Account ${account} stake amount ${amount}, final balance ${total}`)
 
     if (stakeService.emit) {
-      stakeService.emit('updated', stake!.toJSON())
+      stakeService.emit('updated', stake.toJSON())
     }
   },
 
@@ -27,8 +31,12 @@ const handlers = {
 
     const stake = await StakeModel.findOne({ where: { token, account } })
 
-    stake!.total = total
-    await stake!.save()
+    if (!stake) {
+      throw new Error(`Stake for acoount ${account}, token ${token} not created`)
+    }
+
+    stake.total = total
+    await stake.save()
     logger.info(`Account ${account} stake amount ${amount}, final balance ${total}`)
 
     if (stakeService.emit) {
