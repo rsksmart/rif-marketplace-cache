@@ -11,12 +11,13 @@ import { Substitute, SubstituteOf } from '@fluffy-spoon/substitute'
 import { Sequelize } from 'sequelize-typescript'
 
 import eventProcessor from '../../../src/services/storage/storage.processor'
-import { AgreementService, OfferService, StorageServices } from '../../../src/services/storage'
+import { AgreementService, OfferService, StakeService, StorageServices } from '../../../src/services/storage'
 import { sequelizeFactory } from '../../../src/sequelize'
 import Offer from '../../../src/services/storage/models/offer.model'
 import { blockMock, eventMock } from '../../utils'
 import { EventError } from '../../../src/errors'
 import BillingPlan from '../../../src/services/storage/models/billing-plan.model'
+import StakeModel from '../../../src/services/storage/models/stake.model'
 import Agreement from '../../../src/services/storage/models/agreement.model'
 import { decodeByteArray, wrapEvent } from '../../../src/utils'
 import { getBlockDate } from '../../../src/blockchain/utils'
@@ -395,6 +396,88 @@ describe('Storage services: Events Processor', () => {
         expect(agreementAfterUpdate?.availableFunds).to.be.eql(agreement.availableFunds.minus(event.returnValues.amount))
         expect(agreementAfterUpdate?.lastPayout).to.be.eql(await getBlockDate(eth, blockNumber))
         expect(agreementServiceEmitSpy).to.have.been.calledOnceWith('updated', wrapEvent('AgreementFundsPayout', agreementAfterUpdate?.toJSON() as object))
+      })
+    })
+  })
+  describe('Staking events', () => {
+    const token = 'SomeTokenAddress'
+    const account = provider
+    let processor: (event: EventData) => Promise<void>
+    let stakeService: StakeService
+    let stakeServiceEmitSpy: sinon.SinonSpy
+
+    before(() => {
+      stakeService = new StakeService({ Model: StakeModel })
+      processor = eventProcessor({ stakeService } as StorageServices, eth)
+      stakeServiceEmitSpy = sinon.spy()
+      stakeService.emit = stakeServiceEmitSpy
+    })
+    beforeEach(async () => {
+      await sequelize.sync({ force: true })
+      stakeServiceEmitSpy.resetHistory()
+    })
+
+    it('should create new Stake if not existed', async () => {
+      const total = 1000
+      const event = eventMock({
+        event: 'Staked',
+        returnValues: { user: account, total, token, amount: 1000 }
+      })
+      await processor(event)
+      const createdStake = await StakeModel.findOne({ where: { token, account } })
+
+      expect(createdStake).to.be.instanceOf(StakeModel)
+      expect(createdStake?.account).to.be.eql(account)
+      expect(createdStake?.token).to.be.eql(token)
+      expect(stakeServiceEmitSpy).to.have.been.calledWith('created')
+    })
+    it('should not create if existed', async () => {
+      const total = 1000
+      const event = eventMock({
+        event: 'Staked',
+        returnValues: { user: account, total, token, amount: 1000 }
+      })
+      await StakeModel.create({ account, token, total: '0' })
+      await processor(event)
+
+      expect(stakeServiceEmitSpy).to.have.not.been.calledWith('created')
+    })
+    describe('Staked', () => {
+      it('should update total', async () => {
+        const total = 1000
+        const event = eventMock({
+          event: 'Staked',
+          returnValues: {
+            total,
+            user: account,
+            token
+          }
+        })
+
+        await processor(event)
+        const updatedStake = await StakeModel.findOne({ where: { token, account } })
+
+        expect(updatedStake?.total).to.be.eql(new BigNumber(event.returnValues.total))
+        expect(stakeServiceEmitSpy).to.have.been.calledWith('updated', updatedStake!.toJSON())
+      })
+    })
+    describe('Unstaked', () => {
+      it('should update total', async () => {
+        const total = 1000
+        const event = eventMock({
+          event: 'Unstaked',
+          returnValues: {
+            total,
+            user: account,
+            token
+          }
+        })
+
+        await processor(event)
+        const updatedStake = await StakeModel.findOne({ where: { token, account } })
+
+        expect(stakeServiceEmitSpy).to.have.been.calledWith('updated', updatedStake!.toJSON())
+        expect(updatedStake?.total).to.be.eql(new BigNumber(event.returnValues.total))
       })
     })
   })
