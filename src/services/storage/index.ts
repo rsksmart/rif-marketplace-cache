@@ -8,6 +8,7 @@ import { AbiItem } from 'web3-utils'
 
 import { ethFactory } from '../../blockchain'
 import { getEventsEmitterForService, isServiceInitialized } from '../../blockchain/utils'
+import { REORG_OUT_OF_RANGE_EVENT_NAME } from '../../blockchain/events'
 import { Application, CachedService, ServiceAddresses } from '../../definitions'
 import { loggingFactory } from '../../logger'
 import { errorHandler, waitForReadyApp } from '../../utils'
@@ -72,10 +73,10 @@ function precache (possibleEth?: Eth): Promise<void> {
 }
 
 const storage: CachedService = {
-  async initialize (app: Application): Promise<void> {
+  async initialize (app: Application): Promise<{ stop: () => void }> {
     if (!config.get<boolean>('storage.enabled')) {
       logger.info('Storage service: disabled')
-      return
+      return { stop: () => undefined }
     }
     logger.info('Storage service: enabled')
 
@@ -95,6 +96,8 @@ const storage: CachedService = {
 
     app.configure(storageChannels)
 
+    const reorgEmitterService = app.service(ServiceAddresses.REORG_EMITTER)
+
     // We require services to be precached before running server
     if (!isServiceInitialized(SERVICE_NAME)) {
       return logger.critical('Storage service is not initialized! Run precache command.')
@@ -110,6 +113,14 @@ const storage: CachedService = {
     })
     eventsEmitter.on('newConfirmation', (data) => confirmationService.emit('newConfirmation', data))
     eventsEmitter.on('invalidConfirmation', (data) => confirmationService.emit('invalidConfirmation', data))
+    eventsEmitter.on(REORG_OUT_OF_RANGE_EVENT_NAME, (blockNumber: number) => reorgEmitterService.emitReorg(blockNumber, 'storage'))
+
+    return {
+      stop: () => {
+        confirmationService.removeAllListeners()
+        eventsEmitter.stop()
+      }
+    }
   },
 
   async purge (): Promise<void> {

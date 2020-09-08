@@ -16,10 +16,10 @@ const logger = loggingFactory(SERVICE_NAME)
 
 const storage: CachedService = {
   // eslint-disable-next-line require-await
-  async initialize (app: Application): Promise<void> {
+  async initialize (app: Application): Promise<{ stop: () => void }> {
     if (!config.get<boolean>('rates.enabled')) {
       logger.info('Rates service: disabled')
-      return
+      return { stop: () => undefined }
     }
     logger.info('Rates service: enabled')
 
@@ -30,7 +30,9 @@ const storage: CachedService = {
 
     // Start periodical refresh
     const updatePeriod = config.get<number>(CONFIG_UPDATE_PERIOD) * 1000 // Converting seconds to ms
-    setInterval(() => updater().catch(logger.error), updatePeriod)
+    const intervalId = setInterval(() => updater().catch(logger.error), updatePeriod)
+
+    return { stop: () => clearInterval(intervalId) }
   },
 
   async purge (): Promise<void> {

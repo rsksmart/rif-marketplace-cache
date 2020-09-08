@@ -1,14 +1,20 @@
 import { Command, flags } from '@oclif/command'
 import { Input, OutputFlags } from '@oclif/parser'
-import { readFile as readFileCb } from 'fs'
 import { promisify } from 'util'
 import config from 'config'
+import fs from 'fs'
 import { hexToAscii } from 'web3-utils'
 import BigNumber from 'bignumber.js'
 
-import { Application, Config, isSupportedServices, Logger, SupportedServices } from './definitions'
+import {
+  Application,
+  Config,
+  isSupportedServices,
+  Logger,
+  SupportedServices
+} from './definitions'
 
-const readFile = promisify(readFileCb)
+const readFile = promisify(fs.readFile)
 
 /**
  * Bignumber.js utils functions
@@ -115,7 +121,7 @@ export function validateServices (args: string[], onlyEnabledForAll = false): Su
  * @param fn
  * @param logger
  */
-export function errorHandler (fn: (...args: any[]) => Promise<void>, logger: Logger): (...args: any[]) => Promise<void> {
+export function errorHandler (fn: (...args: any[]) => Promise<any>, logger: Logger): (...args: any[]) => Promise<any> {
   return (...args) => {
     return fn(...args).catch(err => logger.error(err))
   }
@@ -166,12 +172,12 @@ export abstract class BaseCLICommand extends Command {
     )
   }
 
-  async loadConfig (path?: string): Promise<Config> {
-    if (!path) {
+  async loadConfig (configPath?: string): Promise<Config> {
+    if (!configPath) {
       return {}
     }
 
-    const data = await readFile(path, 'utf-8')
+    const data = await readFile(configPath, 'utf-8')
     return JSON.parse(data) as Config
   }
 

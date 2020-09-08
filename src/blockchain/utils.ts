@@ -1,11 +1,10 @@
 import { AbiItem, keccak256 } from 'web3-utils'
 import Eth from 'web3-eth'
-import { EventEmitter } from 'events'
 import config from 'config'
 import { getObject } from 'sequelize-store'
 
 import { loggingFactory } from '../logger'
-import eventsEmitterFactory, { EventsEmitterOptions } from './events'
+import eventsEmitterFactory, { BaseEventsEmitter, EventsEmitterOptions } from './events'
 import { NewBlockEmitterOptions } from '../definitions'
 import { BlockTracker } from './block-tracker'
 import { AutoStartStopEventEmitter, ListeningNewBlockEmitter, PollingNewBlockEmitter } from './new-block-emitters'
@@ -29,7 +28,7 @@ export function isServiceInitialized (serviceName: string): boolean {
   return blockTracker.getLastFetchedBlock()[0] !== undefined
 }
 
-export function getEventsEmitterForService (serviceName: string, eth: Eth, contractAbi: AbiItem[]): EventEmitter {
+export function getEventsEmitterForService (serviceName: string, eth: Eth, contractAbi: AbiItem[]): BaseEventsEmitter {
   const contractAddresses = config.get<string>(`${serviceName}.contractAddress`)
   const contract = new eth.Contract(contractAbi, contractAddresses)
   const logger = loggingFactory(`${serviceName}:blockchain`)

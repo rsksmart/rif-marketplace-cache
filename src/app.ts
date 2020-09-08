@@ -7,7 +7,7 @@ import feathers from '@feathersjs/feathers'
 import express from '@feathersjs/express'
 import socketio from '@feathersjs/socketio'
 
-import { Application, SupportedServices } from './definitions'
+import { Application, ServiceAddresses, SupportedServices } from './definitions'
 import { loggingFactory } from './logger'
 import sequelize from './sequelize'
 import blockchain from './blockchain'
@@ -20,6 +20,7 @@ import authentication from './services/authentication'
 import storage from './services/storage'
 import rates from './services/rates'
 import rns from './services/rns'
+import { REORG_OUT_OF_RANGE_EVENT_NAME } from './blockchain/events'
 
 const logger = loggingFactory()
 
@@ -29,7 +30,9 @@ export const services = {
   [SupportedServices.RNS]: rns
 }
 
-export async function appFactory (): Promise<Application> {
+export type AppOptions = { appResetCallBack: (...args: any) => void }
+
+export async function appFactory (options: AppOptions): Promise<{ app: Application, stop: () => void }> {
   const app: Application = express(feathers())
 
   logger.verbose('Current configuration: ', config)
@@ -58,13 +61,13 @@ export async function appFactory (): Promise<Application> {
   /**********************************************************/
   // Configure each services
 
-  const servicePromises: Promise<void>[] = []
+  const servicePromises: Promise<{ stop: () => void }>[] = []
   for (const service of Object.values(services)) {
     app.configure((app) => servicePromises.push(errorHandler(service.initialize, logger)(app)))
   }
 
   // Wait for services to initialize
-  await Promise.all(servicePromises)
+  const servicesInstances = await Promise.all(servicePromises)
 
   // Log errors in hooks
   app.hooks({
@@ -77,5 +80,12 @@ export async function appFactory (): Promise<Application> {
   app.use(express.notFound())
   app.use(express.errorHandler({ logger }))
 
-  return app
+  // Subscribe for reorg event
+  const reorgService = app.service(ServiceAddresses.REORG_EMITTER)
+  reorgService.on(REORG_OUT_OF_RANGE_EVENT_NAME, () => {
+    // wait 5 seconds to be sure that reorg event received by connected services
+    setTimeout(() => options.appResetCallBack(), 5000)
+  })
+
+  return { app, stop: () => servicesInstances.forEach(service => service.stop()) }
 }

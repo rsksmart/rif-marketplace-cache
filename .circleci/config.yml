@@ -41,6 +41,8 @@ jobs:
         type: string
     docker:
       - image: circleci/node:<< parameters.version >>
+    environment:
+      ALLOW_CONFIG_MUTATIONS: true
     steps:
       - checkout
       - run:
