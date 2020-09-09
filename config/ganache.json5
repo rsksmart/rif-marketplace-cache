@@ -8,6 +8,7 @@
   },
   rns: {
     enabled: true,
+    batchContractAddress: "0xc0b3B62DD0400E4baa721DdEc9B8A384147b23fF",
     owner: {
       contractAddress: "0x4bf749ec68270027C5910220CEAB30Cc284c7BA2",
       eventsEmitter: {

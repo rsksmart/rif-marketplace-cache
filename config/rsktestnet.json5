@@ -1,8 +1,13 @@
 {
+  port: 3030,
+  blockchain: {
+    provider: "http://127.0.0.1:7777/"
+  },
   storage: {
     enabled: false,
   },
   rns: {
+    batchContractAddress: "0x380a47e2a1cec8a21cf00374ea5d092166a702fc",
     owner: {
       contractAddress: "0xca0a477e19bac7e0e172ccfd2e3c28a7200bdb71",
       eventsEmitter: {

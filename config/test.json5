@@ -6,6 +6,7 @@
   },
   rns: {
     enabled: true,
+    batchContractAddress: "BATCH_ADDR",
     owner: {
       contractAddress: "OWNER_ADDR"
     },

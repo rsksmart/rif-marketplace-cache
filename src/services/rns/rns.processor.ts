@@ -12,6 +12,7 @@ import DomainExpiration from './models/expiration.model'
 import DomainOwner from './models/owner.model'
 import Transfer from './models/transfer.model'
 import SoldDomain from './models/sold-domain.model'
+import RLP = require('rlp')
 
 /**
  * Updates Domain Owner
@@ -67,10 +68,10 @@ async function registerTransfer (
 async function transferHandler (logger: Logger, eventData: EventData, eth: Eth, services: RnsServices): Promise<void> {
   const tokenId = Utils.numberToHex(eventData.returnValues.tokenId)
   const ownerAddress = eventData.returnValues.to.toLowerCase()
-
-  const fiftsAddr = config.get('rns.fifsAddrRegistrar.contractAddress')
-  const registrar = config.get('rns.registrar.contractAddress')
+  const fifsAddr = config.get<string>('rns.fifsAddrRegistrar.contractAddress')
+  const registrar = config.get<string>('rns.registrar.contractAddress')
   const marketplace = config.get<string>('rns.placement.contractAddress')
+  const batchprocess = config.get<string>('rns.batchContractAddress')
   const tld = config.get('rns.tld')
 
   const transactionHash = eventData.transactionHash
@@ -84,7 +85,20 @@ async function transferHandler (logger: Logger, eventData: EventData, eth: Eth, 
     const decodedData: DecodedData = abiDecoder.decodeMethod(transaction.input)
 
     if (decodedData) {
-      const name = Utils.hexToAscii('0x' + decodedData.params[2].value.slice(218, decodedData.params[2].value.length))
+      // Decode domain name
+      let name: string | undefined
+
+      if (decodedData.params[0].value === batchprocess.toLowerCase()) {
+        // Batch registration
+        const rlpDecoded: any = RLP.decode(decodedData.params[2].value)
+        const domainNames = rlpDecoded[1].map(
+          (domainData: number[]) => Utils.hexToAscii((Utils.bytesToHex(domainData.slice(88, domainData.length))))
+        )
+        name = domainNames.find((domain: string) => Utils.numberToHex(Utils.sha3(domain) as string) === tokenId)
+      } else {
+        // Single registration
+        name = Utils.hexToAscii('0x' + decodedData.params[2].value.slice(218, decodedData.params[2].value.length))
+      }
 
       if (name) {
         try {
@@ -101,11 +115,11 @@ async function transferHandler (logger: Logger, eventData: EventData, eth: Eth, 
     }
   }
 
-  if (ownerAddress === (fiftsAddr as string).toLowerCase()) {
+  if (ownerAddress === fifsAddr.toLowerCase()) {
     return
   }
 
-  if (ownerAddress === (registrar as string).toLowerCase()) {
+  if (ownerAddress === registrar.toLowerCase()) {
     return
   }
 
