@@ -429,25 +429,16 @@ describe('Storage services: Events Processor', () => {
       expect(createdStake).to.be.instanceOf(StakeModel)
       expect(createdStake?.account).to.be.eql(account)
       expect(createdStake?.token).to.be.eql(token)
-      expect(stakeServiceEmitSpy).to.have.been.calledWith('created')
-    })
-    it('should not create if existed', async () => {
-      const total = 1000
-      const event = eventMock({
-        event: 'Staked',
-        returnValues: { user: account, total, token, amount: 1000 }
-      })
-      await StakeModel.create({ account, token, total: '0' })
-      await processor(event)
-
-      expect(stakeServiceEmitSpy).to.have.not.been.calledWith('created')
+      expect(stakeServiceEmitSpy).to.have.been.calledWith('updated')
     })
     describe('Staked', () => {
-      it('should update total', async () => {
+      it('should update stake', async () => {
         const total = 1000
+        const amount = 1000
         const event = eventMock({
           event: 'Staked',
           returnValues: {
+            amount,
             total,
             user: account,
             token
@@ -463,21 +454,42 @@ describe('Storage services: Events Processor', () => {
     })
     describe('Unstaked', () => {
       it('should update total', async () => {
-        const total = 1000
+        const total = 0
+        const amount = 1000
         const event = eventMock({
           event: 'Unstaked',
           returnValues: {
+            amount,
             total,
             user: account,
             token
           }
         })
+        await StakeModel.create({ token, total: amount, account })
 
         await processor(event)
         const updatedStake = await StakeModel.findOne({ where: { token, account } })
 
         expect(stakeServiceEmitSpy).to.have.been.calledWith('updated', updatedStake?.toJSON())
         expect(updatedStake?.total).to.be.eql(new BigNumber(event.returnValues.total))
+      })
+      it('should throw if unstake with stake', async () => {
+        const total = 0
+        const amount = 1000
+        const event = eventMock({
+          event: 'Unstaked',
+          returnValues: {
+            amount,
+            total,
+            user: account,
+            token
+          }
+        })
+
+        await expect(processor(event)).to.be.eventually.rejectedWith(
+          Error,
+          `Stake for account ${account}, token ${token} not exist`
+        )
       })
     })
   })

@@ -11,7 +11,7 @@ import { EventEmitter } from 'events'
 import { ethFactory } from '../../blockchain'
 import { getEventsEmitterForService, isServiceInitialized } from '../../blockchain/utils'
 import { REORG_OUT_OF_RANGE_EVENT_NAME } from '../../blockchain/events'
-import { Application, CachedService, ServiceAddresses } from '../../definitions'
+import { Application, CachedService, Logger, ServiceAddresses } from '../../definitions'
 import { loggingFactory } from '../../logger'
 import { errorHandler, waitForReadyApp } from '../../utils'
 import Agreement from './models/agreement.model'
@@ -43,13 +43,14 @@ export interface StorageServices {
   stakeService: StakeService
 }
 
-const SERVICE_NAME = 'storage'
-const STORAGE_MANAGER = 'storageManager'
-const STAKING = 'staking'
+const STORAGE_MANAGER = 'storage.storageManager'
+const STAKING = 'storage.staking'
 
-const logger = loggingFactory(SERVICE_NAME)
+const storageLogger = loggingFactory('storage')
+const storageManagerLogger = loggingFactory(STORAGE_MANAGER)
+const stakingLogger = loggingFactory(STAKING)
 
-function precacheContract (eventEmitter: EventEmitter, services: StorageServices, eth: Eth): Promise<void> {
+function precacheContract (eventEmitter: EventEmitter, services: StorageServices, eth: Eth, logger: Logger): Promise<void> {
   return new Promise<void>((resolve, reject) => {
     const dataQueue: EventData[] = []
     const dataQueuePusher = (event: EventData): void => { dataQueue.push(event) }
@@ -77,8 +78,8 @@ function precacheContract (eventEmitter: EventEmitter, services: StorageServices
 
 async function precache (possibleEth?: Eth): Promise<void> {
   const eth = possibleEth || ethFactory()
-  const storageEventsEmitter = getEventsEmitterForService(`${SERVICE_NAME}.${STORAGE_MANAGER}`, eth, storageManagerContract.abi as AbiItem[])
-  const stakingEventsEmitter = getEventsEmitterForService(`${SERVICE_NAME}.${STAKING}`, eth, stakingContract.abi as AbiItem[])
+  const storageEventsEmitter = getEventsEmitterForService(`${STORAGE_MANAGER}`, eth, storageManagerContract.abi as AbiItem[])
+  const stakingEventsEmitter = getEventsEmitterForService(`${STAKING}`, eth, stakingContract.abi as AbiItem[])
 
   const services: StorageServices = {
     stakeService: new StakeService({ Model: StakeModel }),
@@ -87,19 +88,19 @@ async function precache (possibleEth?: Eth): Promise<void> {
   }
 
   // Precache Storage Manager
-  await precacheContract(storageEventsEmitter, services, eth)
+  await precacheContract(storageEventsEmitter, services, eth, storageManagerLogger)
 
   // Precache Staking
-  await precacheContract(stakingEventsEmitter, services, eth)
+  await precacheContract(stakingEventsEmitter, services, eth, stakingLogger)
 }
 
 const storage: CachedService = {
   async initialize (app: Application): Promise<{ stop: () => void }> {
     if (!config.get<boolean>('storage.enabled')) {
-      logger.info('Storage service: disabled')
+      storageLogger.info('Storage service: disabled')
       return { stop: () => undefined }
     }
-    logger.info('Storage service: enabled')
+    storageLogger.info('Storage service: enabled')
 
     await waitForReadyApp(app)
 
@@ -125,28 +126,28 @@ const storage: CachedService = {
     const reorgEmitterService = app.service(ServiceAddresses.REORG_EMITTER)
 
     // We require services to be precached before running server
-    if (!isServiceInitialized(`${SERVICE_NAME}.${STORAGE_MANAGER}`)) {
-      return logger.critical('Storage service is not initialized! Run precache command.')
+    if (!isServiceInitialized(`${STORAGE_MANAGER}`) || !isServiceInitialized(STAKING)) {
+      return storageLogger.critical('Storage service is not initialized! Run precache command.')
     }
 
     const eth = app.get('eth') as Eth
     const confirmationService = app.service(ServiceAddresses.CONFIRMATIONS)
 
     // Storage Manager watcher
-    const storageManagerEventsEmitter = getEventsEmitterForService(`${SERVICE_NAME}.${STORAGE_MANAGER}`, eth, storageManagerContract.abi as AbiItem[])
-    storageManagerEventsEmitter.on('newEvent', errorHandler(eventProcessor(services, eth), logger))
+    const storageManagerEventsEmitter = getEventsEmitterForService(`${STORAGE_MANAGER}`, eth, storageManagerContract.abi as AbiItem[])
+    storageManagerEventsEmitter.on('newEvent', errorHandler(eventProcessor(services, eth), storageManagerLogger))
     storageManagerEventsEmitter.on('error', (e: Error) => {
-      logger.error(`There was unknown error in Events Emitter! ${e}`)
+      storageManagerLogger.error(`There was unknown error in Events Emitter! ${e}`)
     })
     storageManagerEventsEmitter.on('newConfirmation', (data) => confirmationService.emit('newConfirmation', data))
     storageManagerEventsEmitter.on('invalidConfirmation', (data) => confirmationService.emit('invalidConfirmation', data))
     storageManagerEventsEmitter.on(REORG_OUT_OF_RANGE_EVENT_NAME, (blockNumber: number) => reorgEmitterService.emitReorg(blockNumber, 'storage'))
 
     // Staking watcher
-    const stakingEventsEmitter = getEventsEmitterForService(`${SERVICE_NAME}.${STAKING}`, eth, stakingContract.abi as AbiItem[])
-    stakingEventsEmitter.on('newEvent', errorHandler(eventProcessor(services, eth), logger))
+    const stakingEventsEmitter = getEventsEmitterForService(`${STAKING}`, eth, stakingContract.abi as AbiItem[])
+    stakingEventsEmitter.on('newEvent', errorHandler(eventProcessor(services, eth), stakingLogger))
     stakingEventsEmitter.on('error', (e: Error) => {
-      logger.error(`There was unknown error in Events Emitter! ${e}`)
+      stakingLogger.error(`There was unknown error in Events Emitter! ${e}`)
     })
     stakingEventsEmitter.on('newConfirmation', (data) => confirmationService.emit('newConfirmation', data))
     stakingEventsEmitter.on('invalidConfirmation', (data) => confirmationService.emit('invalidConfirmation', data))
@@ -166,7 +167,7 @@ const storage: CachedService = {
     const agreementsCount = await Agreement.destroy({ where: {}, truncate: true, cascade: true })
     const offersCount = await Offer.destroy({ where: {}, truncate: true, cascade: true })
     const stakeCount = await StakeModel.destroy({ where: {}, truncate: true, cascade: true })
-    logger.info(`Removed ${priceCount} billing plans entries, ${stakeCount} stakes, ${offersCount} offers and ${agreementsCount} agreements`)
+    storageLogger.info(`Removed ${priceCount} billing plans entries, ${stakeCount} stakes, ${offersCount} offers and ${agreementsCount} agreements`)
 
     const store = getObject()
     delete store['storage.storageManager.lastFetchedBlockNumber']

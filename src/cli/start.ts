@@ -108,13 +108,13 @@ ${formattedServices}`
       const resetPromise = new Promise(resolve => {
         appFactory({
           appResetCallBack: () => resolve()
-        }).then((application: { app: Application, stop: () => void }) => {
+        }).then(({ app, stop }) => {
           // Lets save the function that stops the app
-          stopCallback = application.stop
+          stopCallback = stop
 
           // Start server
           const port = config.get('port')
-          const server = application.app.listen(port)
+          const server = app.listen(port)
 
           server.on('listening', () =>
             logger.info(`Server started on port ${port}`)

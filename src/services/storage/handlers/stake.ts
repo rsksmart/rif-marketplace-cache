@@ -1,4 +1,5 @@
 import { EventData } from 'web3-eth-contract'
+import BigNumber from 'bignumber.js'
 
 import { loggingFactory } from '../../../logger'
 import { Handler } from '../../../definitions'
@@ -11,13 +12,13 @@ const handlers = {
   async Staked (event: EventData, { stakeService }: StorageServices): Promise<void> {
     const { user: account, total, token, amount } = event.returnValues
 
-    const stake = await StakeModel.findOne({ where: { token, account } })
+    let stake = await StakeModel.findOne({ where: { token, account } })
 
     if (!stake) {
-      throw new Error(`Stake for acoount ${account}, token ${token} not created`)
+      stake = new StakeModel({ account, token, total: 0 })
     }
 
-    stake.total = total
+    stake.total = new BigNumber(stake.total).plus(amount)
     await stake.save()
     logger.info(`Account ${account} stake amount ${amount}, final balance ${total}`)
 
@@ -32,15 +33,15 @@ const handlers = {
     const stake = await StakeModel.findOne({ where: { token, account } })
 
     if (!stake) {
-      throw new Error(`Stake for acoount ${account}, token ${token} not created`)
+      throw new Error(`Stake for account ${account}, token ${token} not exist`)
     }
 
-    stake.total = total
+    stake.total = new BigNumber(stake.total).minus(amount)
     await stake.save()
     logger.info(`Account ${account} stake amount ${amount}, final balance ${total}`)
 
     if (stakeService.emit) {
-      stakeService.emit('updated', stake!.toJSON())
+      stakeService.emit('updated', stake.toJSON())
     }
   }
 }
@@ -51,21 +52,9 @@ function isValidEvent (value: string): value is keyof typeof handlers {
 
 const handler: Handler<StorageServices> = {
   events: ['Staked', 'Unstaked'],
-  async process (event: EventData, services: StorageServices): Promise<void> {
+  process (event: EventData, services: StorageServices): Promise<void> {
     if (!isValidEvent(event.event)) {
       return Promise.reject(new Error(`Unknown event ${event.event}`))
-    }
-    const { user: account, token } = event.returnValues
-    const stake = await StakeModel.findOne({ where: { account, token } })
-
-    // Create stake row if not exist
-    if (!stake) {
-      const stakeFromDb = await StakeModel.create({ account, token, total: '0' })
-      logger.debug('Stake created: ', stakeFromDb.toJSON())
-
-      if (services.stakeService.emit) {
-        services.stakeService.emit('created', stakeFromDb.toJSON())
-      }
     }
 
     return handlers[event.event](event, services)
