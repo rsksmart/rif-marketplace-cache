@@ -3,7 +3,7 @@ import { flags } from '@oclif/command'
 
 import { appFactory, services } from '../app'
 import { loggingFactory } from '../logger'
-import { Flags, Config, SupportedServices, isSupportedServices, Application } from '../definitions'
+import { Flags, Config, SupportedServices, isSupportedServices } from '../definitions'
 import { BaseCLICommand } from '../utils'
 import DbBackUpJob from '../db-backup'
 import { ethFactory } from '../blockchain'
