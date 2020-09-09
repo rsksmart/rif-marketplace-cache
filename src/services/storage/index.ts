@@ -78,8 +78,8 @@ function precacheContract (eventEmitter: EventEmitter, services: StorageServices
 
 async function precache (possibleEth?: Eth): Promise<void> {
   const eth = possibleEth || ethFactory()
-  const storageEventsEmitter = getEventsEmitterForService(`${STORAGE_MANAGER}`, eth, storageManagerContract.abi as AbiItem[])
-  const stakingEventsEmitter = getEventsEmitterForService(`${STAKING}`, eth, stakingContract.abi as AbiItem[])
+  const storageEventsEmitter = getEventsEmitterForService(STORAGE_MANAGER, eth, storageManagerContract.abi as AbiItem[])
+  const stakingEventsEmitter = getEventsEmitterForService(STAKING, eth, stakingContract.abi as AbiItem[])
 
   const services: StorageServices = {
     stakeService: new StakeService({ Model: StakeModel }),
@@ -126,7 +126,7 @@ const storage: CachedService = {
     const reorgEmitterService = app.service(ServiceAddresses.REORG_EMITTER)
 
     // We require services to be precached before running server
-    if (!isServiceInitialized(`${STORAGE_MANAGER}`) || !isServiceInitialized(STAKING)) {
+    if (!isServiceInitialized(STORAGE_MANAGER) || !isServiceInitialized(STAKING)) {
       return storageLogger.critical('Storage service is not initialized! Run precache command.')
     }
 
@@ -134,7 +134,7 @@ const storage: CachedService = {
     const confirmationService = app.service(ServiceAddresses.CONFIRMATIONS)
 
     // Storage Manager watcher
-    const storageManagerEventsEmitter = getEventsEmitterForService(`${STORAGE_MANAGER}`, eth, storageManagerContract.abi as AbiItem[])
+    const storageManagerEventsEmitter = getEventsEmitterForService(STORAGE_MANAGER, eth, storageManagerContract.abi as AbiItem[])
     storageManagerEventsEmitter.on('newEvent', errorHandler(eventProcessor(services, eth), storageManagerLogger))
     storageManagerEventsEmitter.on('error', (e: Error) => {
       storageManagerLogger.error(`There was unknown error in Events Emitter! ${e}`)
@@ -144,7 +144,7 @@ const storage: CachedService = {
     storageManagerEventsEmitter.on(REORG_OUT_OF_RANGE_EVENT_NAME, (blockNumber: number) => reorgEmitterService.emitReorg(blockNumber, 'storage'))
 
     // Staking watcher
-    const stakingEventsEmitter = getEventsEmitterForService(`${STAKING}`, eth, stakingContract.abi as AbiItem[])
+    const stakingEventsEmitter = getEventsEmitterForService(STAKING, eth, stakingContract.abi as AbiItem[])
     stakingEventsEmitter.on('newEvent', errorHandler(eventProcessor(services, eth), stakingLogger))
     stakingEventsEmitter.on('error', (e: Error) => {
       stakingLogger.error(`There was unknown error in Events Emitter! ${e}`)
@@ -170,10 +170,10 @@ const storage: CachedService = {
     storageLogger.info(`Removed ${priceCount} billing plans entries, ${stakeCount} stakes, ${offersCount} offers and ${agreementsCount} agreements`)
 
     const store = getObject()
-    delete store['storage.storageManager.lastFetchedBlockNumber']
-    delete store['storage.staking.lastFetchedBlockNumber']
-    delete store['storage.storageManager.lastFetchedBlockHash']
-    delete store['storage.staking.lastFetchedBlockHash']
+    delete store[`${STORAGE_MANAGER}.lastFetchedBlockNumber`]
+    delete store[`${STAKING}.lastFetchedBlockNumber`]
+    delete store[`${STORAGE_MANAGER}.lastFetchedBlockHash`]
+    delete store[`${STAKING}.lastFetchedBlockHash`]
 
     await sleep(1000)
   },

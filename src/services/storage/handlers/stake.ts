@@ -12,11 +12,11 @@ const handlers = {
   async Staked (event: EventData, { stakeService }: StorageServices): Promise<void> {
     const { user: account, total, token, amount } = event.returnValues
 
-    let stake = await StakeModel.findOne({ where: { token, account } })
-
-    if (!stake) {
-      stake = new StakeModel({ account, token, total: 0 })
-    }
+    const [stake] = await StakeModel.findOrCreate({
+      // TODO make a call to token contract for resolving token name
+      defaults: { account, token, total: 0, tokenName: null },
+      where: { token, account }
+    })
 
     stake.total = new BigNumber(stake.total).plus(amount)
     await stake.save()
