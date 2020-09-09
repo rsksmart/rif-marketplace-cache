@@ -1,8 +1,4 @@
 {
-  port: 3030,
-  blockchain: {
-    provider: "http://127.0.0.1:7777/"
-  },
   storage: {
     enabled: false,
   },
