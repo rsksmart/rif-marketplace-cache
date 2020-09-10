@@ -19,7 +19,6 @@ import offerHooks from './hooks/offers.hooks'
 import agreementHooks from './hooks/agreements.hooks'
 import eventProcessor from './storage.processor'
 import storageChannels from './storage.channels'
-import { sleep } from '../../../test/utils'
 
 export class OfferService extends Service {
   emit?: Function
@@ -132,8 +131,6 @@ const storage: CachedService = {
     const store = getObject()
     delete store['storage.lastFetchedBlockNumber']
     delete store['storage.lastFetchedBlockHash']
-
-    await sleep(1000)
   },
 
   precache
