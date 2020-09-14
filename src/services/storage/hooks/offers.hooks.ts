@@ -1,9 +1,13 @@
-import { HookContext } from '@feathersjs/feathers'
-import BillingPlan from '../models/billing-plan.model'
-import { disallow, discard } from 'feathers-hooks-common'
-import Agreement from '../models/agreement.model'
-import { hooks } from 'feathers-sequelize'
 import { Op, literal, Sequelize } from 'sequelize'
+import { HookContext } from '@feathersjs/feathers'
+import { disallow, discard } from 'feathers-hooks-common'
+import { hooks } from 'feathers-sequelize'
+
+import { SUPPORTED_TOKENS_SYMBOLS } from '../handlers/stake'
+import BillingPlan from '../models/billing-plan.model'
+import StakeModel from '../models/stake.model'
+import Rate from '../../rates/rates.model'
+import Agreement from '../models/agreement.model'
 import dehydrate = hooks.dehydrate
 
 export default {
@@ -12,7 +16,7 @@ export default {
       (context: HookContext) => {
         context.params.sequelize = {
           raw: false,
-          include: [BillingPlan, Agreement],
+          include: [BillingPlan, Agreement, StakeModel],
           nest: true
         }
 
@@ -24,11 +28,12 @@ export default {
       }
     ],
     find: [
-      (context: HookContext) => {
+      async (context: HookContext) => {
         if (context.params.query) {
           const { averagePrice, totalCapacity, periods, provider, $limit } = context.params.query
 
           if (!$limit) {
+            const rates = await Rate.findAll()
             context.params.sequelize = {
               raw: false,
               nest: true,
@@ -39,9 +44,30 @@ export default {
                 },
                 {
                   model: Agreement
+                },
+                {
+                  model: StakeModel,
+                  as: 'stakes'
                 }
               ],
-              order: [['plans', 'period', 'ASC']],
+              attributes: [
+                literal(`
+                  SUM(
+                    case
+                      ${SUPPORTED_TOKENS_SYMBOLS.reduce(
+                        (acc, el) => {
+                          const rate = rates.find(r => r.token === el)?.usd || 0
+                          return `${acc} \n when stakes.symbol = ${el} then cast(stakes.total as integer) * ${rate}`
+                        },
+                        ''
+                      )}
+                      else 0
+                    end
+                  ) as totalStakeUSD
+                `)
+              ],
+              order: [['totalStakeUSD', 'ASC'], ['plans', 'period', 'ASC']],
+              groupBy: ['storage_offer.provider'],
               where: {}
             }
 

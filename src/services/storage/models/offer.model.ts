@@ -4,6 +4,7 @@ import BigNumber from 'bignumber.js'
 
 import BillingPlan from './billing-plan.model'
 import Agreement from './agreement.model'
+import StakeModel from './stake.model'
 import { BigNumberStringType } from '../../../sequelize'
 
 @Scopes(() => ({
@@ -36,6 +37,9 @@ export default class Offer extends Model {
 
   @HasMany(() => BillingPlan)
   plans!: BillingPlan[]
+
+  @HasMany(() => StakeModel)
+  stakes?: StakeModel[]
 
   @HasMany(() => Agreement)
   agreements!: Agreement[]
