@@ -7,6 +7,9 @@ import { BlockHeader, Eth } from 'web3-eth'
 import { AutoStartStopEventEmitter, NEW_BLOCK_EVENT_NAME } from './blockchain/new-block-emitters'
 import { DbBackUpConfig } from './definitions'
 import { getNewBlockEmitter } from './blockchain/utils'
+import { loggingFactory } from './logger'
+
+const logger = loggingFactory('db:backups')
 
 export type BackUpEntry = { name: string, block: { hash: string, number: BigNumber } }
 
@@ -74,6 +77,7 @@ export class DbBackUpJob {
       if (previousBackUp) {
         await fs.promises.unlink(path.resolve(this.backUpConfig.path, previousBackUp.name))
       }
+      logger.info(`Make DB backup on block ${block.number}`)
     }
   }
 
