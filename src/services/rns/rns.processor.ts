@@ -4,7 +4,7 @@ import { Eth } from 'web3-eth'
 import { EventData } from 'web3-eth-contract'
 import Utils from 'web3-utils'
 import { RnsBaseService, RnsServices } from '.'
-import { getBlockDate } from '../../blockchain/utils'
+import { getBlockDate, RLPDecoded } from '../../blockchain/utils'
 import { Logger } from '../../definitions'
 import DomainOffer from './models/domain-offer.model'
 import Domain from './models/domain.model'
@@ -65,6 +65,36 @@ async function registerTransfer (
   return transferDomain.id
 }
 
+// getDomainName: Decode domain name
+function getDomainName (decodedData: DecodedData, tokenId: string, batchprocess: string): string | undefined {
+  if (decodedData) {
+    let name: string | undefined
+
+    if (decodedData.params[0].value === batchprocess.toLowerCase()) {
+      // Batch registration
+      const rlpDecoded: RLPDecoded = RLP.decode(decodedData.params[2].value) as unknown as RLPDecoded
+      const domainNames = rlpDecoded[1].map(
+        (domainData: number[]) =>
+          Utils.hexToAscii(
+            Utils.bytesToHex(
+              domainData.slice(88, domainData.length)
+            )
+          )
+      )
+      name = domainNames.find(
+        (domain: string) =>
+          Utils.numberToHex(Utils.sha3(domain) as string) === tokenId
+      )
+    } else {
+      // Single registration
+      const domainData: string = decodedData.params[2].value
+      name = Utils.hexToAscii('0x' + domainData.slice(218, domainData.length))
+    }
+
+    return name
+  }
+}
+
 async function transferHandler (logger: Logger, eventData: EventData, eth: Eth, services: RnsServices): Promise<void> {
   const tokenId = Utils.numberToHex(eventData.returnValues.tokenId)
   const ownerAddress = eventData.returnValues.to.toLowerCase()
@@ -84,33 +114,18 @@ async function transferHandler (logger: Logger, eventData: EventData, eth: Eth, 
     const transaction = await eth.getTransaction(transactionHash)
     const decodedData: DecodedData = abiDecoder.decodeMethod(transaction.input)
 
-    if (decodedData) {
-      // Decode domain name
-      let name: string | undefined
+    const name: string | undefined = getDomainName(decodedData, tokenId, batchprocess)
 
-      if (decodedData.params[0].value === batchprocess.toLowerCase()) {
-        // Batch registration
-        const rlpDecoded: any = RLP.decode(decodedData.params[2].value)
-        const domainNames = rlpDecoded[1].map(
-          (domainData: number[]) => Utils.hexToAscii((Utils.bytesToHex(domainData.slice(88, domainData.length))))
-        )
-        name = domainNames.find((domain: string) => Utils.numberToHex(Utils.sha3(domain) as string) === tokenId)
-      } else {
-        // Single registration
-        name = Utils.hexToAscii('0x' + decodedData.params[2].value.slice(218, decodedData.params[2].value.length))
+    if (name) {
+      try {
+        await Domain.upsert({ tokenId, name: `${name}.${tld}` })
+      } catch (e) {
+        await Domain.upsert({ tokenId })
+        logger.warn(`Domain name ${name}.${tld} for token ${tokenId} could not be stored.`)
       }
 
-      if (name) {
-        try {
-          await Domain.upsert({ tokenId, name: `${name}.${tld}` })
-        } catch (e) {
-          await Domain.upsert({ tokenId })
-          logger.warn(`Domain name ${name}.${tld} for token ${tokenId} could not be stored.`)
-        }
-
-        if (domainsService.emit) {
-          domainsService.emit('patched', { tokenId })
-        }
+      if (domainsService.emit) {
+        domainsService.emit('patched', { tokenId })
       }
     }
   }

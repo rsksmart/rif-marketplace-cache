@@ -244,7 +244,7 @@ describe('Domain events', () => {
   })
 
   it('should Decode Name for new Domain - Batch', async () => {
-    // Encoded multiple registrations for  `domain.rsk` and `domainother.rsk`ß
+    // Encoded multiple registrations for  `domain.rsk` and `domainother.rsk`
     const txInput = '0x4000aea0000000000000000000000000c0b3b62dd0400e4baa721ddec9b8a384147b23ff' +
       '0000000000000000000000000000000000000000000000003782dace9d90000000000000000000000000000000' +
       '000000000000000000000000000000000000600000000000000000000000000000000000000000000000000000' +

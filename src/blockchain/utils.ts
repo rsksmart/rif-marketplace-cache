@@ -9,6 +9,8 @@ import eventsEmitterFactory, { EventsEmitterOptions } from './events'
 import { NewBlockEmitterOptions } from '../definitions'
 import { BlockTracker } from './block-tracker'
 
+export type RLPDecoded = Array<Array<number[]>>
+
 function getBlockTracker (keyPrefix?: string): BlockTracker {
   const store = getObject(keyPrefix)
   return new BlockTracker(store)
