@@ -1,6 +1,6 @@
 {
   "name": "@rsksmart/rif-marketplace-cache",
-  "version": "1.0.0-rc.0",
+  "version": "1.0.0",
   "description": "Caching server for RIF Marketplace",
   "keywords": [
     "RIF",
@@ -128,6 +128,7 @@
   "types": "types/index.d.ts",
   "contributors": [
     "Adam Uhlíř <adam@uhlir.dev>",
+    "Dennis Arslan <dennis@arslan.co.uk>",
     "Julian M. Rodriguez <56316686+julianmrodri@users.noreply.github.com>",
     "Juraj <36888576+jurajpiar@users.noreply.github.com>",
     "Juraj Piar <juraj@iovlabs.org>",
