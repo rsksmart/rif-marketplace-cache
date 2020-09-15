@@ -20,7 +20,7 @@ import DomainExpiration from '../../../src/services/rns/models/expiration.model'
 import DomainOffer from '../../../src/services/rns/models/domain-offer.model'
 import SoldDomain from '../../../src/services/rns/models/sold-domain.model'
 
-import { eventMock } from '../../utils'
+import { eventMock, transactionMock } from '../../utils'
 
 chai.use(sinonChai)
 chai.use(chaiAsPromised)
@@ -39,10 +39,15 @@ describe('Domain events', () => {
   const label = 'domain'
   const name = 'domain.rsk'
   const tokenId = Utils.sha3(label) as string
+  const labelOther = 'domainother'
+  const nameOther = 'domainother.rsk'
+  const tokenOtherId = Utils.sha3(labelOther) as string
   const from = 'from_addr'
   const to = 'to_addr'
   const other = 'other_addr'
   const expirationTime = (new Date()).getTime().toString()
+  const zeroAddress = '0x0000000000000000000000000000000000000000'
+  const transactionHash = 'TX_HASH'
 
   before(() => {
     sequelize = sequelizeFactory()
@@ -78,7 +83,7 @@ describe('Domain events', () => {
   it('should update Domain Owner on Tranfer', async () => {
     const event = eventMock({
       event: 'Transfer',
-      transactionHash: 'TX_HASH',
+      transactionHash,
       returnValues: { tokenId, from, to }
     })
 
@@ -100,12 +105,12 @@ describe('Domain events', () => {
   it('should handle multiple Transfers in the same transaction', async () => {
     const event = eventMock({
       event: 'Transfer',
-      transactionHash: 'TX_HASH',
+      transactionHash,
       returnValues: { tokenId, from, to }
     })
     const newEvent = eventMock({
       event: 'Transfer',
-      transactionHash: 'TX_HASH',
+      transactionHash,
       returnValues: { tokenId, from: to, to: other }
     })
 
@@ -236,6 +241,50 @@ describe('Domain events', () => {
 
     expect(createdEvent).to.be.instanceOf(Domain)
     expect(createdEvent?.name).to.be.eql(event.returnValues.name)
+  })
+
+  it('should Decode Name for new Domain - Batch', async () => {
+    // Encoded multiple registrations for  `domain.rsk` and `domainother.rsk`
+    const txInput = '0x4000aea0000000000000000000000000c0b3b62dd0400e4baa721ddec9b8a384147b23ff' +
+      '0000000000000000000000000000000000000000000000003782dace9d90000000000000000000000000000000' +
+      '000000000000000000000000000000000000600000000000000000000000000000000000000000000000000000' +
+      '0000000000d2f8d0881bc16d674ec80000f8c5b85ec2c414c890f8bf6a479f320ead074411a4b0e7944ea8c9c1' +
+      '6d97ebe8ec0de1264229e19b6681ec254dfdb4ee52ed336e6a58d6a635bba4dd00000000000000000000000000' +
+      '00000000000000000000000000000000000001646f6d61696eb863c2c414c890f8bf6a479f320ead074411a4b0' +
+      'e7944ea8c9c17a134ff0de2189b133a610ff8e4a0164c1fd91a7bb3c4052b1fb1bb6792a220800000000000000' +
+      '00000000000000000000000000000000000000000000000001646f6d61696e6f74686572000000000000000000' +
+      '0000000000'
+
+    const mockedTransaction = transactionMock(transactionHash, txInput)
+    eth.getTransaction(transactionHash).resolves(mockedTransaction)
+
+    const event = eventMock({
+      event: 'Transfer',
+      transactionHash,
+      returnValues: { tokenId, from: zeroAddress, to: to }
+    })
+
+    const newEvent = eventMock({
+      event: 'Transfer',
+      transactionHash,
+      returnValues: { tokenId: tokenOtherId, from: zeroAddress, to: to }
+    })
+
+    await processor(event)
+
+    const createdEvent = await Domain.findByPk(Utils.numberToHex(tokenId))
+
+    expect(createdEvent).to.be.instanceOf(Domain)
+    expect(createdEvent?.name).to.be.eql(name)
+    expect(domainServiceEmitSpy).to.have.been.calledWith('patched')
+
+    await processor(newEvent)
+
+    const newCreatedEvent = await Domain.findByPk(Utils.numberToHex(tokenOtherId))
+
+    expect(newCreatedEvent).to.be.instanceOf(Domain)
+    expect(newCreatedEvent?.name).to.be.eql(nameOther)
+    expect(domainServiceEmitSpy).to.have.been.calledWith('patched')
   })
 })
 

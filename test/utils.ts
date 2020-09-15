@@ -1,4 +1,4 @@
-import { BlockHeader, BlockTransactionString, TransactionReceipt } from 'web3-eth'
+import { BlockHeader, BlockTransactionString, TransactionReceipt, Transaction } from 'web3-eth'
 import { Substitute } from '@fluffy-spoon/substitute'
 import { EventData } from 'web3-eth-contract'
 
@@ -69,4 +69,17 @@ export function blockMock (blockNumber: number, blockHash = '0x123', options: Pa
   block.number.returns!(blockNumber)
   block.hash.returns!(blockHash)
   return block
+}
+
+export function transactionMock (hash: string, input: string, options: Partial<Transaction> = {}): Transaction {
+  const transaction = Substitute.for<Transaction>()
+
+  Object.entries(options).forEach(([key, value]) => {
+    // @ts-ignore
+    transaction[key].returns!(value)
+  })
+
+  transaction.hash.returns!(hash)
+  transaction.input.returns!(input)
+  return transaction
 }

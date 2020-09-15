@@ -12,6 +12,9 @@ import DomainExpiration from './models/expiration.model'
 import DomainOwner from './models/owner.model'
 import Transfer from './models/transfer.model'
 import SoldDomain from './models/sold-domain.model'
+import RLP = require('rlp')
+
+type RLPDecoded = Array<Array<number[]>>
 
 /**
  * Updates Domain Owner
@@ -64,13 +67,48 @@ async function registerTransfer (
   return transferDomain.id
 }
 
+/**
+ * Decode domain name
+ * @param decodedData
+ * @param tokenId
+ * @param batchAddr
+ */
+function getDomainName (decodedData: DecodedData, tokenId: string, batchAddr: string): string | undefined {
+  if (decodedData) {
+    let name: string | undefined
+
+    if (decodedData.params[0].value === batchAddr) {
+      // Batch registration
+      const rlpDecoded: RLPDecoded = RLP.decode(decodedData.params[2].value) as unknown as RLPDecoded
+      const domainNames = rlpDecoded[1].map(
+        (domainData: number[]) =>
+          Utils.hexToAscii(
+            Utils.bytesToHex(
+              domainData.slice(88, domainData.length)
+            )
+          )
+      )
+      name = domainNames.find(
+        (domain: string) =>
+          Utils.numberToHex(Utils.sha3(domain) as string) === tokenId
+      )
+    } else {
+      // Single registration
+      const domainData: string = decodedData.params[2].value
+      name = Utils.hexToAscii('0x' + domainData.slice(218, domainData.length))
+    }
+
+    return name
+  }
+}
+
 async function transferHandler (logger: Logger, eventData: EventData, eth: Eth, services: RnsServices): Promise<void> {
   const tokenId = Utils.numberToHex(eventData.returnValues.tokenId)
   const ownerAddress = eventData.returnValues.to.toLowerCase()
-
-  const fiftsAddr = config.get('rns.fifsAddrRegistrar.contractAddress')
-  const registrar = config.get('rns.registrar.contractAddress')
-  const marketplace = config.get<string>('rns.placement.contractAddress')
+  const fifsAddr = config.get<string>('rns.fifsAddrRegistrar.contractAddress').toLowerCase()
+  const registrarAddr = config.get<string>('rns.registrar.contractAddress').toLowerCase()
+  const marketplaceAddr = config.get<string>('rns.placement.contractAddress').toLowerCase()
+  const batchAddr = config.get<string>('rns.batchContractAddress').toLowerCase()
   const tld = config.get('rns.tld')
 
   const transactionHash = eventData.transactionHash
@@ -83,33 +121,31 @@ async function transferHandler (logger: Logger, eventData: EventData, eth: Eth, 
     const transaction = await eth.getTransaction(transactionHash)
     const decodedData: DecodedData = abiDecoder.decodeMethod(transaction.input)
 
-    if (decodedData) {
-      const name = Utils.hexToAscii('0x' + decodedData.params[2].value.slice(218, decodedData.params[2].value.length))
+    const name: string | undefined = getDomainName(decodedData, tokenId, batchAddr)
 
-      if (name) {
-        try {
-          await Domain.upsert({ tokenId, name: `${name}.${tld}` })
-        } catch (e) {
-          await Domain.upsert({ tokenId })
-          logger.warn(`Domain name ${name}.${tld} for token ${tokenId} could not be stored.`)
-        }
+    if (name) {
+      try {
+        await Domain.upsert({ tokenId, name: `${name}.${tld}` })
+      } catch (e) {
+        await Domain.upsert({ tokenId })
+        logger.warn(`Domain name ${name}.${tld} for token ${tokenId} could not be stored.`)
+      }
 
-        if (domainsService.emit) {
-          domainsService.emit('patched', { tokenId })
-        }
+      if (domainsService.emit) {
+        domainsService.emit('patched', { tokenId })
       }
     }
   }
 
-  if (ownerAddress === (fiftsAddr as string).toLowerCase()) {
+  if (ownerAddress === fifsAddr) {
     return
   }
 
-  if (ownerAddress === (registrar as string).toLowerCase()) {
+  if (ownerAddress === registrarAddr) {
     return
   }
 
-  if (ownerAddress === marketplace.toLowerCase() || from === marketplace.toLowerCase()) {
+  if (ownerAddress === marketplaceAddr || from === marketplaceAddr) {
     return // Marketplace transfers are handled in TokenSold
   }
 
