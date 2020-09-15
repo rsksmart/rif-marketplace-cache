@@ -4,7 +4,7 @@ import { Eth } from 'web3-eth'
 import { EventData } from 'web3-eth-contract'
 import Utils from 'web3-utils'
 import { RnsBaseService, RnsServices } from '.'
-import { getBlockDate, RLPDecoded } from '../../blockchain/utils'
+import { getBlockDate } from '../../blockchain/utils'
 import { Logger } from '../../definitions'
 import DomainOffer from './models/domain-offer.model'
 import Domain from './models/domain.model'
@@ -13,6 +13,8 @@ import DomainOwner from './models/owner.model'
 import Transfer from './models/transfer.model'
 import SoldDomain from './models/sold-domain.model'
 import RLP = require('rlp')
+
+type RLPDecoded = Array<Array<number[]>>
 
 /**
  * Updates Domain Owner
@@ -65,12 +67,17 @@ async function registerTransfer (
   return transferDomain.id
 }
 
-// getDomainName: Decode domain name
-function getDomainName (decodedData: DecodedData, tokenId: string, batchprocess: string): string | undefined {
+/**
+ * Decode domain name
+ * @param decodedData
+ * @param tokenId
+ * @param batchAddr
+ */
+function getDomainName (decodedData: DecodedData, tokenId: string, batchAddr: string): string | undefined {
   if (decodedData) {
     let name: string | undefined
 
-    if (decodedData.params[0].value === batchprocess.toLowerCase()) {
+    if (decodedData.params[0].value === batchAddr) {
       // Batch registration
       const rlpDecoded: RLPDecoded = RLP.decode(decodedData.params[2].value) as unknown as RLPDecoded
       const domainNames = rlpDecoded[1].map(
@@ -98,10 +105,10 @@ function getDomainName (decodedData: DecodedData, tokenId: string, batchprocess:
 async function transferHandler (logger: Logger, eventData: EventData, eth: Eth, services: RnsServices): Promise<void> {
   const tokenId = Utils.numberToHex(eventData.returnValues.tokenId)
   const ownerAddress = eventData.returnValues.to.toLowerCase()
-  const fifsAddr = config.get<string>('rns.fifsAddrRegistrar.contractAddress')
-  const registrar = config.get<string>('rns.registrar.contractAddress')
-  const marketplace = config.get<string>('rns.placement.contractAddress')
-  const batchprocess = config.get<string>('rns.batchContractAddress')
+  const fifsAddr = config.get<string>('rns.fifsAddrRegistrar.contractAddress').toLowerCase()
+  const registrarAddr = config.get<string>('rns.registrar.contractAddress').toLowerCase()
+  const marketplaceAddr = config.get<string>('rns.placement.contractAddress').toLowerCase()
+  const batchAddr = config.get<string>('rns.batchContractAddress').toLowerCase()
   const tld = config.get('rns.tld')
 
   const transactionHash = eventData.transactionHash
@@ -114,7 +121,7 @@ async function transferHandler (logger: Logger, eventData: EventData, eth: Eth, 
     const transaction = await eth.getTransaction(transactionHash)
     const decodedData: DecodedData = abiDecoder.decodeMethod(transaction.input)
 
-    const name: string | undefined = getDomainName(decodedData, tokenId, batchprocess)
+    const name: string | undefined = getDomainName(decodedData, tokenId, batchAddr)
 
     if (name) {
       try {
@@ -130,15 +137,15 @@ async function transferHandler (logger: Logger, eventData: EventData, eth: Eth, 
     }
   }
 
-  if (ownerAddress === fifsAddr.toLowerCase()) {
+  if (ownerAddress === fifsAddr) {
     return
   }
 
-  if (ownerAddress === registrar.toLowerCase()) {
+  if (ownerAddress === registrarAddr) {
     return
   }
 
-  if (ownerAddress === marketplace.toLowerCase() || from === marketplace.toLowerCase()) {
+  if (ownerAddress === marketplaceAddr || from === marketplaceAddr) {
     return // Marketplace transfers are handled in TokenSold
   }
 

@@ -255,7 +255,7 @@ describe('Domain events', () => {
       '00000000000000000000000000000000000000000000000001646f6d61696e6f74686572000000000000000000' +
       '0000000000'
 
-    const mockedTransaction = transactionMock(transactionHash, txInput, {})
+    const mockedTransaction = transactionMock(transactionHash, txInput)
     eth.getTransaction(transactionHash).resolves(mockedTransaction)
 
     const event = eventMock({
