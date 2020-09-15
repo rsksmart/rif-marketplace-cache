@@ -1,3 +1,29 @@
+<a name="1.0.0"></a>
+# [1.0.0](https://github.com/rsksmart/rif-marketplace-cache/compare/v1.0.0-rc.0...v1.0.0) (2020-09-15)
+
+
+### Features
+
+* batch support for domain registration ([#293](https://github.com/rsksmart/rif-marketplace-cache/issues/293)) ([971fb7e](https://github.com/rsksmart/rif-marketplace-cache/commit/971fb7e))
+* mainnet config file ([#287](https://github.com/rsksmart/rif-marketplace-cache/issues/287)) ([1f38445](https://github.com/rsksmart/rif-marketplace-cache/commit/1f38445))
+
+
+
+<a name="1.0.0-rc.0"></a>
+# [1.0.0-rc.0](https://github.com/rsksmart/rif-marketplace-cache/compare/v0.3.0...v1.0.0-rc.0) (2020-08-25)
+
+
+### Bug Fixes
+
+* update npm dependencies ([#270](https://github.com/rsksmart/rif-marketplace-cache/issues/270)) ([200f6cc](https://github.com/rsksmart/rif-marketplace-cache/commit/200f6cc))
+
+
+### Features
+
+* rns contract testnet ([#281](https://github.com/rsksmart/rif-marketplace-cache/issues/281)) ([261441c](https://github.com/rsksmart/rif-marketplace-cache/commit/261441c))
+
+
+
 <a name="0.3.0"></a>
 # 0.3.0 (2020-07-28)
 

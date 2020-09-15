@@ -4,5 +4,24 @@
   blockchain: {
     provider: 'ws://localhost:8545',
     waitBlockCountBeforeConfirmationRemoved: 10
+  },
+  rns: {
+    enabled: true,
+    batchContractAddress: "0xc0b3b62dd0400e4baa721ddec9b8a384147b23ff", // encoded address used in tests
+    owner: {
+      contractAddress: "OWNER_ADDR"
+    },
+    reverse: {
+      contractAddress: "REVERSE_ADDR"
+    },
+    placement: {
+      contractAddress: "PLACEMENT_ADDR"
+    },
+    registrar: {
+      contractAddress: "REGISTRAR_ADDR"
+    },
+    fifsAddrRegistrar: {
+      contractAddress: "FIFSREGISTRAR_ADDR"
+    }
   }
 }
