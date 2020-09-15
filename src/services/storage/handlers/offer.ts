@@ -1,5 +1,7 @@
+import BigNumber from 'bignumber.js'
+
 import Offer from '../models/offer.model'
-import BillingPlan from '../models/price.model'
+import BillingPlan from '../models/billing-plan.model'
 import { EventData } from 'web3-eth-contract'
 import { loggingFactory } from '../../../logger'
 import { Handler } from '../../../definitions'
@@ -9,17 +11,31 @@ import { EventError } from '../../../errors'
 
 const logger = loggingFactory('storage:handler:offer')
 
-function updatePrices (offer: Offer, period: number, price: number): Promise<BillingPlan> {
-  const priceEntity = offer.plans && offer.plans.find(value => value.period === period)
-  logger.info(`Updating period ${period} to price ${price} (ID: ${offer.address})`)
+function updatePrices (offer: Offer, period: BigNumber, price: BigNumber): Promise<BillingPlan> {
+  const {
+    plans,
+    provider
+  } = offer
 
-  if (priceEntity) {
-    priceEntity.amount = price
-    return priceEntity.save()
+  const billingPlan = plans && plans.find(value => new BigNumber(value.period).eq(period))
+  logger.info(`Updating period ${period} to price ${price} (ID: ${provider})`)
+
+  if (billingPlan) {
+    billingPlan.price = price
+    return billingPlan.save()
   } else {
-    const newPriceEntity = new BillingPlan({ period, amount: price, offerId: offer.address })
-    return newPriceEntity.save()
+    const newBillingPlanEntity = new BillingPlan({ period, price, offerId: provider })
+    return newBillingPlanEntity.save()
   }
+}
+
+export function calculateAverage (plans: BillingPlan[]): number {
+  return plans.map(({ price, period }: BillingPlan) => {
+    const priceMBPPeriod = price
+    const priceGBPPeriod = priceMBPPeriod.times(1024)
+    const priceGBPSec = priceGBPPeriod.div(period)
+    return priceGBPSec.times(3600 * 24)
+  }).reduce((sum, x) => sum.plus(x)).toNumber() / plans.length
 }
 
 const handlers: { [key: string]: Function } = {
@@ -30,7 +46,7 @@ const handlers: { [key: string]: Function } = {
     if (offerService.emit) {
       offerService.emit('updated', wrapEvent('TotalCapacitySet', offer.toJSON()))
     }
-    logger.info(`Updating capacity ${offer.totalCapacity} (ID: ${offer.address})`)
+    logger.info(`Updating capacity ${offer.totalCapacity} (ID: ${offer.provider})`)
   },
   async MessageEmitted (event: EventData, offer: Offer, offerService: OfferService): Promise<void> {
     const msg = event.returnValues.message
@@ -50,16 +66,22 @@ const handlers: { [key: string]: Function } = {
       if (offerService.emit) {
         offerService.emit('updated', wrapEvent('MessageEmitted', offer.toJSON()))
       }
-      logger.info(`PeerId ${offer.peerId} defined (ID: ${offer.address})`)
+      logger.info(`PeerId ${offer.peerId} defined (ID: ${offer.provider})`)
     } else {
       throw new EventError(`Unknown message flag ${flag}!`, event.event)
     }
   },
-  async BillingPlanSet (event: EventData, offer: Offer, offerService: OfferService): Promise<void> {
-    await updatePrices(offer, event.returnValues.period, event.returnValues.price)
+  async BillingPlanSet ({ returnValues: { period, price } }: EventData, offer: Offer, offerService: OfferService): Promise<void> {
+    const plan = await updatePrices(offer, period, price)
+
+    const updatedPlans = [...offer.plans || [], plan]
+
+    const newAvgPrice = updatedPlans?.length && calculateAverage(updatedPlans)
+    offer.averagePrice = newAvgPrice || 0
+    offer.save()
 
     if (offerService.emit) {
-      const freshOffer = await Offer.findByPk(offer.address) as Offer
+      const freshOffer = await Offer.findByPk(offer.provider) as Offer
       offerService.emit('updated', wrapEvent('BillingPlanSet', freshOffer.toJSON()))
     }
   }
@@ -72,7 +94,7 @@ const handler: Handler<StorageServices> = {
 
     // TODO: Ignored until https://github.com/sequelize/sequelize/pull/11924
     // @ts-ignore
-    const [offer, created] = await Offer.findOrCreate({ where: { address: provider }, include: [BillingPlan] })
+    const [offer, created] = await Offer.findOrCreate({ where: { provider }, include: [BillingPlan] })
 
     if (created) {
       logger.info(`Created new StorageOffer for ${provider}`)

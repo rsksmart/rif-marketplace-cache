@@ -1,4 +1,6 @@
-import { Sequelize, SequelizeOptions } from 'sequelize-typescript'
+import { DataType, Model, Sequelize, SequelizeOptions } from 'sequelize-typescript'
+import { ModelAttributeColumnOptions } from 'sequelize'
+import BigNumber from 'bignumber.js'
 import path from 'path'
 import config from 'config'
 import sqlFormatter from 'sql-formatter'
@@ -29,7 +31,24 @@ export function sequelizeFactory (): Sequelize {
     transactionType: 'IMMEDIATE'
   }
 
-  return new Sequelize(config.get('db'), dbSettings)
+  return new Sequelize(`sqlite:${config.get('db')}`, dbSettings)
+}
+
+export function BigNumberStringType (propName: string): Partial<ModelAttributeColumnOptions> {
+  return {
+    type: DataType.STRING(),
+    get (this: Model): BigNumber {
+      return new BigNumber(this.getDataValue(propName as any))
+    },
+    set (this: Model, value: string | number | BigNumber): void {
+      const n = new BigNumber(value)
+
+      if (isNaN(n.toNumber())) {
+        throw new Error(`${this.constructor.name + ' ' || ''}Model Error: ${propName} should be a one of [number, string(number), BigNumber]`)
+      }
+      this.setDataValue(propName as any, n.toString(10))
+    }
+  }
 }
 
 export default function (app: Application): void {

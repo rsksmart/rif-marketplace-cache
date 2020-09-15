@@ -4,7 +4,11 @@
     provider: "ws://127.0.0.1:8545/"
   },
   storage: {
-    enabled: false
+    enabled: true,
+    contractAddress: "0x47a2Db5D68751EeAdFBC44851E84AcDB4F7299Cc",
+    eventsEmitter: {
+      confirmations: 2
+    }
   },
   rns: {
     enabled: true,

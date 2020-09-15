@@ -5,8 +5,8 @@ import { appFactory, services } from '../app'
 import { loggingFactory } from '../logger'
 import { Flags, Config, SupportedServices, isSupportedServices } from '../definitions'
 import { BaseCLICommand } from '../utils'
-import { sequelizeFactory } from '../sequelize'
-import Event from '../blockchain/event.model'
+import DbBackUpJob from '../db-backup'
+import { ethFactory } from '../blockchain'
 
 const logger = loggingFactory('cli:start')
 
@@ -26,10 +26,6 @@ ${formattedServices}`
     port: flags.integer({ char: 'p', description: 'port to attach the server to' }),
     db: flags.string({ description: 'database connection URI', env: 'RIFM_DB' }),
     provider: flags.string({ description: 'blockchain provider connection URI', env: 'RIFM_PROVIDER' }),
-    purge: flags.boolean({
-      char: 'u',
-      description: 'will purge services that should be lunched (eq. enable/disable is applied)'
-    }),
     enable: flags.string({ char: 'e', multiple: true, description: 'enable specific service' }),
     disable: flags.string({ char: 'd', multiple: true, description: 'disable specific service' })
   }
@@ -84,17 +80,12 @@ ${formattedServices}`
     return output
   }
 
-  private async purge (): Promise<void> {
-    const toBePurgedServices = (Object.keys(services) as Array<keyof typeof services>)
+  public async precache () {
+    const toBePrecache = (Object.keys(services) as Array<keyof typeof services>)
       .filter(service => config.get<boolean>(`${service}.enabled`))
-
-    logger.info(`Purging services: ${toBePurgedServices.join(', ')}`)
-
     await Promise.all(
-      toBePurgedServices.map((service) => services[service].purge())
+      toBePrecache.map((service) => services[service].precache(ethFactory()))
     )
-
-    await Event.destroy({ where: {}, truncate: true, cascade: true })
   }
 
   async run (): Promise<void> {
@@ -103,23 +94,57 @@ ${formattedServices}`
     const configOverrides = this.buildConfigObject(flags)
     config.util.extendDeep(config, configOverrides)
 
-    if (flags.purge) {
-      sequelizeFactory()
-      await this.purge()
+    const backUpJob = new DbBackUpJob(ethFactory())
+    // An infinite loop which you can exit only with SIGINT/SIGKILL
+    while (true) {
+      let stopCallback: () => void = () => {
+        throw new Error('No stop callback was assigned!')
+      }
+
+      // Run backup job
+      backUpJob.run()
+
+      // Promise that resolves when reset callback is called
+      const resetPromise = new Promise(resolve => {
+        appFactory({
+          appResetCallBack: () => resolve()
+        }).then(({ app, stop }) => {
+          // Lets save the function that stops the app
+          stopCallback = stop
+
+          // Start server
+          const port = config.get('port')
+          const server = app.listen(port)
+
+          server.on('listening', () =>
+            logger.info(`Server started on port ${port}`)
+          )
+
+          process.on('unhandledRejection', err =>
+            logger.error(`Unhandled Rejection at: ${err}`)
+          )
+        })
+      })
+
+      // Let see if we have to restart the app at some point most probably because
+      // reorgs outside of confirmation range.
+      await resetPromise
+
+      logger.warn('Reorg detected outside of confirmation range. Rebuilding the service\'s state!')
+      logger.info('Stopping the app')
+      stopCallback()
+      backUpJob.stop()
+
+      // Restore DB from backup
+      await backUpJob.restoreDb().catch(e => {
+        // TODO send notification to devops
+        logger.error(e)
+      })
+
+      // Run pre-cache
+      await this.precache()
+
+      logger.info('Restarting the app')
     }
-
-    const app = await appFactory()
-    const port = config.get('port')
-    const server = app.listen(port)
-
-    process.on('unhandledRejection', err =>
-      logger.error(`Unhandled Rejection at: ${err}`)
-    )
-
-    server.on('listening', () =>
-      this.log('Server started on port %d', port)
-    )
-
-    return Promise.resolve()
   }
 }

@@ -1,12 +1,16 @@
 import { Table, DataType, Column, Model, HasMany, Scopes } from 'sequelize-typescript'
-import BillingPlan from './price.model'
-import Agreement from './agreement.model'
 import { Op } from 'sequelize'
+import BigNumber from 'bignumber.js'
+
+import BillingPlan from './billing-plan.model'
+import Agreement from './agreement.model'
+import { BigNumberStringType } from '../../../sequelize'
 
 @Scopes(() => ({
   active: {
     where: {
-      totalCapacity: { [Op.and]: [{ [Op.ne]: null }, { [Op.gt]: 0 }] }
+      totalCapacity: { [Op.and]: [{ [Op.ne]: null }, { [Op.ne]: '0' }] }
+      // peerId: { [Op.ne]: null } // Disabled until used in tx to prevent empty results
     },
     include: [
       {
@@ -19,13 +23,16 @@ import { Op } from 'sequelize'
 @Table({ freezeTableName: true, tableName: 'storage_offer' })
 export default class Offer extends Model {
   @Column({ primaryKey: true, type: DataType.STRING(64) })
-  address!: string
+  provider!: string
 
-  @Column
-  totalCapacity!: number
+  @Column({ ...BigNumberStringType('totalCapacity') })
+  totalCapacity!: BigNumber
 
   @Column
   peerId!: string
+
+  @Column(DataType.INTEGER)
+  averagePrice!: number
 
   @HasMany(() => BillingPlan)
   plans!: BillingPlan[]
@@ -34,12 +41,14 @@ export default class Offer extends Model {
   agreements!: Agreement[]
 
   @Column(DataType.VIRTUAL)
-  get utilizedCapacity (): number {
-    return (this.agreements || []).map(request => request.size).reduce((previousValue, currentValue) => previousValue + currentValue, 0)
+  get utilizedCapacity (): BigNumber {
+    return (this.agreements || [])
+      .map(request => request.size)
+      .reduce((previousValue, currentValue) => previousValue.plus(currentValue), new BigNumber(0))
   }
 
   @Column(DataType.VIRTUAL)
-  get availableCapacity (): number {
-    return this.totalCapacity - this.utilizedCapacity
+  get availableCapacity (): BigNumber {
+    return this.totalCapacity.minus(this.utilizedCapacity)
   }
 }

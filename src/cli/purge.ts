@@ -1,5 +1,6 @@
 import { services } from '../app'
 import Listr from 'listr'
+import { getEndPromise as awaitStoreToEndProcessing } from 'sequelize-store'
 import { sequelizeFactory } from '../sequelize'
 import { BaseCLICommand, capitalizeFirstLetter, validateServices } from '../utils'
 import Event from '../blockchain/event.model'
@@ -63,6 +64,7 @@ ${formattedServices}`
     this.log('Removing cached data for service:')
     const tasks = new Listr(tasksDefinition)
     await tasks.run()
+    await awaitStoreToEndProcessing()
     this.exit(0)
   }
 }

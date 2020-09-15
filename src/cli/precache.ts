@@ -1,5 +1,6 @@
 import { services } from '../app'
 import Listr from 'listr'
+import { getEndPromise as awaitStoreToEndProcessing } from 'sequelize-store'
 import { sequelizeFactory } from '../sequelize'
 import { BaseCLICommand, capitalizeFirstLetter, validateServices } from '../utils'
 import { initStore } from '../store'
@@ -55,6 +56,7 @@ ${formattedServices}`
     this.log('Pre caching data for service:')
     const tasks = new Listr(tasksDefinition)
     await tasks.run()
+    await awaitStoreToEndProcessing()
     this.exit(0)
   }
 }

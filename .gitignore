@@ -30,3 +30,4 @@ oclif.manifest.json
 
 # DB file
 *.sqlite
+.eslintrc.js

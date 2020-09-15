@@ -10,6 +10,7 @@ import type { EventData } from 'web3-eth-contract'
 import type { AbiItem } from 'web3-utils'
 import { ethFactory } from '../../blockchain'
 import { getEventsEmitterForService, isServiceInitialized } from '../../blockchain/utils'
+import { REORG_OUT_OF_RANGE_EVENT_NAME } from '../../blockchain/events'
 import { ServiceAddresses } from '../../definitions'
 import type { Application, CachedService } from '../../definitions'
 import { loggingFactory } from '../../logger'
@@ -88,10 +89,10 @@ async function precache (eth?: Eth): Promise<void> {
 
 const rns: CachedService = {
   // eslint-disable-next-line require-await
-  async initialize (app: Application): Promise<void> {
+  async initialize (app: Application): Promise<{ stop: () => void }> {
     if (!config.get<boolean>('rns.enabled')) {
       logger.info('RNS service: disabled')
-      return Promise.resolve()
+      return { stop: () => undefined }
     }
     logger.info('RNS service: enabled')
 
@@ -101,6 +102,8 @@ const rns: CachedService = {
     app.use(ServiceAddresses.RNS_DOMAINS, new RnsBaseService({ Model: Domain }))
     app.use(ServiceAddresses.RNS_SOLD, new RnsBaseService({ Model: SoldDomain }))
     app.use(ServiceAddresses.RNS_OFFERS, new RnsBaseService({ Model: DomainOffer }))
+
+    const reorgEmitterService = app.service(ServiceAddresses.REORG_EMITTER)
 
     const domains = app.service(ServiceAddresses.RNS_DOMAINS)
     const sold = app.service(ServiceAddresses.RNS_SOLD)
@@ -128,6 +131,7 @@ const rns: CachedService = {
     })
     rnsEventsEmitter.on('newConfirmation', (data) => confirmationService.emit('newConfirmation', data))
     rnsEventsEmitter.on('invalidConfirmation', (data) => confirmationService.emit('invalidConfirmation', data))
+    rnsEventsEmitter.on(REORG_OUT_OF_RANGE_EVENT_NAME, (blockNumber: number) => reorgEmitterService.emitReorg(blockNumber, 'rns.owner'))
 
     const rnsReverseEventsEmitter = getEventsEmitterForService('rns.reverse', eth, rnsReverseContractAbi.abi as AbiItem[])
     rnsReverseEventsEmitter.on('newEvent', errorHandler(eventProcessor(loggingFactory('rns.reverse:processor'), eth, services), logger))
@@ -136,6 +140,7 @@ const rns: CachedService = {
     })
     rnsReverseEventsEmitter.on('newConfirmation', (data) => confirmationService.emit('newConfirmation', data))
     rnsReverseEventsEmitter.on('invalidConfirmation', (data) => confirmationService.emit('invalidConfirmation', data))
+    rnsReverseEventsEmitter.on(REORG_OUT_OF_RANGE_EVENT_NAME, (blockNumber: number) => reorgEmitterService.emitReorg(blockNumber, 'rns.reverse'))
 
     const rnsPlacementsEventsEmitter = getEventsEmitterForService('rns.placement', eth, simplePlacementsContractAbi.abi as AbiItem[])
     rnsPlacementsEventsEmitter.on('newEvent', errorHandler(eventProcessor(loggingFactory('rns.placement:processor'), eth, services), logger))
@@ -144,8 +149,16 @@ const rns: CachedService = {
     })
     rnsPlacementsEventsEmitter.on('newConfirmation', (data) => confirmationService.emit('newConfirmation', data))
     rnsPlacementsEventsEmitter.on('invalidConfirmation', (data) => confirmationService.emit('invalidConfirmation', data))
+    rnsPlacementsEventsEmitter.on(REORG_OUT_OF_RANGE_EVENT_NAME, (blockNumber: number) => reorgEmitterService.emitReorg(blockNumber, 'rns.placement'))
 
-    return Promise.resolve()
+    return {
+      stop: () => {
+        rnsPlacementsEventsEmitter.stop()
+        rnsReverseEventsEmitter.stop()
+        rnsEventsEmitter.stop()
+        confirmationService.removeAllListeners()
+      }
+    }
   },
 
   precache,

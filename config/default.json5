@@ -1,7 +1,12 @@
 // For full syntax see /src/types.ts::Config interface
-
 {
-  db: 'sqlite:db.sqlite',
+  db: 'db.sqlite',
+
+  // DB back up config
+  dbBackUp: {
+    blocks: 1440, // 12 hours * 60 * 60 / 30s (new block every 30s) ==> backuped twice a day
+    path: 'db-backups'
+  },
 
   // CORS setting, please consult https://expressjs.com/en/resources/middleware/cors.html for more details
   cors: {
@@ -10,12 +15,17 @@
   },
 
   blockchain: {
-
     // Number of blocks that is waited AFTER the event is confirmed before
     // it is removed from database.
     // Such parameter is needed for a REST API where a host could miss that an event has
     // full confirmations as it could be removed from the DB before the endpoint is queried.
-    waitBlockCountBeforeConfirmationRemoved: 20
+    waitBlockCountBeforeConfirmationRemoved: 20,
+
+    // Specify behavior of NewBlockEmitter, that detects new blocks on blockchain.
+    newBlockEmitter: {
+      // If to use polling strategy, if false then listening is used.
+      polling: true
+    }
   },
 
   log: {
@@ -37,8 +47,17 @@
     // Sets if Storage service should be enabled
     enabled: true,
 
-    // Events that will be listened to
-    events: ['TotalCapacitySet', 'MessageEmitted', 'BillingPlanSet', 'NewAgreement', 'AgreementFundsDeposited', 'AgreementFundsWithdrawn', 'AgreementFundsPayout', 'AgreementStopped'],
+    // Topics that will be listened to
+    topics: [
+      'TotalCapacitySet(address,uint64)',
+      'BillingPlanSet(address,uint64,uint128)',
+      'MessageEmitted(address,bytes32[])',
+      'NewAgreement(bytes32,bytes32[],address,address,uint128,uint64,uint128,uint256)',
+      'AgreementFundsDeposited(bytes32,uint256)',
+      'AgreementFundsWithdrawn(bytes32,uint256)',
+      'AgreementFundsPayout(bytes32,uint256)',
+      'AgreementStopped(bytes32)',
+    ],
 
     // Specify behavior of EventsEmitter, that retrieves events from blockchain and pass them onwards for further processing.
     eventsEmitter: {

@@ -9,7 +9,7 @@ import { decodeByteArray, wrapEvent } from '../../../utils'
 import { getBlockDate } from '../../../blockchain/utils'
 
 import Agreement from '../models/agreement.model'
-import BillingPlan from '../models/price.model'
+import BillingPlan from '../models/billing-plan.model'
 import { StorageServices } from '../index'
 
 const logger = loggingFactory('storage:handler:request')
@@ -33,7 +33,7 @@ const handlers = {
       offerId: offerId,
       size: event.returnValues.size,
       billingPeriod: event.returnValues.billingPeriod,
-      billingPrice: plan.amount,
+      billingPrice: plan.price,
       availableFunds: event.returnValues.availableFunds,
       lastPayout: await getBlockDate(eth, event.blockNumber)
     }
@@ -66,7 +66,7 @@ const handlers = {
       throw new EventError(`Agreement with ID ${id} was not found!`, 'AgreementFundsDeposited')
     }
 
-    agreement.availableFunds += parseInt(event.returnValues.amount)
+    agreement.availableFunds = agreement.availableFunds.plus(event.returnValues.amount)
     await agreement.save()
 
     if (agreementService.emit) agreementService.emit('updated', wrapEvent('AgreementFundsDeposited', agreement.toJSON()))
@@ -81,7 +81,7 @@ const handlers = {
       throw new EventError(`Agreement with ID ${id} was not found!`, 'AgreementFundsWithdrawn')
     }
 
-    agreement.availableFunds -= parseInt(event.returnValues.amount)
+    agreement.availableFunds = agreement.availableFunds.minus(event.returnValues.amount)
     await agreement.save()
 
     if (agreementService.emit) agreementService.emit('updated', wrapEvent('AgreementFundsWithdrawn', agreement.toJSON()))
@@ -97,7 +97,7 @@ const handlers = {
     }
 
     agreement.lastPayout = await getBlockDate(eth, event.blockNumber)
-    agreement.availableFunds -= parseInt(event.returnValues.amount)
+    agreement.availableFunds = agreement.availableFunds.minus(event.returnValues.amount)
     await agreement.save()
 
     if (agreementService.emit) agreementService.emit('updated', wrapEvent('AgreementFundsPayout', agreement.toJSON()))

@@ -37,7 +37,7 @@ const DATA_EVENT_NAME = 'newEvent'
  * Dummy implementation for testing BaseEventsEmitter
  */
 export class DummyEventsEmitter extends BaseEventsEmitter {
-  constructor (eth: Eth, contract: Contract, events: string[], options?: EventsEmitterOptions, name?: string) {
+  constructor (eth: Eth, contract: Contract, events: string[], topics?: string[], options?: EventsEmitterOptions, name?: string) {
     let logger: Logger
 
     if (!name) {
@@ -46,7 +46,7 @@ export class DummyEventsEmitter extends BaseEventsEmitter {
       logger = loggingFactory('blockchain:events:' + name)
     }
 
-    super(eth, contract, events, logger, options)
+    super(eth, contract, logger, events, options)
   }
 
   async createEvent (data: EventData | EventData[]): Promise<void> {
@@ -97,7 +97,7 @@ describe('BaseEventsEmitter', () => {
     const newBlockEmitter = new EventEmitter()
     const options = { blockTracker, newBlockEmitter }
     const spy = sinon.spy()
-    const eventsEmitter = new DummyEventsEmitter(eth, contract, ['testEvent'], options)
+    const eventsEmitter = new DummyEventsEmitter(eth, contract, ['testEvent'], undefined, options)
     eventsEmitter.on(DATA_EVENT_NAME, spy) // Will start processingPastEvents() which will be delayed
 
     // Directly calling processEvents(), which should be blocked by the processingPastEvents()
@@ -131,7 +131,7 @@ describe('BaseEventsEmitter', () => {
       const newBlockEmitter = new EventEmitter()
       const options: EventsEmitterOptions = { confirmations: 2, blockTracker, newBlockEmitter }
       const spy = sinon.spy()
-      const eventsEmitter = new DummyEventsEmitter(eth, contract, ['testEvent'], options)
+      const eventsEmitter = new DummyEventsEmitter(eth, contract, ['testEvent'], undefined, options)
       eventsEmitter.on(DATA_EVENT_NAME, spy)
       await sleep(100)
 
@@ -154,7 +154,7 @@ describe('BaseEventsEmitter', () => {
       const newBlockEmitter = new EventEmitter()
       const options: EventsEmitterOptions = { confirmations: 2, blockTracker, newBlockEmitter }
       const spy = sinon.spy()
-      const eventsEmitter = new DummyEventsEmitter(eth, contract, ['testEvent'], options)
+      const eventsEmitter = new DummyEventsEmitter(eth, contract, ['testEvent'], undefined, options)
       eventsEmitter.on(DATA_EVENT_NAME, spy)
 
       const events = [
@@ -191,7 +191,7 @@ describe('BaseEventsEmitter', () => {
       const newBlockEmitter = new EventEmitter()
       const options = { blockTracker, newBlockEmitter }
       const spy = sinon.spy()
-      const eventsEmitter = new DummyEventsEmitter(eth, contract, ['testEvent'], options)
+      const eventsEmitter = new DummyEventsEmitter(eth, contract, ['testEvent'], undefined, options)
       eventsEmitter.on(DATA_EVENT_NAME, spy)
       await sleep(100)
 
@@ -212,7 +212,7 @@ describe('BaseEventsEmitter', () => {
       const newBlockEmitter = new EventEmitter()
       const options = { blockTracker, newBlockEmitter }
       const spy = sinon.spy()
-      const eventsEmitter = new DummyEventsEmitter(eth, contract, ['testEvent'], options)
+      const eventsEmitter = new DummyEventsEmitter(eth, contract, ['testEvent'], undefined, options)
 
       const testEvent = eventMock()
       const events = [
@@ -260,7 +260,7 @@ describe('PollingEventsEmitter', function () {
     const newEventSpy = sinon.spy()
     const reorgSpy = sinon.spy()
     const reorgOutOfRangeSpy = sinon.spy()
-    const eventsEmitter = new PollingEventsEmitter(eth, contract, ['testEvent'], options)
+    const eventsEmitter = new PollingEventsEmitter(eth, contract, ['testEvent'], undefined, options)
     eventsEmitter.on(DATA_EVENT_NAME, newEventSpy)
     eventsEmitter.on(REORG_EVENT_NAME, reorgSpy)
     eventsEmitter.on(REORG_OUT_OF_RANGE_EVENT_NAME, reorgOutOfRangeSpy)
@@ -298,7 +298,7 @@ describe('PollingEventsEmitter', function () {
     const newEventSpy = sinon.spy()
     const reorgSpy = sinon.spy()
     const reorgOutOfRangeSpy = sinon.spy()
-    const eventsEmitter = new PollingEventsEmitter(eth, contract, ['testEvent'], options)
+    const eventsEmitter = new PollingEventsEmitter(eth, contract, ['testEvent'], undefined, options)
     eventsEmitter.on(DATA_EVENT_NAME, newEventSpy)
     eventsEmitter.on(REORG_EVENT_NAME, reorgSpy)
     eventsEmitter.on(REORG_OUT_OF_RANGE_EVENT_NAME, reorgOutOfRangeSpy)
@@ -332,7 +332,7 @@ describe('PollingEventsEmitter', function () {
     const newEventSpy = sinon.spy()
     const reorgSpy = sinon.spy()
     const reorgOutOfRangeSpy = sinon.spy()
-    const eventsEmitter = new PollingEventsEmitter(eth, contract, ['testEvent'], options)
+    const eventsEmitter = new PollingEventsEmitter(eth, contract, ['testEvent'], undefined, options)
     eventsEmitter.on(DATA_EVENT_NAME, newEventSpy)
     eventsEmitter.on(REORG_EVENT_NAME, reorgSpy)
     eventsEmitter.on(REORG_OUT_OF_RANGE_EVENT_NAME, reorgOutOfRangeSpy)
@@ -369,7 +369,7 @@ describe('PollingEventsEmitter', function () {
     const newBlockEmitter = new EventEmitter()
     const options = { blockTracker, newBlockEmitter }
     const spy = sinon.spy()
-    const eventsEmitter = new PollingEventsEmitter(eth, contract, ['testEvent'], options)
+    const eventsEmitter = new PollingEventsEmitter(eth, contract, ['testEvent'], undefined, options)
     eventsEmitter.on(DATA_EVENT_NAME, spy) // Will start processingPastEvents() which will be delayed
 
     // Directly calling processEvents(), which should be blocked by the processingPastEvents()
@@ -432,7 +432,7 @@ describe('PollingEventsEmitter', function () {
       const newEventSpy = sinon.spy()
       const reorgSpy = sinon.spy()
       const reorgOutOfRangeSpy = sinon.spy()
-      const eventsEmitter = new PollingEventsEmitter(eth, contract, ['testEvent'], options)
+      const eventsEmitter = new PollingEventsEmitter(eth, contract, ['testEvent'], undefined, options)
       eventsEmitter.on(DATA_EVENT_NAME, newEventSpy)
       eventsEmitter.on(REORG_EVENT_NAME, reorgSpy)
       eventsEmitter.on(REORG_OUT_OF_RANGE_EVENT_NAME, reorgOutOfRangeSpy)
@@ -470,7 +470,7 @@ describe('PollingEventsEmitter', function () {
       const newEventSpy = sinon.spy()
       const reorgSpy = sinon.spy()
       const reorgOutOfRangeSpy = sinon.spy()
-      const eventsEmitter = new PollingEventsEmitter(eth, contract, ['testEvent'], options)
+      const eventsEmitter = new PollingEventsEmitter(eth, contract, ['testEvent'], undefined, options)
       eventsEmitter.on(DATA_EVENT_NAME, newEventSpy)
       eventsEmitter.on(REORG_EVENT_NAME, reorgSpy)
       eventsEmitter.on(REORG_OUT_OF_RANGE_EVENT_NAME, reorgOutOfRangeSpy)
@@ -508,7 +508,7 @@ describe('PollingEventsEmitter', function () {
       const newEventSpy = sinon.spy()
       const reorgSpy = sinon.spy()
       const reorgOutOfRangeSpy = sinon.spy()
-      const eventsEmitter = new PollingEventsEmitter(eth, contract, ['testEvent'], options)
+      const eventsEmitter = new PollingEventsEmitter(eth, contract, ['testEvent'], undefined, options)
       eventsEmitter.on(DATA_EVENT_NAME, newEventSpy)
       eventsEmitter.on(REORG_EVENT_NAME, reorgSpy)
       eventsEmitter.on(REORG_OUT_OF_RANGE_EVENT_NAME, reorgOutOfRangeSpy)

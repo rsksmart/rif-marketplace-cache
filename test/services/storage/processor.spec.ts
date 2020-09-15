@@ -1,3 +1,4 @@
+import BigNumber from 'bignumber.js'
 import chai from 'chai'
 import chaiAsPromised from 'chai-as-promised'
 import sinonChai from 'sinon-chai'
@@ -15,7 +16,7 @@ import { sequelizeFactory } from '../../../src/sequelize'
 import Offer from '../../../src/services/storage/models/offer.model'
 import { blockMock, eventMock } from '../../utils'
 import { EventError } from '../../../src/errors'
-import BillingPlan from '../../../src/services/storage/models/price.model'
+import BillingPlan from '../../../src/services/storage/models/billing-plan.model'
 import Agreement from '../../../src/services/storage/models/agreement.model'
 import { decodeByteArray, wrapEvent } from '../../../src/utils'
 import { getBlockDate } from '../../../src/blockchain/utils'
@@ -57,7 +58,7 @@ describe('Storage services: Events Processor', () => {
         returnValues: { provider }
       })
       await processor(event)
-      const createdEvent = await Offer.findOne({ where: { address: event.returnValues.provider } })
+      const createdEvent = await Offer.findOne({ where: { provider: event.returnValues.provider } })
 
       expect(createdEvent).to.be.instanceOf(Offer)
       expect(offerServiceEmitSpy).to.have.been.calledOnceWith('created')
@@ -70,7 +71,7 @@ describe('Storage services: Events Processor', () => {
           provider: 'test'
         }
       })
-      const eventFromDb = await Offer.create({ address: event.returnValues.provider })
+      const eventFromDb = await Offer.create({ provider: event.returnValues.provider })
       expect(eventFromDb).to.be.instanceOf(Offer)
 
       await processor(event)
@@ -88,9 +89,9 @@ describe('Storage services: Events Processor', () => {
         })
 
         await processor(event)
-        const updatedEventFromDB = await Offer.findOne({ where: { address: event.returnValues.provider } })
+        const updatedEventFromDB = await Offer.findOne({ where: { provider: event.returnValues.provider } })
 
-        expect(updatedEventFromDB?.totalCapacity).to.be.eql(event.returnValues.capacity)
+        expect(updatedEventFromDB?.totalCapacity).to.be.eql(new BigNumber(event.returnValues.capacity))
       })
     })
     describe('BillingPlanSet', () => {
@@ -118,25 +119,25 @@ describe('Storage services: Events Processor', () => {
 
         expect(billingPlan).to.be.instanceOf(BillingPlan)
         expect(billingPlan?.createdAt).to.be.eql(billingPlan?.updatedAt) // new instance
-        expect(billingPlan?.amount).to.be.eql(event.returnValues.price)
-        expect(billingPlan?.period).to.be.eql(event.returnValues.period)
+        expect(billingPlan?.price).to.be.eql(new BigNumber(event.returnValues.price))
+        expect(billingPlan?.period).to.be.eql(new BigNumber(event.returnValues.period))
       })
       it('create new BillingPlan if has one with different period`', async () => {
         await processor(billingEvent)
 
-        const billingPlan = await BillingPlan.findOne({ where: { offerId: provider, period: 99 } })
+        const billingPlan = await BillingPlan.findOne({ where: { offerId: provider, period: '99' } })
 
         expect(billingPlan).to.be.instanceOf(BillingPlan)
         expect(billingPlan?.createdAt).to.be.eql(billingPlan?.updatedAt) // new instance
-        expect(billingPlan?.amount).to.be.eql(billingEvent.returnValues.price)
-        expect(billingPlan?.period).to.be.eql(billingEvent.returnValues.period)
+        expect(billingPlan?.price).to.be.eql(new BigNumber(billingEvent.returnValues.price))
+        expect(billingPlan?.period).to.be.eql(new BigNumber(billingEvent.returnValues.period))
       })
       it('update BillingPlan', async () => {
         // Create new offer and billing plan
-        const offer = await Offer.create({ address: provider })
-        const billing = await BillingPlan.create({ offerId: offer.address, period: 99, amount: 1 })
+        const offer = await Offer.create({ provider })
+        const billing = await BillingPlan.create({ offerId: offer.provider, period: 99, price: 1 })
         expect(offer).to.be.instanceOf(Offer)
-        expect(billing?.amount).to.be.eql(1)
+        expect(billing?.price).to.be.eql(new BigNumber(1))
         expect(billing).to.be.instanceOf(BillingPlan)
 
         const newPrice = 99999
@@ -144,12 +145,12 @@ describe('Storage services: Events Processor', () => {
 
         await processor(billingEvent)
 
-        const billingPlan = await BillingPlan.findOne({ where: { offerId: offer.address, period: 99 } })
+        const billingPlan = await BillingPlan.findOne({ where: { offerId: offer.provider, period: '99' } })
 
         expect(billingPlan).to.be.instanceOf(BillingPlan)
         expect(billingPlan?.updatedAt).to.be.gt(billingPlan?.createdAt)
-        expect(billingPlan?.amount).to.be.eql(newPrice)
-        expect(billingPlan?.period).to.be.eql(billingEvent.returnValues.period)
+        expect(billingPlan?.price).to.be.eql(new BigNumber(newPrice))
+        expect(billingPlan?.period).to.be.eql(new BigNumber(billingEvent.returnValues.period))
       })
     })
     describe('MessageEmitted', () => {
@@ -163,7 +164,7 @@ describe('Storage services: Events Processor', () => {
         })
 
         await processor(event)
-        const updatedEventFromDB = await Offer.findOne({ where: { address: event.returnValues.provider } })
+        const updatedEventFromDB = await Offer.findOne({ where: { provider: event.returnValues.provider } })
 
         expect(updatedEventFromDB?.peerId).to.be.eql(null)
       })
@@ -198,7 +199,7 @@ describe('Storage services: Events Processor', () => {
         })
 
         await processor(event)
-        const updatedEventFromDB = await Offer.findOne({ where: { address: event.returnValues.provider } })
+        const updatedEventFromDB = await Offer.findOne({ where: { provider: event.returnValues.provider } })
 
         expect(updatedEventFromDB?.peerId).to.be.eql(testPeerId)
       })
@@ -248,8 +249,8 @@ describe('Storage services: Events Processor', () => {
     beforeEach(async () => {
       await sequelize.sync({ force: true })
       agreementServiceEmitSpy.resetHistory()
-      offer = await Offer.create({ address: provider })
-      plan = await BillingPlan.create({ offerId: offer.address, amount: 100, period: billingPeriod })
+      offer = await Offer.create({ provider })
+      plan = await BillingPlan.create({ offerId: offer.provider, price: 100, period: billingPeriod })
       expect(offer).to.be.instanceOf(Offer)
       expect(plan).to.be.instanceOf(BillingPlan)
     })
@@ -269,26 +270,25 @@ describe('Storage services: Events Processor', () => {
       })
 
       it('should throw error if billing plan not exist', async () => {
-        await expect(BillingPlan.destroy({ where: { offerId: provider, period: billingPeriod } })).to.eventually.become(1)
+        await expect(BillingPlan.destroy({ where: { offerId: provider, period: billingPeriod.toString() } })).to.eventually.become(1)
         await expect(processor(event)).to.eventually.be.rejectedWith(
           EventError,
-          `Price for period ${event.returnValues.billingPeriod} and offer ${provider} not found when creating new request ${agreementReference}`
+          `Price for period ${event.returnValues.billingPeriod.toString()} and offer ${provider} not found when creating new request ${agreementReference}`
         )
       })
       it('should create/overwrite new agreement', async () => {
         await processor(event)
 
         const agreement = await Agreement.findOne({ where: { agreementReference, offerId: event.returnValues.provider } })
-
         expect(agreement).to.be.instanceOf(Agreement)
         expect(agreement?.agreementReference).to.be.eql(agreementReference)
         expect(agreement?.dataReference).to.be.eql(decodeByteArray(event.returnValues.dataReference))
         expect(agreement?.consumer).to.be.eql(event.returnValues.agreementCreator)
         expect(agreement?.offerId).to.be.eql(provider)
-        expect(agreement?.size).to.be.eql(event.returnValues.size)
-        expect(agreement?.billingPeriod).to.be.eql(event.returnValues.billingPeriod)
-        expect(agreement?.billingPrice).to.be.eql(plan.amount)
-        expect(agreement?.availableFunds).to.be.eql(event.returnValues.availableFunds)
+        expect(agreement?.size).to.be.eql(new BigNumber(event.returnValues.size))
+        expect(agreement?.billingPeriod).to.be.eql(new BigNumber(event.returnValues.billingPeriod))
+        expect(agreement?.billingPrice).to.be.eql(new BigNumber(plan.price))
+        expect(agreement?.availableFunds).to.be.eql(new BigNumber(event.returnValues.availableFunds))
         expect(agreement?.lastPayout).to.be.eql(await getBlockDate(eth, event.blockNumber))
         expect(agreementServiceEmitSpy).to.have.been.calledOnceWith('created')
       })
@@ -339,7 +339,7 @@ describe('Storage services: Events Processor', () => {
 
         const agreementAfterUpdate = await Agreement.findOne({ where: { agreementReference, offerId: event.returnValues.provider } })
 
-        expect(agreementAfterUpdate?.availableFunds).to.be.eql(event.returnValues.amount + agreement.availableFunds)
+        expect(agreementAfterUpdate?.availableFunds).to.be.eql(agreement.availableFunds.plus(event.returnValues.amount))
         expect(agreementServiceEmitSpy).to.have.been.calledOnceWith('updated', wrapEvent('AgreementFundsDeposited', agreementAfterUpdate?.toJSON() as object))
       })
     })
@@ -364,7 +364,7 @@ describe('Storage services: Events Processor', () => {
 
         const agreementAfterUpdate = await Agreement.findOne({ where: { agreementReference, offerId: event.returnValues.provider } })
 
-        expect(agreementAfterUpdate?.availableFunds).to.be.eql(agreement.availableFunds - event.returnValues.amount)
+        expect(agreementAfterUpdate?.availableFunds).to.be.eql(agreement.availableFunds.minus(event.returnValues.amount))
         expect(agreementServiceEmitSpy).to.have.been.calledOnceWith('updated', wrapEvent('AgreementFundsWithdrawn', agreementAfterUpdate?.toJSON() as object))
       })
     })
@@ -392,7 +392,7 @@ describe('Storage services: Events Processor', () => {
 
         const agreementAfterUpdate = await Agreement.findOne({ where: { agreementReference, offerId: event.returnValues.provider } })
 
-        expect(agreementAfterUpdate?.availableFunds).to.be.eql(agreement.availableFunds - event.returnValues.amount)
+        expect(agreementAfterUpdate?.availableFunds).to.be.eql(agreement.availableFunds.minus(event.returnValues.amount))
         expect(agreementAfterUpdate?.lastPayout).to.be.eql(await getBlockDate(eth, blockNumber))
         expect(agreementServiceEmitSpy).to.have.been.calledOnceWith('updated', wrapEvent('AgreementFundsPayout', agreementAfterUpdate?.toJSON() as object))
       })
