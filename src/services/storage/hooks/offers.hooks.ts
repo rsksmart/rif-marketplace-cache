@@ -47,7 +47,6 @@ export default {
               ],
               attributes: [[aggregateLiteral, 'totalStakedUSD']],
               order: [literal('totalStakedUSD DESC'), ['plans', 'period', 'ASC']],
-              groupBy: ['storage_offer.provider'],
               where: {}
             }
 
