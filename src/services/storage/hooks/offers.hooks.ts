@@ -3,10 +3,8 @@ import { HookContext } from '@feathersjs/feathers'
 import { disallow, discard } from 'feathers-hooks-common'
 import { hooks } from 'feathers-sequelize'
 
-import { SUPPORTED_TOKENS_SYMBOLS } from '../handlers/stake'
+import { getStakesAggregateQuery } from '../models/offer.model'
 import BillingPlan from '../models/billing-plan.model'
-import StakeModel from '../models/stake.model'
-import Rate from '../../rates/rates.model'
 import Agreement from '../models/agreement.model'
 import dehydrate = hooks.dehydrate
 
@@ -16,7 +14,7 @@ export default {
       (context: HookContext) => {
         context.params.sequelize = {
           raw: false,
-          include: [BillingPlan, Agreement, StakeModel],
+          include: [BillingPlan, Agreement],
           nest: true
         }
 
@@ -31,9 +29,10 @@ export default {
       async (context: HookContext) => {
         if (context.params.query) {
           const { averagePrice, totalCapacity, periods, provider, $limit } = context.params.query
+          const sequelize = context.app.get('sequelize') as Sequelize
 
           if (!$limit) {
-            const rates = await Rate.findAll()
+            const aggregateLiteral = await getStakesAggregateQuery(sequelize, 'usd')
             context.params.sequelize = {
               raw: false,
               nest: true,
@@ -44,29 +43,10 @@ export default {
                 },
                 {
                   model: Agreement
-                },
-                {
-                  model: StakeModel,
-                  as: 'stakes'
                 }
               ],
-              attributes: [
-                literal(`
-                  SUM(
-                    case
-                      ${SUPPORTED_TOKENS_SYMBOLS.reduce(
-                        (acc, el) => {
-                          const rate = rates.find(r => r.token === el)?.usd || 0
-                          return `${acc} \n when stakes.symbol = ${el} then cast(stakes.total as integer) * ${rate}`
-                        },
-                        ''
-                      )}
-                      else 0
-                    end
-                  ) as totalStakeUSD
-                `)
-              ],
-              order: [['totalStakeUSD', 'ASC'], ['plans', 'period', 'ASC']],
+              attributes: [[aggregateLiteral, 'totalStakedUSD']],
+              order: [literal('totalStakedUSD DESC'), ['plans', 'period', 'ASC']],
               groupBy: ['storage_offer.provider'],
               where: {}
             }
@@ -84,7 +64,6 @@ export default {
             }
 
             if (totalCapacity) {
-              const sequelize = context.app.get('sequelize') as Sequelize
               const minCap = sequelize.escape(totalCapacity.min)
               const maxCap = sequelize.escape(totalCapacity.max)
               const rawQ = `cast(totalCapacity as integer) BETWEEN ${minCap} AND ${maxCap}`

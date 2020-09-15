@@ -1,11 +1,12 @@
 import { Table, DataType, Column, Model, HasMany, Scopes } from 'sequelize-typescript'
-import { Op, literal } from 'sequelize'
+import { Op, literal, Sequelize } from 'sequelize'
 import BigNumber from 'bignumber.js'
 
 import BillingPlan from './billing-plan.model'
 import Agreement from './agreement.model'
-import StakeModel from './stake.model'
 import { BigNumberStringType } from '../../../sequelize'
+import Rate from '../../rates/rates.model'
+import { SUPPORTED_TOKENS_SYMBOLS } from './stake.model'
 
 @Scopes(() => ({
   active: {
@@ -38,9 +39,6 @@ export default class Offer extends Model {
   @HasMany(() => BillingPlan)
   plans!: BillingPlan[]
 
-  @HasMany(() => StakeModel)
-  stakes?: StakeModel[]
-
   @HasMany(() => Agreement)
   agreements!: Agreement[]
 
@@ -55,4 +53,22 @@ export default class Offer extends Model {
   get availableCapacity (): BigNumber {
     return this.totalCapacity.minus(this.utilizedCapacity)
   }
+}
+
+export async function getStakesAggregateQuery (sequelize: Sequelize, currency: 'usd' | 'eur' | 'btc' = 'usd') {
+  const rates = await Rate.findAll()
+  return literal(`(
+    SELECT SUM(
+      case
+        ${SUPPORTED_TOKENS_SYMBOLS.reduce(
+          (acc, el) => {
+            const rate: number = rates.find(r => r.token === el)?.[currency] || 0
+            return `${acc} \n when symbol = ${sequelize.escape(el)} then cast(total as integer) * ${sequelize.escape(rate)}`
+          },
+          ''
+        )}
+        else 0
+      end
+    ) from storage_stakes where account = provider)
+  `)
 }

@@ -14,7 +14,7 @@ const logger = loggingFactory('storage:handler:stake')
  * Supported tokens
   */
 type SupportedTokens = 'rbtc' | 'rif' | 'cfp'
-export const SUPPORTED_TOKENS_SYMBOLS = ['rbtc', 'rif', 'cfp']
+
 /**
  * TODO replace with some import
  */
