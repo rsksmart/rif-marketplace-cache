@@ -230,9 +230,11 @@ export const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000'
  * @returns {SupportedTokens} token symbol
  */
 function getTokenSymbol (token: string, eth: Eth, tokenAbi: AbiItem[] = ERC20Abi): Promise<SupportedTokens> {
-  if (token === ZERO_ADDRESS) return Promise.resolve('rbtc')
+  if (token === ZERO_ADDRESS) {
+    return Promise.resolve('rbtc')
+  }
 
-  const contract = new eth.Contract(tokenAbi as AbiItem[], token)
+  const contract = new eth.Contract(tokenAbi, token)
   return contract.methods.symbol().call({ from: eth.accounts.create() })
 }
 
