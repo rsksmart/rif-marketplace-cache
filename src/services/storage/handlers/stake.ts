@@ -65,7 +65,7 @@ const handlers = {
 
     stake.total = new BigNumber(stake.total).minus(amount)
     await stake.save()
-    logger.info(`Account ${account} stake amount ${amount}, final balance ${total}`)
+    logger.info(`Account ${account} un-stake amount ${amount}, final balance ${total}`)
 
     if (stakeService.emit) {
       stakeService.emit('updated', stake.toJSON())
