@@ -400,7 +400,7 @@ describe('Storage services: Events Processor', () => {
     })
   })
   describe('Staking events', () => {
-    const token = 'SomeTokenAddress'
+    const token = '0x0000000000000000000000000000000000000000'
     const account = provider
     let processor: (event: EventData) => Promise<void>
     let stakeService: StakeService
@@ -429,6 +429,7 @@ describe('Storage services: Events Processor', () => {
       expect(createdStake).to.be.instanceOf(StakeModel)
       expect(createdStake?.account).to.be.eql(account)
       expect(createdStake?.token).to.be.eql(token)
+      expect(createdStake?.symbol).to.be.eql('rbtc')
       expect(stakeServiceEmitSpy).to.have.been.calledWith('updated')
     })
     describe('Staked', () => {
@@ -447,7 +448,6 @@ describe('Storage services: Events Processor', () => {
 
         await processor(event)
         const updatedStake = await StakeModel.findOne({ where: { token, account } })
-
         expect(updatedStake?.total).to.be.eql(new BigNumber(event.returnValues.total))
         expect(stakeServiceEmitSpy).to.have.been.calledWith('updated', updatedStake?.toJSON())
       })
@@ -473,7 +473,7 @@ describe('Storage services: Events Processor', () => {
         expect(stakeServiceEmitSpy).to.have.been.calledWith('updated', updatedStake?.toJSON())
         expect(updatedStake?.total).to.be.eql(new BigNumber(event.returnValues.total))
       })
-      it('should throw if unstake with stake', async () => {
+      it('should throw if unstake without stake', async () => {
         const total = 0
         const amount = 1000
         const event = eventMock({

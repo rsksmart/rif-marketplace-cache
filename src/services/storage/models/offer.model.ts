@@ -55,6 +55,11 @@ export default class Offer extends Model {
   }
 }
 
+/**
+ * This function generate nested query for aggregating total stakes for offer in specific currency
+ * @param sequelize
+ * @param currency
+ */
 export async function getStakesAggregateQuery (sequelize: Sequelize, currency: 'usd' | 'eur' | 'btc' = 'usd') {
   if (!config.get('storage.tokens')) {
     throw new Error('"storage.tokens" not exist in config')

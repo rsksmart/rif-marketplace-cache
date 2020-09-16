@@ -210,7 +210,7 @@ describe('Models', () => {
     beforeEach(async () => {
       await sequelize.sync({ force: true })
     })
-    it('Can aggregate total stakes for offers and order by stakes', async () => {
+    it('should aggregate total stakes for offers and order by stakes', async () => {
       // POPULATE DB
       await Offer.bulkCreate([
         { provider: 'abc', totalCapacity: 123, peerId: '1', averagePrice: '123' },
