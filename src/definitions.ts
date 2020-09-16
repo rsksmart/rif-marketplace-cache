@@ -163,9 +163,20 @@ export interface Config {
   }
 
   // Settings for Storage service related function
-  storage?: BlockchainServiceOptions & {
+  storage?: {
+    // Supported tokens and their addresses
+    tokens?: {
+      [key: string]: string
+    }
+
     // Sets if Storage service should be enabled
     enabled?: boolean
+
+    // Staking contract options
+    staking?: BlockchainServiceOptions
+
+    // Storage Manager contract options
+    storageManager?: BlockchainServiceOptions
   }
 
   // Settings for RNS service related function

@@ -3,8 +3,6 @@ import BigNumber from 'bignumber.js'
 
 import { BigNumberStringType } from '../../../sequelize'
 
-export const SUPPORTED_TOKENS_SYMBOLS = ['rbtc', 'rif']
-
 @Table({ freezeTableName: true, tableName: 'storage_stakes' })
 export default class StakeModel extends Model {
   @Column({ ...BigNumberStringType('total') })

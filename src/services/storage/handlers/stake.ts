@@ -1,265 +1,49 @@
 import { EventData } from 'web3-eth-contract'
 import BigNumber from 'bignumber.js'
+import config from 'config'
 
 import { loggingFactory } from '../../../logger'
 import { Handler } from '../../../definitions'
 import { StorageServices } from '../index'
 import StakeModel from '../models/stake.model'
-import { Eth } from 'web3-eth'
-import { AbiItem } from 'web3-utils'
 
 const logger = loggingFactory('storage:handler:stake')
 
 /**
- * Supported tokens
-  */
-type SupportedTokens = 'rbtc' | 'rif'
-
-/**
- * TODO replace with some import
- */
-const ERC20Abi = [
-  {
-    anonymous: false,
-    inputs: [
-      {
-        indexed: true,
-        internalType: 'address',
-        name: 'owner',
-        type: 'address'
-      },
-      {
-        indexed: true,
-        internalType: 'address',
-        name: 'spender',
-        type: 'address'
-      },
-      {
-        indexed: false,
-        internalType: 'uint256',
-        name: 'value',
-        type: 'uint256'
-      }
-    ],
-    name: 'Approval',
-    type: 'event'
-  },
-  {
-    anonymous: false,
-    inputs: [
-      {
-        indexed: true,
-        internalType: 'address',
-        name: 'from',
-        type: 'address'
-      },
-      {
-        indexed: true,
-        internalType: 'address',
-        name: 'to',
-        type: 'address'
-      },
-      {
-        indexed: false,
-        internalType: 'uint256',
-        name: 'value',
-        type: 'uint256'
-      }
-    ],
-    name: 'Transfer',
-    type: 'event'
-  },
-  {
-    constant: true,
-    inputs: [],
-    name: 'totalSupply',
-    outputs: [
-      {
-        internalType: 'uint256',
-        name: '',
-        type: 'uint256'
-      }
-    ],
-    payable: false,
-    stateMutability: 'view',
-    type: 'function'
-  },
-  {
-    constant: true,
-    inputs: [
-      {
-        internalType: 'address',
-        name: 'account',
-        type: 'address'
-      }
-    ],
-    name: 'balanceOf',
-    outputs: [
-      {
-        internalType: 'uint256',
-        name: '',
-        type: 'uint256'
-      }
-    ],
-    payable: false,
-    stateMutability: 'view',
-    type: 'function'
-  },
-  {
-    constant: false,
-    inputs: [
-      {
-        internalType: 'address',
-        name: 'recipient',
-        type: 'address'
-      },
-      {
-        internalType: 'uint256',
-        name: 'amount',
-        type: 'uint256'
-      }
-    ],
-    name: 'transfer',
-    outputs: [
-      {
-        internalType: 'bool',
-        name: '',
-        type: 'bool'
-      }
-    ],
-    payable: false,
-    stateMutability: 'nonpayable',
-    type: 'function'
-  },
-  {
-    constant: true,
-    inputs: [
-      {
-        internalType: 'address',
-        name: 'owner',
-        type: 'address'
-      },
-      {
-        internalType: 'address',
-        name: 'spender',
-        type: 'address'
-      }
-    ],
-    name: 'allowance',
-    outputs: [
-      {
-        internalType: 'uint256',
-        name: '',
-        type: 'uint256'
-      }
-    ],
-    payable: false,
-    stateMutability: 'view',
-    type: 'function'
-  },
-  {
-    constant: false,
-    inputs: [
-      {
-        internalType: 'address',
-        name: 'spender',
-        type: 'address'
-      },
-      {
-        internalType: 'uint256',
-        name: 'amount',
-        type: 'uint256'
-      }
-    ],
-    name: 'approve',
-    outputs: [
-      {
-        internalType: 'bool',
-        name: '',
-        type: 'bool'
-      }
-    ],
-    payable: false,
-    stateMutability: 'nonpayable',
-    type: 'function'
-  },
-  {
-    constant: false,
-    inputs: [
-      {
-        internalType: 'address',
-        name: 'sender',
-        type: 'address'
-      },
-      {
-        internalType: 'address',
-        name: 'recipient',
-        type: 'address'
-      },
-      {
-        internalType: 'uint256',
-        name: 'amount',
-        type: 'uint256'
-      }
-    ],
-    name: 'transferFrom',
-    outputs: [
-      {
-        internalType: 'bool',
-        name: '',
-        type: 'bool'
-      }
-    ],
-    payable: false,
-    stateMutability: 'nonpayable',
-    type: 'function'
-  }
-] as AbiItem[]
-
-/**
- * Native token address
- */
-export const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000'
-
-/**
  * Make a call to ERC20 token SC and return token symbol
  * Return `rbtc` for ZERO_ADDRESS
- * @param token
- * @param eth
- * @param tokenAbi
- * @returns {SupportedTokens} token symbol
+ * @param tokenAddress
+ * @returns {string} token symbol
  */
-async function getTokenSymbol (token: string, eth: Eth, tokenAbi: AbiItem[] = ERC20Abi): Promise<SupportedTokens> {
-  if (token === ZERO_ADDRESS) {
-    return Promise.resolve('rbtc')
+function getTokenSymbol (tokenAddress: string): string {
+  if (!config.has(`storage.tokens.${tokenAddress}`)) {
+    throw new Error(`Token at ${tokenAddress} not supported`)
   }
 
-  const contract = new eth.Contract(tokenAbi, token)
-  return (await contract.methods.symbol().call({ from: eth.accounts.create() })).toLowerCase()
+  return config.get<string>(`storage.tokens.${tokenAddress}`).toLowerCase()
 }
 
 /**
  * Find or create stake
  * @param account
  * @param token
- * @param eth
  * @returns {Promise<StakeModel>} stake
  */
-async function findOrCreateStake (account: string, token: string, eth: Eth): Promise<StakeModel> {
+async function findOrCreateStake (account: string, token: string): Promise<StakeModel> {
   const stake = await StakeModel.findOne({ where: { account, token } })
 
   if (stake) {
     return stake
   }
-  const symbol = await getTokenSymbol(token, eth)
+  const symbol = getTokenSymbol(token)
   return StakeModel.create({ account, token, symbol, total: 0 })
 }
 
 const handlers = {
-  async Staked (event: EventData, { stakeService }: StorageServices, eth: Eth): Promise<void> {
+  async Staked (event: EventData, { stakeService }: StorageServices): Promise<void> {
     const { user: account, total, token, amount } = event.returnValues
 
-    const stake = await findOrCreateStake(account, token, eth)
+    const stake = await findOrCreateStake(account, token)
 
     stake.total = new BigNumber(stake.total).plus(amount)
     await stake.save()
@@ -295,12 +79,12 @@ function isValidEvent (value: string): value is keyof typeof handlers {
 
 const handler: Handler<StorageServices> = {
   events: ['Staked', 'Unstaked'],
-  process (event: EventData, services: StorageServices, eth: Eth): Promise<void> {
+  process (event: EventData, services: StorageServices): Promise<void> {
     if (!isValidEvent(event.event)) {
       return Promise.reject(new Error(`Unknown event ${event.event}`))
     }
 
-    return handlers[event.event](event, services, eth)
+    return handlers[event.event](event, services)
   }
 }
 

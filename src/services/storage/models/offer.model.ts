@@ -1,3 +1,4 @@
+import config from 'config'
 import { Table, DataType, Column, Model, HasMany, Scopes } from 'sequelize-typescript'
 import { Op, literal, Sequelize } from 'sequelize'
 import BigNumber from 'bignumber.js'
@@ -6,7 +7,6 @@ import BillingPlan from './billing-plan.model'
 import Agreement from './agreement.model'
 import { BigNumberStringType } from '../../../sequelize'
 import Rate from '../../rates/rates.model'
-import { SUPPORTED_TOKENS_SYMBOLS } from './stake.model'
 
 @Scopes(() => ({
   active: {
@@ -56,11 +56,16 @@ export default class Offer extends Model {
 }
 
 export async function getStakesAggregateQuery (sequelize: Sequelize, currency: 'usd' | 'eur' | 'btc' = 'usd') {
+  if (!config.get('storage.tokens')) {
+    throw new Error('"storage.tokens" not exist in config')
+  }
+
+  const supportedTokens = Object.keys(config.get('storage.tokens'))
   const rates = await Rate.findAll()
   return literal(`(
     SELECT SUM(
       case
-        ${SUPPORTED_TOKENS_SYMBOLS.reduce(
+        ${supportedTokens.reduce(
           (acc, el) => {
             const rate: number = rates.find(r => r.token === el)?.[currency] || 0
             return `${acc} \n when symbol = ${sequelize.escape(el)} then cast(total as integer) * ${sequelize.escape(rate)}`

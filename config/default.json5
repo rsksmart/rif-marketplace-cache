@@ -47,6 +47,12 @@
     // Sets if Storage service should be enabled
     enabled: true,
 
+    // supported tokens
+    tokens: {
+      // Native token use zero address
+      '0x0000000000000000000000000000000000000000': 'rbtc',
+    },
+
     // Storage Manager Contract
     storageManager: {
       // Topics that will be listened to
