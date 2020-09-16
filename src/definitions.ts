@@ -17,6 +17,8 @@ export enum SupportedServices {
   RNS = 'rns'
 }
 
+export type SupportedTokens = 'rif' | 'rbtc'
+
 export function isSupportedServices (value: any): value is SupportedServices {
   return Object.values(SupportedServices).includes(value)
 }
@@ -166,7 +168,7 @@ export interface Config {
   storage?: {
     // Supported tokens and their addresses
     tokens?: {
-      [key: string]: string
+      [key: string]: SupportedTokens
     }
 
     // Sets if Storage service should be enabled

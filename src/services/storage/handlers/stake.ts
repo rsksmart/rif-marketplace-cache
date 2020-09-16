@@ -3,7 +3,7 @@ import BigNumber from 'bignumber.js'
 import config from 'config'
 
 import { loggingFactory } from '../../../logger'
-import { Handler } from '../../../definitions'
+import { Handler, SupportedTokens } from '../../../definitions'
 import { StorageServices } from '../index'
 import StakeModel from '../models/stake.model'
 
@@ -12,15 +12,15 @@ const logger = loggingFactory('storage:handler:stake')
 /**
  * Make a call to ERC20 token SC and return token symbol
  * Return `rbtc` for ZERO_ADDRESS
- * @param tokenAddress
- * @returns {string} token symbol
+ * @param tokenContractAddress
+ * @returns {SupportedTokens} token symbol
  */
-function getTokenSymbol (tokenAddress: string): string {
-  if (!config.has(`storage.tokens.${tokenAddress}`)) {
-    throw new Error(`Token at ${tokenAddress} not supported`)
+function getTokenSymbol (tokenContractAddress: string): SupportedTokens {
+  if (!config.has(`storage.tokens.${tokenContractAddress}`)) {
+    throw new Error(`Token at ${tokenContractAddress} not supported`)
   }
 
-  return config.get<string>(`storage.tokens.${tokenAddress}`).toLowerCase()
+  return config.get<SupportedTokens>(`storage.tokens.${tokenContractAddress}`)
 }
 
 /**
