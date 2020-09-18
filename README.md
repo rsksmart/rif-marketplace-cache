@@ -466,8 +466,8 @@ You might have some problems during development, here are few pointers about wha
 
 #### No events from Blockchain:
 
- - make sure that the ABI in Cache is matching the contracts that are deployed in your Ganache/Testnet. The same version of contracts have to be everywhere.
- - check if you have confirmations turned on (when you `start` cache the whole Config is logged in `VERBOSE` level) and if so emit empty blocks to get enough confirmations
+ - make sure that the ABIs in Cache match contracts deployed on your network (Ganache, Testnet, etc). The same version of contracts has to be everywhere.
+ - ensure confirmations are enabled (when ran in `VERBOSE` mode, you should see the whole Config logged). If they are, make sure you emit empty blocks to get enough confirmations.
  - run Cache with log level `DEBUG` (you can filter out database logging with log filter `-db`) and see if events are incoming to Cache
 
 ## License
