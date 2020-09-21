@@ -12,6 +12,9 @@ export default class BillingPlan extends Model {
   @Column({ ...BigNumberStringType('price') })
   price!: BigNumber
 
+  @Column
+  token!: string
+
   @ForeignKey(() => Offer)
   @Column
   offerId!: string

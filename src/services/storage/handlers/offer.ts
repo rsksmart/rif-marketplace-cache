@@ -11,27 +11,27 @@ import { EventError } from '../../../errors'
 
 const logger = loggingFactory('storage:handler:offer')
 
-function updatePrices (offer: Offer, period: BigNumber, price: BigNumber): Promise<BillingPlan> {
+function updatePrices (offer: Offer, period: BigNumber, price: BigNumber, token: string): Promise<BillingPlan> {
   const {
     plans,
     provider
   } = offer
 
-  const billingPlan = plans && plans.find(value => new BigNumber(value.period).eq(period))
+  const billingPlan = plans && plans.find(value => new BigNumber(value.period).eq(period) && token === value.token)
   logger.info(`Updating period ${period} to price ${price} (ID: ${provider})`)
 
   if (billingPlan) {
     billingPlan.price = price
     return billingPlan.save()
   } else {
-    const newBillingPlanEntity = new BillingPlan({ period, price, offerId: provider })
+    const newBillingPlanEntity = new BillingPlan({ period, price, offerId: provider, token })
     return newBillingPlanEntity.save()
   }
 }
 
+// TODO multi currency avg price
 export function calculateAverage (plans: BillingPlan[]): number {
-  return plans.map(({ price, period }: BillingPlan) => {
-    const priceMBPPeriod = price
+  return plans.map(({ price: priceMBPPeriod, period }: BillingPlan) => {
     const priceGBPPeriod = priceMBPPeriod.times(1024)
     const priceGBPSec = priceGBPPeriod.div(period)
     return priceGBPSec.times(3600 * 24)
@@ -71,8 +71,8 @@ const handlers: { [key: string]: Function } = {
       throw new EventError(`Unknown message flag ${flag}!`, event.event)
     }
   },
-  async BillingPlanSet ({ returnValues: { period, price } }: EventData, offer: Offer, offerService: OfferService): Promise<void> {
-    const plan = await updatePrices(offer, period, price)
+  async BillingPlanSet ({ returnValues: { period, price, token } }: EventData, offer: Offer, offerService: OfferService): Promise<void> {
+    const plan = await updatePrices(offer, period, price, token)
 
     const updatedPlans = [...offer.plans || [], plan]
 
