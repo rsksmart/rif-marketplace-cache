@@ -17,7 +17,7 @@ const logger = loggingFactory('storage:handler:request')
 const handlers = {
   async NewAgreement (event: EventData, { agreementService }: StorageServices, eth: Eth): Promise<void> {
     const { provider: offerId, billingPeriod: period, token } = event.returnValues
-    const id = soliditySha3(event.returnValues.agreementCreator, ...event.returnValues.dataReference)
+    const id = soliditySha3(event.returnValues.agreementCreator, ...event.returnValues.dataReference, token)
     const dataReference = decodeByteArray(event.returnValues.dataReference)
 
     const plan = await BillingPlan.findOne({ where: { offerId, period, token } })

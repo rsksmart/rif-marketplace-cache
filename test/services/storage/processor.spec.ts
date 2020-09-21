@@ -96,11 +96,13 @@ describe('Storage services: Events Processor', () => {
       })
     })
     describe('BillingPlanSet', () => {
+      const token = '0x0000'
       const billingEvent: EventData = eventMock({
         event: 'BillingPlanSet',
         returnValues: {
           price: 1000,
           period: 99,
+          token,
           provider
         }
       })
@@ -110,6 +112,7 @@ describe('Storage services: Events Processor', () => {
           returnValues: {
             price: 1000,
             period: 69696,
+            token,
             provider
           }
         })
@@ -121,24 +124,27 @@ describe('Storage services: Events Processor', () => {
         expect(billingPlan).to.be.instanceOf(BillingPlan)
         expect(billingPlan?.createdAt).to.be.eql(billingPlan?.updatedAt) // new instance
         expect(billingPlan?.price).to.be.eql(new BigNumber(event.returnValues.price))
+        expect(billingPlan?.token).to.be.eql(event.returnValues.token)
         expect(billingPlan?.period).to.be.eql(new BigNumber(event.returnValues.period))
       })
       it('create new BillingPlan if has one with different period`', async () => {
         await processor(billingEvent)
 
-        const billingPlan = await BillingPlan.findOne({ where: { offerId: provider, period: '99' } })
+        const billingPlan = await BillingPlan.findOne({ where: { offerId: provider, period: '99', token } })
 
         expect(billingPlan).to.be.instanceOf(BillingPlan)
         expect(billingPlan?.createdAt).to.be.eql(billingPlan?.updatedAt) // new instance
         expect(billingPlan?.price).to.be.eql(new BigNumber(billingEvent.returnValues.price))
+        expect(billingPlan?.token).to.be.eql(billingEvent.returnValues.token)
         expect(billingPlan?.period).to.be.eql(new BigNumber(billingEvent.returnValues.period))
       })
       it('update BillingPlan', async () => {
         // Create new offer and billing plan
         const offer = await Offer.create({ provider })
-        const billing = await BillingPlan.create({ offerId: offer.provider, period: 99, price: 1 })
+        const billing = await BillingPlan.create({ offerId: offer.provider, period: 99, price: 1, token })
         expect(offer).to.be.instanceOf(Offer)
         expect(billing?.price).to.be.eql(new BigNumber(1))
+        expect(billing?.token).to.be.eql(token)
         expect(billing).to.be.instanceOf(BillingPlan)
 
         const newPrice = 99999
@@ -151,6 +157,7 @@ describe('Storage services: Events Processor', () => {
         expect(billingPlan).to.be.instanceOf(BillingPlan)
         expect(billingPlan?.updatedAt).to.be.gt(billingPlan?.createdAt)
         expect(billingPlan?.price).to.be.eql(new BigNumber(newPrice))
+        expect(billingPlan?.token).to.be.eql(token)
         expect(billingPlan?.period).to.be.eql(new BigNumber(billingEvent.returnValues.period))
       })
     })
@@ -213,12 +220,13 @@ describe('Storage services: Events Processor', () => {
     let offer: Offer
     let plan: BillingPlan
     let agreementData: object
+    const token = '0x0000'
     const billingPeriod = 99
     const size = 100
     const availableFunds = 100
     const agreementCreator = asciiToHex('AgreementCreator')
     const dataReference = ['Reference1', 'Reference2'].map(asciiToHex)
-    const agreementReference = soliditySha3(agreementCreator, ...dataReference)
+    const agreementReference = soliditySha3(agreementCreator, ...dataReference, token)
     const blockNumber = 13
     const agreementNotExistTest = (event: EventData): Mocha.Test => it('should throw error if agreement not exist', async () => {
       await expect(processor(event)).to.eventually.be.rejectedWith(
@@ -251,7 +259,7 @@ describe('Storage services: Events Processor', () => {
       await sequelize.sync({ force: true })
       agreementServiceEmitSpy.resetHistory()
       offer = await Offer.create({ provider })
-      plan = await BillingPlan.create({ offerId: offer.provider, price: 100, period: billingPeriod })
+      plan = await BillingPlan.create({ offerId: offer.provider, price: 100, period: billingPeriod, token })
       expect(offer).to.be.instanceOf(Offer)
       expect(plan).to.be.instanceOf(BillingPlan)
     })
@@ -266,7 +274,8 @@ describe('Storage services: Events Processor', () => {
           dataReference,
           size,
           availableFunds,
-          provider
+          provider,
+          token
         }
       })
 
