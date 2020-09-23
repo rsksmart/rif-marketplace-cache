@@ -92,10 +92,7 @@ export async function getBillingPriceAvgQuery (sequelize: Sequelize, currency: '
 
   const supportedTokens = Object.entries(config.get('storage.tokens'))
   const rates = await Rate.findAll()
-  return literal(`(
-    SELECT (cast(SUM(
-      case
-        ${supportedTokens.reduce(
+  const toDollars = `${supportedTokens.reduce(
     (acc, [tokenAddress, symbol]) => {
       const rate: number = rates.find(r => r.token === symbol)?.[currency] || 0
       return `${acc} \n
@@ -103,9 +100,16 @@ export async function getBillingPriceAvgQuery (sequelize: Sequelize, currency: '
         then cast(price as real) * ${sequelize.escape(rate)}`
     },
     ''
-  )}
-        else 0
-      end
-    ) / COUNT(*) * 1024 / period * (3600 * 24) as integer)) from "storage_billing-plan" where offerId = provider)
+  )}`
+  return literal(`(
+    SELECT (
+      ROUND(
+        (SUM(
+          case
+            ${toDollars}
+            else 0
+          end) / COUNT(*) * 1024 / period * (3600 * 24)
+        ) + 0.05, 0)
+      ) from "storage_billing-plan" where offerId = provider)
   `)
 }
