@@ -99,14 +99,13 @@ export async function getBillingPriceAvgQuery (sequelize: Sequelize, currency: '
     (acc, [tokenAddress, symbol]) => {
       const rate: number = rates.find(r => r.token === symbol)?.[currency] || 0
       return `${acc} \n
-      when token = ${sequelize.escape(tokenAddress)}
-        then
-           (cast(price as REAL) * ${sequelize.escape(rate)}) * 1024 / period * (3600 * 24)`
+        when token = ${sequelize.escape(tokenAddress)}
+        then cast(price as REAL) * ${sequelize.escape(rate)}`
     },
     ''
   )}
         else 0
       end
-    ) / COUNT(*)) from "storage_billing-plan" where offerId = provider)
+    ) / COUNT(*) * 1024 / period * (3600 * 24)) from "storage_billing-plan" where offerId = provider)
   `)
 }
