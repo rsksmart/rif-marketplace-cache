@@ -225,9 +225,9 @@ describe('Models', () => {
         { period: '86400', price: '20', token: '0x0000000000000000000000000000000000000000', offerId: 'abc2' },
         { period: '86400', price: '400', token: '0x12345', offerId: 'abc2' },
         { period: '86400', price: '2000', token: '0x0000000000000000000000000000000000000000', offerId: 'abc2' },
-        { period: '86400', price: '2.5', token: '0x0000000000000000000000000000000000000000', offerId: 'abc3' },
-        { period: '86400', price: '3', token: '0x12345', offerId: 'abc3' },
-        { period: '86400', price: '0.4', token: '0x0000000000000000000000000000000000000000', offerId: 'abc3' }
+        { period: '86400', price: '25', token: '0x0000000000000000000000000000000000000000', offerId: 'abc3' },
+        { period: '86400', price: '30', token: '0x12345', offerId: 'abc3' },
+        { period: '86400', price: '4', token: '0x0000000000000000000000000000000000000000', offerId: 'abc3' }
       ])
       await Rate.bulkCreate([
         { token: 'rif', usd: 1 },
@@ -256,7 +256,7 @@ describe('Models', () => {
       const expectedRes = [
         { provider: 'abc', avgBillingPrice: 2048000 },
         { provider: 'abc2', avgBillingPrice: 1515520 },
-        { provider: 'abc3', avgBillingPrice: 3003.733333333333 }
+        { provider: 'abc3', avgBillingPrice: 30037 }
       ]
       expect(offers).to.be.deep.equal(expectedRes)
     })
