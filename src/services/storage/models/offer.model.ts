@@ -65,15 +65,15 @@ export async function getStakesAggregateQuery (sequelize: Sequelize, currency: '
     throw new Error('"storage.tokens" not exist in config')
   }
 
-  const supportedTokens = Object.keys(config.get('storage.tokens'))
+  const supportedTokens = Object.entries(config.get('storage.tokens'))
   const rates = await Rate.findAll()
   return literal(`(
     SELECT SUM(
       case
         ${supportedTokens.reduce(
-          (acc, el) => {
-            const rate: number = rates.find(r => r.token === el)?.[currency] || 0
-            return `${acc} \n when symbol = ${sequelize.escape(el)} then cast(total as integer) * ${sequelize.escape(rate)}`
+          (acc, [tokenAddress, tokenSymbol]) => {
+            const rate: number = rates.find(r => r.token === tokenSymbol)?.[currency] || 0
+            return `${acc} \n when token = ${sequelize.escape(tokenAddress)} then cast(total as integer) * ${sequelize.escape(rate)}`
           },
           ''
         )}

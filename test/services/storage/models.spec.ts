@@ -218,11 +218,11 @@ describe('Models', () => {
         { provider: 'abc3', totalCapacity: 1234, peerId: '2', averagePrice: '1234' }
       ])
       await StakeModel.bulkCreate([
-        { total: '1000', symbol: 'rbtc', account: 'abc', token: '123' },
-        { total: '1000', symbol: 'rif', account: 'abc', token: '123' },
-        { total: '2000', symbol: 'rbtc', account: 'abc2', token: '123' },
-        { total: '1000', symbol: 'rif', account: 'abc2', token: '123' },
-        { total: '1000', symbol: 'rbtc', account: 'abc3', token: '123' }
+        { total: '1000', symbol: 'rbtc', account: 'abc', token: '0x0000000000000000000000000000000000000000' },
+        { total: '1000', symbol: 'rif', account: 'abc', token: '0x12345' },
+        { total: '2000', symbol: 'rbtc', account: 'abc2', token: '0x0000000000000000000000000000000000000000' },
+        { total: '1000', symbol: 'rif', account: 'abc2', token: '0x12345' },
+        { total: '1000', symbol: 'rbtc', account: 'abc3', token: '0x0000000000000000000000000000000000000000' }
       ])
       await Rate.bulkCreate([
         { token: 'rif', usd: 1 },
