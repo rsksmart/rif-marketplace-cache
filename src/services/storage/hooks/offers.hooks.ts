@@ -1,7 +1,7 @@
-import { Op, literal, Sequelize } from 'sequelize'
 import { HookContext } from '@feathersjs/feathers'
 import { disallow, discard } from 'feathers-hooks-common'
 import { hooks } from 'feathers-sequelize'
+import { Op, literal, Sequelize } from 'sequelize'
 
 import BillingPlan from '../models/billing-plan.model'
 import Agreement from '../models/agreement.model'
@@ -29,10 +29,10 @@ export default {
       async (context: HookContext) => {
         if (context.params.query && !context.params.query.$limit) {
           const { averagePrice, totalCapacity, periods, provider } = context.params.query
-          const sequelize = context.app.get('sequelize') as Sequelize
+          const sequelize = context.app.get('sequelize')
 
           const aggregateLiteral = await getStakesAggregateQuery(sequelize, 'usd')
-          const avgBillingPlanPriceUsdQuery = getBillingPriceAvgQuery(sequelize, 'usd')
+          const avgBillingPlanPriceUsdQuery = await getBillingPriceAvgQuery(sequelize, 'usd')
 
           if (!$limit) {
             context.params.sequelize = {
