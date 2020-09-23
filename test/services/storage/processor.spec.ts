@@ -249,6 +249,7 @@ describe('Storage services: Events Processor', () => {
         consumer: agreementCreator,
         offerId: provider,
         size,
+        token,
         billingPeriod,
         billingPrice: 100,
         availableFunds,
@@ -299,6 +300,7 @@ describe('Storage services: Events Processor', () => {
         expect(agreement?.billingPeriod).to.be.eql(new BigNumber(event.returnValues.billingPeriod))
         expect(agreement?.billingPrice).to.be.eql(new BigNumber(plan.price))
         expect(agreement?.availableFunds).to.be.eql(new BigNumber(event.returnValues.availableFunds))
+        expect(agreement?.token).to.be.eql(token)
         expect(agreement?.lastPayout).to.be.eql(await getBlockDate(eth, event.blockNumber))
         expect(agreementServiceEmitSpy).to.have.been.calledOnceWith('created')
       })

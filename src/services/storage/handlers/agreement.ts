@@ -34,6 +34,7 @@ const handlers = {
       size: event.returnValues.size,
       billingPeriod: event.returnValues.billingPeriod,
       billingPrice: plan.price,
+      token,
       availableFunds: event.returnValues.availableFunds,
       lastPayout: await getBlockDate(eth, event.blockNumber)
     }
