@@ -27,51 +27,49 @@ export default {
     ],
     find: [
       async (context: HookContext) => {
-        if (context.params.query) {
-          const { averagePrice, totalCapacity, periods, provider, $limit } = context.params.query
+        if (context.params.query && !context.params.query.$limit) {
+          const { averagePrice, totalCapacity, periods, provider } = context.params.query
           const sequelize = context.app.get('sequelize') as Sequelize
 
-          if (!$limit) {
-            const aggregateLiteral = await getStakesAggregateQuery(sequelize, 'usd')
-            context.params.sequelize = {
-              raw: false,
-              nest: true,
-              include: [
-                {
-                  model: BillingPlan,
-                  as: 'plans'
-                },
-                {
-                  model: Agreement
-                }
-              ],
-              attributes: [[aggregateLiteral, 'totalStakedUSD']],
-              order: [literal('totalStakedUSD DESC'), ['plans', 'period', 'ASC']],
-              where: {}
-            }
-
-            if (provider && provider.$like) {
-              context.params.sequelize.where.provider = {
-                [Op.like]: `%${provider.$like}%`
+          const aggregateLiteral = await getStakesAggregateQuery(sequelize, 'usd')
+          context.params.sequelize = {
+            raw: false,
+            nest: true,
+            include: [
+              {
+                model: BillingPlan,
+                as: 'plans'
+              },
+              {
+                model: Agreement
               }
-            }
+            ],
+            attributes: [[aggregateLiteral, 'totalStakedUSD']],
+            order: [literal('totalStakedUSD DESC'), ['plans', 'period', 'ASC']],
+            where: {}
+          }
 
-            if (averagePrice) {
-              context.params.sequelize.where.averagePrice = {
-                [Op.between]: [averagePrice.min, averagePrice.max]
-              }
+          if (provider && provider.$like) {
+            context.params.sequelize.where.provider = {
+              [Op.like]: `%${provider.$like}%`
             }
+          }
 
-            if (totalCapacity) {
-              const minCap = sequelize.escape(totalCapacity.min)
-              const maxCap = sequelize.escape(totalCapacity.max)
-              const rawQ = `cast(totalCapacity as integer) BETWEEN ${minCap} AND ${maxCap}`
-              context.params.sequelize.where.totalCapacity = literal(rawQ)
+          if (averagePrice) {
+            context.params.sequelize.where.averagePrice = {
+              [Op.between]: [averagePrice.min, averagePrice.max]
             }
+          }
 
-            if (periods?.length) {
-              context.params.sequelize.where['$plans.period$'] = { [Op.in]: periods }
-            }
+          if (totalCapacity) {
+            const minCap = sequelize.escape(totalCapacity.min)
+            const maxCap = sequelize.escape(totalCapacity.max)
+            const rawQ = `cast(totalCapacity as integer) BETWEEN ${minCap} AND ${maxCap}`
+            context.params.sequelize.where.totalCapacity = literal(rawQ)
+          }
+
+          if (periods?.length) {
+            context.params.sequelize.where['$plans.period$'] = { [Op.in]: periods }
           }
         }
       }
