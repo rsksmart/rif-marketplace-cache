@@ -33,9 +33,6 @@ export default class Offer extends Model {
   @Column
   peerId!: string
 
-  @Column(DataType.INTEGER)
-  averagePrice!: number
-
   @HasMany(() => BillingPlan)
   plans!: BillingPlan[]
 
