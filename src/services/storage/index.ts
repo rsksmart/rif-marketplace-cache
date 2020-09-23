@@ -2,6 +2,7 @@ import storageManagerContract from '@rsksmart/rif-marketplace-storage/build/cont
 import stakingContract from '@rsksmart/rif-marketplace-storage/build/contracts/Staking.json'
 import config from 'config'
 import { Service } from 'feathers-sequelize'
+import { QueryTypes } from 'sequelize'
 import { getObject } from 'sequelize-store'
 import Eth from 'web3-eth'
 import { EventData } from 'web3-eth-contract'
@@ -15,6 +16,7 @@ import { Application, CachedService, Logger, ServiceAddresses } from '../../defi
 import { loggingFactory } from '../../logger'
 import { errorHandler, waitForReadyApp } from '../../utils'
 import Agreement from './models/agreement.model'
+import Rate from '../rates/rates.model'
 import Offer from './models/offer.model'
 import BillingPlan from './models/billing-plan.model'
 import offerHooks from './hooks/offers.hooks'
@@ -35,6 +37,41 @@ export class AgreementService extends Service {
 
 export class StakeService extends Service {
   emit?: Function
+}
+
+export class AvgBillingPriceService extends Service {
+  emit?: Function
+
+  async get (): Promise<{ min: number, max: number }> {
+    if (!config.get('storage.tokens')) {
+      throw new Error('"storage.tokens" not exist in config')
+    }
+    const sequelize = this.Model.sequelize
+
+    const supportedTokens = Object.entries(config.get('storage.tokens'))
+    const rates = await Rate.findAll()
+    const toDollars = `case ${supportedTokens.reduce(
+      (acc, [tokenAddress, symbol]) => {
+        const rate: number = rates.find(r => r.token === symbol)?.usd || 0
+        return `${acc} \n
+        when token = ${sequelize.escape(tokenAddress)}
+        then cast(price as real) * ${sequelize.escape(rate)}`
+      },
+      ''
+    )} else 0 end`
+
+    const getAvgMinMaxPBillingPrice = (minMax: number): string => `
+        SELECT ROUND(
+          (SUM(${toDollars}) / COUNT(*) * 1024 / period * (3600 * 24)) + 0.05, 0) as avgPrice
+        FROM "storage_billing-plan"
+        GROUP BY offerId
+        ORDER BY avgPrice ${minMax === 0 ? 'DESC' : 'ASC'}
+        LIMIT 1
+     `
+    const min = await sequelize.query(getAvgMinMaxPBillingPrice(1), { type: QueryTypes.SELECT, raw: true })
+    const max = await sequelize.query(getAvgMinMaxPBillingPrice(0), { type: QueryTypes.SELECT, raw: true })
+    return { min, max }
+  }
 }
 
 export interface StorageServices {
@@ -108,6 +145,7 @@ const storage: CachedService = {
     app.use(ServiceAddresses.STORAGE_OFFERS, new OfferService({ Model: Offer }))
     const offerService = app.service(ServiceAddresses.STORAGE_OFFERS)
     offerService.hooks(offerHooks)
+    app.use(ServiceAddresses.AVG_BILLING_PRICE, new AvgBillingPriceService({ Model: BillingPlan }))
 
     // Initialize Agreement service
     app.use(ServiceAddresses.STORAGE_AGREEMENTS, new AgreementService({ Model: Agreement }))
