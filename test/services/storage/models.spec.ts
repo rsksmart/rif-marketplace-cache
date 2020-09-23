@@ -7,6 +7,7 @@ import Agreement from '../../../src/services/storage/models/agreement.model'
 import { sequelizeFactory } from '../../../src/sequelize'
 import Offer, { getStakesAggregateQuery } from '../../../src/services/storage/models/offer.model'
 import StakeModel from '../../../src/services/storage/models/stake.model'
+import BillingPlan from '../../../src/services/storage/models/billing-plan.model'
 import Rate from '../../../src/services/rates/rates.model'
 
 chai.use(sinonChai)
@@ -209,6 +210,55 @@ describe('Models', () => {
   describe('Offer', () => {
     beforeEach(async () => {
       await sequelize.sync({ force: true })
+    })
+    it('should aggregate avg billing price for offers', async () => {
+      // POPULATE DB
+      await Offer.bulkCreate([
+        { provider: 'abc', totalCapacity: 123, peerId: '1' },
+        { provider: 'abc2', totalCapacity: 1234, peerId: '2' },
+        { provider: 'abc3', totalCapacity: 1234, peerId: '2' }
+      ])
+      await BillingPlan.bulkCreate([
+        { period: '86400', price: '1000', token: '0x0000000000000000000000000000000000000000', offerId: 'abc' },
+        { period: '86400', price: '1000', token: '0x0000000000000000000000000000000000000000', offerId: 'abc' },
+        { period: '86400', price: '1000', token: '0x0000000000000000000000000000000000000000', offerId: 'abc' },
+        { period: '86400', price: '20', token: '0x0000000000000000000000000000000000000000', offerId: 'abc2' },
+        { period: '86400', price: '200', token: '0x0000000000000000000000000000000000000000', offerId: 'abc2' },
+        { period: '86400', price: '2000', token: '0x0000000000000000000000000000000000000000', offerId: 'abc2' },
+        { period: '86400', price: '2.5', token: '0x0000000000000000000000000000000000000000', offerId: 'abc3' },
+        { period: '86400', price: '1.5', token: '0x0000000000000000000000000000000000000000', offerId: 'abc3' },
+        { period: '86400', price: '0.4', token: '0x0000000000000000000000000000000000000000', offerId: 'abc3' }
+      ])
+      await Rate.bulkCreate([
+        { token: 'rif', usd: 1 },
+        { token: 'rbtc', usd: 2 }
+      ])
+
+      expect((await Rate.findAll()).length).to.be.eql(2)
+      expect((await BillingPlan.findAll()).length).to.be.eql(9)
+      expect((await Offer.findAll()).length).to.be.eql(3)
+
+      // Prepare aggregation query
+      const aggregateBillingPriceAvg = await getBillingPriceAvgQuery(sequelize, 'usd')
+
+      const offers = await Offer.findAll({
+        raw: true,
+        attributes: {
+          exclude: ['totalCapacity', 'peerId', 'createdAt', 'updatedAt'],
+          include: [
+            [
+              aggregateBillingPriceAvg,
+              'avgBillingPrice'
+            ]
+          ]
+        }
+      })
+      const expectedRes = [
+        { provider: 'abc', avgBillingPrice: 2048000 },
+        { provider: 'abc2', avgBillingPrice: 1515520 },
+        { provider: 'abc3', avgBillingPrice: 3003.7333333333336 }
+      ]
+      expect(offers).to.be.deep.equal(expectedRes)
     })
     it('should aggregate total stakes for offers and order by stakes', async () => {
       // POPULATE DB

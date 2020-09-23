@@ -29,15 +29,6 @@ function updatePrices (offer: Offer, period: BigNumber, price: BigNumber, token:
   }
 }
 
-// TODO multi currency avg price
-export function calculateAverage (plans: BillingPlan[]): number {
-  return plans.map(({ price: priceMBPPeriod, period }: BillingPlan) => {
-    const priceGBPPeriod = priceMBPPeriod.times(1024)
-    const priceGBPSec = priceGBPPeriod.div(period)
-    return priceGBPSec.times(3600 * 24)
-  }).reduce((sum, x) => sum.plus(x)).toNumber() / plans.length
-}
-
 const handlers: { [key: string]: Function } = {
   async TotalCapacitySet (event: EventData, offer: Offer, offerService: OfferService): Promise<void> {
     offer.totalCapacity = event.returnValues.capacity
@@ -72,13 +63,7 @@ const handlers: { [key: string]: Function } = {
     }
   },
   async BillingPlanSet ({ returnValues: { period, price, token } }: EventData, offer: Offer, offerService: OfferService): Promise<void> {
-    const plan = await updatePrices(offer, period, price, token)
-
-    const updatedPlans = [...offer.plans || [], plan]
-
-    const newAvgPrice = updatedPlans?.length && calculateAverage(updatedPlans)
-    offer.averagePrice = newAvgPrice || 0
-    offer.save()
+    await updatePrices(offer, period, price, token)
 
     if (offerService.emit) {
       const freshOffer = await Offer.findByPk(offer.provider) as Offer

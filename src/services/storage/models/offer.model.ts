@@ -82,3 +82,34 @@ export async function getStakesAggregateQuery (sequelize: Sequelize, currency: '
     ) from storage_stakes where account = provider)
   `)
 }
+
+/**
+ * This function generate nested query for aggregating an avg billing price for offer for specific currency
+ * @param sequelize
+ * @param currency
+ */
+export async function getBillingPriceAvgQuery (sequelize: Sequelize, currency: 'usd' | 'eur' | 'btc' = 'usd') {
+  if (!config.get('storage.tokens')) {
+    throw new Error('"storage.tokens" not exist in config')
+  }
+
+  const supportedTokens = Object.entries(config.get('storage.tokens'))
+  const rates = await Rate.findAll()
+  return literal(`(
+    SELECT (SUM(
+      case
+        ${supportedTokens.reduce(
+    (acc, [tokenAddress, symbol]) => {
+      const rate: number = rates.find(r => r.token === symbol)?.[currency] || 0
+      return `${acc} \n
+      when token = ${sequelize.escape(tokenAddress)}
+        then
+           (cast(price as REAL) * ${sequelize.escape(rate)}) * 1024 / period * (3600 * 24)`
+    },
+    ''
+  )}
+        else 0
+      end
+    ) / COUNT(*)) from "storage_billing-plan" where offerId = provider)
+  `)
+}

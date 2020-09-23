@@ -3,9 +3,9 @@ import { HookContext } from '@feathersjs/feathers'
 import { disallow, discard } from 'feathers-hooks-common'
 import { hooks } from 'feathers-sequelize'
 
-import { getStakesAggregateQuery } from '../models/offer.model'
 import BillingPlan from '../models/billing-plan.model'
 import Agreement from '../models/agreement.model'
+import { getBillingPriceAvgQuery, getStakesAggregateQuery } from '../models/offer.model'
 import dehydrate = hooks.dehydrate
 
 export default {
@@ -32,22 +32,25 @@ export default {
           const sequelize = context.app.get('sequelize') as Sequelize
 
           const aggregateLiteral = await getStakesAggregateQuery(sequelize, 'usd')
-          context.params.sequelize = {
-            raw: false,
-            nest: true,
-            include: [
-              {
-                model: BillingPlan,
-                as: 'plans'
-              },
-              {
-                model: Agreement
-              }
-            ],
-            attributes: [[aggregateLiteral, 'totalStakedUSD']],
-            order: [literal('totalStakedUSD DESC'), ['plans', 'period', 'ASC']],
-            where: {}
-          }
+          const avgBillingPlanPriceUsdQuery = getBillingPriceAvgQuery(sequelize, 'usd')
+
+          if (!$limit) {
+            context.params.sequelize = {
+              raw: false,
+              nest: true,
+              include: [
+                {
+                  model: BillingPlan,
+                  as: 'plans'
+                },
+                {
+                  model: Agreement
+                }
+              ],
+              attributes: [[avgBillingPlanPriceUsdQuery, 'avgBillingPrice'], [aggregateLiteral, 'totalStakedUSD']],
+              order: [literal('totalStakedUSD DESC')],
+              where: {}
+            }
 
           if (provider && provider.$like) {
             context.params.sequelize.where.provider = {
