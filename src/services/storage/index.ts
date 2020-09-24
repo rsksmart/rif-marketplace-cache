@@ -42,7 +42,7 @@ export class StakeService extends Service {
 export class AvgBillingPriceService extends Service {
   emit?: Function
 
-  async get (): Promise<{ min: number, max: number }> {
+  async get (minMax: 1 | -1): Promise<number | string> {
     if (!config.get('storage.tokens')) {
       throw new Error('"storage.tokens" not exist in config')
     }
@@ -60,17 +60,16 @@ export class AvgBillingPriceService extends Service {
       ''
     )} else 0 end`
 
-    const getAvgMinMaxPBillingPrice = (minMax: number): string => `
+    const getAvgMinMaxPBillingPrice = (minMax: 1 | -1): string => `
         SELECT ROUND(
-          (SUM(${toDollars}) / COUNT(*) * 1024 / period * (3600 * 24)) + 0.05, 0) as avgPrice
+          (SUM(${toDollars}) / COUNT(*) * 1024 / period * (3600 * 24)), 0) as avgPrice
         FROM "storage_billing-plan"
         GROUP BY offerId
-        ORDER BY avgPrice ${minMax === 0 ? 'DESC' : 'ASC'}
+        ORDER BY avgPrice ${minMax === -1 ? 'DESC' : 'ASC'}
         LIMIT 1
      `
-    const min = await sequelize.query(getAvgMinMaxPBillingPrice(1), { type: QueryTypes.SELECT, raw: true })
-    const max = await sequelize.query(getAvgMinMaxPBillingPrice(0), { type: QueryTypes.SELECT, raw: true })
-    return { min, max }
+    const [{ avgPrice }] = await sequelize.query(getAvgMinMaxPBillingPrice(minMax), { type: QueryTypes.SELECT, raw: true })
+    return avgPrice
   }
 }
 

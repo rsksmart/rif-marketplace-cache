@@ -109,7 +109,7 @@ export async function getBillingPriceAvgQuery (sequelize: Sequelize, currency: '
             ${toDollars}
             else 0
           end) / COUNT(*) * 1024 / period * (3600 * 24)
-        ) + 0.05, 0)
+        ), 0)
       ) from "storage_billing-plan" where offerId = provider)
   `)
 }
