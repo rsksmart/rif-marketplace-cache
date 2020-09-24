@@ -1,3 +1,4 @@
+import config from 'config'
 import { HookContext } from '@feathersjs/feathers'
 import { disallow, discard } from 'feathers-hooks-common'
 import { hooks } from 'feathers-sequelize'
@@ -5,8 +6,60 @@ import { Op, literal, Sequelize } from 'sequelize'
 
 import BillingPlan from '../models/billing-plan.model'
 import Agreement from '../models/agreement.model'
-import { getBillingPriceAvgQuery, getStakesAggregateQuery } from '../models/offer.model'
+import Offer, { getBillingPriceAvgQuery, getStakesAggregateQuery } from '../models/offer.model'
 import dehydrate = hooks.dehydrate
+
+/**
+ * This hook will add an array of support currencies to each offer in query result
+ * @param context
+ */
+function supportCurrenciesHook (context: HookContext): HookContext {
+  const tokens = config.get<Record<string, string>>('storage.tokens')
+  context.result.forEach((offer: Offer & { acceptedCurrencies: string[] }) => {
+    offer.acceptedCurrencies = offer.plans.reduce<string[]>(
+      (acc, { token }) => {
+        const currencyLabel = tokens[token]
+        return [...acc, ...currencyLabel && !acc.includes(currencyLabel) ? [currencyLabel] : []]
+      },
+      []
+    )
+  })
+  return context
+}
+
+/**
+ * average price filter query
+ * @param sequelize
+ * @param context
+ * @param averagePrice
+ */
+function averagePriceFilter (
+  sequelize: Sequelize,
+  context: HookContext,
+  averagePrice: { min: number | string, max: number | string }
+): void {
+  const minPrice = sequelize.escape(averagePrice.min)
+  const maxPrice = sequelize.escape(averagePrice.max)
+  const rawQ = `avgBillingPrice BETWEEN ${minPrice} AND ${maxPrice}`
+  context.params.sequelize.where[Op.and] = [literal(rawQ)]
+}
+
+/**
+ * total capacity filter query
+ * @param sequelize
+ * @param context
+ * @param totalCapacity
+ */
+function totalCapacityFilter (
+  sequelize: Sequelize,
+  context: HookContext,
+  totalCapacity: { min: number | string, max: number | string }
+): void {
+  const minCap = sequelize.escape(totalCapacity.min)
+  const maxCap = sequelize.escape(totalCapacity.max)
+  const rawQ = `cast(totalCapacity as integer) BETWEEN ${minCap} AND ${maxCap}`
+  context.params.sequelize.where.totalCapacity = literal(rawQ)
+}
 
 export default {
   before: {
@@ -59,16 +112,11 @@ export default {
           }
 
           if (averagePrice) {
-            context.params.sequelize.where.averagePrice = {
-              [Op.between]: [averagePrice.min, averagePrice.max]
-            }
+            averagePriceFilter(sequelize, context, averagePrice)
           }
 
           if (totalCapacity) {
-            const minCap = sequelize.escape(totalCapacity.min)
-            const maxCap = sequelize.escape(totalCapacity.max)
-            const rawQ = `cast(totalCapacity as integer) BETWEEN ${minCap} AND ${maxCap}`
-            context.params.sequelize.where.totalCapacity = literal(rawQ)
+            totalCapacityFilter(sequelize, context, totalCapacity)
           }
 
           if (periods?.length) {
@@ -86,7 +134,7 @@ export default {
 
   after: {
     all: [dehydrate(), discard('agreements')],
-    find: [],
+    find: [supportCurrenciesHook],
     get: [],
     create: [],
     update: [],

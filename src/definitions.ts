@@ -176,6 +176,9 @@ export interface Config {
     // Sets if Storage service should be enabled
     enabled?: boolean
 
+    // Supported tokens
+    tokens?: Record<string, string>
+
     // Staking contract options
     staking?: BlockchainServiceOptions
 
