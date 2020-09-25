@@ -27,6 +27,8 @@ import storageChannels from './storage.channels'
 import { sleep } from '../../../test/utils'
 import StakeModel from './models/stake.model'
 
+type MinMax = 1 | -1
+
 export class OfferService extends Service {
   emit?: Function
 }
@@ -42,7 +44,7 @@ export class StakeService extends Service {
 export class AvgBillingPriceService extends Service {
   emit?: Function
 
-  async get (minMax: 1 | -1): Promise<number | string> {
+  async get (minMax: MinMax): Promise<number | string> {
     if (!config.get('storage.tokens')) {
       throw new Error('"storage.tokens" not exist in config')
     }
@@ -60,7 +62,7 @@ export class AvgBillingPriceService extends Service {
       ''
     )} else 0 end`
 
-    const getAvgMinMaxPBillingPrice = (minMax: 1 | -1): string => `
+    const getAvgMinMaxPBillingPrice = (minMax: MinMax): string => `
         SELECT ROUND(
           (SUM(${toDollars}) / COUNT(*) * 1024 / period * (3600 * 24)), 0) as avgPrice
         FROM "storage_billing-plan"
