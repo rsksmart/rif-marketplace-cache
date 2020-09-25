@@ -11,8 +11,14 @@
     provider: "RIFM_PROVIDER",
   },
   storage: {
-    contractAddress: "RIFM_STORAGE_CONTRACT_ADDR",
-    startingBlock: "RIFM_STORAGE_STARTING_BLOCK"
+    storageManager: {
+      contractAddress: "RIFM_STORAGE_CONTRACT_ADDR",
+      startingBlock: "RIFM_STORAGE_STARTING_BLOCK"
+    },
+    staking: {
+      contractAddress: "RIFM_STAKING_CONTRACT_ADDR",
+      startingBlock: "RIFM_STAKING_STARTING_BLOCK"
+    }
   },
   rns: {
     owner: {

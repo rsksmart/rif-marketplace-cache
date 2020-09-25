@@ -4,8 +4,15 @@
     provider: "ws://localhost:8545",
   },
   storage: {
-    eventsEmitter: {
-      confirmations: 1
+    storageManager: {
+      eventsEmitter: {
+        confirmations: 1
+      }
+    },
+    staking: {
+      eventsEmitter: {
+        confirmations: 1
+      }
     }
   },
   rates: {

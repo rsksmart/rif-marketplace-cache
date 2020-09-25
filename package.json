@@ -38,7 +38,7 @@
   "scripts": {
     "prepack": "tasegir run --watch node_modules/.bin/oclif-dev -- manifest && sed -i '' 's#\"./src/cli\"#\"./lib/cli\"#g' package.json",
     "postpack": "sed -i '' 's#\"./lib/cli\"#\"./src/cli\"#g' package.json",
-    "bin": "tasegir run --watch ./bin/run -- ",
+    "bin": "tasegir run ./bin/run -- ",
     "compile": "tasegir compile",
     "docs": "typedoc --mode modules --excludeNotExported --readme none --excludePrivate  --tsconfig ./node_modules/tasegir/src/config/tsconfig.json --exclude 'src/providers/*,test/**/*' --out docs src",
     "types-check": "tasegir types-check",
@@ -60,7 +60,7 @@
     "@oclif/parser": "^3.8.5",
     "@oclif/plugin-help": "^3.2.0",
     "@rsksmart/rif-marketplace-nfts": "~0.1.4",
-    "@rsksmart/rif-marketplace-storage": "^0.1.0-dev.1",
+    "@rsksmart/rif-marketplace-storage": "^0.1.0-dev.2",
     "@rsksmart/rns-auction-registrar": "1.0.2",
     "@rsksmart/rns-reverse": "^1.0.2",
     "@rsksmart/rns-rskregistrar": "^1.2.1",

@@ -4,7 +4,7 @@ import * as Parser from '@oclif/parser'
 import { EventData } from 'web3-eth-contract'
 import { Eth } from 'web3-eth'
 
-import type { AgreementService, OfferService } from './services/storage'
+import type { AgreementService, OfferService, StakeService } from './services/storage'
 import type { RatesService } from './services/rates'
 import type { RnsBaseService } from './services/rns'
 import { ConfirmatorService } from './blockchain/confirmator'
@@ -17,6 +17,8 @@ export enum SupportedServices {
   RNS = 'rns'
 }
 
+export type SupportedTokens = 'rif' | 'rbtc'
+
 export function isSupportedServices (value: any): value is SupportedServices {
   return Object.values(SupportedServices).includes(value)
 }
@@ -27,6 +29,7 @@ export enum ServiceAddresses {
   RNS_OFFERS = '/rns/v0/offers',
   STORAGE_OFFERS = '/storage/v0/offers',
   STORAGE_AGREEMENTS = '/storage/v0/agreements',
+  STORAGE_STAKES = '/storage/v0/stakes',
   XR = '/rates/v0/',
   CONFIRMATIONS = '/confirmations',
   NEW_BLOCK_EMITTER = '/new-block',
@@ -37,6 +40,7 @@ export enum ServiceAddresses {
 interface ServiceTypes {
   [ServiceAddresses.STORAGE_OFFERS]: OfferService & ServiceAddons<any>
   [ServiceAddresses.STORAGE_AGREEMENTS]: AgreementService & ServiceAddons<any>
+  [ServiceAddresses.STORAGE_STAKES]: StakeService & ServiceAddons<any>
   [ServiceAddresses.XR]: RatesService & ServiceAddons<any>
   [ServiceAddresses.RNS_DOMAINS]: RnsBaseService & ServiceAddons<any>
   [ServiceAddresses.RNS_SOLD]: RnsBaseService & ServiceAddons<any>
@@ -161,9 +165,20 @@ export interface Config {
   }
 
   // Settings for Storage service related function
-  storage?: BlockchainServiceOptions & {
+  storage?: {
+    // Supported tokens and their addresses
+    tokens?: {
+      [key: string]: SupportedTokens
+    }
+
     // Sets if Storage service should be enabled
     enabled?: boolean
+
+    // Staking contract options
+    staking?: BlockchainServiceOptions
+
+    // Storage Manager contract options
+    storageManager?: BlockchainServiceOptions
   }
 
   // Settings for RNS service related function

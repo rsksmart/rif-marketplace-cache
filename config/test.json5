@@ -5,6 +5,11 @@
     provider: 'ws://localhost:8545',
     waitBlockCountBeforeConfirmationRemoved: 10
   },
+  storage: {
+    tokens: {
+      '0x12345': 'rif'
+    }
+  },
   rns: {
     enabled: true,
     batchContractAddress: "0xc0b3b62dd0400e4baa721ddec9b8a384147b23ff", // encoded address used in tests

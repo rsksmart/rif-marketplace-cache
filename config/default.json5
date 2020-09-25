@@ -47,38 +47,78 @@
     // Sets if Storage service should be enabled
     enabled: true,
 
-    // Topics that will be listened to
-    topics: [
-      'TotalCapacitySet(address,uint64)',
-      'BillingPlanSet(address,uint64,uint128)',
-      'MessageEmitted(address,bytes32[])',
-      'NewAgreement(bytes32,bytes32[],address,address,uint128,uint64,uint128,uint256)',
-      'AgreementFundsDeposited(bytes32,uint256)',
-      'AgreementFundsWithdrawn(bytes32,uint256)',
-      'AgreementFundsPayout(bytes32,uint256)',
-      'AgreementStopped(bytes32)',
-    ],
-
-    // Specify behavior of EventsEmitter, that retrieves events from blockchain and pass them onwards for further processing.
-    eventsEmitter: {
-      // If to use polling strategy, if false then listening is used.
-      polling: true,
-
-      // Interval in milliseconds, how often is blockchain checked.
-      pollingInterval: 5000,
-
-      // Starting block that upon first start of the service, will the blockchain be crawled for the past events.
-      startingBlock: "genesis",
-
-      // Number of blocks that will be waited before passing an event for further processing.
-      confirmations: 6
+    // supported tokens
+    tokens: {
+      // Native token use zero address
+      '0x0000000000000000000000000000000000000000': 'rbtc',
     },
 
-    // Specify behavior of NewBlockEmitter, that detects new blocks on blockchain.
-    newBlockEmitter: {
-      // If to use polling strategy, if false then listening is used.
-      polling: true
+    // Storage Manager Contract
+    storageManager: {
+      // Topics that will be listened to
+      topics: [
+        'TotalCapacitySet(address,uint64)',
+        'BillingPlanSet(address,address,uint64,uint128)',
+        'MessageEmitted(address,bytes32[])',
+        'NewAgreement(bytes32[],address,address,uint128,uint64,uint128,address,uint256)',
+        'AgreementFundsDeposited(bytes32,uint256,address)',
+        'AgreementFundsWithdrawn(bytes32,uint256,address)',
+        'AgreementFundsPayout(bytes32,uint256,address)',
+        'AgreementStopped(bytes32)'
+      ],
+
+      // Specify behavior of EventsEmitter, that retrieves events from blockchain and pass them onwards for further processing.
+      eventsEmitter: {
+        // If to use polling strategy, if false then listening is used.
+        polling: true,
+
+        // Interval in milliseconds, how often is blockchain checked.
+        pollingInterval: 5000,
+
+        // Starting block that upon first start of the service, will the blockchain be crawled for the past events.
+        startingBlock: "genesis",
+
+        // Number of blocks that will be waited before passing an event for further processing.
+        confirmations: 6
+      },
+
+      // Specify behavior of NewBlockEmitter, that detects new blocks on blockchain.
+      newBlockEmitter: {
+        // If to use polling strategy, if false then listening is used.
+        polling: true
+      }
+    },
+
+    // Staking Contract
+    staking: {
+      // Topics that will be listened to
+      topics: [
+        'Staked(address,uint256,uint256,address,bytes)',
+        'Unstaked(address,uint256,uint256,address,bytes)',
+      ],
+
+      // Specify behavior of EventsEmitter, that retrieves events from blockchain and pass them onwards for further processing.
+      eventsEmitter: {
+        // If to use polling strategy, if false then listening is used.
+        polling: true,
+
+        // Interval in milliseconds, how often is blockchain checked.
+        pollingInterval: 5000,
+
+        // Starting block that upon first start of the service, will the blockchain be crawled for the past events.
+        startingBlock: "genesis",
+
+        // Number of blocks that will be waited before passing an event for further processing.
+        confirmations: 6
+      },
+
+      // Specify behavior of NewBlockEmitter, that detects new blocks on blockchain.
+      newBlockEmitter: {
+        // If to use polling strategy, if false then listening is used.
+        polling: true
+      }
     }
+
   },
 
   // Settings for RNS service related function

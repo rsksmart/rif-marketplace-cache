@@ -1,9 +1,11 @@
-import { HookContext } from '@feathersjs/feathers'
-import BillingPlan from '../models/billing-plan.model'
-import { disallow, discard } from 'feathers-hooks-common'
-import Agreement from '../models/agreement.model'
-import { hooks } from 'feathers-sequelize'
 import { Op, literal, Sequelize } from 'sequelize'
+import { HookContext } from '@feathersjs/feathers'
+import { disallow, discard } from 'feathers-hooks-common'
+import { hooks } from 'feathers-sequelize'
+
+import { getStakesAggregateQuery } from '../models/offer.model'
+import BillingPlan from '../models/billing-plan.model'
+import Agreement from '../models/agreement.model'
 import dehydrate = hooks.dehydrate
 
 export default {
@@ -24,50 +26,50 @@ export default {
       }
     ],
     find: [
-      (context: HookContext) => {
-        if (context.params.query) {
-          const { averagePrice, totalCapacity, periods, provider, $limit } = context.params.query
+      async (context: HookContext) => {
+        if (context.params.query && !context.params.query.$limit) {
+          const { averagePrice, totalCapacity, periods, provider } = context.params.query
+          const sequelize = context.app.get('sequelize') as Sequelize
 
-          if (!$limit) {
-            context.params.sequelize = {
-              raw: false,
-              nest: true,
-              include: [
-                {
-                  model: BillingPlan,
-                  as: 'plans'
-                },
-                {
-                  model: Agreement
-                }
-              ],
-              order: [['plans', 'period', 'ASC']],
-              where: {}
-            }
-
-            if (provider && provider.$like) {
-              context.params.sequelize.where.provider = {
-                [Op.like]: `%${provider.$like}%`
+          const aggregateLiteral = await getStakesAggregateQuery(sequelize, 'usd')
+          context.params.sequelize = {
+            raw: false,
+            nest: true,
+            include: [
+              {
+                model: BillingPlan,
+                as: 'plans'
+              },
+              {
+                model: Agreement
               }
-            }
+            ],
+            attributes: [[aggregateLiteral, 'totalStakedUSD']],
+            order: [literal('totalStakedUSD DESC'), ['plans', 'period', 'ASC']],
+            where: {}
+          }
 
-            if (averagePrice) {
-              context.params.sequelize.where.averagePrice = {
-                [Op.between]: [averagePrice.min, averagePrice.max]
-              }
+          if (provider && provider.$like) {
+            context.params.sequelize.where.provider = {
+              [Op.like]: `%${provider.$like}%`
             }
+          }
 
-            if (totalCapacity) {
-              const sequelize = context.app.get('sequelize') as Sequelize
-              const minCap = sequelize.escape(totalCapacity.min)
-              const maxCap = sequelize.escape(totalCapacity.max)
-              const rawQ = `cast(totalCapacity as integer) BETWEEN ${minCap} AND ${maxCap}`
-              context.params.sequelize.where.totalCapacity = literal(rawQ)
+          if (averagePrice) {
+            context.params.sequelize.where.averagePrice = {
+              [Op.between]: [averagePrice.min, averagePrice.max]
             }
+          }
 
-            if (periods?.length) {
-              context.params.sequelize.where['$plans.period$'] = { [Op.in]: periods }
-            }
+          if (totalCapacity) {
+            const minCap = sequelize.escape(totalCapacity.min)
+            const maxCap = sequelize.escape(totalCapacity.max)
+            const rawQ = `cast(totalCapacity as integer) BETWEEN ${minCap} AND ${maxCap}`
+            context.params.sequelize.where.totalCapacity = literal(rawQ)
+          }
+
+          if (periods?.length) {
+            context.params.sequelize.where['$plans.period$'] = { [Op.in]: periods }
           }
         }
       }

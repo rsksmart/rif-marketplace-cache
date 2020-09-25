@@ -3,9 +3,6 @@ import { Substitute } from '@fluffy-spoon/substitute'
 import { EventData } from 'web3-eth-contract'
 import fs from 'fs'
 import path from 'path'
-import config from 'config'
-
-import { DbBackUpConfig } from '../src/definitions'
 
 export function sleep<T> (ms: number, ...args: T[]): Promise<T> {
   return new Promise(resolve => setTimeout(() => resolve(...args), ms))
@@ -89,12 +86,12 @@ export function transactionMock (hash: string, input: string, options: Partial<T
   return transaction
 }
 
-export function rmDir (folder: string) {
+export function rmDir (folder: string): void {
   if (fs.existsSync(folder)) {
     for (const file of fs.readdirSync(folder)) {
       fs.unlinkSync(path.join(folder, file))
     }
 
-    fs.rmdirSync(config.get<DbBackUpConfig>('dbBackUp').path, { recursive: true })
+    fs.rmdirSync(folder, { recursive: true })
   }
 }

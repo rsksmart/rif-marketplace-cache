@@ -1,10 +1,13 @@
 import chai from 'chai'
 import sinonChai from 'sinon-chai'
 import BigNumber from 'bignumber.js'
+import Sequelize, { literal } from 'sequelize'
 
 import Agreement from '../../../src/services/storage/models/agreement.model'
 import { sequelizeFactory } from '../../../src/sequelize'
-import Sequelize from 'sequelize'
+import Offer, { getStakesAggregateQuery } from '../../../src/services/storage/models/offer.model'
+import StakeModel from '../../../src/services/storage/models/stake.model'
+import Rate from '../../../src/services/rates/rates.model'
 
 chai.use(sinonChai)
 const expect = chai.expect
@@ -201,6 +204,58 @@ const AGREEMENT_TEST_SCHEMA = [
 ]
 
 describe('Models', () => {
-  before(() => sequelizeFactory())
+  const sequelize = sequelizeFactory()
   describe('Agreement', () => generateModelGettersTests(AGREEMENT_TEST_SCHEMA, agreementFactory))
+  describe('Offer', () => {
+    beforeEach(async () => {
+      await sequelize.sync({ force: true })
+    })
+    it('should aggregate total stakes for offers and order by stakes', async () => {
+      // POPULATE DB
+      await Offer.bulkCreate([
+        { provider: 'abc', totalCapacity: 123, peerId: '1', averagePrice: '123' },
+        { provider: 'abc2', totalCapacity: 1234, peerId: '2', averagePrice: '1234' },
+        { provider: 'abc3', totalCapacity: 1234, peerId: '2', averagePrice: '1234' }
+      ])
+      await StakeModel.bulkCreate([
+        { total: '1000', symbol: 'rbtc', account: 'abc', token: '0x0000000000000000000000000000000000000000' },
+        { total: '1000', symbol: 'rif', account: 'abc', token: '0x12345' },
+        { total: '2000', symbol: 'rbtc', account: 'abc2', token: '0x0000000000000000000000000000000000000000' },
+        { total: '1000', symbol: 'rif', account: 'abc2', token: '0x12345' },
+        { total: '1000', symbol: 'rbtc', account: 'abc3', token: '0x0000000000000000000000000000000000000000' }
+      ])
+      await Rate.bulkCreate([
+        { token: 'rif', usd: 1 },
+        { token: 'rbtc', usd: 2 }
+      ])
+
+      expect((await Rate.findAll()).length).to.be.eql(2)
+      expect((await StakeModel.findAll()).length).to.be.eql(5)
+      expect((await Offer.findAll()).length).to.be.eql(3)
+
+      // Prepare aggregation query
+      const aggregateStakeQuery = await getStakesAggregateQuery(sequelize, 'usd')
+
+      const offers = await Offer.findAll({
+        raw: true,
+        attributes: {
+          exclude: ['totalCapacity', 'peerId', 'averagePrice', 'createdAt', 'updatedAt'],
+          include: [
+            [
+              aggregateStakeQuery,
+              'totalStakesUSD'
+            ]
+          ]
+        },
+        order: [literal('totalStakesUSD DESC')]
+      })
+
+      const expectedRes = [
+        { provider: 'abc2', totalStakesUSD: 5000 },
+        { provider: 'abc', totalStakesUSD: 3000 },
+        { provider: 'abc3', totalStakesUSD: 2000 }
+      ]
+      expect(offers).to.be.deep.equal(expectedRes)
+    })
+  })
 })
