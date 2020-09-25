@@ -62,7 +62,7 @@ export class AvgBillingPriceService extends Service {
       ''
     )} else 0 end`
 
-    const getAvgMinMaxPBillingPrice = (minMax: MinMax): string => `
+    const getAvgMinMaxBillingPrice = (minMax: MinMax): string => `
         SELECT ROUND(
           (SUM(${toDollars}) / COUNT(*) * 1024 / period * (3600 * 24)), 0) as avgPrice
         FROM "storage_billing-plan"
@@ -70,7 +70,7 @@ export class AvgBillingPriceService extends Service {
         ORDER BY avgPrice ${minMax === -1 ? 'DESC' : 'ASC'}
         LIMIT 1
      `
-    const [{ avgPrice }] = await sequelize.query(getAvgMinMaxPBillingPrice(minMax), { type: QueryTypes.SELECT, raw: true })
+    const [{ avgPrice }] = await sequelize.query(getAvgMinMaxBillingPrice(minMax), { type: QueryTypes.SELECT, raw: true })
     return avgPrice
   }
 }

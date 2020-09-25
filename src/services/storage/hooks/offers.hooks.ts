@@ -16,13 +16,7 @@ import dehydrate = hooks.dehydrate
 function supportCurrenciesHook (context: HookContext): HookContext {
   const tokens = config.get<Record<string, string>>('storage.tokens')
   context.result.forEach((offer: Offer & { acceptedCurrencies: string[] }) => {
-    offer.acceptedCurrencies = offer.plans.reduce<string[]>(
-      (acc, { token }) => {
-        const currencyLabel = tokens[token]
-        return [...acc, ...currencyLabel && !acc.includes(currencyLabel) ? [currencyLabel] : []]
-      },
-      []
-    )
+    offer.acceptedCurrencies = Array.from(new Set(offer.plans.map(plan => tokens[plan.token])))
   })
   return context
 }
