@@ -6,7 +6,7 @@ import chai from 'chai'
 
 import RnsService from '../src/services/rns'
 import StorageService from '../src/services/storage'
-import { unlinkSync, copyFileSync, mkdirSync } from 'fs'
+import { unlinkSync, copyFileSync, mkdirSync, existsSync } from 'fs'
 import { sequelizeFactory } from '../src/sequelize'
 import { initStore } from '../src/store'
 import { getEndPromise } from 'sequelize-store'
@@ -52,7 +52,10 @@ describe('CLI', function () {
     // create backups
     const db = config.get<string>('db')
     const backupPath = path.resolve(process.cwd(), config.get<string>('dbBackUp.path'))
-    mkdirSync(path.resolve(config.get<DbBackUpConfig>('dbBackUp').path))
+
+    if (!existsSync(path.resolve(config.get<DbBackUpConfig>('dbBackUp').path))) {
+      mkdirSync(path.resolve(config.get<DbBackUpConfig>('dbBackUp').path))
+    }
     copyFileSync(db, path.resolve(backupPath, `0x0123:10-${db}`))
     copyFileSync(db, path.resolve(backupPath, `0x0123:20-${db}`))
 

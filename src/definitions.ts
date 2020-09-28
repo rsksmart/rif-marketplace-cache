@@ -168,16 +168,14 @@ export interface Config {
 
   // Settings for Storage service related function
   storage?: {
-    // Supported tokens and their addresses
-    tokens?: {
-      [key: string]: SupportedTokens
-    }
 
     // Sets if Storage service should be enabled
     enabled?: boolean
 
-    // Supported tokens
-    tokens?: Record<string, string>
+    // Supported tokens and their addresses
+    tokens?: {
+      [key: string]: SupportedTokens
+    }
 
     // Staking contract options
     staking?: BlockchainServiceOptions

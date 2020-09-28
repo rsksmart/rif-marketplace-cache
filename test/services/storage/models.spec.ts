@@ -5,7 +5,10 @@ import Sequelize, { literal } from 'sequelize'
 
 import Agreement from '../../../src/services/storage/models/agreement.model'
 import { sequelizeFactory } from '../../../src/sequelize'
-import Offer, { getStakesAggregateQuery } from '../../../src/services/storage/models/offer.model'
+import Offer, {
+  getBillingPriceAvgQuery,
+  getStakesAggregateQuery
+} from '../../../src/services/storage/models/offer.model'
 import StakeModel from '../../../src/services/storage/models/stake.model'
 import BillingPlan from '../../../src/services/storage/models/billing-plan.model'
 import Rate from '../../../src/services/rates/rates.model'

@@ -94,23 +94,27 @@ export default {
           const aggregateLiteral = await getStakesAggregateQuery(sequelize, 'usd')
           const avgBillingPlanPriceUsdQuery = await getBillingPriceAvgQuery(sequelize, 'usd')
 
-          if (!$limit) {
-            context.params.sequelize = {
-              raw: false,
-              nest: true,
+          context.params.sequelize = {
+            raw: false,
+            nest: true,
+            include: [
+              {
+                model: BillingPlan,
+                as: 'plans'
+              },
+              {
+                model: Agreement
+              }
+            ],
+            attributes: {
               include: [
-                {
-                  model: BillingPlan,
-                  as: 'plans'
-                },
-                {
-                  model: Agreement
-                }
-              ],
-              attributes: [[avgBillingPlanPriceUsdQuery, 'avgBillingPrice'], [aggregateLiteral, 'totalStakedUSD']],
-              order: [literal('totalStakedUSD DESC')],
-              where: {}
-            }
+                [avgBillingPlanPriceUsdQuery, 'avgBillingPrice'],
+                [aggregateLiteral, 'totalStakedUSD']
+              ]
+            },
+            order: [literal('totalStakedUSD DESC')],
+            where: {}
+          }
 
           if (provider && provider.$like) {
             context.params.sequelize.where.provider = {
