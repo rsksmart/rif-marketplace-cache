@@ -16,7 +16,20 @@ import dehydrate = hooks.dehydrate
 function supportCurrenciesHook (context: HookContext): HookContext {
   const tokens = config.get<Record<string, string>>('storage.tokens')
   context.result.forEach((offer: Offer & { acceptedCurrencies: string[] }) => {
-    offer.acceptedCurrencies = Array.from(new Set(offer.plans.map(plan => tokens[plan.token])))
+    offer.acceptedCurrencies = Array.from(new Set(offer.plans.map(plan => tokens[plan.token]).filter(c => c)))
+  })
+  return context
+}
+
+/**
+ * This hook will sort billing plans array by period ASC
+ * @param context
+ */
+function sortBillingPlansHook (context: HookContext): HookContext {
+  context.result.forEach((offer: Offer & { acceptedCurrencies: string[] }) => {
+    offer.plans = offer.plans.sort((planA, planB) => {
+      return planA.period.minus(planB.period).toNumber()
+    })
   })
   return context
 }
@@ -128,7 +141,7 @@ export default {
 
   after: {
     all: [dehydrate(), discard('agreements')],
-    find: [supportCurrenciesHook],
+    find: [supportCurrenciesHook, sortBillingPlansHook],
     get: [],
     create: [],
     update: [],

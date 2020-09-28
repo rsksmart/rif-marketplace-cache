@@ -104,7 +104,7 @@ export async function getBillingPriceAvgQuery (sequelize: Sequelize, currency: '
   // The query calculate the avg billing price for each offer and convert this value to price/gb/day
   return literal(`(
     SELECT (
-      ROUND(
+      CAST(
         (
           (SUM(
             case
@@ -112,7 +112,7 @@ export async function getBillingPriceAvgQuery (sequelize: Sequelize, currency: '
               else 0
             end
           ) / COUNT(*)) * 1024 / period * (3600 * 24)
-        ), 0)
+        ) as INTEGER)
       ) from "storage_billing-plan" where offerId = provider)
   `)
 }
