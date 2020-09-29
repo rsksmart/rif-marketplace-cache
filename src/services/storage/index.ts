@@ -15,6 +15,7 @@ import { REORG_OUT_OF_RANGE_EVENT_NAME } from '../../blockchain/events'
 import { Application, CachedService, Logger, ServiceAddresses } from '../../definitions'
 import { loggingFactory } from '../../logger'
 import { errorHandler, waitForReadyApp } from '../../utils'
+import { getAvgMinMaxBillingPriceQuery, MinMax } from './utils'
 import Agreement from './models/agreement.model'
 import Offer from './models/offer.model'
 import BillingPlan from './models/billing-plan.model'
@@ -25,8 +26,6 @@ import eventProcessor from './storage.processor'
 import storageChannels from './storage.channels'
 import { sleep } from '../../../test/utils'
 import StakeModel from './models/stake.model'
-
-type MinMax = 1 | -1
 
 export class OfferService extends Service {
   emit?: Function
@@ -43,28 +42,13 @@ export class StakeService extends Service {
 export class AvgBillingPriceService extends Service {
   emit?: Function
 
-  async get (minMax: MinMax): Promise<number | string> {
+  async get (minMax: MinMax): Promise<number> {
     if (!config.get('storage.tokens')) {
       throw new Error('"storage.tokens" not exist in config')
     }
     const sequelize = this.Model.sequelize
 
-    const getAvgMinMaxBillingPrice = (minMax: MinMax): string => `
-        SELECT
-            CAST(
-              SUM(
-                CAST(price as REAL) / 1000000000000000000 * COALESCE("rates"."usd", 0) * 1024 / period * (3600 * 24)
-              ) / COUNT(*)
-              as INTEGER
-            ) as avgPrice
-        FROM "storage_billing-plan"
-        LEFT OUTER JOIN
-            "rates" AS "rates" ON "storage_billing-plan"."rateId" = "rates"."token"
-        GROUP BY offerId
-        ORDER BY avgPrice ${minMax === -1 ? 'DESC' : 'ASC'}
-        LIMIT 1
-     `
-    const [{ avgPrice }] = await sequelize.query(getAvgMinMaxBillingPrice(minMax), { type: QueryTypes.SELECT, raw: true })
+    const [{ avgPrice }] = await sequelize.query(getAvgMinMaxBillingPriceQuery(minMax), { type: QueryTypes.SELECT, raw: true })
     // Maybe not the best idea
     return minMax === -1 ? avgPrice + 10 : avgPrice - 10
   }
@@ -141,6 +125,8 @@ const storage: CachedService = {
     app.use(ServiceAddresses.STORAGE_OFFERS, new OfferService({ Model: Offer }))
     const offerService = app.service(ServiceAddresses.STORAGE_OFFERS)
     offerService.hooks(offerHooks)
+
+    // Init AVG Billing plan service
     app.use(ServiceAddresses.AVG_BILLING_PRICE, new AvgBillingPriceService({ Model: BillingPlan }))
 
     // Initialize Agreement service

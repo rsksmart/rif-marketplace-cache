@@ -113,6 +113,35 @@ It has following schema:
 ]
 ```
 
+```
+GET: /storage/v0/stakes'
+```
+
+Returns JSON that represent all stakes for each account.
+
+It has following schema:
+
+```json5
+[
+   {
+     "total": "number",
+     "symbol": "string", // token symbol
+     "token": "string", // token address
+     "account": "string",
+   }
+]
+```
+
+```
+GET: /storage/v0/avgBillingPrice
+```
+
+Return min/max average billing pride.
+
+```json5
+10700
+```
+
 ### Rates
 
 API that caches conversion rates currently for RBTC and RIF Token.
