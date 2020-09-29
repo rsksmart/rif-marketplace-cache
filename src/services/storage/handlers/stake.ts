@@ -5,7 +5,7 @@ import { loggingFactory } from '../../../logger'
 import { Handler } from '../../../definitions'
 import { StorageServices } from '../index'
 import StakeModel from '../models/stake.model'
-import { getTokenSymbol } from '../../../utils'
+import { getTokenSymbol } from '../utils'
 
 const logger = loggingFactory('storage:handler:stake')
 

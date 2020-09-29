@@ -6,8 +6,9 @@ import { EventData } from 'web3-eth-contract'
 import { loggingFactory } from '../../../logger'
 import { Handler } from '../../../definitions'
 import { OfferService, StorageServices } from '../index'
-import { decodeByteArray, getTokenSymbol, wrapEvent } from '../../../utils'
+import { decodeByteArray, wrapEvent } from '../../../utils'
 import { EventError } from '../../../errors'
+import { getTokenSymbol } from '../utils'
 
 const logger = loggingFactory('storage:handler:offer')
 

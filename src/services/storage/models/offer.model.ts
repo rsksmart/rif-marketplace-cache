@@ -73,7 +73,7 @@ export function getStakesAggregateQuery (
   return literal(`
   (
     SELECT
-      SUM(total * coalesce("rates"."${currency}", 0))
+      CAST(SUM((total / 1000000000000000000) * coalesce("rates"."${currency}", 0)) as INTEGER)
     FROM
       storage_stakes
     LEFT OUTER JOIN
@@ -97,7 +97,7 @@ export function getBillingPriceAvgQuery (
   (
     SELECT
       CAST(
-        SUM(price * coalesce("rates"."${currency}", 0)) / COUNT(*) * 1024 / period * (3600 * 24)
+        SUM((price / 1000000000000000000) * coalesce("rates"."${currency}", 0)) / COUNT(*) * 1024 / period * (3600 * 24)
         as INTEGER
       )
     FROM

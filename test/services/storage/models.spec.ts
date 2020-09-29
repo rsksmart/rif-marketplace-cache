@@ -222,15 +222,15 @@ describe('Models', () => {
         { provider: 'abc3', totalCapacity: 1234, peerId: '2' }
       ])
       await BillingPlan.bulkCreate([
-        { period: '86400', price: '1000', token: '0x0000000000000000000000000000000000000000', offerId: 'abc', rateId: 'rbtc' },
-        { period: '86400', price: '2000', token: '0x12345', offerId: 'abc', rateId: 'rif' },
-        { period: '86400', price: '1000', token: '0x0000000000000000000000000000000000000000', offerId: 'abc', rateId: 'rbtc' },
-        { period: '86400', price: '20', token: '0x0000000000000000000000000000000000000000', offerId: 'abc2', rateId: 'rbtc' },
-        { period: '86400', price: '400', token: '0x12345', offerId: 'abc2', rateId: 'rif' },
-        { period: '86400', price: '2000', token: '0x0000000000000000000000000000000000000000', offerId: 'abc2', rateId: 'rbtc' },
-        { period: '86400', price: '25', token: '0x0000000000000000000000000000000000000000', offerId: 'abc3', rateId: 'rbtc' },
-        { period: '86400', price: '30', token: '0x12345', offerId: 'abc3', rateId: 'rif' },
-        { period: '86400', price: '4', token: '0x0000000000000000000000000000000000000000', offerId: 'abc3', rateId: 'rbtc' }
+        { period: '86400', price: '369000000000000000', token: '0x0000000000000000000000000000000000000000', offerId: 'abc', rateId: 'rbtc' },
+        { period: '86400', price: '2200000000000000123', token: '0x12345', offerId: 'abc', rateId: 'rif' },
+        { period: '86400', price: '4506000000000000000', token: '0x0000000000000000000000000000000000000000', offerId: 'abc', rateId: 'rbtc' },
+        { period: '86400', price: '2000000000000000', token: '0x0000000000000000000000000000000000000000', offerId: 'abc2', rateId: 'rbtc' },
+        { period: '86400', price: '2200000000000000123', token: '0x12345', offerId: 'abc2', rateId: 'rif' },
+        { period: '86400', price: '1000000000000000', token: '0x0000000000000000000000000000000000000000', offerId: 'abc2', rateId: 'rbtc' },
+        { period: '86400', price: '3000000000000000', token: '0x0000000000000000000000000000000000000000', offerId: 'abc3', rateId: 'rbtc' },
+        { period: '86400', price: '20000000000000000000', token: '0x12345', offerId: 'abc3', rateId: 'rif' },
+        { period: '86400', price: '4000000000000000', token: '0x0000000000000000000000000000000000000000', offerId: 'abc3', rateId: 'rbtc' }
       ])
       await Rate.bulkCreate([
         { token: 'rif', usd: 1 },
@@ -254,12 +254,13 @@ describe('Models', () => {
               'avgBillingPrice'
             ]
           ]
-        }
+        },
+        order: [literal('avgBillingPrice')]
       })
       const expectedRes = [
-        { provider: 'abc', avgBillingPrice: 2048000 },
-        { provider: 'abc2', avgBillingPrice: 1515520 },
-        { provider: 'abc3', avgBillingPrice: 30037 }
+        { provider: 'abc2', avgBillingPrice: 682 },
+        { provider: 'abc', avgBillingPrice: 3413 },
+        { provider: 'abc3', avgBillingPrice: 6826 }
       ]
       expect(offers).to.be.deep.equal(expectedRes)
     })
@@ -271,11 +272,11 @@ describe('Models', () => {
         { provider: 'abc3', totalCapacity: 1234, peerId: '2', averagePrice: '1234' }
       ])
       await StakeModel.bulkCreate([
-        { total: '1000', symbol: 'rbtc', account: 'abc', token: '0x0000000000000000000000000000000000000000' },
-        { total: '1000', symbol: 'rif', account: 'abc', token: '0x12345' },
-        { total: '2000', symbol: 'rbtc', account: 'abc2', token: '0x0000000000000000000000000000000000000000' },
-        { total: '1000', symbol: 'rif', account: 'abc2', token: '0x12345' },
-        { total: '1000', symbol: 'rbtc', account: 'abc3', token: '0x0000000000000000000000000000000000000000' }
+        { total: '369000000000000000', symbol: 'rbtc', account: 'abc', token: '0x0000000000000000000000000000000000000000' },
+        { total: '369000000000000000123791', symbol: 'rif', account: 'abc', token: '0x12345' },
+        { total: '369000000000000000', symbol: 'rbtc', account: 'abc2', token: '0x0000000000000000000000000000000000000000' },
+        { total: '36900023748000000000000', symbol: 'rif', account: 'abc2', token: '0x12345' },
+        { total: '1000000000000000000', symbol: 'rbtc', account: 'abc3', token: '0x0000000000000000000000000000000000000000' }
       ])
       await Rate.bulkCreate([
         { token: 'rif', usd: 1 },
@@ -304,9 +305,9 @@ describe('Models', () => {
       })
 
       const expectedRes = [
-        { provider: 'abc2', totalStakesUSD: 5000 },
-        { provider: 'abc', totalStakesUSD: 3000 },
-        { provider: 'abc3', totalStakesUSD: 2000 }
+        { provider: 'abc', totalStakesUSD: 369000 },
+        { provider: 'abc2', totalStakesUSD: 36900 },
+        { provider: 'abc3', totalStakesUSD: 2 }
       ]
       expect(offers).to.be.deep.equal(expectedRes)
     })
