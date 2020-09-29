@@ -97,7 +97,9 @@ export function getBillingPriceAvgQuery (
   (
     SELECT
       CAST(
-        SUM((cast(price as REAL) / 1000000000000000000) * coalesce("rates"."${currency}", 0)) / COUNT(*) * 1024 / period * (3600 * 24)
+        SUM(
+          (cast(price as REAL) / 1000000000000000000) * coalesce("rates"."${currency}", 0) * 1024 / period * (3600 * 24)
+        ) / COUNT("storage_billing-plan"."id")
         as INTEGER
       )
     FROM

@@ -52,7 +52,10 @@ export class AvgBillingPriceService extends Service {
     const getAvgMinMaxBillingPrice = (minMax: MinMax): string => `
         SELECT
             CAST(
-              (SUM(CAST(price as REAL) / 1000000000000000000 * COALESCE("rates"."usd", 0)) / COUNT(*) * 1024 / period * (3600 * 24)) as INTEGER
+              SUM(
+                CAST(price as REAL) / 1000000000000000000 * COALESCE("rates"."usd", 0) * 1024 / period * (3600 * 24)
+              ) / COUNT(*)
+              as INTEGER
             ) as avgPrice
         FROM "storage_billing-plan"
         LEFT OUTER JOIN
