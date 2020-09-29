@@ -26,7 +26,7 @@ export function getAvgMinMaxBillingPriceQuery (minMax: MinMax): string {
         SELECT
             CAST(
               SUM(
-                CAST(price as REAL) / WEI * COALESCE("rates"."usd", 0) * 1024 / period * (3600 * 24)
+                CAST(price as REAL) / ${WEI} * COALESCE("rates"."usd", 0) * 1024 / period * (3600 * 24)
               ) / COUNT(*)
               as INTEGER
             ) as avgPrice
