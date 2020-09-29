@@ -1,7 +1,8 @@
-import { Table, Column, Model, ForeignKey, BelongsTo, HasOne } from 'sequelize-typescript'
+import { Table, Column, Model, ForeignKey, BelongsTo } from 'sequelize-typescript'
 import BigNumber from 'bignumber.js'
 
 import { BigNumberStringType } from '../../../sequelize'
+import { SupportedTokens } from '../../../definitions'
 import Offer from './offer.model'
 import Rate from '../../rates/rates.model'
 
@@ -25,5 +26,5 @@ export default class BillingPlan extends Model {
 
   @ForeignKey(() => Rate)
   @Column
-  rateId!: string
+  rateId!: SupportedTokens
 }

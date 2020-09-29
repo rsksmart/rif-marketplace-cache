@@ -1,13 +1,12 @@
-import config from 'config'
 import BigNumber from 'bignumber.js'
 
 import Offer from '../models/offer.model'
 import BillingPlan from '../models/billing-plan.model'
 import { EventData } from 'web3-eth-contract'
 import { loggingFactory } from '../../../logger'
-import { Handler, SupportedTokens } from '../../../definitions'
+import { Handler } from '../../../definitions'
 import { OfferService, StorageServices } from '../index'
-import { decodeByteArray, wrapEvent } from '../../../utils'
+import { decodeByteArray, getTokenSymbol, wrapEvent } from '../../../utils'
 import { EventError } from '../../../errors'
 
 const logger = loggingFactory('storage:handler:offer')
@@ -25,13 +24,13 @@ function updatePrices (offer: Offer, period: BigNumber, price: BigNumber, token:
     billingPlan.price = price
     return billingPlan.save()
   } else {
-    const supportedTokens = config.get<{ [tokenAddress: string]: SupportedTokens }>('storage.tokens')
+    const tokenSymbol = getTokenSymbol(token).toLowerCase()
     const newBillingPlanEntity = new BillingPlan({
       period,
       price,
       offerId: provider,
       token,
-      rateId: supportedTokens[token]
+      rateId: tokenSymbol
     })
     return newBillingPlanEntity.save()
   }

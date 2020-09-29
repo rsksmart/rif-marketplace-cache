@@ -1,4 +1,3 @@
-import config from 'config'
 import { HookContext } from '@feathersjs/feathers'
 import { disallow, discard } from 'feathers-hooks-common'
 import { hooks } from 'feathers-sequelize'
@@ -8,18 +7,6 @@ import BillingPlan from '../models/billing-plan.model'
 import Agreement from '../models/agreement.model'
 import Offer, { getBillingPriceAvgQuery, getStakesAggregateQuery } from '../models/offer.model'
 import dehydrate = hooks.dehydrate
-
-/**
- * This hook will add an array of support currencies to each offer in query result
- * @param context
- */
-function supportCurrenciesHook (context: HookContext): HookContext {
-  const tokens = config.get<Record<string, string>>('storage.tokens')
-  context.result.forEach((offer: Offer & { acceptedCurrencies: string[] }) => {
-    offer.acceptedCurrencies = Array.from(new Set(offer.plans.map(plan => tokens[plan.token]).filter(c => c)))
-  })
-  return context
-}
 
 /**
  * This hook will sort billing plans array by period ASC
@@ -85,12 +72,10 @@ export default {
       }
     ],
     find: [
-      async (context: HookContext) => {
+      (context: HookContext) => {
         if (context.params.query && !context.params.query.$limit) {
           const { averagePrice, totalCapacity, periods, provider } = context.params.query
           const sequelize = context.app.get('sequelize')
-
-          const aggregateLiteral = await getStakesAggregateQuery(sequelize, 'usd')
 
           context.params.sequelize = {
             raw: false,
@@ -107,7 +92,7 @@ export default {
             attributes: {
               include: [
                 [getBillingPriceAvgQuery(sequelize, 'usd'), 'avgBillingPrice'],
-                [aggregateLiteral, 'totalStakedUSD']
+                [getStakesAggregateQuery(sequelize, 'usd'), 'totalStakedUSD']
               ]
             },
             order: [literal('totalStakedUSD DESC')],
@@ -143,7 +128,7 @@ export default {
 
   after: {
     all: [dehydrate(), discard('agreements')],
-    find: [supportCurrenciesHook, sortBillingPlansHook],
+    find: [sortBillingPlansHook],
     get: [],
     create: [],
     update: [],

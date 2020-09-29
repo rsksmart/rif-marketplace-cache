@@ -287,7 +287,7 @@ describe('Models', () => {
       expect((await Offer.findAll()).length).to.be.eql(3)
 
       // Prepare aggregation query
-      const aggregateStakeQuery = await getStakesAggregateQuery(sequelize, 'usd')
+      const aggregateStakeQuery = getStakesAggregateQuery(sequelize, 'usd')
 
       const offers = await Offer.findAll({
         raw: true,

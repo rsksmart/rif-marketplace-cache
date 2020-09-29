@@ -11,7 +11,8 @@ import {
   Config,
   isSupportedServices,
   Logger,
-  SupportedServices
+  SupportedServices,
+  SupportedTokens
 } from './definitions'
 
 const readFile = promisify(fs.readFile)
@@ -201,4 +202,17 @@ export abstract class BaseCLICommand extends Command {
 
     return Promise.resolve()
   }
+}
+
+/**
+ * get token symbol by token address from config
+ * @param tokenContractAddress
+ * @returns {SupportedTokens} token symbol
+ */
+export function getTokenSymbol (tokenContractAddress: string): SupportedTokens {
+  if (!config.has(`storage.tokens.${tokenContractAddress}`)) {
+    throw new Error(`Token on address ${tokenContractAddress} is not supported`)
+  }
+
+  return config.get<SupportedTokens>(`storage.tokens.${tokenContractAddress}`)
 }

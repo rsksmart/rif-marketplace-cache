@@ -1,13 +1,12 @@
-import config from 'config'
 import BigNumber from 'bignumber.js'
 import { Table, DataType, Column, Model, HasMany, Scopes } from 'sequelize-typescript'
 import { Op, literal, Sequelize } from 'sequelize'
 import { Literal } from 'sequelize/types/lib/utils'
 
 import BillingPlan from './billing-plan.model'
+import { SupportedTokens } from '../../../definitions'
 import Agreement from './agreement.model'
 import { BigNumberStringType } from '../../../sequelize'
-import Rate from '../../rates/rates.model'
 
 @Scopes(() => ({
   active: {
@@ -51,6 +50,15 @@ export default class Offer extends Model {
   get availableCapacity (): BigNumber {
     return this.totalCapacity.minus(this.utilizedCapacity)
   }
+
+  @Column(DataType.VIRTUAL)
+  get acceptedCurrencies (): Array<SupportedTokens> {
+    return Array.from(
+      new Set(
+        (this.plans || []).map(plan => plan.rateId)
+      )
+    )
+  }
 }
 
 /**
@@ -58,26 +66,21 @@ export default class Offer extends Model {
  * @param sequelize
  * @param currency
  */
-export async function getStakesAggregateQuery (sequelize: Sequelize, currency: 'usd' | 'eur' | 'btc' = 'usd') {
-  if (!config.get('storage.tokens')) {
-    throw new Error('"storage.tokens" not exist in config')
-  }
-
-  const supportedTokens = Object.entries(config.get('storage.tokens'))
-  const rates = await Rate.findAll()
-  return literal(`(
-    SELECT SUM(
-      case
-        ${supportedTokens.reduce(
-          (acc, [tokenAddress, tokenSymbol]) => {
-            const rate: number = rates.find(r => r.token === tokenSymbol)?.[currency] || 0
-            return `${acc} \n when token = ${sequelize.escape(tokenAddress)} then cast(total as integer) * ${sequelize.escape(rate)}`
-          },
-          ''
-        )}
-        else 0
-      end
-    ) from storage_stakes where account = provider)
+export function getStakesAggregateQuery (
+  sequelize: Sequelize,
+  currency: 'usd' | 'eur' | 'btc' = 'usd'
+): Literal {
+  return literal(`
+  (
+    SELECT
+      SUM(total * coalesce("rates"."${currency}", 0))
+    FROM
+      storage_stakes
+    LEFT OUTER JOIN
+      "rates" AS "rates" ON "storage_stakes"."symbol" = "rates"."token"
+    WHERE
+      account = provider
+  )
   `)
 }
 
@@ -93,7 +96,10 @@ export function getBillingPriceAvgQuery (
   return literal(`
   (
     SELECT
-      CAST((SUM(CAST(price as real) * coalesce("rates"."${currency}", 0)) / COUNT(*)) * 1024 / period * (3600 * 24) as INTEGER)
+      CAST(
+        SUM(price * coalesce("rates"."${currency}", 0)) / COUNT(*) * 1024 / period * (3600 * 24)
+        as INTEGER
+      )
     FROM
       "storage_billing-plan"
     LEFT OUTER JOIN

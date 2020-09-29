@@ -96,7 +96,7 @@ describe('Storage services: Events Processor', () => {
       })
     })
     describe('BillingPlanSet', () => {
-      const token = '0x0000'
+      const token = '0x0000000000000000000000000000000000000000'
       const billingEvent: EventData = eventMock({
         event: 'BillingPlanSet',
         returnValues: {
