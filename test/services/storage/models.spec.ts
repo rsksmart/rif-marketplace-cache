@@ -222,15 +222,15 @@ describe('Models', () => {
         { provider: 'abc3', totalCapacity: 1234, peerId: '2' }
       ])
       await BillingPlan.bulkCreate([
-        { period: '86400', price: '1000', token: '0x0000000000000000000000000000000000000000', offerId: 'abc' },
-        { period: '86400', price: '2000', token: '0x12345', offerId: 'abc' },
-        { period: '86400', price: '1000', token: '0x0000000000000000000000000000000000000000', offerId: 'abc' },
-        { period: '86400', price: '20', token: '0x0000000000000000000000000000000000000000', offerId: 'abc2' },
-        { period: '86400', price: '400', token: '0x12345', offerId: 'abc2' },
-        { period: '86400', price: '2000', token: '0x0000000000000000000000000000000000000000', offerId: 'abc2' },
-        { period: '86400', price: '25', token: '0x0000000000000000000000000000000000000000', offerId: 'abc3' },
-        { period: '86400', price: '30', token: '0x12345', offerId: 'abc3' },
-        { period: '86400', price: '4', token: '0x0000000000000000000000000000000000000000', offerId: 'abc3' }
+        { period: '86400', price: '1000', token: '0x0000000000000000000000000000000000000000', offerId: 'abc', rateId: 'rbtc' },
+        { period: '86400', price: '2000', token: '0x12345', offerId: 'abc', rateId: 'rif' },
+        { period: '86400', price: '1000', token: '0x0000000000000000000000000000000000000000', offerId: 'abc', rateId: 'rbtc' },
+        { period: '86400', price: '20', token: '0x0000000000000000000000000000000000000000', offerId: 'abc2', rateId: 'rbtc' },
+        { period: '86400', price: '400', token: '0x12345', offerId: 'abc2', rateId: 'rif' },
+        { period: '86400', price: '2000', token: '0x0000000000000000000000000000000000000000', offerId: 'abc2', rateId: 'rbtc' },
+        { period: '86400', price: '25', token: '0x0000000000000000000000000000000000000000', offerId: 'abc3', rateId: 'rbtc' },
+        { period: '86400', price: '30', token: '0x12345', offerId: 'abc3', rateId: 'rif' },
+        { period: '86400', price: '4', token: '0x0000000000000000000000000000000000000000', offerId: 'abc3', rateId: 'rbtc' }
       ])
       await Rate.bulkCreate([
         { token: 'rif', usd: 1 },
@@ -242,7 +242,7 @@ describe('Models', () => {
       expect((await Offer.findAll()).length).to.be.eql(3)
 
       // Prepare aggregation query
-      const aggregateBillingPriceAvg = await getBillingPriceAvgQuery(sequelize, 'usd')
+      const aggregateBillingPriceAvg = getBillingPriceAvgQuery(sequelize, 'usd')
 
       const offers = await Offer.findAll({
         raw: true,

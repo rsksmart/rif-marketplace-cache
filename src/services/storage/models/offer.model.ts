@@ -1,7 +1,8 @@
 import config from 'config'
+import BigNumber from 'bignumber.js'
 import { Table, DataType, Column, Model, HasMany, Scopes } from 'sequelize-typescript'
 import { Op, literal, Sequelize } from 'sequelize'
-import BigNumber from 'bignumber.js'
+import { Literal } from 'sequelize/types/lib/utils'
 
 import BillingPlan from './billing-plan.model'
 import Agreement from './agreement.model'
@@ -85,34 +86,20 @@ export async function getStakesAggregateQuery (sequelize: Sequelize, currency: '
  * @param sequelize
  * @param currency
  */
-export async function getBillingPriceAvgQuery (sequelize: Sequelize, currency: 'usd' | 'eur' | 'btc' = 'usd') {
-  if (!config.get('storage.tokens')) {
-    throw new Error('"storage.tokens" not exist in config')
-  }
-
-  const supportedTokens = Object.entries(config.get('storage.tokens'))
-  const rates = await Rate.findAll()
-  const toDollars = `${supportedTokens.reduce(
-    (acc, [tokenAddress, symbol]) => {
-      const rate: number = rates.find(r => r.token === symbol)?.[currency] || 0
-      return `${acc} \n
-        when token = ${sequelize.escape(tokenAddress)}
-        then cast(price as real) * ${sequelize.escape(rate)}`
-    },
-    ''
-  )}`
-  // The query calculate the avg billing price for each offer and convert this value to price/gb/day
-  return literal(`(
-    SELECT (
-      CAST(
-        (
-          (SUM(
-            case
-              ${toDollars}
-              else 0
-            end
-          ) / COUNT(*)) * 1024 / period * (3600 * 24)
-        ) as INTEGER)
-      ) from "storage_billing-plan" where offerId = provider)
+export function getBillingPriceAvgQuery (
+  sequelize: Sequelize,
+  currency: 'usd' | 'eur' | 'btc' = 'usd'
+): Literal {
+  return literal(`
+  (
+    SELECT
+      CAST((SUM(CAST(price as real) * coalesce("rates"."${currency}", 0)) / COUNT(*)) * 1024 / period * (3600 * 24) as INTEGER)
+    FROM
+      "storage_billing-plan"
+    LEFT OUTER JOIN
+      "rates" AS "rates" ON "storage_billing-plan"."rateId" = "rates"."token"
+    WHERE
+      offerId = provider
+  )
   `)
 }

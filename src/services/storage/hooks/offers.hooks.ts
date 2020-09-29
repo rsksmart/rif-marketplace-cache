@@ -27,9 +27,8 @@ function supportCurrenciesHook (context: HookContext): HookContext {
  */
 function sortBillingPlansHook (context: HookContext): HookContext {
   context.result.forEach((offer: Offer & { acceptedCurrencies: string[] }) => {
-    offer.plans = offer.plans.sort((planA, planB) => {
-      return planA.period.minus(planB.period).toNumber()
-    })
+    offer.plans = offer.plans
+      .sort((planA, planB) => planA.period.minus(planB.period).toNumber())
   })
   return context
 }
@@ -92,7 +91,6 @@ export default {
           const sequelize = context.app.get('sequelize')
 
           const aggregateLiteral = await getStakesAggregateQuery(sequelize, 'usd')
-          const avgBillingPlanPriceUsdQuery = await getBillingPriceAvgQuery(sequelize, 'usd')
 
           context.params.sequelize = {
             raw: false,
@@ -108,7 +106,7 @@ export default {
             ],
             attributes: {
               include: [
-                [avgBillingPlanPriceUsdQuery, 'avgBillingPrice'],
+                [getBillingPriceAvgQuery(sequelize, 'usd'), 'avgBillingPrice'],
                 [aggregateLiteral, 'totalStakedUSD']
               ]
             },
