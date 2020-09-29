@@ -16,7 +16,6 @@ import { Application, CachedService, Logger, ServiceAddresses } from '../../defi
 import { loggingFactory } from '../../logger'
 import { errorHandler, waitForReadyApp } from '../../utils'
 import Agreement from './models/agreement.model'
-import Rate from '../rates/rates.model'
 import Offer from './models/offer.model'
 import BillingPlan from './models/billing-plan.model'
 import offerHooks from './hooks/offers.hooks'
