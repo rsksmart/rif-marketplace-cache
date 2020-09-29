@@ -50,22 +50,14 @@ export class AvgBillingPriceService extends Service {
     }
     const sequelize = this.Model.sequelize
 
-    const supportedTokens = Object.entries(config.get('storage.tokens'))
-    const rates = await Rate.findAll()
-    const toDollars = `case ${supportedTokens.reduce(
-      (acc, [tokenAddress, symbol]) => {
-        const rate: number = rates.find(r => r.token === symbol)?.usd || 0
-        return `${acc} \n
-        when token = ${sequelize.escape(tokenAddress)}
-        then cast(price as real) * ${sequelize.escape(rate)}`
-      },
-      ''
-    )} else 0 end`
-
     const getAvgMinMaxBillingPrice = (minMax: MinMax): string => `
-        SELECT CAST(
-          (SUM(${toDollars}) / COUNT(*) * 1024 / period * (3600 * 24)) as INTEGER) as avgPrice
+        SELECT
+            CAST(
+              (SUM(price * COALESCE("rates"."usd", 0)) / COUNT(*) * 1024 / period * (3600 * 24)) as INTEGER
+            ) as avgPrice
         FROM "storage_billing-plan"
+        LEFT OUTER JOIN
+            "rates" AS "rates" ON "storage_billing-plan"."rateId" = "rates"."token"
         GROUP BY offerId
         ORDER BY avgPrice ${minMax === -1 ? 'DESC' : 'ASC'}
         LIMIT 1
