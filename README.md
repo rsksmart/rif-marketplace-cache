@@ -138,6 +138,7 @@ GET: /storage/v0/avgBillingPrice
 
 Return min/max average billing price converted to USD.
 
+
 ```json5
 {
   min: 'number',
