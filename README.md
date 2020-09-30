@@ -136,10 +136,13 @@ It has following schema:
 GET: /storage/v0/avgBillingPrice
 ```
 
-Return min/max average billing pride.
+Return min/max average billing price converted to USD.
 
 ```json5
-10700
+{
+  min: 'number',
+  max: 'number'
+}
 ```
 
 ### Rates
