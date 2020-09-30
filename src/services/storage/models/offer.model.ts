@@ -74,7 +74,7 @@ export function getStakesAggregateQuery (
   return literal(`
   (
     SELECT
-      CAST(SUM((cast(total as real) / ${WEI}) * coalesce("rates"."${currency}", 0)) as INTEGER)
+      CAST(SUM((cast(total as real) / ${WEI}) * coalesce("rates"."${sequelize.escape(currency)}", 0)) as INTEGER)
     FROM
       storage_stakes
     LEFT OUTER JOIN
@@ -99,7 +99,7 @@ export function getBillingPriceAvgQuery (
     SELECT
       CAST(
         SUM(
-          (cast(price as REAL) / ${WEI}) * coalesce("rates"."${currency}", 0) * 1024 / period * (3600 * 24)
+          (cast(price as REAL) / ${WEI}) * coalesce("rates"."${sequelize.escape(currency)}", 0) * 1024 / period * (3600 * 24)
         ) / COUNT("storage_billing-plan"."id")
         as INTEGER
       )

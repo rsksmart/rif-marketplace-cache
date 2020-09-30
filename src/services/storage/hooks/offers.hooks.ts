@@ -73,8 +73,7 @@ export default {
         }
 
         if (context.params?.query?.['non-active']) {
-          const nonActiveProp = 'non-active'
-          delete context.params?.query?.[nonActiveProp]
+          delete context.params?.query?.['non-active']
         } else {
           context.params.sequelize.scope = 'active'
         }
