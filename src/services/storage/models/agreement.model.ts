@@ -34,7 +34,7 @@ export default class Agreement extends Model {
   billingPrice!: BigNumber
 
   @Column
-  token!: string
+  tokenAddress!: string
 
   @Column({ ...BigNumberStringType('availableFunds') })
   availableFunds!: BigNumber

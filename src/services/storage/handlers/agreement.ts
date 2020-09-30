@@ -16,14 +16,14 @@ const logger = loggingFactory('storage:handler:request')
 
 const handlers = {
   async NewAgreement (event: EventData, { agreementService }: StorageServices, eth: Eth): Promise<void> {
-    const { provider: offerId, billingPeriod: period, token } = event.returnValues
-    const id = soliditySha3(event.returnValues.agreementCreator, ...event.returnValues.dataReference, token)
+    const { provider: offerId, billingPeriod: period, token: tokenAddress } = event.returnValues
+    const id = soliditySha3(event.returnValues.agreementCreator, ...event.returnValues.dataReference, tokenAddress)
     const dataReference = decodeByteArray(event.returnValues.dataReference)
 
-    const plan = await BillingPlan.findOne({ where: { offerId, period, token } })
+    const plan = await BillingPlan.findOne({ where: { offerId, period, tokenAddress } })
 
     if (!plan) {
-      throw new EventError(`Price for period ${period} and offer ${offerId} not found when creating new request ${id}`, 'RequestMade')
+      throw new EventError(`Price for period ${period}, token ${tokenAddress} and offer ${offerId} not found when creating new request ${id}`, 'RequestMade')
     }
 
     const data = {
@@ -34,7 +34,7 @@ const handlers = {
       size: event.returnValues.size,
       billingPeriod: event.returnValues.billingPeriod,
       billingPrice: plan.price,
-      token,
+      tokenAddress,
       availableFunds: event.returnValues.availableFunds,
       lastPayout: await getBlockDate(eth, event.blockNumber)
     }

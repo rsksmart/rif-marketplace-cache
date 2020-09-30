@@ -12,25 +12,25 @@ import { getTokenSymbol } from '../utils'
 
 const logger = loggingFactory('storage:handler:offer')
 
-function updatePrices (offer: Offer, period: BigNumber, price: BigNumber, token: string): Promise<BillingPlan> {
+function updatePrices (offer: Offer, period: BigNumber, price: BigNumber, tokenAddress: string): Promise<BillingPlan> {
   const {
     plans,
     provider
   } = offer
 
-  const billingPlan = plans && plans.find(value => new BigNumber(value.period).eq(period) && token === value.token)
+  const billingPlan = plans && plans.find(value => new BigNumber(value.period).eq(period) && tokenAddress === value.tokenAddress)
   logger.info(`Updating period ${period} to price ${price} (ID: ${provider})`)
 
   if (billingPlan) {
     billingPlan.price = price
     return billingPlan.save()
   } else {
-    const tokenSymbol = getTokenSymbol(token).toLowerCase()
+    const tokenSymbol = getTokenSymbol(tokenAddress).toLowerCase()
     const newBillingPlanEntity = new BillingPlan({
       period,
       price,
       offerId: provider,
-      token,
+      tokenAddress,
       rateId: tokenSymbol
     })
     return newBillingPlanEntity.save()

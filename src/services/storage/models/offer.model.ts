@@ -1,6 +1,6 @@
 import BigNumber from 'bignumber.js'
 import { Table, DataType, Column, Model, HasMany, Scopes } from 'sequelize-typescript'
-import { literal, Sequelize } from 'sequelize'
+import { literal, Op, Sequelize } from 'sequelize'
 import { Literal } from 'sequelize/types/lib/utils'
 
 import BillingPlan from './billing-plan.model'
@@ -12,7 +12,7 @@ import { WEI } from '../utils'
 @Scopes(() => ({
   active: {
     where: {
-      totalCapacity: literal('cast(totalCapacity as integer) > 0')
+      totalCapacity: { [Op.ne]: '0' }
       // peerId: { [Op.ne]: null }
     },
     include: [
@@ -74,7 +74,7 @@ export function getStakesAggregateQuery (
   return literal(`
   (
     SELECT
-      CAST(SUM((cast(total as real) / ${WEI}) * coalesce("rates"."${sequelize.escape(currency)}", 0)) as INTEGER)
+      CAST(SUM((cast(total as real) / ${WEI}) * coalesce("rates".${sequelize.escape(currency)}, 0)) as INTEGER)
     FROM
       storage_stakes
     LEFT OUTER JOIN
@@ -99,7 +99,7 @@ export function getBillingPriceAvgQuery (
     SELECT
       CAST(
         SUM(
-          (cast(price as REAL) / ${WEI}) * coalesce("rates"."${sequelize.escape(currency)}", 0) * 1024 / period * (3600 * 24)
+          (cast(price as REAL) / ${WEI}) * coalesce("rates".${sequelize.escape(currency)}, 0) * 1024 / period * (3600 * 24)
         ) / COUNT("storage_billing-plan"."id")
         as INTEGER
       )

@@ -7,7 +7,6 @@ import { Handler } from '../../definitions'
 import { Eth } from 'web3-eth'
 import { StorageServices } from './index'
 
-// TODO optimize processing by selecting specific handlers instead of using all of them
 const HANDLERS: Handler<StorageServices>[] = [offer, request, stake]
 
 export default function (services: StorageServices, eth: Eth) {

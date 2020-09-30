@@ -1,7 +1,7 @@
 import { SupportedTokens } from '../../definitions'
 import config from 'config'
 
-export const WEI = 1000000000000000000
+export const WEI = 1e18
 export type MinMax = 1 | -1
 
 /**

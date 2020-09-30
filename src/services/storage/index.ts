@@ -42,14 +42,15 @@ export class StakeService extends Service {
 export class AvgBillingPriceService extends Service {
   emit?: Function
 
-  async get (minMax: MinMax): Promise<number> {
+  async get (): Promise<{ min: number, max: number }> {
     if (!config.get('storage.tokens')) {
       throw new Error('"storage.tokens" not exist in config')
     }
     const sequelize = this.Model.sequelize
 
-    const [{ avgPrice }] = await sequelize.query(getAvgMinMaxBillingPriceQuery(minMax), { type: QueryTypes.SELECT, raw: true })
-    return avgPrice
+    const [{ avgPrice: min }] = await sequelize.query(getAvgMinMaxBillingPriceQuery(-1), { type: QueryTypes.SELECT, raw: true })
+    const [{ avgPrice: max }] = await sequelize.query(getAvgMinMaxBillingPriceQuery(1), { type: QueryTypes.SELECT, raw: true })
+    return { min, max }
   }
 }
 
