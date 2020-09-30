@@ -28,7 +28,6 @@ export function sequelizeFactory (): Sequelize {
     },
     logging: (msg) => logger.debug(formatLogs(msg)),
     // @ts-ignore
-    // TODO what the reason of doing this???
     transactionType: 'IMMEDIATE'
   }
 
