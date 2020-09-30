@@ -34,7 +34,11 @@ function averagePriceFilter (
   const minPrice = sequelize.escape(averagePrice.min)
   const maxPrice = sequelize.escape(averagePrice.max)
   const rawQ = `avgBillingPrice BETWEEN ${minPrice} AND ${maxPrice}`
-  context.params.sequelize.where[Op.and] = [literal(rawQ)]
+  // We should use Op.and to prevent overwriting the scope values
+  context.params.sequelize.where[Op.and] = [
+    ...context.params.sequelize.where[Op.and] || [],
+    literal(rawQ)
+  ]
 }
 
 /**
@@ -51,7 +55,11 @@ function totalCapacityFilter (
   const minCap = sequelize.escape(totalCapacity.min)
   const maxCap = sequelize.escape(totalCapacity.max)
   const rawQ = `cast(totalCapacity as integer) BETWEEN ${minCap} AND ${maxCap}`
-  context.params.sequelize.where.totalCapacity = literal(rawQ)
+  // We should use Op.and to prevent overwriting the scope values
+  context.params.sequelize.where[Op.and] = [
+    ...context.params.sequelize.where[Op.and] || [],
+    literal(rawQ)
+  ]
 }
 
 export default {
@@ -78,6 +86,7 @@ export default {
           const sequelize = context.app.get('sequelize')
 
           context.params.sequelize = {
+            ...context.params.sequelize,
             raw: false,
             nest: true,
             include: [

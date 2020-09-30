@@ -12,7 +12,7 @@ import { WEI } from '../utils'
 @Scopes(() => ({
   active: {
     where: {
-      [Op.and]: [literal('cast(totalCapacity as integer) > 0')]
+      totalCapacity: literal('cast(totalCapacity as integer) > 0')
       // peerId: { [Op.ne]: null }
     },
     include: [
