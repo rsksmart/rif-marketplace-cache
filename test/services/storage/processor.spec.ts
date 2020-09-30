@@ -96,11 +96,13 @@ describe('Storage services: Events Processor', () => {
       })
     })
     describe('BillingPlanSet', () => {
+      const token = '0x0000000000000000000000000000000000000000'
       const billingEvent: EventData = eventMock({
         event: 'BillingPlanSet',
         returnValues: {
           price: 1000,
           period: 99,
+          token,
           provider
         }
       })
@@ -110,6 +112,7 @@ describe('Storage services: Events Processor', () => {
           returnValues: {
             price: 1000,
             period: 69696,
+            token,
             provider
           }
         })
@@ -121,24 +124,27 @@ describe('Storage services: Events Processor', () => {
         expect(billingPlan).to.be.instanceOf(BillingPlan)
         expect(billingPlan?.createdAt).to.be.eql(billingPlan?.updatedAt) // new instance
         expect(billingPlan?.price).to.be.eql(new BigNumber(event.returnValues.price))
+        expect(billingPlan?.tokenAddress).to.be.eql(event.returnValues.token)
         expect(billingPlan?.period).to.be.eql(new BigNumber(event.returnValues.period))
       })
       it('create new BillingPlan if has one with different period`', async () => {
         await processor(billingEvent)
 
-        const billingPlan = await BillingPlan.findOne({ where: { offerId: provider, period: '99' } })
+        const billingPlan = await BillingPlan.findOne({ where: { offerId: provider, period: '99', tokenAddress: token } })
 
         expect(billingPlan).to.be.instanceOf(BillingPlan)
         expect(billingPlan?.createdAt).to.be.eql(billingPlan?.updatedAt) // new instance
         expect(billingPlan?.price).to.be.eql(new BigNumber(billingEvent.returnValues.price))
+        expect(billingPlan?.tokenAddress).to.be.eql(billingEvent.returnValues.token)
         expect(billingPlan?.period).to.be.eql(new BigNumber(billingEvent.returnValues.period))
       })
       it('update BillingPlan', async () => {
         // Create new offer and billing plan
         const offer = await Offer.create({ provider })
-        const billing = await BillingPlan.create({ offerId: offer.provider, period: 99, price: 1 })
+        const billing = await BillingPlan.create({ offerId: offer.provider, period: 99, price: 1, tokenAddress: token })
         expect(offer).to.be.instanceOf(Offer)
         expect(billing?.price).to.be.eql(new BigNumber(1))
+        expect(billing?.tokenAddress).to.be.eql(token)
         expect(billing).to.be.instanceOf(BillingPlan)
 
         const newPrice = 99999
@@ -151,6 +157,7 @@ describe('Storage services: Events Processor', () => {
         expect(billingPlan).to.be.instanceOf(BillingPlan)
         expect(billingPlan?.updatedAt).to.be.gt(billingPlan?.createdAt)
         expect(billingPlan?.price).to.be.eql(new BigNumber(newPrice))
+        expect(billingPlan?.tokenAddress).to.be.eql(token)
         expect(billingPlan?.period).to.be.eql(new BigNumber(billingEvent.returnValues.period))
       })
     })
@@ -213,12 +220,13 @@ describe('Storage services: Events Processor', () => {
     let offer: Offer
     let plan: BillingPlan
     let agreementData: object
+    const token = '0x0000'
     const billingPeriod = 99
     const size = 100
     const availableFunds = 100
     const agreementCreator = asciiToHex('AgreementCreator')
     const dataReference = ['Reference1', 'Reference2'].map(asciiToHex)
-    const agreementReference = soliditySha3(agreementCreator, ...dataReference)
+    const agreementReference = soliditySha3(agreementCreator, ...dataReference, token)
     const blockNumber = 13
     const agreementNotExistTest = (event: EventData): Mocha.Test => it('should throw error if agreement not exist', async () => {
       await expect(processor(event)).to.eventually.be.rejectedWith(
@@ -241,6 +249,7 @@ describe('Storage services: Events Processor', () => {
         consumer: agreementCreator,
         offerId: provider,
         size,
+        tokenAddress: token,
         billingPeriod,
         billingPrice: 100,
         availableFunds,
@@ -251,7 +260,7 @@ describe('Storage services: Events Processor', () => {
       await sequelize.sync({ force: true })
       agreementServiceEmitSpy.resetHistory()
       offer = await Offer.create({ provider })
-      plan = await BillingPlan.create({ offerId: offer.provider, price: 100, period: billingPeriod })
+      plan = await BillingPlan.create({ offerId: offer.provider, price: 100, period: billingPeriod, tokenAddress: token })
       expect(offer).to.be.instanceOf(Offer)
       expect(plan).to.be.instanceOf(BillingPlan)
     })
@@ -266,15 +275,16 @@ describe('Storage services: Events Processor', () => {
           dataReference,
           size,
           availableFunds,
-          provider
+          provider,
+          token
         }
       })
 
       it('should throw error if billing plan not exist', async () => {
-        await expect(BillingPlan.destroy({ where: { offerId: provider, period: billingPeriod.toString() } })).to.eventually.become(1)
+        await expect(BillingPlan.destroy({ where: { offerId: provider, period: billingPeriod.toString(), tokenAddress: token } })).to.eventually.become(1)
         await expect(processor(event)).to.eventually.be.rejectedWith(
           EventError,
-          `Price for period ${event.returnValues.billingPeriod.toString()} and offer ${provider} not found when creating new request ${agreementReference}`
+          `Price for period ${event.returnValues.billingPeriod.toString()}, token ${token} and offer ${provider} not found when creating new request ${agreementReference}`
         )
       })
       it('should create/overwrite new agreement', async () => {
@@ -290,6 +300,7 @@ describe('Storage services: Events Processor', () => {
         expect(agreement?.billingPeriod).to.be.eql(new BigNumber(event.returnValues.billingPeriod))
         expect(agreement?.billingPrice).to.be.eql(new BigNumber(plan.price))
         expect(agreement?.availableFunds).to.be.eql(new BigNumber(event.returnValues.availableFunds))
+        expect(agreement?.tokenAddress).to.be.eql(token)
         expect(agreement?.lastPayout).to.be.eql(await getBlockDate(eth, event.blockNumber))
         expect(agreementServiceEmitSpy).to.have.been.calledOnceWith('created')
       })

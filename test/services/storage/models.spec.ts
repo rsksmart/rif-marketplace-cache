@@ -5,8 +5,12 @@ import Sequelize, { literal } from 'sequelize'
 
 import Agreement from '../../../src/services/storage/models/agreement.model'
 import { sequelizeFactory } from '../../../src/sequelize'
-import Offer, { getStakesAggregateQuery } from '../../../src/services/storage/models/offer.model'
+import Offer, {
+  getBillingPriceAvgQuery,
+  getStakesAggregateQuery
+} from '../../../src/services/storage/models/offer.model'
 import StakeModel from '../../../src/services/storage/models/stake.model'
+import BillingPlan from '../../../src/services/storage/models/billing-plan.model'
 import Rate from '../../../src/services/rates/rates.model'
 
 chai.use(sinonChai)
@@ -210,6 +214,58 @@ describe('Models', () => {
     beforeEach(async () => {
       await sequelize.sync({ force: true })
     })
+    it('should aggregate avg billing price for offers', async () => {
+      // POPULATE DB
+      await Offer.bulkCreate([
+        { provider: 'abc', totalCapacity: 123, peerId: '1' },
+        { provider: 'abc2', totalCapacity: 1234, peerId: '2' },
+        { provider: 'abc3', totalCapacity: 1234, peerId: '2' }
+      ])
+      const wei = 1000000000000000000
+      const pricePerDayPerGb = wei / 1024
+      await BillingPlan.bulkCreate([
+        { period: '86400', price: `${pricePerDayPerGb}`, token: '0x0000000000000000000000000000000000000000', offerId: 'abc', rateId: 'rbtc' },
+        { period: '604800', price: `${7 * pricePerDayPerGb}`, token: '0x12345', offerId: 'abc', rateId: 'rif' },
+        { period: '2592000', price: `${30 * pricePerDayPerGb}`, token: '0x0000000000000000000000000000000000000000', offerId: 'abc', rateId: 'rbtc' },
+        { period: '86400', price: `${2 * pricePerDayPerGb}`, token: '0x0000000000000000000000000000000000000000', offerId: 'abc2', rateId: 'rbtc' },
+        { period: '604800', price: `${2 * 7 * pricePerDayPerGb}`, token: '0x12345', offerId: 'abc2', rateId: 'rif' },
+        { period: '2592000', price: `${2 * 30 * pricePerDayPerGb}`, token: '0x0000000000000000000000000000000000000000', offerId: 'abc2', rateId: 'rbtc' },
+        { period: '86400', price: `${3 * pricePerDayPerGb}`, token: '0x0000000000000000000000000000000000000000', offerId: 'abc3', rateId: 'rbtc' },
+        { period: '604800', price: `${3 * 7 * pricePerDayPerGb}`, token: '0x12345', offerId: 'abc3', rateId: 'rif' },
+        { period: '2592000', price: `${3 * 30 * pricePerDayPerGb}`, token: '0x0000000000000000000000000000000000000000', offerId: 'abc3', rateId: 'rbtc' }
+      ])
+      await Rate.bulkCreate([
+        { token: 'rif', usd: 1 },
+        { token: 'rbtc', usd: 1 }
+      ])
+
+      expect((await Rate.findAll()).length).to.be.eql(2)
+      expect((await BillingPlan.findAll()).length).to.be.eql(9)
+      expect((await Offer.findAll()).length).to.be.eql(3)
+
+      // Prepare aggregation query
+      const aggregateBillingPriceAvg = getBillingPriceAvgQuery(sequelize, 'usd')
+
+      const offers = await Offer.findAll({
+        raw: true,
+        attributes: {
+          exclude: ['totalCapacity', 'peerId', 'createdAt', 'updatedAt'],
+          include: [
+            [
+              aggregateBillingPriceAvg,
+              'avgBillingPrice'
+            ]
+          ]
+        },
+        order: [literal('avgBillingPrice')]
+      })
+      const expectedRes = [
+        { provider: 'abc', avgBillingPrice: 1 },
+        { provider: 'abc2', avgBillingPrice: 2 },
+        { provider: 'abc3', avgBillingPrice: 3 }
+      ]
+      expect(offers).to.be.deep.equal(expectedRes)
+    })
     it('should aggregate total stakes for offers and order by stakes', async () => {
       // POPULATE DB
       await Offer.bulkCreate([
@@ -218,11 +274,11 @@ describe('Models', () => {
         { provider: 'abc3', totalCapacity: 1234, peerId: '2', averagePrice: '1234' }
       ])
       await StakeModel.bulkCreate([
-        { total: '1000', symbol: 'rbtc', account: 'abc', token: '0x0000000000000000000000000000000000000000' },
-        { total: '1000', symbol: 'rif', account: 'abc', token: '0x12345' },
-        { total: '2000', symbol: 'rbtc', account: 'abc2', token: '0x0000000000000000000000000000000000000000' },
-        { total: '1000', symbol: 'rif', account: 'abc2', token: '0x12345' },
-        { total: '1000', symbol: 'rbtc', account: 'abc3', token: '0x0000000000000000000000000000000000000000' }
+        { total: '369000000000000000', symbol: 'rbtc', account: 'abc', token: '0x0000000000000000000000000000000000000000' },
+        { total: '369000000000000000123791', symbol: 'rif', account: 'abc', token: '0x12345' },
+        { total: '369000000000000000', symbol: 'rbtc', account: 'abc2', token: '0x0000000000000000000000000000000000000000' },
+        { total: '36900023748000000000000', symbol: 'rif', account: 'abc2', token: '0x12345' },
+        { total: '1000000000000000000', symbol: 'rbtc', account: 'abc3', token: '0x0000000000000000000000000000000000000000' }
       ])
       await Rate.bulkCreate([
         { token: 'rif', usd: 1 },
@@ -234,7 +290,7 @@ describe('Models', () => {
       expect((await Offer.findAll()).length).to.be.eql(3)
 
       // Prepare aggregation query
-      const aggregateStakeQuery = await getStakesAggregateQuery(sequelize, 'usd')
+      const aggregateStakeQuery = getStakesAggregateQuery(sequelize, 'usd')
 
       const offers = await Offer.findAll({
         raw: true,
@@ -251,9 +307,9 @@ describe('Models', () => {
       })
 
       const expectedRes = [
-        { provider: 'abc2', totalStakesUSD: 5000 },
-        { provider: 'abc', totalStakesUSD: 3000 },
-        { provider: 'abc3', totalStakesUSD: 2000 }
+        { provider: 'abc', totalStakesUSD: 369000 },
+        { provider: 'abc2', totalStakesUSD: 36900 },
+        { provider: 'abc3', totalStakesUSD: 2 }
       ]
       expect(offers).to.be.deep.equal(expectedRes)
     })

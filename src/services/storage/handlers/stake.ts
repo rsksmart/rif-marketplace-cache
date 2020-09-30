@@ -1,27 +1,13 @@
 import { EventData } from 'web3-eth-contract'
 import BigNumber from 'bignumber.js'
-import config from 'config'
 
 import { loggingFactory } from '../../../logger'
-import { Handler, SupportedTokens } from '../../../definitions'
+import { Handler } from '../../../definitions'
 import { StorageServices } from '../index'
 import StakeModel from '../models/stake.model'
+import { getTokenSymbol } from '../utils'
 
 const logger = loggingFactory('storage:handler:stake')
-
-/**
- * Make a call to ERC20 token SC and return token symbol
- * Return `rbtc` for ZERO_ADDRESS
- * @param tokenContractAddress
- * @returns {SupportedTokens} token symbol
- */
-function getTokenSymbol (tokenContractAddress: string): SupportedTokens {
-  if (!config.has(`storage.tokens.${tokenContractAddress}`)) {
-    throw new Error(`Token at ${tokenContractAddress} not supported`)
-  }
-
-  return config.get<SupportedTokens>(`storage.tokens.${tokenContractAddress}`)
-}
 
 /**
  * Find or create stake
@@ -35,7 +21,7 @@ async function findOrCreateStake (account: string, token: string): Promise<Stake
   if (stake) {
     return stake
   }
-  const symbol = getTokenSymbol(token)
+  const symbol = getTokenSymbol(token).toLowerCase()
   return StakeModel.create({ account, token, symbol, total: 0 })
 }
 

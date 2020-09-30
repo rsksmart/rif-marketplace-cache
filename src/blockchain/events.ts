@@ -356,7 +356,7 @@ export class PollingEventsEmitter extends BaseEventsEmitter {
         return
       }
 
-      this.logger.info(`Checking new events between blocks ${lastFetchedBlockNumber}-${currentBlock}`)
+      this.logger.info(`Checking new events between blocks ${lastFetchedBlockNumber}-${currentBlock.number}`)
       const events = await this.contract.getPastEvents('allEvents', {
         fromBlock: (lastFetchedBlockNumber as number) + 1, // +1 because both fromBlock and toBlock is "or equal"
         toBlock: currentBlock.number,

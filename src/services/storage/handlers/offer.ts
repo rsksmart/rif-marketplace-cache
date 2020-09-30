@@ -8,34 +8,33 @@ import { Handler } from '../../../definitions'
 import { OfferService, StorageServices } from '../index'
 import { decodeByteArray, wrapEvent } from '../../../utils'
 import { EventError } from '../../../errors'
+import { getTokenSymbol } from '../utils'
 
 const logger = loggingFactory('storage:handler:offer')
 
-function updatePrices (offer: Offer, period: BigNumber, price: BigNumber): Promise<BillingPlan> {
+function updatePrices (offer: Offer, period: BigNumber, price: BigNumber, tokenAddress: string): Promise<BillingPlan> {
   const {
     plans,
     provider
   } = offer
 
-  const billingPlan = plans && plans.find(value => new BigNumber(value.period).eq(period))
+  const billingPlan = plans && plans.find(value => new BigNumber(value.period).eq(period) && tokenAddress === value.tokenAddress)
   logger.info(`Updating period ${period} to price ${price} (ID: ${provider})`)
 
   if (billingPlan) {
     billingPlan.price = price
     return billingPlan.save()
   } else {
-    const newBillingPlanEntity = new BillingPlan({ period, price, offerId: provider })
+    const tokenSymbol = getTokenSymbol(tokenAddress).toLowerCase()
+    const newBillingPlanEntity = new BillingPlan({
+      period,
+      price,
+      offerId: provider,
+      tokenAddress,
+      rateId: tokenSymbol
+    })
     return newBillingPlanEntity.save()
   }
-}
-
-export function calculateAverage (plans: BillingPlan[]): number {
-  return plans.map(({ price, period }: BillingPlan) => {
-    const priceMBPPeriod = price
-    const priceGBPPeriod = priceMBPPeriod.times(1024)
-    const priceGBPSec = priceGBPPeriod.div(period)
-    return priceGBPSec.times(3600 * 24)
-  }).reduce((sum, x) => sum.plus(x)).toNumber() / plans.length
 }
 
 const handlers: { [key: string]: Function } = {
@@ -71,14 +70,8 @@ const handlers: { [key: string]: Function } = {
       throw new EventError(`Unknown message flag ${flag}!`, event.event)
     }
   },
-  async BillingPlanSet ({ returnValues: { period, price } }: EventData, offer: Offer, offerService: OfferService): Promise<void> {
-    const plan = await updatePrices(offer, period, price)
-
-    const updatedPlans = [...offer.plans || [], plan]
-
-    const newAvgPrice = updatedPlans?.length && calculateAverage(updatedPlans)
-    offer.averagePrice = newAvgPrice || 0
-    offer.save()
+  async BillingPlanSet ({ returnValues: { period, price, token } }: EventData, offer: Offer, offerService: OfferService): Promise<void> {
+    await updatePrices(offer, period, price, token)
 
     if (offerService.emit) {
       const freshOffer = await Offer.findByPk(offer.provider) as Offer
