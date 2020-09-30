@@ -1,6 +1,6 @@
 import BigNumber from 'bignumber.js'
 import { Table, DataType, Column, Model, HasMany, Scopes } from 'sequelize-typescript'
-import { Op, literal, Sequelize } from 'sequelize'
+import { literal, Sequelize } from 'sequelize'
 import { Literal } from 'sequelize/types/lib/utils'
 
 import BillingPlan from './billing-plan.model'
