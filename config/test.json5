@@ -9,6 +9,16 @@
   storage: {
     tokens: {
       '0x12345': 'rif'
+    },
+    storageManager: {
+      eventsEmitter: {
+        confirmations: 1
+      }
+    },
+    staking: {
+      eventsEmitter: {
+        confirmations: 1
+      }
     }
   },
   rns: {

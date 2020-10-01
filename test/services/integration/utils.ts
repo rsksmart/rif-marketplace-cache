@@ -7,7 +7,7 @@ import { Sequelize } from 'sequelize'
 import { Eth } from 'web3-eth'
 import type { HttpProvider } from 'web3-core'
 import { Contract } from 'web3-eth-contract'
-import { AbiItem, asciiToHex } from 'web3-utils'
+import { AbiItem, asciiToHex, padRight } from 'web3-utils'
 import { promisify } from 'util'
 import storageManagerContract from '@rsksmart/rif-marketplace-storage/build/contracts/StorageManager.json'
 import stakingContract from '@rsksmart/rif-marketplace-storage/build/contracts/Staking.json'
@@ -19,6 +19,7 @@ import { initStore } from '../../../src/store'
 import { Application, SupportedServices } from '../../../src/definitions'
 import { ethFactory } from '../../../src/blockchain'
 
+export const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000'
 export const appResetCallbackSpy = sinon.spy()
 
 export function encodeHash (hash: string): string[] {
@@ -154,7 +155,7 @@ export class TestingApp {
     const contract = new this.eth.Contract(storageManagerContract.abi as AbiItem[])
     const deploy = await contract.deploy({ data: storageManagerContract.bytecode })
     this.storageContract = await deploy.send({ from: this.providerAddress, gas: await deploy.estimateGas() })
-    await this.storageContract?.methods.setWhitelistedTokens('0x0000000000000000000000000000000000000000', true)
+    await this.storageContract?.methods.setWhitelistedTokens(ZERO_ADDRESS, true).send({ from: this.providerAddress })
   }
 
   private async deployStaking (): Promise<void> {
@@ -162,7 +163,23 @@ export class TestingApp {
     const contract = new this.eth.Contract(stakingContract.abi as AbiItem[])
     const deploy = await contract.deploy({ arguments: [this.storageContract?.options.address], data: stakingContract.bytecode })
     this.stakingContract = await deploy.send({ from: this.providerAddress, gas: await deploy.estimateGas() })
-    await this.stakingContract?.methods.setWhitelistedTokens('0x0000000000000000000000000000000000000000', true)
+    await this.stakingContract?.methods.setWhitelistedTokens(ZERO_ADDRESS, true).send({ from: this.providerAddress})
+  }
+
+  public async createOffer (offerData: Record<any, any>) {
+    const msg = [padRight(asciiToHex('some string'), 64), padRight(asciiToHex('some other string'), 64)]
+
+    const setOffer = this.storageContract?.methods.setOffer(
+      offerData.totalCapacity,
+      [offerData.periods],
+      [offerData.prices],
+      [ZERO_ADDRESS],
+      msg
+    )
+    return await setOffer.send({
+      from: this.providerAddress,
+      gas: await setOffer.estimateGas({ from: this.providerAddress })
+    })
   }
 
   public async advanceBlock (): Promise<void> {
