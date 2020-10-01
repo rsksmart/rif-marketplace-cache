@@ -10,12 +10,14 @@ import { Contract } from 'web3-eth-contract'
 import { AbiItem, asciiToHex } from 'web3-utils'
 import { promisify } from 'util'
 import storageManagerContract from '@rsksmart/rif-marketplace-storage/build/contracts/StorageManager.json'
+import stakingContract from '@rsksmart/rif-marketplace-storage/build/contracts/Staking.json'
 
 import { loggingFactory } from '../../../src/logger'
-import { appFactory, AppOptions } from '../../../src/app'
+import { appFactory, AppOptions, services } from '../../../src/app'
 import { sequelizeFactory } from '../../../src/sequelize'
 import { initStore } from '../../../src/store'
-import { Application } from '../../../src/definitions'
+import { Application, SupportedServices } from '../../../src/definitions'
+import { ethFactory } from '../../../src/blockchain'
 
 export const appResetCallbackSpy = sinon.spy()
 
@@ -31,6 +33,7 @@ export class TestingApp {
   private logger = loggingFactory('test:test-app')
   private app: { stop: () => void, app: Application } | undefined
   public storageContract: Contract | undefined
+  public stakingContract: Contract | undefined
   public eth: Eth | undefined
   public sequelize: Sequelize | undefined
   public consumerAddress = ''
@@ -49,8 +52,11 @@ export class TestingApp {
     await this.initBlockchainProvider()
     // Deploy StorageManager for provider
     await this.deployStorageManager()
+    await this.deployStaking()
     // @ts-ignore
     config.storage.storageManager.contractAddress = this.storageContract?.options.address
+    // @ts-ignore
+    config.storage.staking.contractAddress = this.stakingContract?.options.address
     // Remove current testing db
     await this.purgeDb()
     this.logger.info('Database removed')
@@ -58,6 +64,18 @@ export class TestingApp {
     const sequelize = await sequelizeFactory()
     await sequelize.sync({ force: true })
     await initStore(sequelize)
+    this.logger.info('Database initialized')
+
+    // Precache
+    await this.precache()
+    this.logger.info('Database precached')
+  }
+
+  async precache () {
+    for (const service of Object.values(SupportedServices).filter(service => config.get(`${service}.enabled`))) {
+      if (service === 'rns') return
+      await services[service].precache()
+    }
   }
 
   async start (options?: Partial<AppOptions>): Promise<void> {
@@ -70,6 +88,7 @@ export class TestingApp {
     // Start server
     const port = config.get('port')
     const server = this.app.app.listen(port)
+    this.logger.info('Cache service started')
 
     server.on('listening', () =>
       this.logger.info(`Server started on port ${port}`)
@@ -78,8 +97,6 @@ export class TestingApp {
     process.on('unhandledRejection', err =>
       this.logger.error(`Unhandled Rejection at: ${err}`)
     )
-
-    this.logger.info('Cache service started')
   }
 
   async stop (): Promise<void> {
@@ -111,7 +128,7 @@ export class TestingApp {
   }
 
   private async initBlockchainProvider (): Promise<void> {
-    this.eth = new Eth(config.get<string>('blockchain.provider'))
+    this.eth = ethFactory()
     const [provider, consumer] = await this.eth.getAccounts()
     this.providerAddress = provider
     this.consumerAddress = consumer
@@ -138,6 +155,14 @@ export class TestingApp {
     const deploy = await contract.deploy({ data: storageManagerContract.bytecode })
     this.storageContract = await deploy.send({ from: this.providerAddress, gas: await deploy.estimateGas() })
     await this.storageContract?.methods.setWhitelistedTokens('0x0000000000000000000000000000000000000000', true)
+  }
+
+  private async deployStaking (): Promise<void> {
+    if (!this.eth || !this.providerAddress) throw new Error('Provider should be initialized and has at least 2 accounts')
+    const contract = new this.eth.Contract(stakingContract.abi as AbiItem[])
+    const deploy = await contract.deploy({ arguments: [this.storageContract?.options.address], data: stakingContract.bytecode })
+    this.stakingContract = await deploy.send({ from: this.providerAddress, gas: await deploy.estimateGas() })
+    await this.stakingContract?.methods.setWhitelistedTokens('0x0000000000000000000000000000000000000000', true)
   }
 
   public async advanceBlock (): Promise<void> {

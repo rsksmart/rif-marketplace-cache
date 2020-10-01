@@ -1,4 +1,5 @@
 {
+  port: 3030,
   db: 'db_test.sqlite',
   dbBackUp: { blocks: 10, path:  'db-backups' },
   blockchain: {
