@@ -7,7 +7,7 @@ import { Sequelize } from 'sequelize'
 import { Eth } from 'web3-eth'
 import type { HttpProvider } from 'web3-core'
 import { Contract } from 'web3-eth-contract'
-import { AbiItem, asciiToHex, padRight } from 'web3-utils'
+import { AbiItem, asciiToHex } from 'web3-utils'
 import { promisify } from 'util'
 import storageManagerContract from '@rsksmart/rif-marketplace-storage/build/contracts/StorageManager.json'
 import stakingContract from '@rsksmart/rif-marketplace-storage/build/contracts/Staking.json'
@@ -135,21 +135,6 @@ export class TestingApp {
     this.consumerAddress = consumer
   }
 
-  // private async createOffer (): Promise<void> {
-  //   if (!this.storageContract || !this.providerAddress) {
-  //     throw new Error('Provider should be initialized and has at least 2 accounts and StorageManage contract should be deployed')
-  //   }
-  //
-  //   const encodedPeerId = encodeHash(this.peerId!.id).map(el => el.replace('0x', ''))
-  //   const prefixedMsg = prefixArray(encodedPeerId, '01', 64)
-  //     .map(el => `0x${el}`)
-  //
-  //   const offerCall = this.contract
-  //     .methods
-  //     .setOffer(1000000, [1, 100], [10, 80], prefixedMsg)
-  //   await offerCall.send({ from: this.providerAddress, gas: await offerCall.estimateGas() })
-  // }
-
   private async deployStorageManager (): Promise<void> {
     if (!this.eth || !this.providerAddress) throw new Error('Provider should be initialized and has at least 2 accounts')
     const contract = new this.eth.Contract(storageManagerContract.abi as AbiItem[])
@@ -163,18 +148,16 @@ export class TestingApp {
     const contract = new this.eth.Contract(stakingContract.abi as AbiItem[])
     const deploy = await contract.deploy({ arguments: [this.storageContract?.options.address], data: stakingContract.bytecode })
     this.stakingContract = await deploy.send({ from: this.providerAddress, gas: await deploy.estimateGas() })
-    await this.stakingContract?.methods.setWhitelistedTokens(ZERO_ADDRESS, true).send({ from: this.providerAddress})
+    await this.stakingContract?.methods.setWhitelistedTokens(ZERO_ADDRESS, true).send({ from: this.providerAddress })
   }
 
   public async createOffer (offerData: Record<any, any>) {
-    const msg = [padRight(asciiToHex('some string'), 64), padRight(asciiToHex('some other string'), 64)]
-
     const setOffer = this.storageContract?.methods.setOffer(
       offerData.totalCapacity,
       [offerData.periods],
       [offerData.prices],
       [ZERO_ADDRESS],
-      msg
+      [offerData.msg]
     )
     return await setOffer.send({
       from: this.providerAddress,
