@@ -10,6 +10,8 @@ import Rate from '../../../../src/services/rates/rates.model'
 import { asciiToHex } from 'web3-utils'
 import Agreement from '../../../../src/services/storage/models/agreement.model'
 import { wrapEvent } from '../../../../src/utils'
+import BigNumber from 'bignumber.js'
+import { getBlockDate } from '../../../../src/blockchain/utils'
 
 chai.use(sinonChai)
 const expect = chai.expect
@@ -113,13 +115,57 @@ describe('Storage service', function () {
         expect(offer.plans[1].price.toString()).to.be.eql(offerData.prices[1].toString())
       })
     })
-    describe('Agreements', () => {
-      afterEach(async () => {
+    describe.only('Agreements', () => {
+      const cid = [asciiToHex('/ipfs/QmSomeHash')]
+      const offerData = {
+        totalCapacity: 2000,
+        periods: [10, 100],
+        prices: [200, 300],
+        msg: generateMsg('test')
+      }
+      const size = 10
+
+      before(async () => {
         await BillingPlan.destroy({ where: {} })
+        await Agreement.destroy({ where: {} })
         await Offer.destroy({ where: {} })
         await Rate.destroy({ where: {} })
+        await app.createOffer(offerData)
+        await sleep(4000)
+        await app.advanceBlock()
+        await sleep(4000)
+        await app.advanceBlock()
+        await sleep(4000)
       })
-      // it('should create new agreement', async () => {})
+      afterEach(async () => {
+        await Agreement.destroy({ where: {} })
+      })
+      it('should create new agreement', async () => {
+        const agreementData = {
+          provider: app.providerAddress,
+          cid,
+          period: offerData.periods[0],
+          size: size,
+          amount: 10000
+        }
+        await app.createAgreement(agreementData)
+
+        await sleep(4000)
+        await app.advanceBlock()
+        await sleep(4000)
+        await app.advanceBlock()
+        await sleep(4000)
+
+        const agreement = await Agreement.findOne({ where: { offerId: app.providerAddress } })
+        expect(agreement).to.be.instanceOf(Agreement)
+        expect(agreement?.consumer).to.be.eql(app.consumerAddress)
+        expect(agreement?.dataReference).to.be.eql('/ipfs/QmSomeHash')
+        expect(agreement?.size.toString()).to.be.eql(agreementData.size.toString())
+        expect(agreement?.billingPeriod.toString()).to.be.eql(offerData.periods[0].toString())
+        expect(agreement?.billingPrice.toString()).to.be.eql(offerData.prices[0].toString())
+        expect(agreement?.availableFunds.toNumber()).to.be.eql(agreementData.amount)
+        expect(agreement?.tokenAddress).to.be.eql(ZERO_ADDRESS)
+      })
       // it('should update existed agreement', async () => {})
       // it('should make agreement inActive', async () => {})
       // it('should proceed deposit funds', async () => {})

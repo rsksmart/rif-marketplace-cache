@@ -165,6 +165,25 @@ export class TestingApp {
     })
   }
 
+  public async createAgreement (agreementData: Record<any, any>) {
+    const newAgreement = await this.storageContract?.methods.newAgreement(
+      agreementData.cid,
+      agreementData.provider,
+      agreementData.size,
+      agreementData.period,
+      ZERO_ADDRESS,
+      0,
+      [],
+      [],
+      ZERO_ADDRESS
+    )
+    return await newAgreement.send({
+      from: this.consumerAddress,
+      gas: await newAgreement.estimateGas({ from: this.consumerAddress, value: agreementData.amount }),
+      value: agreementData.amount
+    })
+  }
+
   public async advanceBlock (): Promise<void> {
     if (!this.eth || !this.eth.currentProvider) {
       throw new Error('Eth was not initialized!')
