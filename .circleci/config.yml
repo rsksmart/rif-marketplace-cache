@@ -143,9 +143,9 @@ jobs:
       - run:
           name: "Unit tests"
           command: npx tasegir test --target node --files ./test/unit/*.spec.ts --files ./test/unit/**/*.spec.ts --files ./test/unit/**/**/*.spec.ts --reporter lcovonly -- --bail
-            - run:
-                name: "Integration tests"
-                command: npx tasegir test --target node --files ./test/integration/**/*.spec.ts --files ./test/integration/**/**/*.spec.ts --reporter lcovonly -- --bail
+      - run:
+          name: "Integration tests"
+          command: npx tasegir test --target node --files ./test/integration/**/*.spec.ts --files ./test/integration/**/**/*.spec.ts --reporter lcovonly -- --bail
 
 workflows:
   test:
