@@ -34,7 +34,7 @@ export function getAvgMinMaxBillingPriceQuery (minMax: MinMax): string {
         LEFT OUTER JOIN
             "rates" AS "rates" ON "storage_billing-plan"."rateId" = "rates"."token"
         GROUP BY offerId
-        ORDER BY avgPrice ${minMax === -1 ? 'DESC' : 'ASC'}
+        ORDER BY avgPrice ${minMax === 1 ? 'DESC' : 'ASC'}
         LIMIT 1
      `
 }
