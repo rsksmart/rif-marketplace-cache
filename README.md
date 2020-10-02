@@ -51,6 +51,8 @@ by FeathersJS.
 
 For RIF Storage there is cached information about Pinning Contract and current Storage Offers.
 
+#### Offers endpoint
+
 ```
 GET: /storage/v0/offers
 ```
@@ -83,6 +85,7 @@ It has following schema:
   }
 ]
 ```
+#### Agreements endpoint
 
 ```
 GET: /storage/v0/agreements
@@ -112,6 +115,7 @@ It has following schema:
    }
 ]
 ```
+#### Stakes endpoint
 
 ```
 GET: /storage/v0/stakes'
@@ -131,6 +135,8 @@ It has following schema:
    }
 ]
 ```
+
+#### Average Billing Price endpoint
 
 ```
 GET: /storage/v0/avgBillingPrice
