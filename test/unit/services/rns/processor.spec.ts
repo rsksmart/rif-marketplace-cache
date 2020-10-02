@@ -9,18 +9,18 @@ import Utils from 'web3-utils'
 import Eth from 'web3-eth'
 import { Substitute, SubstituteOf } from '@fluffy-spoon/substitute'
 import { Sequelize } from 'sequelize-typescript'
-import { loggingFactory } from '../../../src/logger'
+import { loggingFactory } from '../../../../src/logger'
 
-import eventProcessor from '../../../src/services/rns/rns.processor'
-import { RnsBaseService, RnsServices } from '../../../src/services/rns'
-import { sequelizeFactory } from '../../../src/sequelize'
-import Domain from '../../../src/services/rns/models/domain.model'
-import DomainOwner from '../../../src/services/rns/models/owner.model'
-import DomainExpiration from '../../../src/services/rns/models/expiration.model'
-import DomainOffer from '../../../src/services/rns/models/domain-offer.model'
-import SoldDomain from '../../../src/services/rns/models/sold-domain.model'
+import eventProcessor from '../../../../src/services/rns/rns.processor'
+import { RnsBaseService, RnsServices } from '../../../../src/services/rns'
+import { sequelizeFactory } from '../../../../src/sequelize'
+import Domain from '../../../../src/services/rns/models/domain.model'
+import DomainOwner from '../../../../src/services/rns/models/owner.model'
+import DomainExpiration from '../../../../src/services/rns/models/expiration.model'
+import DomainOffer from '../../../../src/services/rns/models/domain-offer.model'
+import SoldDomain from '../../../../src/services/rns/models/sold-domain.model'
 
-import { eventMock, transactionMock } from '../../utils'
+import { eventMock, transactionMock } from '../../../utils'
 
 chai.use(sinonChai)
 chai.use(chaiAsPromised)

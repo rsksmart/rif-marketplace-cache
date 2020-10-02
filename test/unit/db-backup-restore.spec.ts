@@ -6,10 +6,10 @@ import sinonChai from 'sinon-chai'
 import { Eth } from 'web3-eth'
 import { Substitute, Arg } from '@fluffy-spoon/substitute'
 
-import DbBackUpJob from '../src/db-backup'
-import { blockMock, rmDir, sleep } from './utils'
-import { NEW_BLOCK_EVENT_NAME } from '../src/blockchain/new-block-emitters'
-import { DbBackUpConfig } from '../src/definitions'
+import DbBackUpJob from '../../src/db-backup'
+import { blockMock, rmDir, sleep } from '../utils'
+import { NEW_BLOCK_EVENT_NAME } from '../../src/blockchain/new-block-emitters'
+import { DbBackUpConfig } from '../../src/definitions'
 
 chai.use(sinonChai)
 const expect = chai.expect

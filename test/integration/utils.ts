@@ -12,12 +12,12 @@ import { promisify } from 'util'
 import storageManagerContract from '@rsksmart/rif-marketplace-storage/build/contracts/StorageManager.json'
 import stakingContract from '@rsksmart/rif-marketplace-storage/build/contracts/Staking.json'
 
-import { loggingFactory } from '../../../src/logger'
-import { appFactory, AppOptions, services } from '../../../src/app'
-import { sequelizeFactory } from '../../../src/sequelize'
-import { initStore } from '../../../src/store'
-import { Application, SupportedServices } from '../../../src/definitions'
-import { ethFactory } from '../../../src/blockchain'
+import { loggingFactory } from '../../src/logger'
+import { appFactory, AppOptions, services } from '../../src/app'
+import { sequelizeFactory } from '../../src/sequelize'
+import { initStore } from '../../src/store'
+import { Application, SupportedServices } from '../../src/definitions'
+import { ethFactory } from '../../src/blockchain'
 
 export const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000'
 export const appResetCallbackSpy = sinon.spy()

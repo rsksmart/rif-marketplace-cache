@@ -2,12 +2,14 @@ import config from 'config'
 import chai from 'chai'
 import sinonChai from 'sinon-chai'
 
-import { TestingApp, ZERO_ADDRESS } from '../utils'
+import { TestingApp, ZERO_ADDRESS } from '../../utils'
 import { sleep } from '../../../utils'
 import Offer from '../../../../src/services/storage/models/offer.model'
 import BillingPlan from '../../../../src/services/storage/models/billing-plan.model'
 import Rate from '../../../../src/services/rates/rates.model'
 import { asciiToHex } from 'web3-utils'
+import Agreement from '../../../../src/services/storage/models/agreement.model'
+import { wrapEvent } from '../../../../src/utils'
 
 chai.use(sinonChai)
 const expect = chai.expect
@@ -111,14 +113,37 @@ describe('Storage service', function () {
         expect(offer.plans[1].price.toString()).to.be.eql(offerData.prices[1].toString())
       })
     })
-    // describe('Agreements', () => {
-    //   afterEach(async () => {
-    //     await BillingPlan.destroy({ where: {} })
-    //     await Offer.destroy({ where: {} })
-    //     await Rate.destroy({ where: {} })
-    //   })
-    //   it('', async () => {
-    //   })
-    // })
+    describe('Agreements', () => {
+      afterEach(async () => {
+        await BillingPlan.destroy({ where: {} })
+        await Offer.destroy({ where: {} })
+        await Rate.destroy({ where: {} })
+      })
+      it('should create new agreement', async () => {})
+      it('should update existed agreement', async () => {})
+      it('should make agreement inActive', async () => {})
+      it('should proceed deposit funds', async () => {})
+      it('should proceed withdrawal funds', async () => {})
+      it('should proceed funds payout', async () => {})
+    })
+    describe('Staking', () => {
+      afterEach(async () => {
+        await BillingPlan.destroy({ where: {} })
+        await Offer.destroy({ where: {} })
+        await Rate.destroy({ where: {} })
+      })
+      it('should create new stake', async () => {})
+      it('should update existed stake', async () => {})
+      it('should be able to unstake', async () => {})
+      it('should be able to query total stake in USD', async () => {})
+    })
+    describe('Avg Billing Plan', () => {
+      afterEach(async () => {
+        await BillingPlan.destroy({ where: {} })
+        await Offer.destroy({ where: {} })
+        await Rate.destroy({ where: {} })
+      })
+      it('should be able to query avg billing price min/max values', async () => {})
+    })
   })
 })

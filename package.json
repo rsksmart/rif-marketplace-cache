@@ -44,7 +44,9 @@
     "types-check": "tasegir types-check",
     "lint": "tasegir lint",
     "release": "tasegir release",
-    "test": "cross-env ALLOW_CONFIG_MUTATIONS=true tasegir test --target node",
+    "test": "npm run test:unit && npm run test:integration",
+    "test:integration": "cross-env ALLOW_CONFIG_MUTATIONS=true tasegir test --target node --files ./test/integration/**/*.spec.ts",
+    "test:unit": "cross-env ALLOW_CONFIG_MUTATIONS=true tasegir test --target node --files ./test/unit/**/*.spec.ts",
     "start": "tasegir run --watch ./src/index.ts"
   },
   "dependencies": {

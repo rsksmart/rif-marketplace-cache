@@ -14,16 +14,16 @@ import {
   BaseEventsEmitter,
   EventsEmitterOptions,
   PollingEventsEmitter, REORG_EVENT_NAME, REORG_OUT_OF_RANGE_EVENT_NAME
-} from '../../src/blockchain/events'
-import { Logger } from '../../src/definitions'
-import { loggingFactory } from '../../src/logger'
-import { sequelizeFactory } from '../../src/sequelize'
-import Event from '../../src/blockchain/event.model'
-import { sleep, blockMock, eventMock } from '../utils'
-import { NEW_BLOCK_EVENT_NAME } from '../../src/blockchain/new-block-emitters'
-import { BlockTracker } from '../../src/blockchain/block-tracker'
+} from '../../../src/blockchain/events'
+import { Logger } from '../../../src/definitions'
+import { loggingFactory } from '../../../src/logger'
+import { sequelizeFactory } from '../../../src/sequelize'
+import Event from '../../../src/blockchain/event.model'
+import { sleep, blockMock, eventMock } from '../../utils'
+import { NEW_BLOCK_EVENT_NAME } from '../../../src/blockchain/new-block-emitters'
+import { BlockTracker } from '../../../src/blockchain/block-tracker'
 import { AbiItem } from 'web3-utils'
-import { Confirmator } from '../../src/blockchain/confirmator'
+import { Confirmator } from '../../../src/blockchain/confirmator'
 
 chai.use(sinonChai)
 chai.use(chaiAsPromised)
