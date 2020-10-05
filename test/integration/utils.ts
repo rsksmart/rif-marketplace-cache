@@ -18,6 +18,7 @@ import { sequelizeFactory } from '../../src/sequelize'
 import { initStore } from '../../src/store'
 import { Application, SupportedServices } from '../../src/definitions'
 import { ethFactory } from '../../src/blockchain'
+import { sleep } from '../utils'
 
 export const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000'
 export const appResetCallbackSpy = sinon.spy()
@@ -184,6 +185,19 @@ export class TestingApp {
     })
   }
 
+  public async payoutFunds (cid: any) {
+    const payoutFunds = await this.storageContract?.methods.payoutFunds(
+      [cid],
+      [this.consumerAddress],
+      ZERO_ADDRESS,
+      this.providerAddress
+    )
+    return await payoutFunds.send({
+      from: this.providerAddress,
+      gas: await payoutFunds.estimateGas({ from: this.providerAddress }),
+    })
+  }
+
   public async advanceBlock (): Promise<void> {
     if (!this.eth || !this.eth.currentProvider) {
       throw new Error('Eth was not initialized!')
@@ -195,5 +209,13 @@ export class TestingApp {
       params: [],
       id: new Date().getTime()
     })
+  }
+
+  async addConfirmations () {
+    await sleep(4000)
+    await this.advanceBlock()
+    await sleep(4000)
+    await this.advanceBlock()
+    await sleep(4000)
   }
 }

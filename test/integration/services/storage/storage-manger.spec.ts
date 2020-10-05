@@ -3,15 +3,11 @@ import chai from 'chai'
 import sinonChai from 'sinon-chai'
 
 import { TestingApp, ZERO_ADDRESS } from '../../utils'
-import { sleep } from '../../../utils'
 import Offer from '../../../../src/services/storage/models/offer.model'
 import BillingPlan from '../../../../src/services/storage/models/billing-plan.model'
 import Rate from '../../../../src/services/rates/rates.model'
 import { asciiToHex } from 'web3-utils'
 import Agreement from '../../../../src/services/storage/models/agreement.model'
-import { wrapEvent } from '../../../../src/utils'
-import BigNumber from 'bignumber.js'
-import { getBlockDate } from '../../../../src/blockchain/utils'
 
 chai.use(sinonChai)
 const expect = chai.expect
@@ -23,7 +19,7 @@ const generateMsg = (peerId = 'FakePeerId') => {
 }
 
 describe('Storage service', function () {
-  this.timeout(20000)
+  this.timeout(30000)
   let app: TestingApp
 
   before(async () => {
@@ -53,11 +49,7 @@ describe('Storage service', function () {
         }
         await app.createOffer(offerData)
 
-        await sleep(4000)
-        await app.advanceBlock()
-        await sleep(4000)
-        await app.advanceBlock()
-        await sleep(4000)
+        await app.addConfirmations()
 
         const offers = await Offer.findAll({ include: [{ model: BillingPlan, as: 'plans' }] })
         expect(offers.length).to.be.eql(1)
@@ -95,11 +87,7 @@ describe('Storage service', function () {
 
         await app.createOffer(offerData)
 
-        await sleep(4000)
-        await app.advanceBlock()
-        await sleep(4000)
-        await app.advanceBlock()
-        await sleep(4000)
+        await app.addConfirmations()
 
         const offers = await Offer.findAll({ include: [{ model: BillingPlan, as: 'plans' }] })
         expect(offers.length).to.be.eql(1)
@@ -115,7 +103,7 @@ describe('Storage service', function () {
         expect(offer.plans[1].price.toString()).to.be.eql(offerData.prices[1].toString())
       })
     })
-    describe.only('Agreements', () => {
+    describe('Agreements', () => {
       const cid = [asciiToHex('/ipfs/QmSomeHash')]
       const offerData = {
         totalCapacity: 2000,
@@ -130,12 +118,9 @@ describe('Storage service', function () {
         await Agreement.destroy({ where: {} })
         await Offer.destroy({ where: {} })
         await Rate.destroy({ where: {} })
+
         await app.createOffer(offerData)
-        await sleep(4000)
-        await app.advanceBlock()
-        await sleep(4000)
-        await app.advanceBlock()
-        await sleep(4000)
+        await app.addConfirmations()
       })
       afterEach(async () => {
         await Agreement.destroy({ where: {} })
@@ -149,12 +134,7 @@ describe('Storage service', function () {
           amount: 10000
         }
         await app.createAgreement(agreementData)
-
-        await sleep(4000)
-        await app.advanceBlock()
-        await sleep(4000)
-        await app.advanceBlock()
-        await sleep(4000)
+        await app.addConfirmations()
 
         const agreement = await Agreement.findOne({ where: { offerId: app.providerAddress } })
         expect(agreement).to.be.instanceOf(Agreement)
@@ -166,8 +146,42 @@ describe('Storage service', function () {
         expect(agreement?.availableFunds.toNumber()).to.be.eql(agreementData.amount)
         expect(agreement?.tokenAddress).to.be.eql(ZERO_ADDRESS)
       })
-      // it('should update existed agreement', async () => {})
-      // it('should make agreement inActive', async () => {})
+      it('should update existed agreement', async () => {
+        const agreementData = {
+          provider: app.providerAddress,
+          cid,
+          period: offerData.periods[0],
+          size: size,
+          amount: 10000
+        }
+        await app.createAgreement(agreementData)
+
+        await app.addConfirmations()
+
+        const agreement = await Agreement.findOne({ where: { offerId: app.providerAddress } })
+        expect(agreement?.availableFunds.toNumber()).to.be.eql(agreementData.amount)
+
+        await app.createAgreement({ ...agreementData, amount: 11000 })
+
+        await app.addConfirmations()
+
+        const updatedAgreement = await Agreement.findOne({ where: { offerId: app.providerAddress } })
+        expect(updatedAgreement?.availableFunds.toNumber()).to.be.eql(19000)
+      })
+      it.skip('should make agreement inActive on AgreementStopped event', async () => {
+        const agreementData = {
+          provider: app.providerAddress,
+          cid,
+          period: offerData.periods[0],
+          size: size,
+          amount: 10000
+        }
+        await app.createAgreement(agreementData)
+        await app.addConfirmations()
+
+        await app.payoutFunds(agreementData.cid)
+        await app.addConfirmations()
+      })
       // it('should proceed deposit funds', async () => {})
       // it('should proceed withdrawal funds', async () => {})
       // it('should proceed funds payout', async () => {})
