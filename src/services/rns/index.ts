@@ -86,6 +86,11 @@ async function precache (eth?: Eth): Promise<void> {
   }
 }
 
+const paginate = {
+  default: 10,
+  max: 25
+}
+
 const rns: CachedService = {
   // eslint-disable-next-line require-await
   async initialize (app: Application): Promise<void> {
@@ -98,9 +103,9 @@ const rns: CachedService = {
     await waitForReadyApp(app)
 
     // Initialize feather's service
-    app.use(ServiceAddresses.RNS_DOMAINS, new RnsBaseService({ Model: Domain }))
-    app.use(ServiceAddresses.RNS_SOLD, new RnsBaseService({ Model: SoldDomain }))
-    app.use(ServiceAddresses.RNS_OFFERS, new RnsBaseService({ Model: DomainOffer }))
+    app.use(ServiceAddresses.RNS_DOMAINS, new RnsBaseService({ Model: Domain, paginate }))
+    app.use(ServiceAddresses.RNS_SOLD, new RnsBaseService({ Model: SoldDomain, paginate }))
+    app.use(ServiceAddresses.RNS_OFFERS, new RnsBaseService({ Model: DomainOffer, paginate }))
 
     const domains = app.service(ServiceAddresses.RNS_DOMAINS)
     const sold = app.service(ServiceAddresses.RNS_SOLD)
