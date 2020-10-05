@@ -46,7 +46,9 @@ export class TestingApp {
       return
     }
     await this.init()
+    this.logger.info('App initialized')
     await this.start(options)
+    this.logger.info('App started')
   }
 
   async init (): Promise<void> {
@@ -174,8 +176,8 @@ export class TestingApp {
       agreementData.period,
       ZERO_ADDRESS,
       0,
-      [],
-      [],
+      agreementData.toBePayout || [],
+      agreementData.toBePayoutAccounts || [],
       ZERO_ADDRESS
     )
     return await newAgreement.send({
@@ -185,7 +187,21 @@ export class TestingApp {
     })
   }
 
-  public async payoutFunds (cid: any) {
+  public async depositFunds (depositData: Record<any, any>) {
+    const depositCall = await this.storageContract?.methods.depositFunds(
+      depositData.token || ZERO_ADDRESS,
+      0,
+      depositData.cid,
+      depositData.provider || this.providerAddress,
+    )
+    return await depositCall.send({
+      from: this.consumerAddress,
+      gas: await depositCall.estimateGas({ from: this.consumerAddress, value: depositData.amount }),
+      value: depositData.amount
+    })
+  }
+
+  public async payoutFunds (cid: string[]) {
     const payoutFunds = await this.storageContract?.methods.payoutFunds(
       [cid],
       [this.consumerAddress],
@@ -194,7 +210,20 @@ export class TestingApp {
     )
     return await payoutFunds.send({
       from: this.providerAddress,
-      gas: await payoutFunds.estimateGas({ from: this.providerAddress }),
+      gas: await payoutFunds.estimateGas({ from: this.providerAddress })
+    })
+  }
+
+  public async withdrawalFunds (withdrawData: Record<any, any>) {
+    const withdrawFunds = await this.storageContract?.methods.withdrawFunds(
+      withdrawData.cid,
+      this.providerAddress,
+      [ZERO_ADDRESS],
+      [withdrawData.amount]
+    )
+    return await withdrawFunds.send({
+      from: this.consumerAddress,
+      gas: await withdrawFunds.estimateGas({ from: this.consumerAddress })
     })
   }
 
@@ -211,7 +240,7 @@ export class TestingApp {
     })
   }
 
-  async addConfirmations () {
+  async addConfirmations (): Promise<void> {
     await sleep(4000)
     await this.advanceBlock()
     await sleep(4000)

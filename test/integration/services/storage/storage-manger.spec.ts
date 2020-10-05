@@ -8,6 +8,7 @@ import BillingPlan from '../../../../src/services/storage/models/billing-plan.mo
 import Rate from '../../../../src/services/rates/rates.model'
 import { asciiToHex } from 'web3-utils'
 import Agreement from '../../../../src/services/storage/models/agreement.model'
+import BigNumber from 'bignumber.js'
 
 chai.use(sinonChai)
 const expect = chai.expect
@@ -18,8 +19,22 @@ const generateMsg = (peerId = 'FakePeerId') => {
   return `0x${nodeIdFlag}${testPeerIdHex}`
 }
 
-describe('Storage service', function () {
-  this.timeout(30000)
+function randomStr (length = 32): string {
+  let result = ''
+  const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
+  const charactersLength = characters.length
+  for (let i = 0; i < length; i++) {
+    result += characters.charAt(Math.floor(Math.random() * charactersLength))
+  }
+  return result
+}
+
+function generateCID (): string[] {
+  return [asciiToHex(`/ipfs/${randomStr(26)}`)]
+}
+
+describe.only('Storage service', function () {
+  this.timeout(50000)
   let app: TestingApp
 
   before(async () => {
@@ -38,7 +53,6 @@ describe('Storage service', function () {
       afterEach(async () => {
         await BillingPlan.destroy({ where: {} })
         await Offer.destroy({ where: {} })
-        await Rate.destroy({ where: {} })
       })
       it('should create an offer and plans', async () => {
         const offerData = {
@@ -70,7 +84,6 @@ describe('Storage service', function () {
           msg: generateMsg('test')
         }
         const offerFromDb = await Offer.create({ provider: app.providerAddress, totalCapacity: 1000 })
-        const rateFromDb = await Rate.create({ token: 'rbtc', usd: 1 })
         const planFromDb = await BillingPlan.create({
           period: 10,
           price: 100,
@@ -78,7 +91,6 @@ describe('Storage service', function () {
           offerId: offerFromDb.provider,
           rateId: 'rbtc'
         })
-        expect(rateFromDb).to.be.instanceOf(Rate)
         expect(offerFromDb).to.be.instanceOf(Offer)
         expect(offerFromDb.totalCapacity.toString()).to.be.eql('1000')
         expect(planFromDb).to.be.instanceOf(BillingPlan)
@@ -104,7 +116,6 @@ describe('Storage service', function () {
       })
     })
     describe('Agreements', () => {
-      const cid = [asciiToHex('/ipfs/QmSomeHash')]
       const offerData = {
         totalCapacity: 2000,
         periods: [10, 100],
@@ -117,7 +128,6 @@ describe('Storage service', function () {
         await BillingPlan.destroy({ where: {} })
         await Agreement.destroy({ where: {} })
         await Offer.destroy({ where: {} })
-        await Rate.destroy({ where: {} })
 
         await app.createOffer(offerData)
         await app.addConfirmations()
@@ -128,7 +138,7 @@ describe('Storage service', function () {
       it('should create new agreement', async () => {
         const agreementData = {
           provider: app.providerAddress,
-          cid,
+          cid: generateCID(),
           period: offerData.periods[0],
           size: size,
           amount: 10000
@@ -139,7 +149,7 @@ describe('Storage service', function () {
         const agreement = await Agreement.findOne({ where: { offerId: app.providerAddress } })
         expect(agreement).to.be.instanceOf(Agreement)
         expect(agreement?.consumer).to.be.eql(app.consumerAddress)
-        expect(agreement?.dataReference).to.be.eql('/ipfs/QmSomeHash')
+        expect(agreement?.dataReference).to.be.eql(agreementData.cid)
         expect(agreement?.size.toString()).to.be.eql(agreementData.size.toString())
         expect(agreement?.billingPeriod.toString()).to.be.eql(offerData.periods[0].toString())
         expect(agreement?.billingPrice.toString()).to.be.eql(offerData.prices[0].toString())
@@ -149,13 +159,12 @@ describe('Storage service', function () {
       it('should update existed agreement', async () => {
         const agreementData = {
           provider: app.providerAddress,
-          cid,
+          cid: generateCID(),
           period: offerData.periods[0],
           size: size,
           amount: 10000
         }
         await app.createAgreement(agreementData)
-
         await app.addConfirmations()
 
         const agreement = await Agreement.findOne({ where: { offerId: app.providerAddress } })
@@ -168,10 +177,26 @@ describe('Storage service', function () {
         const updatedAgreement = await Agreement.findOne({ where: { offerId: app.providerAddress } })
         expect(updatedAgreement?.availableFunds.toNumber()).to.be.eql(19000)
       })
-      it.skip('should make agreement inActive on AgreementStopped event', async () => {
+      it('should make agreement inActive on AgreementStopped event', async () => {
         const agreementData = {
           provider: app.providerAddress,
-          cid,
+          cid: generateCID(),
+          period: offerData.periods[0],
+          size: size,
+          amount: 2000
+        }
+        await app.createAgreement(agreementData)
+        await app.addConfirmations()
+
+        await app.payoutFunds(agreementData.cid)
+        await app.addConfirmations()
+        const updatedAgreement = await Agreement.findOne({ where: { offerId: app.providerAddress } })
+        expect(updatedAgreement?.isActive).to.be.eql(false)
+      })
+      it('should proceed deposit funds', async () => {
+        const agreementData = {
+          provider: app.providerAddress,
+          cid: generateCID(),
           period: offerData.periods[0],
           size: size,
           amount: 10000
@@ -179,12 +204,56 @@ describe('Storage service', function () {
         await app.createAgreement(agreementData)
         await app.addConfirmations()
 
+        const agreement = await Agreement.findOne({ where: { offerId: app.providerAddress } })
+        const depositData = {
+          cid: agreementData.cid,
+          token: ZERO_ADDRESS,
+          amount: 1000
+        }
+        await app.depositFunds(depositData)
+        await app.addConfirmations()
+
+        const updatedAgreement = await Agreement.findOne({ where: { offerId: app.providerAddress } })
+        expect(agreement?.availableFunds.plus(depositData.amount).toNumber()).to.be.eql(updatedAgreement?.availableFunds.toNumber())
+      })
+      it('should proceed withdrawal funds', async () => {
+        const agreementData = {
+          provider: app.providerAddress,
+          cid: generateCID(),
+          period: offerData.periods[0],
+          size: size,
+          amount: 2e18
+        }
+        await app.createAgreement(agreementData)
+        await app.addConfirmations()
+
+        const withdrawData = {
+          cid: agreementData.cid,
+          amount: new BigNumber(1e18)
+        }
+        await app.withdrawalFunds(withdrawData)
+        await app.addConfirmations()
+
+        const updatedAgreement = await Agreement.findOne({ where: { offerId: app.providerAddress } })
+        expect(updatedAgreement?.availableFunds.toString()).to.be.eql((new BigNumber(1e18)).toString())
+      })
+      it('should proceed funds payout', async () => {
+        const agreementData = {
+          provider: app.providerAddress,
+          cid: generateCID(),
+          period: offerData.periods[0],
+          size: size,
+          amount: 2000
+        }
+        await app.createAgreement(agreementData)
+        await app.addConfirmations()
+
         await app.payoutFunds(agreementData.cid)
         await app.addConfirmations()
+
+        const agreementAfter = await Agreement.findOne({ where: { offerId: app.providerAddress } })
+        expect(agreementAfter?.availableFunds.toNumber()).to.be.eql(0)
       })
-      // it('should proceed deposit funds', async () => {})
-      // it('should proceed withdrawal funds', async () => {})
-      // it('should proceed funds payout', async () => {})
     })
     describe('Staking', () => {
       afterEach(async () => {

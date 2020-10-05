@@ -12,12 +12,14 @@
     },
     storageManager: {
       eventsEmitter: {
-        confirmations: 1
+        confirmations: 1,
+        pollingInterval: 500
       }
     },
     staking: {
       eventsEmitter: {
-        confirmations: 1
+        confirmations: 1,
+        pollingInterval: 500
       }
     }
   },
