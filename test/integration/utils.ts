@@ -37,7 +37,7 @@ export function encodeHash (hash: string): string[] {
 }
 
 export class TestingApp {
-  private logger = loggingFactory('test:test-app')
+  private readonly logger = loggingFactory('test:test-app')
   private app: { stop: () => void, app: Application } | undefined
   public storageContract: Contract | undefined
   public stakingContract: Contract | undefined
@@ -84,7 +84,6 @@ export class TestingApp {
 
   async precache () {
     for (const service of Object.values(SupportedServices).filter(service => config.get(`${service}.enabled`))) {
-      if (service === 'rns') return
       await services[service].precache()
     }
   }
@@ -112,7 +111,7 @@ export class TestingApp {
 
   async stop (): Promise<void> {
     if (this.app) {
-      await this.app.stop()
+      this.app.stop()
     }
 
     await this.sequelize?.close()
@@ -157,7 +156,9 @@ export class TestingApp {
   }
 
   private async deployStorageManager (): Promise<void> {
-    if (!this.eth || !this.providerAddress) throw new Error('Provider should be initialized and has at least 2 accounts')
+    if (!this.eth || !this.providerAddress) {
+      throw new Error('Provider should be initialized and has at least 2 accounts')
+    }
     const contract = new this.eth.Contract(storageManagerContract.abi as AbiItem[])
     const deploy = await contract.deploy({ data: storageManagerContract.bytecode })
     this.storageContract = await deploy.send({ from: this.providerAddress, gas: await deploy.estimateGas() })
@@ -165,7 +166,9 @@ export class TestingApp {
   }
 
   private async deployStaking (): Promise<void> {
-    if (!this.eth || !this.providerAddress) throw new Error('Provider should be initialized and has at least 2 accounts')
+    if (!this.eth || !this.providerAddress) {
+      throw new Error('Provider should be initialized and has at least 2 accounts')
+    }
     const contract = new this.eth.Contract(stakingContract.abi as AbiItem[])
     const deploy = await contract.deploy({ arguments: [this.storageContract?.options.address], data: stakingContract.bytecode })
     this.stakingContract = await deploy.send({ from: this.providerAddress, gas: await deploy.estimateGas() })
@@ -180,7 +183,7 @@ export class TestingApp {
       [ZERO_ADDRESS],
       [offerData.msg]
     )
-    return await setOffer.send({
+    return setOffer.send({
       from: this.providerAddress,
       gas: await setOffer.estimateGas({ from: this.providerAddress })
     })
@@ -198,7 +201,7 @@ export class TestingApp {
       agreementData.toBePayoutAccounts || [],
       ZERO_ADDRESS
     )
-    return await newAgreement.send({
+    return newAgreement.send({
       from: this.consumerAddress,
       gas: await newAgreement.estimateGas({ from: this.consumerAddress, value: agreementData.amount }),
       value: agreementData.amount
@@ -212,7 +215,7 @@ export class TestingApp {
       depositData.cid,
       depositData.provider || this.providerAddress,
     )
-    return await depositCall.send({
+    return depositCall.send({
       from: this.consumerAddress,
       gas: await depositCall.estimateGas({ from: this.consumerAddress, value: depositData.amount }),
       value: depositData.amount
@@ -226,7 +229,7 @@ export class TestingApp {
       ZERO_ADDRESS,
       this.providerAddress
     )
-    return await payoutFunds.send({
+    return payoutFunds.send({
       from: this.providerAddress,
       gas: await payoutFunds.estimateGas({ from: this.providerAddress })
     })
@@ -239,7 +242,7 @@ export class TestingApp {
       [ZERO_ADDRESS],
       [withdrawData.amount]
     )
-    return await withdrawFunds.send({
+    return withdrawFunds.send({
       from: this.consumerAddress,
       gas: await withdrawFunds.estimateGas({ from: this.consumerAddress })
     })
@@ -252,7 +255,7 @@ export class TestingApp {
       token || ZERO_ADDRESS,
       ZERO_BYTES_32
     )
-    return await stake.send({
+    return stake.send({
       from,
       gas: await stake.estimateGas({ from, value }),
       value
@@ -265,7 +268,7 @@ export class TestingApp {
       token || ZERO_ADDRESS,
       ZERO_BYTES_32
     )
-    return await unstake.send({
+    return unstake.send({
       from,
       gas: await unstake.estimateGas({ from })
     })

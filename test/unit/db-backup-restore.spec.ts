@@ -93,6 +93,7 @@ describe('DB back-up/restore', function () {
 
       const job = new DbBackUpJob(Substitute.for<Eth>())
 
+      expect(job).to.be.instanceOf(DbBackUpJob)
       expect(fs.existsSync(dbPath)).to.be.true()
     })
     it('should make backup if not exist', async () => {

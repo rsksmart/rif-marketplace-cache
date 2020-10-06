@@ -1,4 +1,4 @@
-import { BlockHeader, Eth } from 'web3-eth'
+import { Eth } from 'web3-eth'
 import { Arg, Substitute } from '@fluffy-spoon/substitute'
 import sinon from 'sinon'
 import chai from 'chai'
