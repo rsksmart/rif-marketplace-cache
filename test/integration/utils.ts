@@ -288,13 +288,11 @@ export class TestingApp {
   }
 
   async addConfirmations (): Promise<void> {
-    await sleep(8000)
+    await sleep(6000)
     await this.advanceBlock()
-    await sleep(8000)
+    await sleep(6000)
     await this.advanceBlock()
-    await sleep(8000)
-    await this.advanceBlock()
-    await sleep(8000)
+    await sleep(6000)
   }
 }
 

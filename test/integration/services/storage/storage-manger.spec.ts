@@ -121,7 +121,7 @@ describe('Storage service', function () {
     describe('Agreements', () => {
       const offerData = {
         totalCapacity: 2000,
-        periods: [10, 100],
+        periods: [10, 2592000],
         prices: [200, 300],
         msg: generateMsg('test')
       }
@@ -163,9 +163,9 @@ describe('Storage service', function () {
         const agreementData = {
           provider: app.providerAddress,
           cid: generateCID(),
-          period: offerData.periods[0],
+          period: offerData.periods[1],
           size: size,
-          amount: 10000
+          amount: 30000
         }
         await app.createAgreement(agreementData)
         await app.addConfirmations()
@@ -173,12 +173,11 @@ describe('Storage service', function () {
         const agreement = await Agreement.findOne({ where: { offerId: app.providerAddress } })
         expect(agreement?.availableFunds.toNumber()).to.be.eql(agreementData.amount)
 
-        await app.createAgreement({ ...agreementData, amount: 11000 })
-
+        await app.createAgreement({ ...agreementData, amount: 30000 })
         await app.addConfirmations()
 
         const updatedAgreement = await Agreement.findOne({ where: { offerId: app.providerAddress } })
-        expect(updatedAgreement?.availableFunds.toNumber()).to.be.eql(19000)
+        expect(updatedAgreement?.availableFunds.toNumber()).to.be.eql(60000)
       })
       it('should make agreement inActive on AgreementStopped event', async () => {
         const agreementData = {
