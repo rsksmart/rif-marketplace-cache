@@ -12,18 +12,24 @@ import { getTokenSymbol } from '../utils'
 
 const logger = loggingFactory('storage:handler:offer')
 
-function updatePrices (offer: Offer, period: BigNumber, price: BigNumber, tokenAddress: string): Promise<BillingPlan> {
+async function updatePrices (offer: Offer, period: number, price: number, tokenAddress: string): Promise<void> {
   const {
     plans,
     provider
   } = offer
 
   const billingPlan = plans && plans.find(value => new BigNumber(value.period).eq(period) && tokenAddress === value.tokenAddress)
-  logger.info(`Updating period ${period} to price ${price} (ID: ${provider})`)
+  logger.info(`Updating period ${period} to price ${price} (ID: ${provider}, TOKEN: ${tokenAddress})`)
+
+  // Remove plans with 0 price
+  if (new BigNumber(price).eq(0)) {
+    await BillingPlan.destroy({ where: { period, tokenAddress } })
+    return
+  }
 
   if (billingPlan) {
-    billingPlan.price = price
-    return billingPlan.save()
+    billingPlan.price = new BigNumber(price)
+    await billingPlan.save()
   } else {
     const tokenSymbol = getTokenSymbol(tokenAddress).toLowerCase()
     const newBillingPlanEntity = new BillingPlan({
@@ -33,7 +39,7 @@ function updatePrices (offer: Offer, period: BigNumber, price: BigNumber, tokenA
       tokenAddress,
       rateId: tokenSymbol
     })
-    return newBillingPlanEntity.save()
+    await newBillingPlanEntity.save()
   }
 }
 
@@ -75,7 +81,10 @@ const handlers: { [key: string]: Function } = {
 
     if (offerService.emit) {
       const freshOffer = await Offer.findByPk(offer.provider) as Offer
-      offerService.emit('updated', wrapEvent('BillingPlanSet', freshOffer.toJSON()))
+
+      if (freshOffer) {
+        offerService.emit('updated', wrapEvent('BillingPlanSet', freshOffer.toJSON()))
+      }
     }
   }
 }

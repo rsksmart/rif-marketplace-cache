@@ -160,6 +160,23 @@ describe('Storage services: Events Processor', () => {
         expect(billingPlan?.tokenAddress).to.be.eql(token)
         expect(billingPlan?.period).to.be.eql(new BigNumber(billingEvent.returnValues.period))
       })
+      it('should remove billing plan on price 0', async () => {
+        // Create new offer and billing plan
+        const offer = await Offer.create({ provider })
+        const billing = await BillingPlan.create({ offerId: offer.provider, period: 99, price: 1, tokenAddress: token })
+        expect(offer).to.be.instanceOf(Offer)
+        expect(billing?.price).to.be.eql(new BigNumber(1))
+        expect(billing?.tokenAddress).to.be.eql(token)
+        expect(billing).to.be.instanceOf(BillingPlan)
+
+        // should remove billing price
+        billingEvent.returnValues.price = 0
+
+        await processor(billingEvent)
+
+        const billingPlan = await BillingPlan.findOne({ where: { offerId: offer.provider, period: '99', tokenAddress: token } })
+        expect(billingPlan).to.be.null()
+      })
     })
     describe('MessageEmitted', () => {
       it('should not update Offer if message is empty', async () => {
