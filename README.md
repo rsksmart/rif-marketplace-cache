@@ -51,6 +51,8 @@ by FeathersJS.
 
 For RIF Storage there is cached information about Pinning Contract and current Storage Offers.
 
+#### Offers endpoint
+
 ```
 GET: /storage/v0/offers
 ```
@@ -63,11 +65,14 @@ It has following schema:
 ```json5
 [
   {
-    "address": "string", // Hash, serves as ID
+    "provider": "string", // Hash, serves as ID
     "peerId": "string?", // Optional PeerId of the Provider's node
     "totalCapacity": "number",
     "utilizedCapacity": "number",
+    "acceptedCurrencies": "string[]", // ['rbtc', 'rif']
     "availableCapacity": "number",
+    "avgBillingPrice": "number",
+    "totalStakedUSD": "number",
     "createdAt": "Date",
     "updatedAt": "Date",
     "plans": [
@@ -79,10 +84,30 @@ It has following schema:
         "createdAt": "Date",
         "updatedAt": "Date"
       }
+    ],
+    "agreements": [
+      {
+        "numberOfPrepaidPeriods": "number",
+        "periodsSinceLastPayout": "number",
+        "toBePayedOut": "number",
+        "hasSufficientFunds": "boolean",
+        "agreementReference": "string",
+        "dataReference": "string",
+        "consumer": "string",
+        "size": "number",
+        "isActive": "boolean", // False when agreement is stopped
+        "tokenAddress": "string", // billing plan token address
+        "billingPeriod": "number",
+        "billingPrice": "number",
+        "availableFunds": "number",
+        "lastPayout": "Date",
+        "offerId": "string"
+      }
     ]
   }
 ]
 ```
+#### Agreements endpoint
 
 ```
 GET: /storage/v0/agreements
@@ -104,6 +129,7 @@ It has following schema:
      "consumer": "string",
      "size": "number",
      "isActive": "boolean", // False when agreement is stopped
+     "tokenAddress": "string", // billing plan token address
      "billingPeriod": "number",
      "billingPrice": "number",
      "availableFunds": "number",
@@ -112,6 +138,7 @@ It has following schema:
    }
 ]
 ```
+#### Stakes endpoint
 
 ```
 GET: /storage/v0/stakes'
@@ -131,6 +158,8 @@ It has following schema:
    }
 ]
 ```
+
+#### Average Billing Price endpoint
 
 ```
 GET: /storage/v0/avgBillingPrice
