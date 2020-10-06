@@ -37,7 +37,7 @@ function generateCID (): string[] {
 }
 
 describe('Storage service', function () {
-  this.timeout(50000)
+  this.timeout(60000)
   let app: TestingApp
 
   before(async () => {
