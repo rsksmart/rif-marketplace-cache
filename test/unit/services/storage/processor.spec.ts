@@ -141,7 +141,7 @@ describe('Storage services: Events Processor', () => {
       it('update BillingPlan', async () => {
         // Create new offer and billing plan
         const offer = await Offer.create({ provider })
-        const billing = await BillingPlan.create({ offerId: offer.provider, period: 99, price: 1, tokenAddress: token })
+        const billing = await BillingPlan.create({ offerId: offer.provider, period: 99, price: 1, tokenAddress: token, rateId: 'rbtc' })
         expect(offer).to.be.instanceOf(Offer)
         expect(billing?.price).to.be.eql(new BigNumber(1))
         expect(billing?.tokenAddress).to.be.eql(token)
@@ -163,7 +163,7 @@ describe('Storage services: Events Processor', () => {
       it('should remove billing plan on price 0', async () => {
         // Create new offer and billing plan
         const offer = await Offer.create({ provider })
-        const billing = await BillingPlan.create({ offerId: offer.provider, period: 99, price: 1, tokenAddress: token })
+        const billing = await BillingPlan.create({ offerId: offer.provider, period: 99, price: 1, tokenAddress: token, rateId: 'rbtc' })
         expect(offer).to.be.instanceOf(Offer)
         expect(billing?.price).to.be.eql(new BigNumber(1))
         expect(billing?.tokenAddress).to.be.eql(token)
@@ -277,7 +277,7 @@ describe('Storage services: Events Processor', () => {
       await sequelize.sync({ force: true })
       agreementServiceEmitSpy.resetHistory()
       offer = await Offer.create({ provider })
-      plan = await BillingPlan.create({ offerId: offer.provider, price: 100, period: billingPeriod, tokenAddress: token })
+      plan = await BillingPlan.create({ offerId: offer.provider, price: 100, period: billingPeriod, tokenAddress: token, rateId: 'rbtc' })
       expect(offer).to.be.instanceOf(Offer)
       expect(plan).to.be.instanceOf(BillingPlan)
     })
