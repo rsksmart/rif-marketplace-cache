@@ -65,11 +65,14 @@ It has following schema:
 ```json5
 [
   {
-    "address": "string", // Hash, serves as ID
+    "provider": "string", // Hash, serves as ID
     "peerId": "string?", // Optional PeerId of the Provider's node
     "totalCapacity": "number",
     "utilizedCapacity": "number",
+    "acceptedCurrencies": "string[]", // ['rbtc', 'rif']
     "availableCapacity": "number",
+    "avgBillingPrice": "number",
+    "totalStakedUSD": "number",
     "createdAt": "Date",
     "updatedAt": "Date",
     "plans": [
@@ -80,6 +83,25 @@ It has following schema:
         "offerId": "string",
         "createdAt": "Date",
         "updatedAt": "Date"
+      }
+    ],
+    "agreements": [
+      {
+        "numberOfPrepaidPeriods": "number",
+        "periodsSinceLastPayout": "number",
+        "toBePayedOut": "number",
+        "hasSufficientFunds": "boolean",
+        "agreementReference": "string",
+        "dataReference": "string",
+        "consumer": "string",
+        "size": "number",
+        "isActive": "boolean", // False when agreement is stopped
+        "tokenAddress": "string", // billing plan token address
+        "billingPeriod": "number",
+        "billingPrice": "number",
+        "availableFunds": "number",
+        "lastPayout": "Date",
+        "offerId": "string"
       }
     ]
   }
@@ -107,6 +129,7 @@ It has following schema:
      "consumer": "string",
      "size": "number",
      "isActive": "boolean", // False when agreement is stopped
+     "tokenAddress": "string", // billing plan token address
      "billingPeriod": "number",
      "billingPrice": "number",
      "availableFunds": "number",

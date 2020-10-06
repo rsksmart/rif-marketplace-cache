@@ -22,6 +22,7 @@ import BillingPlan from './models/billing-plan.model'
 import offerHooks from './hooks/offers.hooks'
 import agreementHooks from './hooks/agreements.hooks'
 import stakeHooks from './hooks/stakes.hook'
+import avgBillingPlanHook from './hooks/avg-billing-plan.hook'
 import eventProcessor from './storage.processor'
 import storageChannels from './storage.channels'
 import { sleep } from '../../../test/utils'
@@ -128,6 +129,8 @@ const storage: CachedService = {
 
     // Init AVG Billing plan service
     app.use(ServiceAddresses.AVG_BILLING_PRICE, new AvgBillingPriceService({ Model: BillingPlan }))
+    const avgBillingPlanService = app.service(ServiceAddresses.STORAGE_OFFERS)
+    avgBillingPlanService.hooks(avgBillingPlanHook)
 
     // Initialize Agreement service
     app.use(ServiceAddresses.STORAGE_AGREEMENTS, new AgreementService({ Model: Agreement }))
