@@ -133,6 +133,18 @@ It has following schema:
 ```
 
 ```
+GET: /storage/v0/stakes/:account'
+```
+
+Returns number of total stakes for specific account converted to USD
+
+It has following schema:
+
+```json5
+11645
+```
+
+```
 GET: /storage/v0/avgBillingPrice
 ```
 

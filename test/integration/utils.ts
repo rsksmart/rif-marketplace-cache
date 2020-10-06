@@ -8,9 +8,13 @@ import { Eth } from 'web3-eth'
 import type { HttpProvider } from 'web3-core'
 import { Contract } from 'web3-eth-contract'
 import { AbiItem, asciiToHex } from 'web3-utils'
+import BigNumber from 'bignumber.js'
 import { promisify } from 'util'
 import storageManagerContract from '@rsksmart/rif-marketplace-storage/build/contracts/StorageManager.json'
 import stakingContract from '@rsksmart/rif-marketplace-storage/build/contracts/Staking.json'
+import feathers from '@feathersjs/feathers'
+import socketio from '@feathersjs/socketio-client'
+import io from 'socket.io-client'
 
 import { loggingFactory } from '../../src/logger'
 import { appFactory, AppOptions, services } from '../../src/app'
@@ -21,6 +25,7 @@ import { ethFactory } from '../../src/blockchain'
 import { sleep } from '../utils'
 
 export const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000'
+export const ZERO_BYTES_32 = '0x0000000000000000000000000000000000000000000000000000000000000000'
 export const appResetCallbackSpy = sinon.spy()
 
 export function encodeHash (hash: string): string[] {
@@ -38,6 +43,8 @@ export class TestingApp {
   public stakingContract: Contract | undefined
   public eth: Eth | undefined
   public sequelize: Sequelize | undefined
+  public accounts: string[] = []
+  public nextAccountIndex = 0
   public consumerAddress = ''
   public providerAddress = ''
 
@@ -133,9 +140,20 @@ export class TestingApp {
 
   private async initBlockchainProvider (): Promise<void> {
     this.eth = ethFactory()
-    const [provider, consumer] = await this.eth.getAccounts()
+    const [provider, consumer, ...accounts] = await this.eth.getAccounts()
     this.providerAddress = provider
     this.consumerAddress = consumer
+    this.accounts = accounts
+  }
+
+  public getRandomAccount () {
+    const acc = this.accounts[this.nextAccountIndex]
+
+    if (!acc) {
+      throw new Error(`Are are used all of yours ${this.nextAccountIndex - 1} accounts`)
+    }
+    this.nextAccountIndex += 1
+    return acc
   }
 
   private async deployStorageManager (): Promise<void> {
@@ -227,6 +245,32 @@ export class TestingApp {
     })
   }
 
+  public async stake (amount: number | BigNumber, from: string, token?: string) {
+    const value = token ? 0 : amount
+    const stake = await this.stakingContract?.methods.stake(
+      amount,
+      token || ZERO_ADDRESS,
+      ZERO_BYTES_32
+    )
+    return await stake.send({
+      from,
+      gas: await stake.estimateGas({ from, value }),
+      value
+    })
+  }
+
+  public async unstake (amount: number, from: string, token?: string) {
+    const unstake = await this.stakingContract?.methods.unstake(
+      amount,
+      token || ZERO_ADDRESS,
+      ZERO_BYTES_32
+    )
+    return await unstake.send({
+      from,
+      gas: await unstake.estimateGas({ from })
+    })
+  }
+
   public async advanceBlock (): Promise<void> {
     if (!this.eth || !this.eth.currentProvider) {
       throw new Error('Eth was not initialized!')
@@ -247,4 +291,14 @@ export class TestingApp {
     await this.advanceBlock()
     await sleep(4000)
   }
+}
+
+export function getFeatherClient () {
+  const socket = io(`http://localhost:${config.get('port')}`)
+  const app = feathers()
+
+  // Set up Socket.io client with the socket
+  app.configure(socketio(socket))
+
+  return app
 }

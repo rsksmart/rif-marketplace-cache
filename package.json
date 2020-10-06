@@ -93,6 +93,7 @@
     "winston-transport": "^4.3.0"
   },
   "devDependencies": {
+    "@feathersjs/socketio-client": "^4.5.8",
     "@fluffy-spoon/substitute": "^1.145.0",
     "@oclif/dev-cli": "^1.22.2",
     "@oclif/test": "^1.2.6",
