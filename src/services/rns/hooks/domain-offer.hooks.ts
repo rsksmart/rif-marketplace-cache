@@ -10,7 +10,7 @@ const paginate = (context: HookContext): void => {
 
   if (typeof paginate !== 'undefined') {
     context.params.paginate = paginateOverride
-    delete context.params.query?.paginate
+    discardQuery('paginate')(context)
   }
 }
 
