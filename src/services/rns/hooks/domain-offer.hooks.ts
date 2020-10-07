@@ -6,10 +6,10 @@ import Domain from '../models/domain.model'
 import DomainExpiration from '../models/expiration.model'
 
 const paginate = (context: HookContext): void => {
-  const paginate = context.params.query?.paginate
+  const paginateOverride = context.params.query?.paginate
 
   if (typeof paginate !== 'undefined') {
-    context.params.paginate = paginate
+    context.params.paginate = paginateOverride
     delete context.params.query?.paginate
   }
 }
