@@ -97,15 +97,6 @@ describe('Storage services: Events Processor', () => {
     })
     describe('BillingPlanSet', () => {
       const token = '0x0000000000000000000000000000000000000000'
-      const billingEvent: EventData = eventMock({
-        event: 'BillingPlanSet',
-        returnValues: {
-          price: 1000,
-          period: 99,
-          token,
-          provider
-        }
-      })
       it('create new BillingPlan if not exist', async () => {
         const event = eventMock({
           event: 'BillingPlanSet',
@@ -128,6 +119,16 @@ describe('Storage services: Events Processor', () => {
         expect(billingPlan?.period).to.be.eql(new BigNumber(event.returnValues.period))
       })
       it('create new BillingPlan if has one with different period`', async () => {
+        const billingEvent: EventData = eventMock({
+          event: 'BillingPlanSet',
+          returnValues: {
+            price: 1000,
+            period: 99,
+            token,
+            provider
+          }
+        })
+
         await processor(billingEvent)
 
         const billingPlan = await BillingPlan.findOne({ where: { offerId: provider, period: '99', tokenAddress: token } })
@@ -139,6 +140,17 @@ describe('Storage services: Events Processor', () => {
         expect(billingPlan?.period).to.be.eql(new BigNumber(billingEvent.returnValues.period))
       })
       it('update BillingPlan', async () => {
+        const newPrice = 99999
+        const billingEvent: EventData = eventMock({
+          event: 'BillingPlanSet',
+          returnValues: {
+            price: newPrice,
+            period: 99,
+            token,
+            provider
+          }
+        })
+
         // Create new offer and billing plan
         const offer = await Offer.create({ provider })
         const billing = await BillingPlan.create({ offerId: offer.provider, period: 99, price: 1, tokenAddress: token, rateId: 'rbtc' })
@@ -146,9 +158,6 @@ describe('Storage services: Events Processor', () => {
         expect(billing?.price).to.be.eql(new BigNumber(1))
         expect(billing?.tokenAddress).to.be.eql(token)
         expect(billing).to.be.instanceOf(BillingPlan)
-
-        const newPrice = 99999
-        billingEvent.returnValues.price = newPrice
 
         await processor(billingEvent)
 
@@ -161,6 +170,16 @@ describe('Storage services: Events Processor', () => {
         expect(billingPlan?.period).to.be.eql(new BigNumber(billingEvent.returnValues.period))
       })
       it('should remove billing plan on price 0', async () => {
+        const billingEvent: EventData = eventMock({
+          event: 'BillingPlanSet',
+          returnValues: {
+            price: 0, // should remove billing plan on 0 price
+            period: 99,
+            token,
+            provider
+          }
+        })
+
         // Create new offer and billing plan
         const offer = await Offer.create({ provider })
         const billing = await BillingPlan.create({ offerId: offer.provider, period: 99, price: 1, tokenAddress: token, rateId: 'rbtc' })
@@ -168,9 +187,6 @@ describe('Storage services: Events Processor', () => {
         expect(billing?.price).to.be.eql(new BigNumber(1))
         expect(billing?.tokenAddress).to.be.eql(token)
         expect(billing).to.be.instanceOf(BillingPlan)
-
-        // should remove billing price
-        billingEvent.returnValues.price = 0
 
         await processor(billingEvent)
 
