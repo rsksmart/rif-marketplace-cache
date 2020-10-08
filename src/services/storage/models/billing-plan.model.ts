@@ -8,23 +8,23 @@ import Rate from '../../rates/rates.model'
 
 @Table({ freezeTableName: true, tableName: 'storage_billing-plan' })
 export default class BillingPlan extends Model {
-  @Column({ ...BigNumberStringType('period') })
+  @Column({ ...BigNumberStringType('period'), allowNull: false })
   period!: BigNumber
 
-  @Column({ ...BigNumberStringType('price') })
+  @Column({ ...BigNumberStringType('price'), allowNull: false })
   price!: BigNumber
 
-  @Column
+  @Column({ allowNull: false })
   tokenAddress!: string
 
   @ForeignKey(() => Offer)
-  @Column
+  @Column({ allowNull: false })
   offerId!: string
 
   @BelongsTo(() => Offer)
   offer!: Offer
 
   @ForeignKey(() => Rate)
-  @Column
+  @Column({ allowNull: false })
   rateId!: SupportedTokens
 }

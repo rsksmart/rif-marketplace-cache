@@ -221,22 +221,22 @@ describe('Models', () => {
         { provider: 'abc2', totalCapacity: 1234, peerId: '2' },
         { provider: 'abc3', totalCapacity: 1234, peerId: '2' }
       ])
-      const wei = 1000000000000000000
-      const pricePerDayPerGb = wei / 1024
-      await BillingPlan.bulkCreate([
-        { period: '86400', price: `${pricePerDayPerGb}`, token: '0x0000000000000000000000000000000000000000', offerId: 'abc', rateId: 'rbtc' },
-        { period: '604800', price: `${7 * pricePerDayPerGb}`, token: '0x12345', offerId: 'abc', rateId: 'rif' },
-        { period: '2592000', price: `${30 * pricePerDayPerGb}`, token: '0x0000000000000000000000000000000000000000', offerId: 'abc', rateId: 'rbtc' },
-        { period: '86400', price: `${2 * pricePerDayPerGb}`, token: '0x0000000000000000000000000000000000000000', offerId: 'abc2', rateId: 'rbtc' },
-        { period: '604800', price: `${2 * 7 * pricePerDayPerGb}`, token: '0x12345', offerId: 'abc2', rateId: 'rif' },
-        { period: '2592000', price: `${2 * 30 * pricePerDayPerGb}`, token: '0x0000000000000000000000000000000000000000', offerId: 'abc2', rateId: 'rbtc' },
-        { period: '86400', price: `${3 * pricePerDayPerGb}`, token: '0x0000000000000000000000000000000000000000', offerId: 'abc3', rateId: 'rbtc' },
-        { period: '604800', price: `${3 * 7 * pricePerDayPerGb}`, token: '0x12345', offerId: 'abc3', rateId: 'rif' },
-        { period: '2592000', price: `${3 * 30 * pricePerDayPerGb}`, token: '0x0000000000000000000000000000000000000000', offerId: 'abc3', rateId: 'rbtc' }
-      ])
       await Rate.bulkCreate([
         { token: 'rif', usd: 1 },
         { token: 'rbtc', usd: 1 }
+      ])
+      const wei = 1000000000000000000
+      const pricePerDayPerGb = wei / 1024
+      await BillingPlan.bulkCreate([
+        { period: '86400', price: `${pricePerDayPerGb}`, tokenAddress: '0x0000000000000000000000000000000000000000', offerId: 'abc', rateId: 'rbtc' },
+        { period: '604800', price: `${7 * pricePerDayPerGb}`, tokenAddress: '0x12345', offerId: 'abc', rateId: 'rif' },
+        { period: '2592000', price: `${30 * pricePerDayPerGb}`, tokenAddress: '0x0000000000000000000000000000000000000000', offerId: 'abc', rateId: 'rbtc' },
+        { period: '86400', price: `${2 * pricePerDayPerGb}`, tokenAddress: '0x0000000000000000000000000000000000000000', offerId: 'abc2', rateId: 'rbtc' },
+        { period: '604800', price: `${2 * 7 * pricePerDayPerGb}`, tokenAddress: '0x12345', offerId: 'abc2', rateId: 'rif' },
+        { period: '2592000', price: `${2 * 30 * pricePerDayPerGb}`, tokenAddress: '0x0000000000000000000000000000000000000000', offerId: 'abc2', rateId: 'rbtc' },
+        { period: '86400', price: `${3 * pricePerDayPerGb}`, tokenAddress: '0x0000000000000000000000000000000000000000', offerId: 'abc3', rateId: 'rbtc' },
+        { period: '604800', price: `${3 * 7 * pricePerDayPerGb}`, tokenAddress: '0x12345', offerId: 'abc3', rateId: 'rif' },
+        { period: '2592000', price: `${3 * 30 * pricePerDayPerGb}`, tokenAddress: '0x0000000000000000000000000000000000000000', offerId: 'abc3', rateId: 'rbtc' }
       ])
 
       expect((await Rate.findAll()).length).to.be.eql(2)
