@@ -4,7 +4,7 @@ module.exports = {
   },
   depCheck: {
     ignore: [
-      'cross-env', 'tasegir', 'reflect-metadata', 'socket.io-client', 'web3-core', '@types/*', 'sqlite3', '@oclif/*',
+      'cross-env', 'tasegir', 'reflect-metadata', '@types/*', 'sqlite3', '@oclif/*',
     ]
   }
 }
