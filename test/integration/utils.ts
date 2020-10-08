@@ -287,12 +287,12 @@ export class TestingApp {
     })
   }
 
-  async addConfirmations (): Promise<void> {
+  async addConfirmations (confirmations = 2): Promise<void> {
     await sleep(6000)
-    await this.advanceBlock()
-    await sleep(6000)
-    await this.advanceBlock()
-    await sleep(6000)
+    for (let i = 0; i < confirmations; i++) {
+      await this.advanceBlock()
+      await sleep(6000)
+    }
   }
 }
 
