@@ -7,6 +7,8 @@ import Offer from '../models/offer.model'
 import NotificationModel from '../../notification/notification.model'
 
 const logger = loggingFactory('storage:communication')
+// (offerId -> room) MAP
+const rooms = new Map()
 
 let libp2p: Libp2p
 
@@ -26,15 +28,16 @@ async function initCommunication (): Promise<void> {
 }
 
 async function handleMessage (message: any): Promise<void> {
-  // await NotificationModel.create({ title: 'Some titile',})
+  await NotificationModel.create({ title: '', type: message.code, payload: message.payload })
 }
 
-async function subscribeForOffers () {
-  const offers = await Offer.findAll()
-  offers.forEach(offer => {
+async function subscribeForOffers (): Promise<void> {
+  for (const offer of await Offer.findAll()) {
     const topic = getRoomTopic(offer.provider)
     const logger = loggingFactory(`storage:communication:room:${topic}`)
+
     const room = new Room(libp2p, topic)
+    rooms.set(offer.provider, room) // store room to be able to leave the channel when offer is terminated
 
     room.on('message', async ({ from, data }) => {
       if (from !== offer.peerId) {
@@ -43,5 +46,5 @@ async function subscribeForOffers () {
       await handleMessage(data)
     })
     room.on('error', (e) => logger.error(e))
-  })
+  }
 }
