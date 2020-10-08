@@ -18,8 +18,7 @@
   comms: {
     libp2p: {
       addresses: { listen: ['/ip4/127.0.0.1/tcp/0', '/ip4/127.0.0.1/tcp/0/ws'] }
-    },
-    countOfMessagesPersistedPerAgreement: 10
+    }
   },
 
   blockchain: {
