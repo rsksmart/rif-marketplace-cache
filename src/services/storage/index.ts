@@ -129,7 +129,7 @@ const storage: CachedService = {
 
     // Init AVG Billing plan service
     app.use(ServiceAddresses.AVG_BILLING_PRICE, new AvgBillingPriceService({ Model: BillingPlan }))
-    const avgBillingPlanService = app.service(ServiceAddresses.STORAGE_OFFERS)
+    const avgBillingPlanService = app.service(ServiceAddresses.AVG_BILLING_PRICE)
     avgBillingPlanService.hooks(avgBillingPlanHook)
 
     // Initialize Agreement service
