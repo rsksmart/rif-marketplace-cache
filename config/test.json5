@@ -2,6 +2,19 @@
   port: 3030,
   db: 'db_test.sqlite',
   dbBackUp: { blocks: 10, path:  'db-backups' },
+  comms: {
+    libp2p: {
+      config: {
+        peerDiscovery: {
+          bootstrap: {
+            enabled: true,
+            // Hardcoded address and port to PubSub Node server
+            list: ['/ip4/127.0.0.1/tcp/6030/p2p/QmbQJ4FyVBAar7rLwc1jjeJ6Nba6w2ddqczamJL6vTDrwm']
+          }
+        }
+      }
+    }
+  },
   blockchain: {
     provider: 'ws://localhost:8545',
     waitBlockCountBeforeConfirmationRemoved: 10
