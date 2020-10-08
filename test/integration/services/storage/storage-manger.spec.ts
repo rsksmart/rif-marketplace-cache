@@ -112,7 +112,7 @@ describe('Storage service', function () {
         const offer = offers[0]
         expect(offer.totalCapacity.toString()).to.be.eql(offerData.totalCapacity.toString())
         expect(offer.provider).to.be.eql(app.providerAddress)
-        expect(offer.peerId).to.be.eql('test')
+        expect(offer.peerId).to.be.eql(app.peerId?.id as string)
         expect(offer.plans.length).to.be.eql(2)
         expect(offer.plans[0].period.toString()).to.be.eql(offerData.periods[0].toString())
         expect(offer.plans[0].price.toString()).to.be.eql(offerData.prices[0].toString())
