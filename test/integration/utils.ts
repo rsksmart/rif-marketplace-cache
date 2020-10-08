@@ -47,6 +47,7 @@ export class TestingApp {
   public nextAccountIndex = 0
   public consumerAddress = ''
   public providerAddress = ''
+  public contractOwner = ''
 
   async initAndStart (options?: Partial<AppOptions>, force = false): Promise<void> {
     if (this.app && !force) {
@@ -58,16 +59,31 @@ export class TestingApp {
     this.logger.info('App started')
   }
 
+  async deployContracts () {
+    for (const service of Object.values(SupportedServices).filter(service => config.get(`${service}.enabled`))) {
+      switch (service) {
+        case SupportedServices.RNS:
+          // TODO: Deploy and configure RNS contracts
+          break
+        case SupportedServices.STORAGE:
+          await this.deployStorageManager()
+          await this.deployStaking()
+          // @ts-ignore
+          config.storage.storageManager.contractAddress = this.storageContract?.options.address
+          // @ts-ignore
+          config.storage.staking.contractAddress = this.stakingContract?.options.address
+          break
+        default:
+          return
+      }
+    }
+  }
+
   async init (): Promise<void> {
     // Init Blockchain Provider
     await this.initBlockchainProvider()
     // Deploy StorageManager for provider
-    await this.deployStorageManager()
-    await this.deployStaking()
-    // @ts-ignore
-    config.storage.storageManager.contractAddress = this.storageContract?.options.address
-    // @ts-ignore
-    config.storage.staking.contractAddress = this.stakingContract?.options.address
+    await this.deployContracts()
     // Remove current testing db
     await this.purgeDb()
     this.logger.info('Database removed')
@@ -89,7 +105,7 @@ export class TestingApp {
   }
 
   async start (options?: Partial<AppOptions>): Promise<void> {
-    // Run Pinning service
+    // Run Cache service
     const appOptions = Object.assign({
       appResetCallback: appResetCallbackSpy
     }, options) as AppOptions
@@ -123,6 +139,7 @@ export class TestingApp {
     this.storageContract = undefined
     this.consumerAddress = ''
     this.providerAddress = ''
+    this.contractOwner = ''
   }
 
   private async purgeDb (): Promise<void> {
@@ -139,7 +156,8 @@ export class TestingApp {
 
   private async initBlockchainProvider (): Promise<void> {
     this.eth = ethFactory()
-    const [provider, consumer, ...accounts] = await this.eth.getAccounts()
+    const [owner, provider, consumer, ...accounts] = await this.eth.getAccounts()
+    this.contractOwner = owner
     this.providerAddress = provider
     this.consumerAddress = consumer
     this.accounts = accounts
@@ -161,8 +179,8 @@ export class TestingApp {
     }
     const contract = new this.eth.Contract(storageManagerContract.abi as AbiItem[])
     const deploy = await contract.deploy({ data: storageManagerContract.bytecode })
-    this.storageContract = await deploy.send({ from: this.providerAddress, gas: await deploy.estimateGas() })
-    await this.storageContract?.methods.setWhitelistedTokens(ZERO_ADDRESS, true).send({ from: this.providerAddress })
+    this.storageContract = await deploy.send({ from: this.contractOwner, gas: await deploy.estimateGas() })
+    await this.storageContract?.methods.setWhitelistedTokens(ZERO_ADDRESS, true).send({ from: this.contractOwner })
   }
 
   private async deployStaking (): Promise<void> {
@@ -171,8 +189,8 @@ export class TestingApp {
     }
     const contract = new this.eth.Contract(stakingContract.abi as AbiItem[])
     const deploy = await contract.deploy({ arguments: [this.storageContract?.options.address], data: stakingContract.bytecode })
-    this.stakingContract = await deploy.send({ from: this.providerAddress, gas: await deploy.estimateGas() })
-    await this.stakingContract?.methods.setWhitelistedTokens(ZERO_ADDRESS, true).send({ from: this.providerAddress })
+    this.stakingContract = await deploy.send({ from: this.contractOwner, gas: await deploy.estimateGas() })
+    await this.stakingContract?.methods.setWhitelistedTokens(ZERO_ADDRESS, true).send({ from: this.contractOwner })
   }
 
   public async createOffer (offerData: Record<any, any>) {
