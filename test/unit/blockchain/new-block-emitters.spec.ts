@@ -7,12 +7,12 @@ import dirtyChai from 'dirty-chai'
 import { Arg, Substitute } from '@fluffy-spoon/substitute'
 import { BlockHeader, Eth } from 'web3-eth'
 
-import { blockMock, sleep, subscribeMock } from '../utils'
+import { blockMock, sleep, subscribeMock } from '../../utils'
 import {
   ListeningNewBlockEmitter,
   NEW_BLOCK_EVENT_NAME,
   PollingNewBlockEmitter
-} from '../../src/blockchain/new-block-emitters'
+} from '../../../src/blockchain/new-block-emitters'
 
 chai.use(sinonChai)
 chai.use(chaiAsPromised)

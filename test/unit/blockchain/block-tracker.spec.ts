@@ -3,7 +3,7 @@ import sinonChai from 'sinon-chai'
 import chaiAsPromised from 'chai-as-promised'
 import dirtyChai from 'dirty-chai'
 
-import { BlockTracker, BlockTrackerStore } from '../../src/blockchain/block-tracker'
+import { BlockTracker, BlockTrackerStore } from '../../../src/blockchain/block-tracker'
 
 chai.use(sinonChai)
 chai.use(chaiAsPromised)

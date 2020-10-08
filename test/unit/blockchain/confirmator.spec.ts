@@ -8,12 +8,12 @@ import { Sequelize } from 'sequelize-typescript'
 import { EventEmitter } from 'events'
 import sinonChai from 'sinon-chai'
 
-import Event from '../../src/blockchain/event.model'
-import { sequelizeFactory } from '../../src/sequelize'
-import { Confirmator, ConfirmatorService } from '../../src/blockchain/confirmator'
-import { eventMock, receiptMock, sleep } from '../utils'
-import { loggingFactory } from '../../src/logger'
-import { BlockTracker } from '../../src/blockchain/block-tracker'
+import Event from '../../../src/blockchain/event.model'
+import { sequelizeFactory } from '../../../src/sequelize'
+import { Confirmator, ConfirmatorService } from '../../../src/blockchain/confirmator'
+import { eventMock, receiptMock, sleep } from '../../utils'
+import { loggingFactory } from '../../../src/logger'
+import { BlockTracker } from '../../../src/blockchain/block-tracker'
 
 chai.use(sinonChai)
 chai.use(chaiAsPromised)

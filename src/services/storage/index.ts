@@ -19,6 +19,7 @@ import { getAvgMinMaxBillingPriceQuery } from './utils'
 import Agreement from './models/agreement.model'
 import Offer from './models/offer.model'
 import BillingPlan from './models/billing-plan.model'
+import StakeModel, { getStakesForAccount } from './models/stake.model'
 import offerHooks from './hooks/offers.hooks'
 import agreementHooks from './hooks/agreements.hooks'
 import stakeHooks from './hooks/stakes.hook'
@@ -26,7 +27,6 @@ import avgBillingPlanHook from './hooks/avg-billing-plan.hook'
 import eventProcessor from './storage.processor'
 import storageChannels from './storage.channels'
 import { sleep } from '../../../test/utils'
-import StakeModel from './models/stake.model'
 
 export class OfferService extends Service {
   emit?: Function
@@ -38,6 +38,14 @@ export class AgreementService extends Service {
 
 export class StakeService extends Service {
   emit?: Function
+
+  async get (account: string): Promise<number> {
+    const sequelize = this.Model.sequelize
+
+    const query = getStakesForAccount(sequelize, account)
+    const [{ totalStakedFiat }] = await sequelize.query(query, { type: QueryTypes.SELECT, raw: true })
+    return totalStakedFiat
+  }
 }
 
 export class AvgBillingPriceService extends Service {

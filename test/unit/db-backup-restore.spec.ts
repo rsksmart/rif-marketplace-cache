@@ -6,10 +6,10 @@ import sinonChai from 'sinon-chai'
 import { Eth } from 'web3-eth'
 import { Substitute, Arg } from '@fluffy-spoon/substitute'
 
-import DbBackUpJob from '../src/db-backup'
-import { blockMock, rmDir, sleep } from './utils'
-import { NEW_BLOCK_EVENT_NAME } from '../src/blockchain/new-block-emitters'
-import { DbBackUpConfig } from '../src/definitions'
+import DbBackUpJob from '../../src/db-backup'
+import { blockMock, rmDir, sleep } from '../utils'
+import { NEW_BLOCK_EVENT_NAME } from '../../src/blockchain/new-block-emitters'
+import { DbBackUpConfig } from '../../src/definitions'
 
 chai.use(sinonChai)
 const expect = chai.expect
@@ -93,6 +93,7 @@ describe('DB back-up/restore', function () {
 
       const job = new DbBackUpJob(Substitute.for<Eth>())
 
+      expect(job).to.be.instanceOf(DbBackUpJob)
       expect(fs.existsSync(dbPath)).to.be.true()
     })
     it('should make backup if not exist', async () => {

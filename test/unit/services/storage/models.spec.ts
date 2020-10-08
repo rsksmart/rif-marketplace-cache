@@ -3,15 +3,15 @@ import sinonChai from 'sinon-chai'
 import BigNumber from 'bignumber.js'
 import Sequelize, { literal } from 'sequelize'
 
-import Agreement from '../../../src/services/storage/models/agreement.model'
-import { sequelizeFactory } from '../../../src/sequelize'
+import Agreement from '../../../../src/services/storage/models/agreement.model'
+import { sequelizeFactory } from '../../../../src/sequelize'
 import Offer, {
   getBillingPriceAvgQuery,
   getStakesAggregateQuery
-} from '../../../src/services/storage/models/offer.model'
-import StakeModel from '../../../src/services/storage/models/stake.model'
-import BillingPlan from '../../../src/services/storage/models/billing-plan.model'
-import Rate from '../../../src/services/rates/rates.model'
+} from '../../../../src/services/storage/models/offer.model'
+import StakeModel from '../../../../src/services/storage/models/stake.model'
+import BillingPlan from '../../../../src/services/storage/models/billing-plan.model'
+import Rate from '../../../../src/services/rates/rates.model'
 
 chai.use(sinonChai)
 const expect = chai.expect

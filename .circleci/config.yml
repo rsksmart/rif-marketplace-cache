@@ -1,24 +1,53 @@
 version: 2.1
 
+commands:
+  install-deps:
+    steps:
+      - run:
+          name: "Install deps"
+          command: npm ci
+
+  run-rsk:
+    steps:
+      - run:
+          name: 'Install and Run RSK Node'
+          command: |
+            docker build -t regtest -f rskj.dockerfile .
+            docker run -d --name regtest-node-01  -p 4444:8545 -p 30305:30305 regtest
+
+  install-sqlite:
+    steps:
+      - run:
+          name: "Install SQLite"
+          command: npm install sqlite3
+
 jobs:
   check:
+    parameters:
+      cache:
+        type: boolean
+        default: true
     docker:
       - image: circleci/node:10
     steps:
       - checkout
-#      - restore_cache:
-#          keys:
-#            # when lock file changes, use increasingly general patterns to restore cache
-#            - node-v1-{{ .Branch }}-{{ checksum "package-lock.json" }}
-#            - node-v1-{{ .Branch }}-
-#            - node-v1-
-      - run:
-          name: "Install deps"
-          command: npm ci
-#      - save_cache:
-#          paths:
-#            - ./node_modules
-#          key: node-v1-{{ .Branch }}-{{ checksum "package-lock.json" }}
+      - when:
+          condition: <<parameters.cache>>
+          steps:
+            - restore_cache:
+                keys:
+                  # when lock file changes, use increasingly general patterns to restore cache
+                  - node-10-{{ .Branch }}-{{ checksum "package-lock.json" }}
+                  - node-10-{{ .Branch }}-
+                  - node-10-
+      - install-deps
+      - when:
+          condition: <<parameters.cache>>
+          steps:
+            - save_cache:
+                paths:
+                  - ./node_modules
+                key: node-10-{{ .Branch }}-{{ checksum "package-lock.json" }}
       - run:
           name: "Commit linting"
           command: |
@@ -35,35 +64,88 @@ jobs:
           name: "Types check"
           command: npx tasegir types-check
 
+
+  # Run test on top of Ganache
   node-tests:
     parameters:
       version:
         type: string
+      cache:
+        type: boolean
+        default: true
     docker:
       - image: circleci/node:<< parameters.version >>
+      - image: trufflesuite/ganache-cli
+        command: ganache-cli -i 8545 -e 100000000000 -l 100000000000
     environment:
       ALLOW_CONFIG_MUTATIONS: true
     steps:
       - checkout
+      - when:
+          condition: <<parameters.cache>>
+          steps:
+            - restore_cache:
+                keys:
+                  # when lock file changes, use increasingly general patterns to restore cache
+                  - node-<< parameters.version >>-{{ .Branch }}-{{ checksum "package-lock.json" }}
+                  - node-<< parameters.version >>-{{ .Branch }}-
+                  - node-<< parameters.version >>-
+      - install-deps
+      - when:
+          condition: <<parameters.cache>>
+          steps:
+            - save_cache:
+                paths:
+                  - ./node_modules
+                key: node-<< parameters.version >>-{{ .Branch }}-{{ checksum "package-lock.json" }}
+      - install-sqlite
       - run:
-          name: "Install deps"
-          command: npm ci
-#      - restore_cache:
-#          keys:
-#            # when lock file changes, use increasingly general patterns to restore cache
-#            - node-v1-{{ .Branch }}-{{ checksum "package-lock.json" }}
-#            - node-v1-{{ .Branch }}-
-#            - node-v1-
+          name: "Unit tests"
+          command: npx tasegir test --target node --files ./test/unit/*.spec.ts --files ./test/unit/**/*.spec.ts --files ./test/unit/**/**/*.spec.ts --reporter lcovonly -- --bail
       - run:
-          name: "Install sqlite"
-          command: npm install sqlite3
-      - run:
-          name: "Node tests"
-          command: npx tasegir test --target node --reporter lcovonly -- --bail
-#      - sonarcloud/scan
+          name: "Integration tests"
+          command: npx tasegir test --target node --files ./test/integration/**/*.spec.ts --files ./test/integration/**/**/*.spec.ts --reporter lcovonly -- --bail
 
-#orbs:
-#  sonarcloud: sonarsource/sonarcloud@1.0.1
+
+  # Run test on top of PSK node
+  node-tests-rsk:
+    parameters:
+      cache:
+        type: boolean
+        default: true
+      version:
+        type: string
+    docker:
+      - image: circleci/node:<< parameters.version >>
+
+    steps:
+      - setup_remote_docker
+      - checkout
+      - when:
+          condition: <<parameters.cache>>
+          steps:
+            - restore_cache:
+                keys:
+                  # when lock file changes, use increasingly general patterns to restore cache
+                  - node-<< parameters.version >>-{{ .Branch }}-{{ checksum "package-lock.json" }}
+                  - node-<< parameters.version >>-{{ .Branch }}-
+                  - node-<< parameters.version >>-
+      - install-deps
+      - when:
+          condition: <<parameters.cache>>
+          steps:
+            - save_cache:
+                paths:
+                  - ./node_modules
+                key: node-<< parameters.version >>-{{ .Branch }}-{{ checksum "package-lock.json" }}
+      - install-sqlite
+      - run-rsk
+      - run:
+          name: "Unit tests"
+          command: npx tasegir test --target node --files ./test/unit/*.spec.ts --files ./test/unit/**/*.spec.ts --files ./test/unit/**/**/*.spec.ts --reporter lcovonly -- --bail
+      - run:
+          name: "Integration tests"
+          command: npx tasegir test --target node --files ./test/integration/**/*.spec.ts --files ./test/integration/**/**/*.spec.ts --reporter lcovonly -- --bail
 
 workflows:
   test:
@@ -72,18 +154,21 @@ workflows:
       - node-tests:
           version: '10'
           name: node-10
-#          context: SonarCloud
           requires:
             - check
       - node-tests:
           version: '12'
           name: node-12
-#          context: SonarCloud
           requires:
             - check
       - node-tests:
           version: '14'
           name: node-14
-#          context: SonarCloud
           requires:
             - check
+#      - node-tests-rsk:
+#          version: '10'
+#          name: node-rsk
+#          requires:
+#            - check
+
