@@ -15,6 +15,7 @@ import stakingContract from '@rsksmart/rif-marketplace-storage/build/contracts/S
 import feathers from '@feathersjs/feathers'
 import socketio from '@feathersjs/socketio-client'
 import io from 'socket.io-client'
+import PeerId from 'peer-id'
 
 import { loggingFactory } from '../../src/logger'
 import { appFactory, AppOptions, services } from '../../src/app'
@@ -36,6 +37,38 @@ export function encodeHash (hash: string): string[] {
   return [asciiToHex(hash.slice(0, 32)), ...encodeHash(hash.slice(32))]
 }
 
+/**
+ * IN-PLACE prefix array!
+ * @param arr
+ * @param prefix
+ * @param lengthPerElement
+ */
+export function prefixArray (arr: string[], prefix: string, lengthPerElement = 32): string[] {
+  if (prefix.length >= lengthPerElement) {
+    throw new Error(`Too long prefix! Max ${lengthPerElement} chars!`)
+  }
+
+  const endingLength = lengthPerElement - prefix.length
+
+  let tmp
+  let carryOver = prefix
+  for (let i = 0; i < arr.length; i++) {
+    if (arr[i].length > lengthPerElement) {
+      throw new Error(`Element ${i} was longer then expected!`)
+    }
+
+    tmp = `${carryOver}${arr[i].slice(0, endingLength)}`
+    carryOver = arr[i].slice(endingLength)
+    arr[i] = tmp
+  }
+
+  if (carryOver) {
+    arr.push(carryOver)
+  }
+
+  return arr
+}
+
 export class TestingApp {
   private readonly logger = loggingFactory('test:test-app')
   private app: { stop: () => void, app: Application } | undefined
@@ -48,6 +81,7 @@ export class TestingApp {
   public consumerAddress = ''
   public providerAddress = ''
   public contractOwner = ''
+  public peerId: PeerId.JSONPeerId | undefined
 
   async initAndStart (options?: Partial<AppOptions>, force = false): Promise<void> {
     if (this.app && !force) {
@@ -80,6 +114,7 @@ export class TestingApp {
   }
 
   async init (): Promise<void> {
+    this.peerId = (await PeerId.create()).toJSON()
     // Init Blockchain Provider
     await this.initBlockchainProvider()
     // Deploy StorageManager for provider
@@ -199,7 +234,7 @@ export class TestingApp {
       [offerData.periods],
       [offerData.prices],
       [ZERO_ADDRESS],
-      [offerData.msg]
+      offerData.msg
     )
     return setOffer.send({
       from: this.providerAddress,

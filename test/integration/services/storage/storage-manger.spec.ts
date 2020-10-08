@@ -4,7 +4,7 @@ import sinonChai from 'sinon-chai'
 import BigNumber from 'bignumber.js'
 import { asciiToHex, hexToAscii } from 'web3-utils'
 
-import { getFeatherClient, TestingApp, ZERO_ADDRESS } from '../../utils'
+import { encodeHash, getFeatherClient, prefixArray, TestingApp, ZERO_ADDRESS } from '../../utils'
 import Offer from '../../../../src/services/storage/models/offer.model'
 import BillingPlan from '../../../../src/services/storage/models/billing-plan.model'
 import Rate from '../../../../src/services/rates/rates.model'
@@ -16,10 +16,10 @@ import { WEI } from '../../../../src/services/storage/utils'
 chai.use(sinonChai)
 const expect = chai.expect
 
-const generateMsg = (peerId = 'FakePeerId') => {
-  const testPeerIdHex = asciiToHex(peerId, 32).replace('0x', '')
-  const nodeIdFlag = '01'
-  return `0x${nodeIdFlag}${testPeerIdHex}`
+const generateMsg = (peerId: string) => {
+  const encodedPeerId = encodeHash(peerId).map(el => el.replace('0x', ''))
+  return prefixArray(encodedPeerId, '01', 64)
+    .map(el => `0x${el}`)
 }
 
 function randomStr (length = 32): string {
@@ -39,12 +39,14 @@ function generateCID (): string[] {
 describe('Storage service', function () {
   this.timeout(60000)
   let app: TestingApp
+  let encodedMessage: string[]
 
   before(async () => {
     // @ts-ignore
     config.rns.enabled = false
     app = new TestingApp()
     await app.initAndStart()
+    encodedMessage = generateMsg(app.peerId?.id as string)
   })
   after(async () => {
     await app.stop()
@@ -62,7 +64,7 @@ describe('Storage service', function () {
           totalCapacity: '1024',
           periods: [10],
           prices: [100],
-          msg: generateMsg('test')
+          msg: encodedMessage
         }
         await app.createOffer(offerData)
 
@@ -72,9 +74,9 @@ describe('Storage service', function () {
         expect(offers.length).to.be.eql(1)
 
         const offer = offers[0]
+        expect(offer.peerId).to.be.eql(app.peerId?.id as string)
         expect(offer.totalCapacity.toString()).to.be.eql(offerData.totalCapacity)
         expect(offer.provider).to.be.eql(app.providerAddress)
-        expect(offer.peerId).to.be.eql('test')
         expect(offer.plans.length).to.be.eql(1)
         expect(offer.plans[0].period.toString()).to.be.eql(offerData.periods[0].toString())
         expect(offer.plans[0].price.toString()).to.be.eql(offerData.prices[0].toString())
@@ -84,7 +86,7 @@ describe('Storage service', function () {
           totalCapacity: 2000,
           periods: [10, 100],
           prices: [200, 300],
-          msg: generateMsg('test')
+          msg: encodedMessage
         }
         const offerFromDb = await Offer.create({ provider: app.providerAddress, totalCapacity: 1000 })
         const planFromDb = await BillingPlan.create({
@@ -119,15 +121,16 @@ describe('Storage service', function () {
       })
     })
     describe('Agreements', () => {
-      const offerData = {
-        totalCapacity: 2000,
-        periods: [10, 2592000],
-        prices: [200, 300],
-        msg: generateMsg('test')
-      }
+      let offerData: Record<any, any>
       const size = 10
 
       before(async () => {
+        offerData = {
+          totalCapacity: 2000,
+          periods: [10, 2592000],
+          prices: [200, 300],
+          msg: encodedMessage
+        }
         await BillingPlan.destroy({ where: {} })
         await Agreement.destroy({ where: {} })
         await Offer.destroy({ where: {} })
@@ -318,7 +321,7 @@ describe('Storage service', function () {
           totalCapacity: 2000,
           periods: [86400, 604800],
           prices: [pricePerDayPerGb, 7 * pricePerDayPerGb],
-          msg: generateMsg('test')
+          msg: encodedMessage
         }
 
         await app.createOffer(offerData)
