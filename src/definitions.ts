@@ -11,6 +11,7 @@ import { ConfirmatorService } from './blockchain/confirmator'
 import { NewBlockEmitterService } from './blockchain/new-block-emitters'
 import { ReorgEmitterService } from './blockchain/reorg-emitter'
 import { NotificationService } from './services/notification'
+import { Options as Libp2pOptions } from "libp2p"
 
 export enum SupportedServices {
   STORAGE = 'storage',
@@ -140,8 +141,13 @@ export interface Config {
     path?: string
   }
 
-  notification: {
-    enabled: boolean
+  comms?: {
+    libp2p?: Libp2pOptions
+    countOfMessagesPersistedPerAgreement?: number
+  }
+
+  notification?: {
+    enabled?: boolean
   }
 
   blockchain?: {
