@@ -2,9 +2,9 @@ import config from 'config'
 import { createLibP2P, Room } from '@rsksmart/rif-communications-pubsub'
 import type Libp2p from 'libp2p'
 
-import { loggingFactory } from '../../../logger'
-import Offer from '../models/offer.model'
-import { Application, ServiceAddresses } from '../../../definitions'
+import { loggingFactory } from '../../logger'
+import Offer from './models/offer.model'
+import { Application, ServiceAddresses } from '../../definitions'
 
 const logger = loggingFactory('storage:communication')
 // (offerId -> room) MAP
@@ -45,6 +45,7 @@ async function subscribeForOffers (app: Application): Promise<void> {
       if (from !== offer.peerId) {
         return
       }
+      logger.debug(`Receive message: ${message}`)
       await handler(message)
     })
     room.on('error', (e) => logger.error(e))

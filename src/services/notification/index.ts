@@ -8,7 +8,7 @@ import notificationChannels from './notification.channels'
 import { loggingFactory } from '../../logger'
 import { waitForReadyApp } from '../../utils'
 import NotificationModel from './notification.model'
-import initCommunication, { getRooms } from '../storage/communication/index'
+import initCommunication, { getRooms } from '../storage/communication'
 import { sleep } from '../../../test/utils'
 
 export class NotificationService extends Service {
