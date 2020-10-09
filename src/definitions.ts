@@ -10,6 +10,7 @@ import type { RnsBaseService } from './services/rns'
 import { ConfirmatorService } from './blockchain/confirmator'
 import { NewBlockEmitterService } from './blockchain/new-block-emitters'
 import { ReorgEmitterService } from './blockchain/reorg-emitter'
+import { NotificationService } from './services/notification'
 
 export enum SupportedServices {
   STORAGE = 'storage',
@@ -24,6 +25,7 @@ export function isSupportedServices (value: any): value is SupportedServices {
 }
 
 export enum ServiceAddresses {
+  NOTIFICATION = '/notification',
   RNS_DOMAINS = '/rns/v0/domains',
   RNS_SOLD = '/rns/v0/sold',
   RNS_OFFERS = '/rns/v0/offers',
@@ -48,6 +50,7 @@ interface ServiceTypes {
   [ServiceAddresses.RNS_SOLD]: RnsBaseService & ServiceAddons<any>
   [ServiceAddresses.RNS_OFFERS]: RnsBaseService & ServiceAddons<any>
   [ServiceAddresses.CONFIRMATIONS]: ConfirmatorService & ServiceAddons<any>
+  [ServiceAddresses.NOTIFICATION]: NotificationService & ServiceAddons<any>
   [ServiceAddresses.NEW_BLOCK_EMITTER]: NewBlockEmitterService & ServiceAddons<any>
   [ServiceAddresses.REORG_EMITTER]: ReorgEmitterService & ServiceAddons<any>
 }
@@ -135,6 +138,10 @@ export interface Config {
     level?: string
     filter?: string
     path?: string
+  }
+
+  notification: {
+    enabled: boolean
   }
 
   blockchain?: {

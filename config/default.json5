@@ -21,6 +21,10 @@
     }
   },
 
+  notification: {
+    enabled: true
+  },
+
   blockchain: {
     // Number of blocks that is waited AFTER the event is confirmed before
     // it is removed from database.
