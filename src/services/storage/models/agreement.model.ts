@@ -104,6 +104,6 @@ export default class Agreement extends Model {
     if (!this.hasSufficientFunds) return new BigNumber(0)
     const availableFundsAfterPayout = this.availableFunds.minus(this.getToBePayedOut(false))
 
-    return availableFundsAfterPayout.div(this.periodPrice()).times(this.billingPeriod)
+    return bnFloor(availableFundsAfterPayout.div(this.periodPrice()).times(this.billingPeriod))
   }
 }
