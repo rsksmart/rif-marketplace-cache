@@ -258,6 +258,16 @@ const AGREEMENT_TEST_SCHEMA = [
           lastPayout: new Date(Date.now() - 2.5 * hour)
         },
         new BigNumber(1.5 * 3600)
+      ],
+      [
+        {
+          availableFunds: 100, // has for one period
+          size: 10,
+          billingPrice: 10,
+          billingPeriod: toSecond(hour),
+          lastPayout: new Date(Date.now() - 0.7 * hour) // period already started and has 0.3 hour left
+        },
+        new BigNumber(3600 * 0.3)
       ]
     ]
   }
