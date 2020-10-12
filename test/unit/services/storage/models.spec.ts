@@ -25,8 +25,9 @@ const generateModelGettersTests = (
       () => cases.forEach(([arg, exp]) => {
         it(`${fn} for ${JSON.stringify(arg)} should be ${exp}`,
           () => {
-            const model = modelFactory(arg)
-            expect((model as { [key: string]: any })[fn]).to.be.eql(exp)
+            const model = modelFactory(arg) as { [key: string]: any }
+            const value = model[fn]
+            expect(value).to.be.eql(exp)
           }
         )
       })
@@ -247,6 +248,16 @@ const AGREEMENT_TEST_SCHEMA = [
           lastPayout: new Date(Date.now() - 2 * hour)
         },
         new BigNumber(7200)
+      ],
+      [
+        {
+          availableFunds: 400, // enough for 2 periods
+          size: 10,
+          billingPrice: 10,
+          billingPeriod: toSecond(hour),
+          lastPayout: new Date(Date.now() - 2.5 * hour)
+        },
+        new BigNumber(1.5 * 3600)
       ]
     ]
   }
