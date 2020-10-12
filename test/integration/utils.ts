@@ -215,6 +215,7 @@ export class TestingApp {
     const contract = new this.eth.Contract(storageManagerContract.abi as AbiItem[])
     const deploy = await contract.deploy({ data: storageManagerContract.bytecode })
     this.storageContract = await deploy.send({ from: this.contractOwner, gas: await deploy.estimateGas() })
+    await this.storageContract?.methods.initialize().send({ from: this.contractOwner })
     await this.storageContract?.methods.setWhitelistedTokens(ZERO_ADDRESS, true).send({ from: this.contractOwner })
   }
 
