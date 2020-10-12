@@ -206,7 +206,7 @@ const AGREEMENT_TEST_SCHEMA = [
     ]
   },
   {
-    fn: 'expiredIn',
+    fn: 'expiresIn',
     cases: [
       [
         {
@@ -226,7 +226,7 @@ const AGREEMENT_TEST_SCHEMA = [
           billingPeriod: toSecond(hour),
           lastPayout: new Date(Date.now() - day)
         },
-        new BigNumber(60)
+        new BigNumber(3600)
       ],
       [
         {
@@ -246,7 +246,7 @@ const AGREEMENT_TEST_SCHEMA = [
           billingPeriod: toSecond(hour),
           lastPayout: new Date(Date.now() - 2 * hour)
         },
-        new BigNumber(120)
+        new BigNumber(7200)
       ]
     ]
   }
