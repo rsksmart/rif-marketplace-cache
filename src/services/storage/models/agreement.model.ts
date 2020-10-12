@@ -84,4 +84,15 @@ export default class Agreement extends Model {
   get hasSufficientFunds (): boolean {
     return this.availableFunds.minus(this.toBePayedOut).gte(this.periodPrice())
   }
+
+  /**
+   * Field represents the time (in seconds) until the agreement expires
+   */
+  @Column(DataType.VIRTUAL)
+  get expiresIn (): BigNumber {
+    if (!this.hasSufficientFunds) return new BigNumber(0)
+    const availableFundsAfterPayout = this.availableFunds.minus(this.toBePayedOut)
+
+    return bnFloor(availableFundsAfterPayout.div(this.periodPrice())).times(this.billingPeriod)
+  }
 }

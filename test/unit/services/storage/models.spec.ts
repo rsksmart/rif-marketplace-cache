@@ -204,6 +204,51 @@ const AGREEMENT_TEST_SCHEMA = [
         true
       ]
     ]
+  },
+  {
+    fn: 'expiresIn',
+    cases: [
+      [
+        {
+          availableFunds: 100, // Not enough for period
+          size: 10,
+          billingPrice: 10,
+          billingPeriod: toSecond(hour),
+          lastPayout: new Date(Date.now() - day)
+        },
+        new BigNumber(0)
+      ],
+      [
+        {
+          availableFunds: 2500, // enough for 1 period
+          size: 10,
+          billingPrice: 10,
+          billingPeriod: toSecond(hour),
+          lastPayout: new Date(Date.now() - day)
+        },
+        new BigNumber(3600)
+      ],
+      [
+        {
+          availableFunds: 250, // enough for half period
+          size: 10,
+          billingPrice: 10,
+          billingPeriod: toSecond(hour),
+          lastPayout: new Date(Date.now() - 2 * hour)
+        },
+        new BigNumber(0)
+      ],
+      [
+        {
+          availableFunds: 400, // enough for 2 periods
+          size: 10,
+          billingPrice: 10,
+          billingPeriod: toSecond(hour),
+          lastPayout: new Date(Date.now() - 2 * hour)
+        },
+        new BigNumber(7200)
+      ]
+    ]
   }
 ]
 
