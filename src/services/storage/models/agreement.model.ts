@@ -53,6 +53,23 @@ export default class Agreement extends Model {
     return this.size.times(this.billingPrice)
   }
 
+  getPeriodsSinceLastPayout (floor = true): BigNumber {
+    // Date.now = ms
+    // this.lastPayout.getTime = ms
+    // this.billingPeriod = seconds ==> * 1000
+    const periods = new BigNumber(Date.now() - this.lastPayout.getTime()).div(this.billingPeriod.times(1000))
+    return floor
+      ? bnFloor(periods)
+      : periods
+  }
+
+  getToBePayedOut (floor = true) {
+    const amountToPay = this.getPeriodsSinceLastPayout(floor).times(this.periodPrice())
+    return amountToPay.lte(this.availableFunds)
+      ? bnFloor(amountToPay)
+      : this.availableFunds
+  }
+
   @Column(DataType.VIRTUAL)
   get numberOfPrepaidPeriods (): BigNumber {
     return this.periodPrice().gt(0)
@@ -62,18 +79,12 @@ export default class Agreement extends Model {
 
   @Column(DataType.VIRTUAL)
   get periodsSinceLastPayout (): BigNumber {
-    // Date.now = ms
-    // this.lastPayout.getTime = ms
-    // this.billingPeriod = seconds ==> * 1000
-    return bnFloor(new BigNumber(Date.now() - this.lastPayout.getTime()).div(this.billingPeriod.times(1000)))
+    return this.getPeriodsSinceLastPayout()
   }
 
   @Column(DataType.VIRTUAL)
   get toBePayedOut (): BigNumber {
-    const amountToPay = this.periodsSinceLastPayout.times(this.periodPrice())
-    return amountToPay.lte(this.availableFunds)
-      ? amountToPay
-      : this.availableFunds
+    return this.getToBePayedOut()
   }
 
   /**
@@ -82,7 +93,7 @@ export default class Agreement extends Model {
    */
   @Column(DataType.VIRTUAL)
   get hasSufficientFunds (): boolean {
-    return this.availableFunds.minus(this.toBePayedOut).gte(this.periodPrice())
+    return this.availableFunds.minus(this.getToBePayedOut()).gte(this.periodPrice())
   }
 
   /**
@@ -91,8 +102,8 @@ export default class Agreement extends Model {
   @Column(DataType.VIRTUAL)
   get expiresIn (): BigNumber {
     if (!this.hasSufficientFunds) return new BigNumber(0)
-    const availableFundsAfterPayout = this.availableFunds.minus(this.toBePayedOut)
+    const availableFundsAfterPayout = this.availableFunds.minus(this.getToBePayedOut(false))
 
-    return bnFloor(availableFundsAfterPayout.div(this.periodPrice())).times(this.billingPeriod)
+    return bnFloor(availableFundsAfterPayout.div(this.periodPrice()).times(this.billingPeriod))
   }
 }
