@@ -80,7 +80,7 @@ export class Comms {
 
   async subscribeForOffers (): Promise<void> {
     if (!this.messageHandler || !this.libp2p) {
-      throw new Error('Libp2p not initialized')
+      logger.debug('Libp2p not initialized')
     }
     for (const offer of await Offer.findAll()) {
       this.subscribeForOffer(offer)

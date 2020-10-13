@@ -91,7 +91,7 @@ const handlers: { [key: string]: Function } = {
 
 const handler: Handler<StorageServices> = {
   events: ['TotalCapacitySet', 'MessageEmitted', 'BillingPlanSet'],
-  async process (event: EventData, { offerService }: StorageServices): Promise<void> {
+  async process (event: EventData, { offerService }: StorageServices, { comms }): Promise<void> {
     const provider = event.returnValues.provider
 
     // TODO: Ignored until https://github.com/sequelize/sequelize/pull/11924
@@ -100,6 +100,11 @@ const handler: Handler<StorageServices> = {
 
     if (created) {
       logger.info(`Created new StorageOffer for ${provider}`)
+
+      // Join to libp2p room for that offer
+      if (comms) {
+        comms.subscribeForOffer(offer)
+      }
     }
 
     if (offerService.emit && created) {

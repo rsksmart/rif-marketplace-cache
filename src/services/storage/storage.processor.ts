@@ -6,14 +6,15 @@ import stake from './handlers/stake'
 import { Handler } from '../../definitions'
 import { Eth } from 'web3-eth'
 import { StorageServices } from './index'
+import { Comms } from '../../communication'
 
 const HANDLERS: Handler<StorageServices>[] = [offer, request, stake]
 
-export default function (services: StorageServices, eth: Eth) {
+export default function (services: StorageServices, deps: { eth?: Eth, comms?: Comms }) {
   return async (event: EventData): Promise<void> => {
     const promises = HANDLERS
       .filter(handler => handler.events.includes(event.event))
-      .map(handler => handler.process(event, services, eth))
+      .map(handler => handler.process(event, services, deps))
     await Promise.all(promises)
   }
 }
