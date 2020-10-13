@@ -44,7 +44,7 @@ describe('Storage services: Events Processor', () => {
 
     before(() => {
       offerService = new OfferService({ Model: Offer })
-      processor = eventProcessor({ offerService } as StorageServices, eth)
+      processor = eventProcessor({ offerService } as StorageServices, { eth })
       offerServiceEmitSpy = sinon.spy()
       offerService.emit = offerServiceEmitSpy
     })
@@ -270,7 +270,7 @@ describe('Storage services: Events Processor', () => {
 
     before(async () => {
       agreementService = new AgreementService({ Model: Agreement })
-      processor = eventProcessor({ agreementService } as StorageServices, eth)
+      processor = eventProcessor({ agreementService } as StorageServices, { eth })
       agreementServiceEmitSpy = sinon.spy()
       agreementService.emit = agreementServiceEmitSpy
       const mockedBlock = blockMock(blockNumber, '0x0111', { timestamp: (new Date()).getTime() })
@@ -452,7 +452,7 @@ describe('Storage services: Events Processor', () => {
 
     before(() => {
       stakeService = new StakeService({ Model: StakeModel })
-      processor = eventProcessor({ stakeService } as StorageServices, eth)
+      processor = eventProcessor({ stakeService } as StorageServices, { eth })
       stakeServiceEmitSpy = sinon.spy()
       stakeService.emit = stakeServiceEmitSpy
     })

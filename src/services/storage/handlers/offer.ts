@@ -102,7 +102,7 @@ const handler: Handler<StorageServices> = {
       logger.info(`Created new StorageOffer for ${provider}`)
 
       // Join to libp2p room for that offer
-      if (comms) {
+      if (comms && comms.libp2p) {
         comms.subscribeForOffer(offer)
       }
     }

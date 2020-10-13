@@ -9,7 +9,7 @@ import { JsonSerializable } from '@rsksmart/rif-communications-pubsub/types/defi
 import { NotificationService } from './services/notification'
 import { Application } from './definitions'
 
-const logger = loggingFactory('storage:communication')
+const logger = loggingFactory('communication')
 
 type MessageHandler = (message: JsonSerializable) => Promise<void>
 
@@ -60,7 +60,7 @@ export class Comms {
       throw new Error('Libp2p not initialized')
     }
     const topic = getRoomTopic(offer.provider)
-    const logger = loggingFactory(`storage:communication:room:${topic}`)
+    const logger = loggingFactory(`communication:room:${topic}`)
     const room = new Room(this.libp2p, topic)
     logger.info(`Created room for topic: ${topic}`)
     rooms.set(topic, room) // store room to be able to leave the channel when offer is terminated

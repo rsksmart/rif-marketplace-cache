@@ -21,6 +21,7 @@ import authentication from './services/authentication'
 import storage from './services/storage'
 import rates from './services/rates'
 import rns from './services/rns'
+import notification from './services/notification'
 import { REORG_OUT_OF_RANGE_EVENT_NAME } from './blockchain/events'
 
 const logger = loggingFactory()
@@ -28,7 +29,8 @@ const logger = loggingFactory()
 export const services = {
   [SupportedServices.STORAGE]: storage,
   [SupportedServices.RATES]: rates,
-  [SupportedServices.RNS]: rns
+  [SupportedServices.RNS]: rns,
+  [SupportedServices.NOTIFICATION]: notification
 }
 
 export type AppOptions = { appResetCallBack: (...args: any) => void }

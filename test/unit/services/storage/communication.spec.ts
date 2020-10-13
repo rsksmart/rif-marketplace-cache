@@ -57,7 +57,7 @@ function awaitForPeerJoined (room: Room) {
   })
 }
 
-describe.only('Communication', function () {
+describe.skip('Communication', function () {
   this.timeout(200000)
   let offer: Offer
   let roomPinner: Room
