@@ -8,7 +8,10 @@ import notificationChannels from './notification.channels'
 import { loggingFactory } from '../../logger'
 import { waitForReadyApp } from '../../utils'
 import NotificationModel from './notification.model'
-import initCommunication, { getRooms } from '../storage/communication'
+import {
+  messageHandler,
+  Comms
+} from '../../communication'
 import { sleep } from '../../../test/utils'
 
 export class NotificationService extends Service {
@@ -36,16 +39,16 @@ const notification: CachedService = {
     app.configure(notificationChannels)
 
     // Init comms
-    await initCommunication(app)
+    const comms = app.get('comms') as Comms
+    await comms.init(messageHandler(notificationService))
+    await comms.subscribeForOffers()
 
     // TODO Pre-populate latest messages using rebroadcast feature
     // await this.precache()
 
     return {
       stop: () => {
-        for (const [, room] of getRooms()) {
-          room.clearListeners()
-        }
+        comms.stop()
       }
     }
   },

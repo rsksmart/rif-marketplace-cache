@@ -6,9 +6,15 @@ import PeerId from 'peer-id'
 import { createLibP2P, Message, Room } from '@rsksmart/rif-communications-pubsub'
 
 import { sequelizeFactory } from '../../../../src/sequelize'
-import initComms, { getRoomTopic } from '../../../../src/services/storage/communication'
+import {
+  Comms,
+  getRoomTopic,
+  messageHandler,
+} from '../../../../src/communication'
 import Offer from '../../../../src/services/storage/models/offer.model'
 import { sleep } from '../../../utils'
+import { loggingFactory } from '../../../../src/logger'
+import { NotificationService } from '../../../../src/services/notification'
 
 chai.use(sinonChai)
 chai.use(chaiAsPromised)
@@ -17,6 +23,7 @@ const expect = chai.expect
 
 async function createPinnerLibp2p (peerId: PeerId, offerId: string): Promise<Room> {
   const roomName = getRoomTopic(offerId)
+  const logger = loggingFactory(`test:comms:room${roomName}`)
   const libp2p = await createLibP2P({
     addresses: { listen: ['/ip4/127.0.0.1/tcp/0'] },
     peerId: peerId,
@@ -29,21 +36,32 @@ async function createPinnerLibp2p (peerId: PeerId, offerId: string): Promise<Roo
     }
   })
 
-  console.log(`Listening on room ${roomName}`)
+  logger.info(`Listening on room ${roomName}`)
   const roomPinner = new Room(libp2p, roomName, { pollInterval: 100 })
 
-  roomPinner.on('peer:joined', (peer) => console.log(`${roomName}: peer ${peer} joined`))
-  roomPinner.on('peer:left', (peer) => console.log(`${roomName}: peer ${peer} left`))
+  roomPinner.on('peer:joined', (peer) => logger.info(`${roomName}: peer ${peer} joined`))
+  roomPinner.on('peer:left', (peer) => logger.info(`${roomName}: peer ${peer} left`))
   roomPinner.on('message', (msg: Message) => {
-    console.log(`Pubsub message ${(msg as any).data.code}:`, msg.data)
+    logger.info(`Pubsub message ${(msg as any).data.code}:`, msg.data)
   })
+  roomPinner.on('error', (e) => logger.error(e))
   return roomPinner
+}
+
+function awaitForPeerJoined (room: Room) {
+  return new Promise(resolve => {
+    room.on('peer:joined', (peer) => {
+      console.log(`Peer joined: ${peer}`)
+      resolve()
+    })
+  })
 }
 
 describe.only('Communication', function () {
   this.timeout(200000)
   let offer: Offer
   let roomPinner: Room
+  let comms: Comms
   const sequelize = sequelizeFactory()
 
   before(async () => {
@@ -53,13 +71,20 @@ describe.only('Communication', function () {
 
     // Create PubSub room to listen on events
     roomPinner = await createPinnerLibp2p(peerId, offer.provider)
+
+    // Init comms
+    comms = new Comms()
+    await comms.init(messageHandler({} as NotificationService))
+    // Subscribe for offers
+    await comms.subscribeForOffers()
+    // Await for nodes find each other
+    await awaitForPeerJoined(roomPinner)
   })
   it('Should create notification', async () => {
-    // Init comms
-    await initComms({} as any)
-    await sleep(30000)
+    const room = comms.getRoom(getRoomTopic(offer.provider))
     // Send message
-    await roomPinner.broadcast({ message: 'Hi there' })
+    await room?.broadcast({ message: 'Hi from cache' })
+    await roomPinner.broadcast({ message: 'Hi from pinner' })
     await sleep(10000)
   })
 })
