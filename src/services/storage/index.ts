@@ -164,6 +164,10 @@ const storage: CachedService = {
 
     const eth = app.get('eth') as Eth
     const comms = app.get('comms') as Comms
+    // Init comms
+    await comms.init()
+    await comms.subscribeForOffers()
+
     const confirmationService = app.service(ServiceAddresses.CONFIRMATIONS)
 
     // Storage Manager watcher

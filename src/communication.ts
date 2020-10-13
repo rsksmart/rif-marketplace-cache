@@ -20,11 +20,14 @@ export function getRoomTopic (offerId: string): string {
   return `${config.get<string>('blockchain.networkId')}:${offerId}`
 }
 
-export function messageHandler (notificationService: NotificationService): (message: any) => Promise<void> {
+export function messageHandler (notificationService?: NotificationService): (message: any) => Promise<void> {
   // TODO add GC for notification
   return async function (message: any): Promise<void> {
-    // await notificationService.create({ title: '', type: message.code, payload: message.payload })
-    await NotificationModel.create({ title: '', type: message.code, payload: message.payload })
+    if (!notificationService) {
+      NotificationModel.create({ title: '', type: message.code, payload: message.payload })
+    } else {
+      await notificationService.create({ title: '', type: message.code, payload: message.payload })
+    }
   }
 }
 
@@ -36,8 +39,12 @@ export function initLibp2p (): Promise<any> {
 }
 
 export class Comms {
-  libp2p: any
-  messageHandler: MessageHandler | undefined
+  public libp2p: any
+  private _messageHandler: MessageHandler = messageHandler()
+
+  set messageHandler (handler: MessageHandler) {
+    this._messageHandler = handler
+  }
 
   get rooms (): Map<string, Room> {
     return rooms
@@ -47,16 +54,15 @@ export class Comms {
     return rooms.get(topic)
   }
 
-  async init (messageHandler: MessageHandler): Promise<void> {
+  async init (): Promise<void> {
     if (this.libp2p) {
       throw new Error('libp2p node already spawned')
     }
-    this.messageHandler = messageHandler
     this.libp2p = await initLibp2p()
   }
 
   subscribeForOffer (offer: Offer): void {
-    if (!this.messageHandler || !this.libp2p) {
+    if (!this.libp2p) {
       throw new Error('Libp2p not initialized')
     }
     const topic = getRoomTopic(offer.provider)
@@ -79,7 +85,7 @@ export class Comms {
   }
 
   async subscribeForOffers (): Promise<void> {
-    if (!this.messageHandler || !this.libp2p) {
+    if (!this.libp2p) {
       logger.debug('Libp2p not initialized')
     }
     for (const offer of await Offer.findAll()) {

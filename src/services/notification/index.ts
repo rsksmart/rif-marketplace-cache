@@ -40,8 +40,7 @@ const notification: CachedService = {
 
     // Init comms
     const comms = app.get('comms') as Comms
-    await comms.init(messageHandler(notificationService))
-    await comms.subscribeForOffers()
+    comms.messageHandler = messageHandler(notificationService)
 
     // TODO Pre-populate latest messages using rebroadcast feature
     // await this.precache()
