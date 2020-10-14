@@ -1,6 +1,7 @@
 import config from 'config'
 import { createLibP2P, Room, Message } from '@rsksmart/rif-communications-pubsub'
-// import type Libp2p from 'libp2p'
+import type Libp2p from 'libp2p'
+import PeerId from 'peer-id'
 
 import { loggingFactory } from './logger'
 import Offer from './services/storage/models/offer.model'
@@ -31,15 +32,15 @@ export function messageHandler (notificationService?: NotificationService): (mes
   }
 }
 
-export function initLibp2p (): Promise<any> {
+export async function initLibp2p (): Promise<Libp2p> {
   const libp2pConf = config.get<object>('comms.libp2p')
   logger.info('Spawn libp2p node')
-
-  return createLibP2P(libp2pConf)
+  const peerId = await PeerId.create()
+  return createLibP2P({ ...libp2pConf, peerId })
 }
 
 export class Comms {
-  public libp2p: any
+  public libp2p: Libp2p | undefined
   private _messageHandler: MessageHandler = messageHandler()
 
   set messageHandler (handler: MessageHandler) {
@@ -72,15 +73,18 @@ export class Comms {
     rooms.set(topic, room) // store room to be able to leave the channel when offer is terminated
 
     room.on('message', async ({ from, data: message }: Message) => {
+      // Ignore message from itself
+      if (from === this.libp2p!.peerId.toJSON().id) return
+
       logger.info(`Receive message: ${JSON.stringify(message)}`)
 
       if (from !== offer.peerId) {
         return
       }
-      await this.messageHandler?.(message)
+      await this._messageHandler(message)
     })
-    room.on('peer:joined', (peer) => logger.info(`${topic}: peer ${peer} joined`))
-    room.on('peer:left', (peer) => logger.info(`${topic}: peer ${peer} left`))
+    room.on('peer:joined', (peer) => logger.debug(`${topic}: peer ${peer} joined`))
+    room.on('peer:left', (peer) => logger.debug(`${topic}: peer ${peer} left`))
     room.on('error', (e) => logger.error(e))
   }
 

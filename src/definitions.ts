@@ -3,7 +3,7 @@ import { ServiceAddons } from '@feathersjs/feathers'
 import * as Parser from '@oclif/parser'
 import { EventData } from 'web3-eth-contract'
 import { Eth } from 'web3-eth'
-// import type { Options as Libp2pOptions } from 'libp2p'
+import type { Options as Libp2pOptions } from 'libp2p'
 
 import type { AvgBillingPriceService, AgreementService, OfferService, StakeService } from './services/storage'
 import type { RatesService } from './services/rates'
@@ -144,7 +144,7 @@ export interface Config {
   }
 
   comms?: {
-    libp2p?: any
+    libp2p?: Libp2pOptions
     countOfMessagesPersistedPerAgreement?: number
   }
 

@@ -9,7 +9,6 @@ import { sequelizeFactory } from '../../../../src/sequelize'
 import {
   Comms,
   getRoomTopic,
-  messageHandler,
 } from '../../../../src/communication'
 import Offer from '../../../../src/services/storage/models/offer.model'
 import { sleep } from '../../../utils'
@@ -23,7 +22,7 @@ const expect = chai.expect
 
 async function createPinnerLibp2p (peerId: PeerId, offerId: string): Promise<Room> {
   const roomName = getRoomTopic(offerId)
-  const logger = loggingFactory(`test:comms:room${roomName}`)
+  const logger = loggingFactory(`test:comms:room:${roomName}`)
   const libp2p = await createLibP2P({
     addresses: { listen: ['/ip4/127.0.0.1/tcp/0'] },
     peerId: peerId,
@@ -35,14 +34,15 @@ async function createPinnerLibp2p (peerId: PeerId, offerId: string): Promise<Roo
       }
     }
   })
-
   logger.info(`Listening on room ${roomName}`)
+
   const roomPinner = new Room(libp2p, roomName, { pollInterval: 100 })
 
-  roomPinner.on('peer:joined', (peer) => logger.info(`${roomName}: peer ${peer} joined`))
-  roomPinner.on('peer:left', (peer) => logger.info(`${roomName}: peer ${peer} left`))
+  roomPinner.on('peer:joined', (peer) => logger.debug(`${roomName}: peer ${peer} joined`))
+  roomPinner.on('peer:left', (peer) => logger.debug(`${roomName}: peer ${peer} left`))
   roomPinner.on('message', (msg: Message) => {
-    logger.info(`Pubsub message ${(msg as any).data.code}:`, msg.data)
+    if (msg.from === libp2p.peerId.toJSON().id) return
+    logger.info(`Receive message: ${JSON.stringify(msg.data)}`)
   })
   roomPinner.on('error', (e) => logger.error(e))
   return roomPinner
@@ -51,16 +51,16 @@ async function createPinnerLibp2p (peerId: PeerId, offerId: string): Promise<Roo
 function awaitForPeerJoined (room: Room) {
   return new Promise(resolve => {
     room.on('peer:joined', (peer) => {
-      console.log(`Peer joined: ${peer}`)
       resolve()
     })
   })
 }
 
-describe.skip('Communication', function () {
+describe.only('Communication', function () {
   this.timeout(200000)
   let offer: Offer
   let roomPinner: Room
+  let room: Room
   let comms: Comms
   const sequelize = sequelizeFactory()
 
@@ -74,14 +74,14 @@ describe.skip('Communication', function () {
 
     // Init comms
     comms = new Comms()
-    await comms.init(messageHandler({} as NotificationService))
+    await comms.init()
     // Subscribe for offers
     await comms.subscribeForOffers()
+    room = comms.getRoom(getRoomTopic(offer.provider)) as Room
     // Await for nodes find each other
     await awaitForPeerJoined(roomPinner)
   })
   it('Should create notification', async () => {
-    const room = comms.getRoom(getRoomTopic(offer.provider))
     // Send message
     await room?.broadcast({ message: 'Hi from cache' })
     await roomPinner.broadcast({ message: 'Hi from pinner' })
