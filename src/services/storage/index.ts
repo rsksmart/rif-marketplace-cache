@@ -164,6 +164,7 @@ const storage: CachedService = {
 
     const eth = app.get('eth') as Eth
     const comms = app.get('comms') as Comms
+
     // Init comms
     await comms.init()
     await comms.subscribeForOffers()

@@ -71,25 +71,27 @@ export class Comms {
       throw new Error('Libp2p not initialized')
     }
     const topic = getRoomTopic(offer.provider)
-    const logger = loggingFactory(`communication:room:${topic}`)
+    const roomLogger = loggingFactory(`communication:room:${topic}`)
     const room = new Room(this.libp2p, topic)
-    logger.info(`Created room for topic: ${topic}`)
+    roomLogger.info(`Created room for topic: ${topic}`)
     rooms.set(topic, room) // store room to be able to leave the channel when offer is terminated
 
     room.on('message', async ({ from, data: message }: Message<any>) => {
       // Ignore message from itself
-      if (from === this.libp2p!.peerId.toJSON().id) return
+      if (from === this.libp2p?.peerId.toJSON().id) {
+        return
+      }
 
-      logger.info(`Receive message: ${JSON.stringify(message)}`)
+      roomLogger.info(`Receive message: ${JSON.stringify(message)}`)
 
       if (from !== offer.peerId) {
         return
       }
       await this._messageHandler(message as CommsMessage<CommsPayloads>)
     })
-    room.on('peer:joined', (peer) => logger.debug(`${topic}: peer ${peer} joined`))
-    room.on('peer:left', (peer) => logger.debug(`${topic}: peer ${peer} left`))
-    room.on('error', (e) => logger.error(e))
+    room.on('peer:joined', (peer) => roomLogger.debug(`${topic}: peer ${peer} joined`))
+    room.on('peer:left', (peer) => roomLogger.debug(`${topic}: peer ${peer} left`))
+    room.on('error', (e) => roomLogger.error(e))
   }
 
   async subscribeForOffers (): Promise<void> {
