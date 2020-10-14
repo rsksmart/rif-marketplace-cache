@@ -3,7 +3,7 @@ import { Substitute } from '@fluffy-spoon/substitute'
 import { EventData } from 'web3-eth-contract'
 import fs from 'fs'
 import path from 'path'
-import Libp2p from "libp2p"
+import Libp2p from 'libp2p'
 import { createLibP2P, Message, Room } from '@rsksmart/rif-communications-pubsub'
 import { getRoomTopic } from '../src/communication'
 import { loggingFactory } from '../src/logger'
