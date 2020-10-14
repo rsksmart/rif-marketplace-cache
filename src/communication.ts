@@ -8,6 +8,7 @@ import Offer from './services/storage/models/offer.model'
 import NotificationModel from './services/notification/notification.model'
 import { NotificationService } from './services/notification'
 import { Application, CommsMessage, CommsPayloads, MessageHandler } from './definitions'
+import Agreement from './services/storage/models/agreement.model'
 
 const logger = loggingFactory('communication')
 // (offerId -> room) MAP
@@ -22,10 +23,12 @@ export function messageHandler (
 ): (message: CommsMessage<CommsPayloads>) => Promise<void> {
   // TODO add GC for notification
   return async function (message: CommsMessage<CommsPayloads>): Promise<void> {
+    const agreement = await Agreement.findOne({ where: { agreementReference: message.payload.agreementReference } })
+
     if (!notificationService) {
-      NotificationModel.create({ title: '', type: message.code, payload: message.payload })
+      NotificationModel.create({ account: agreement?.consumer, type: message.code, payload: message.payload })
     } else {
-      await notificationService.create({ title: '', type: message.code, payload: message.payload })
+      await notificationService.create({ account: agreement?.consumer, type: message.code, payload: message.payload })
     }
   }
 }
