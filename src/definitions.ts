@@ -260,3 +260,69 @@ export interface Handler<T> {
   events: string[]
   process: (event: EventData, services: T, deps: { eth?: Eth, comms?: Comms }) => Promise<void>
 }
+
+/****************************************************************************************
+ * Communications
+ */
+
+export enum MessageCodesEnum {
+  I_GENERAL = 'I_GEN',
+  I_AGREEMENT_NEW = 'I_AGR_NEW',
+  I_AGREEMENT_STOPPED = 'I_AGR_STOP',
+  I_AGREEMENT_EXPIRED = 'I_AGR_EXP',
+  I_HASH_START = 'I_HASH_START',
+  I_HASH_PINNED = 'I_HASH_STOP',
+  I_MULTIADDR_ANNOUNCEMENT = 'I_ADDR_ANNOUNCE',
+  I_RESEND_LATEST_MESSAGES = 'I_RESEND',
+  W_GENERAL = 'W_GEN',
+  W_HASH_RETRY = 'W_HASH_RETRY',
+  E_GENERAL = 'E_GEN',
+  E_HASH_NOT_FOUND = 'E_HASH_404',
+  E_AGREEMENT_SIZE_LIMIT_EXCEEDED = 'E_AGR_SIZE_OVERFLOW'
+}
+
+interface BasePayload {
+  agreementReference: string
+}
+
+export interface RetryPayload extends BasePayload {
+  error: string
+  retryNumber: number
+  totalRetries: number
+}
+
+export interface HashInfoPayload extends BasePayload {
+  hash: string
+}
+
+export type AgreementInfoPayload = BasePayload
+
+export interface AgreementSizeExceededPayload extends BasePayload {
+  hash: string
+  size: number
+  expectedSize: number
+}
+
+// Incoming messages
+
+export interface MultiaddrAnnouncementPayload {
+  agreementReference: string
+  peerId: string
+}
+
+export interface ResendMessagesPayload {
+  requestId: string
+  agreementReference: string
+  code?: string
+}
+
+export interface CommsMessage<Payload> {
+  timestamp: number
+  version: number
+  code: string
+  payload: Payload
+}
+
+export type CommsPayloads = ResendMessagesPayload | MultiaddrAnnouncementPayload | AgreementSizeExceededPayload | AgreementInfoPayload | HashInfoPayload | RetryPayload
+
+export type MessageHandler = (message: CommsMessage<CommsPayloads>) => Promise<void>

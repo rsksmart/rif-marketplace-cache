@@ -6,14 +6,10 @@ import PeerId from 'peer-id'
 import { loggingFactory } from './logger'
 import Offer from './services/storage/models/offer.model'
 import NotificationModel from './services/notification/notification.model'
-import { JsonSerializable } from '@rsksmart/rif-communications-pubsub/types/definitions'
 import { NotificationService } from './services/notification'
-import { Application } from './definitions'
+import { Application, CommsMessage, CommsPayloads, MessageHandler } from './definitions'
 
 const logger = loggingFactory('communication')
-
-type MessageHandler = (message: JsonSerializable) => Promise<void>
-
 // (offerId -> room) MAP
 const rooms = new Map<string, Room>()
 
@@ -21,9 +17,11 @@ export function getRoomTopic (offerId: string): string {
   return `${config.get<string>('blockchain.networkId')}:${offerId}`
 }
 
-export function messageHandler (notificationService?: NotificationService): (message: any) => Promise<void> {
+export function messageHandler (
+  notificationService?: NotificationService
+): (message: CommsMessage<CommsPayloads>) => Promise<void> {
   // TODO add GC for notification
-  return async function (message: any): Promise<void> {
+  return async function (message: CommsMessage<CommsPayloads>): Promise<void> {
     if (!notificationService) {
       NotificationModel.create({ title: '', type: message.code, payload: message.payload })
     } else {
@@ -35,8 +33,7 @@ export function messageHandler (notificationService?: NotificationService): (mes
 export async function initLibp2p (): Promise<Libp2p> {
   const libp2pConf = config.get<object>('comms.libp2p')
   logger.info('Spawn libp2p node')
-  const peerId = await PeerId.create()
-  return createLibP2P({ ...libp2pConf, peerId })
+  return createLibP2P({ ...libp2pConf, peerId: await PeerId.create() })
 }
 
 export class Comms {
@@ -45,6 +42,13 @@ export class Comms {
 
   set messageHandler (handler: MessageHandler) {
     this._messageHandler = handler
+  }
+
+  get peerId (): string {
+    if (!this.libp2p) {
+      throw new Error('Libp2p not initialized')
+    }
+    return this?.libp2p?.peerId.toJSON().id as string
   }
 
   get rooms (): Map<string, Room> {
@@ -72,7 +76,7 @@ export class Comms {
     logger.info(`Created room for topic: ${topic}`)
     rooms.set(topic, room) // store room to be able to leave the channel when offer is terminated
 
-    room.on('message', async ({ from, data: message }: Message) => {
+    room.on('message', async ({ from, data: message }: Message<any>) => {
       // Ignore message from itself
       if (from === this.libp2p!.peerId.toJSON().id) return
 
@@ -81,7 +85,7 @@ export class Comms {
       if (from !== offer.peerId) {
         return
       }
-      await this._messageHandler(message)
+      await this._messageHandler(message as CommsMessage<CommsPayloads>)
     })
     room.on('peer:joined', (peer) => logger.debug(`${topic}: peer ${peer} joined`))
     room.on('peer:left', (peer) => logger.debug(`${topic}: peer ${peer} left`))
