@@ -105,8 +105,8 @@ export function rmDir (folder: string): void {
  * Spawn libp2p node
  * @param peerId
  */
-export async function spawnLibp2p (peerId: PeerId): Promise<Libp2p> {
-  return await createLibP2P({
+export function spawnLibp2p (peerId: PeerId): Promise<Libp2p> {
+  return createLibP2P({
     addresses: { listen: ['/ip4/127.0.0.1/tcp/0'] },
     peerId: peerId,
     config: {
