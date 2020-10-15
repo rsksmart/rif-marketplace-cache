@@ -53,7 +53,7 @@ describe('Storage service', function () {
     // @ts-ignore
     config.rns.enabled = true
   })
-  describe('Storage manager', () => {
+  describe('Storage', () => {
     describe('Offers', () => {
       afterEach(async () => {
         await BillingPlan.destroy({ where: {} })
@@ -306,7 +306,7 @@ describe('Storage service', function () {
         const rate = await Rate.findOne({ where: { token: 'rbtc' }, raw: true })
         const [stake] = await StakeModel.findAll({ where: { account }, raw: true })
 
-        const totalStakedUSD = Math.floor((new BigNumber(stake.total)).div(WEI).multipliedBy(rate?.usd as number).toNumber())
+        const totalStakedUSD = (new BigNumber(stake.total)).div(WEI).multipliedBy(rate?.usd as number).toString()
         const { totalStakedFiat, stakes } = await stakeService.get(account)
         expect(totalStakedUSD).to.be.eql(totalStakedFiat)
         expect(stakes.length).to.be.eql(1)

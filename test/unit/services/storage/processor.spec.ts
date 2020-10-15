@@ -21,6 +21,7 @@ import StakeModel from '../../../../src/services/storage/models/stake.model'
 import Agreement from '../../../../src/services/storage/models/agreement.model'
 import { decodeByteArray, wrapEvent } from '../../../../src/utils'
 import { getBlockDate } from '../../../../src/blockchain/utils'
+import Rate from '../../../../src/services/rates/rates.model'
 
 chai.use(sinonChai)
 chai.use(chaiAsPromised)
@@ -478,8 +479,8 @@ describe('Storage services: Events Processor', () => {
     })
     describe('Staked', () => {
       it('should update stake', async () => {
-        const total = 1000
-        const amount = 1000
+        const amount = new BigNumber(1e18).toString()
+        const total = amount
         const event = eventMock({
           event: 'Staked',
           returnValues: {
@@ -489,17 +490,18 @@ describe('Storage services: Events Processor', () => {
             token
           }
         })
+        await Rate.create({ token: 'rbtc', usd: 1000 })
 
         await processor(event)
         const updatedStake = await StakeModel.findOne({ where: { token, account } })
         expect(updatedStake?.total).to.be.eql(new BigNumber(event.returnValues.total))
-        expect(stakeServiceEmitSpy).to.have.been.calledWith('updated', updatedStake?.toJSON())
+        expect(stakeServiceEmitSpy).to.have.been.calledWith('updated', { ...updatedStake?.toJSON(), totalStakedUSD: '1000.00' })
       })
     })
     describe('Unstaked', () => {
       it('should update total', async () => {
         const total = 0
-        const amount = 1000
+        const amount = new BigNumber(1e18)
         const event = eventMock({
           event: 'Unstaked',
           returnValues: {
@@ -509,12 +511,13 @@ describe('Storage services: Events Processor', () => {
             token
           }
         })
+        await Rate.create({ token: 'rbtc', usd: 1000 })
         await StakeModel.create({ token, total: amount, account })
 
         await processor(event)
         const updatedStake = await StakeModel.findOne({ where: { token, account } })
 
-        expect(stakeServiceEmitSpy).to.have.been.calledWith('updated', updatedStake?.toJSON())
+        expect(stakeServiceEmitSpy).to.have.been.calledWith('updated', { ...updatedStake?.toJSON(), totalStakedUSD: '0.00' })
         expect(updatedStake?.total).to.be.eql(new BigNumber(event.returnValues.total))
       })
       it('should throw if unstake without stake', async () => {
