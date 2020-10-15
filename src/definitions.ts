@@ -5,7 +5,7 @@ import type { Eth } from 'web3-eth'
 import type { Web3Events, EventsEmitterOptions, NewBlockEmitterOptions } from '@rsksmart/web3-events'
 import type { Observable } from 'rxjs'
 
-import type { AvgBillingPriceService, AgreementService, OfferService, StakeService } from './services/storage/services.js'
+import type { AvgBillingPriceService, AgreementService, OfferService, StakeService } from './services/storage/services'
 import type { RatesService } from './services/rates'
 import type { RnsBaseService } from './services/rns'
 import type { ReorgEmitterService, NewBlockEmitterService, ConfirmatorService } from './blockchain/services'
