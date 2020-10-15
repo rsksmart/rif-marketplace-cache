@@ -3,9 +3,10 @@ import config from 'config'
 
 import { Application, CachedService, ServiceAddresses } from '../../definitions'
 import { loggingFactory } from '../../logger'
-import hooks from './rates.hooks'
+import hooks from './hooks'
 import Rate from './rates.model'
 import { updater } from './update'
+import { Observable } from 'rxjs'
 
 export class RatesService extends Service {
 }
@@ -40,8 +41,10 @@ const storage: CachedService = {
     logger.info(`Removed ${rateCount} rates from database.`)
   },
 
-  precache (): Promise<void> {
-    return updater()
+  precache (): Observable<string> {
+    return new Observable<string>(subscriber => {
+      updater().then(() => subscriber.complete())
+    })
   }
 }
 

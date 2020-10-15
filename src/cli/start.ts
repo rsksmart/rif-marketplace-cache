@@ -1,12 +1,11 @@
 import config from 'config'
 import { flags } from '@oclif/command'
 
-import { appFactory, services } from '../app'
+import { appFactory } from '../app'
 import { loggingFactory } from '../logger'
 import { Flags, Config, SupportedServices, isSupportedServices } from '../definitions'
 import { BaseCLICommand } from '../utils'
-import DbBackUpJob from '../db-backup'
-import { ethFactory } from '../blockchain'
+import { DbBackUpJob } from '../db-backup'
 
 const logger = loggingFactory('cli:start')
 
@@ -80,37 +79,27 @@ ${formattedServices}`
     return output
   }
 
-  public async precache () {
-    const toBePrecache = (Object.keys(services) as Array<keyof typeof services>)
-      .filter(service => config.get<boolean>(`${service}.enabled`))
-    await Promise.all(
-      toBePrecache.map((service) => services[service].precache(ethFactory()))
-    )
-  }
-
   async run (): Promise<void> {
     const { flags } = this.parse(StartServer)
 
     const configOverrides = this.buildConfigObject(flags)
     config.util.extendDeep(config, configOverrides)
 
-    const backUpJob = new DbBackUpJob(ethFactory())
     // An infinite loop which you can exit only with SIGINT/SIGKILL
     while (true) {
-      let stopCallback: () => void = () => {
-        throw new Error('No stop callback was assigned!')
-      }
-
-      // Run backup job
-      backUpJob.run()
+      let stopCallback: () => Promise<void> = () => Promise.reject(new Error('No stop callback was assigned!'))
+      let backUpJob: DbBackUpJob
+      let requirePrecache = false
 
       // Promise that resolves when reset callback is called
       const resetPromise = new Promise(resolve => {
         appFactory({
+          requirePrecache,
           appResetCallBack: () => resolve()
-        }).then(({ app, stop }) => {
+        }).then(({ app, stop, backups }) => {
           // Lets save the function that stops the app
           stopCallback = stop
+          backUpJob = backups
 
           // Start server
           const port = config.get('port')
@@ -132,17 +121,15 @@ ${formattedServices}`
 
       logger.warn('Reorg detected outside of confirmation range. Rebuilding the service\'s state!')
       logger.info('Stopping the app')
-      stopCallback()
-      backUpJob.stop()
+      await stopCallback()
 
       // Restore DB from backup
-      await backUpJob.restoreDb().catch(e => {
+      await backUpJob!.restoreDb().catch(e => {
         // TODO send notification to devops
         logger.error(e)
       })
 
-      // Run pre-cache
-      await this.precache()
+      requirePrecache = true
 
       logger.info('Restarting the app')
     }

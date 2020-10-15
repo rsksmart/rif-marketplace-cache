@@ -1,15 +1,17 @@
-import { Application as ExpressFeathers } from '@feathersjs/express'
-import { ServiceAddons } from '@feathersjs/feathers'
+import type { Application as ExpressFeathers } from '@feathersjs/express'
+import type { ServiceAddons } from '@feathersjs/feathers'
 import * as Parser from '@oclif/parser'
-import { EventData } from 'web3-eth-contract'
-import { Eth } from 'web3-eth'
+import type { Eth } from 'web3-eth'
+import type { Web3Events, EventsEmitterOptions, NewBlockEmitterOptions } from '@rsksmart/web3-events'
+import type { Observable } from 'rxjs'
 
-import type { AvgBillingPriceService, AgreementService, OfferService, StakeService } from './services/storage'
+import type { AvgBillingPriceService, AgreementService, OfferService, StakeService } from './services/storage/services.js'
 import type { RatesService } from './services/rates'
 import type { RnsBaseService } from './services/rns'
-import { ConfirmatorService } from './blockchain/confirmator'
-import { NewBlockEmitterService } from './blockchain/new-block-emitters'
-import { ReorgEmitterService } from './blockchain/reorg-emitter'
+import type { ReorgEmitterService, NewBlockEmitterService, ConfirmatorService } from './blockchain/services'
+
+import * as storageEvents from '@rsksmart/rif-marketplace-storage/types/web3-v1-contracts/StorageManager'
+import * as stakingEvents from '@rsksmart/rif-marketplace-storage/types/web3-v1-contracts/Staking'
 
 export enum SupportedServices {
   STORAGE = 'storage',
@@ -56,64 +58,17 @@ interface ServiceTypes {
 export type Application = ExpressFeathers<ServiceTypes>;
 
 export interface CachedService {
-  precache (eth?: Eth): Promise<void>
+  precache (eth: Eth, web3events: Web3Events): Observable<string>
   purge (): Promise<void>
   initialize (app: Application): Promise<{ stop: () => void }>
-}
-
-export enum RatesProvider {
-  coingecko = 'coingecko'
-}
-
-export function isRatesProvider (value: any): value is RatesProvider {
-  return Object.values(RatesProvider).includes(value)
-}
-
-export type ToSymbols = 'usd' | 'eur' | 'btc' | 'ars' | 'cny' | 'krw' | 'jpy'
-export const SupportedToSymbols: ToSymbols[] = ['usd', 'eur', 'btc', 'ars', 'cny', 'krw', 'jpy']
-
-export type FromSymbols = 'rbtc' | 'rif'
-export const SupportedFromSymbols: FromSymbols[] = ['rbtc', 'rif']
-
-export type FetchedRates = Record<FromSymbols, Record<ToSymbols, number>>
-
-export interface EventsEmitterOptions {
-  // If to use polling strategy, if false then listening is used.
-  polling?: boolean
-
-  // Interval in milliseconds, how often is blockchain checked.
-  pollingInterval?: number
-
-  // Starting block that upon first start of the service, will the blockchain be crawled for the past events.
-  startingBlock?: string
-
-  // Number of blocks that will be waited before passing an event for further processing.
-  confirmations?: number
-}
-
-export interface NewBlockEmitterOptions {
-  // If to use polling strategy, if false then listening is used.
-  polling?: boolean
-
-  // Interval in milliseconds, how often is blockchain checked.
-  pollingInterval?: number
 }
 
 export interface BlockchainServiceOptions {
   // Address of deployed  contract
   contractAddress?: string
 
-  // Topics that will be listened to, if specified than has priority over "events" configuration
-  topics?: string[]
-
-  // Events that will be listened to
-  events?: string[]
-
   // Specify behavior of EventsEmitter, that retrieves events from blockchain and pass them onwards for further processing.
   eventsEmitter?: EventsEmitterOptions
-
-  // Specify behavior of NewBlockEmitter, that detects new blocks on blockchain.
-  newBlockEmitter?: NewBlockEmitterOptions
 }
 
 export interface DbBackUpConfig {
@@ -140,6 +95,9 @@ export interface Config {
   blockchain?: {
     // Address to where web3js should connect to. Should be WS endpoint.
     provider?: string
+
+    // Specifies behaviour of the default New Block emitter that will be used across all the EventsEmitters
+    newBlockEmitter?: NewBlockEmitterOptions
 
     // Number of blocks that is waited AFTER the event is confirmed before
     // it is removed from database.
@@ -236,12 +194,50 @@ export interface Logger {
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   debug (message: string | object, ...meta: any[]): void
+
+  extend?: (name: string) => Logger
 }
 
 /**
  * Interface for more complex handling of events.
  */
-export interface Handler<T> {
+export interface Handler<E, T> {
   events: string[]
-  process: (event: EventData, services: T, eth: Eth) => Promise<void>
+  process: (event: E, services: T, eth: Eth) => Promise<void>
 }
+
+/// //////////////////////////////////////////////////////////////////////////////////////////////////
+// RATES
+
+export enum RatesProvider {
+  coingecko = 'coingecko'
+}
+
+export function isRatesProvider (value: any): value is RatesProvider {
+  return Object.values(RatesProvider).includes(value)
+}
+
+export type ToSymbols = 'usd' | 'eur' | 'btc' | 'ars' | 'cny' | 'krw' | 'jpy'
+export const SUPPORTED_TO_SYMBOLS: ToSymbols[] = ['usd', 'eur', 'btc', 'ars', 'cny', 'krw', 'jpy']
+
+export type FromSymbols = 'rbtc' | 'rif'
+export const SUPPORTED_FROM_SYMBOLS: FromSymbols[] = ['rbtc', 'rif']
+
+export type FetchedRates = Record<FromSymbols, Record<ToSymbols, number>>
+
+/// //////////////////////////////////////////////////////////////////////////////////////////////////
+// STORAGE
+
+export type StorageAgreementEvents = storageEvents.AgreementFundsDeposited
+  | storageEvents.AgreementFundsPayout
+  | storageEvents.AgreementFundsWithdrawn
+  | storageEvents.AgreementStopped
+  | storageEvents.NewAgreement
+
+export type StorageOfferEvents = storageEvents.BillingPlanSet
+  | storageEvents.MessageEmitted
+  | storageEvents.TotalCapacitySet
+
+export type StakeEvents = stakingEvents.Staked | stakingEvents.Unstaked
+
+export type StorageEvents = StorageOfferEvents | StorageAgreementEvents | StakeEvents

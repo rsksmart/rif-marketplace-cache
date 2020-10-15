@@ -187,6 +187,7 @@ export function loggingFactory (name?: string): Logger {
     warn: delayedLoggingMethod('warn', name),
     info: delayedLoggingMethod('info', name),
     verbose: delayedLoggingMethod('verbose', name),
-    debug: delayedLoggingMethod('debug', name)
+    debug: delayedLoggingMethod('debug', name),
+    extend: (extension: string) => loggingFactory(`${name}:${extension}`)
   }
 }

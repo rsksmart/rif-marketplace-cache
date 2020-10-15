@@ -1,9 +1,10 @@
 import { services } from '../app'
 import Listr from 'listr'
 import { getEndPromise as awaitStoreToEndProcessing } from 'sequelize-store'
+import { Event } from '@rsksmart/web3-events'
+
 import { sequelizeFactory } from '../sequelize'
 import { BaseCLICommand, capitalizeFirstLetter, validateServices } from '../utils'
-import Event from '../blockchain/event.model'
 import { initStore } from '../store'
 import { SupportedServices } from '../definitions'
 

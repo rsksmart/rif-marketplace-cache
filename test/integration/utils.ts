@@ -127,21 +127,12 @@ export class TestingApp {
     await sequelize.sync({ force: true })
     await initStore(sequelize)
     this.logger.info('Database initialized')
-
-    // Precache
-    await this.precache()
-    this.logger.info('Database precached')
-  }
-
-  async precache () {
-    for (const service of Object.values(SupportedServices).filter(service => config.get(`${service}.enabled`))) {
-      await services[service].precache()
-    }
   }
 
   async start (options?: Partial<AppOptions>): Promise<void> {
     // Run Cache service
     const appOptions = Object.assign({
+      requirePrecache: true,
       appResetCallback: appResetCallbackSpy
     }, options) as AppOptions
     this.app = await appFactory(appOptions)

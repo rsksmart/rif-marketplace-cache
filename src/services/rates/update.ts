@@ -1,7 +1,7 @@
 import config from 'config'
 
 import { fetch as coingeckoFetch } from './providers/coingecko'
-import { ToSymbols, isRatesProvider, RatesProvider, SupportedToSymbols, SupportedFromSymbols, FromSymbols } from '../../definitions'
+import { ToSymbols, isRatesProvider, RatesProvider, SUPPORTED_TO_SYMBOLS, SUPPORTED_FROM_SYMBOLS, FromSymbols } from '../../definitions'
 import { ConfigurationError } from '../../errors'
 import Rate from './rates.model'
 import { loggingFactory } from '../../logger'
@@ -33,8 +33,8 @@ export async function updater (): Promise<void> {
 
     const toSymbols = config.get<ToSymbols[]>(CONFIG_FIATS)
     const fromSymbols = config.get<FromSymbols[]>(CONFIG_TOKENS)
-    const unsupportedToSymbols = toSymbols.filter(toSymbol => !SupportedToSymbols.includes(toSymbol))
-    const unsupportedFromSymbols = fromSymbols.filter(fromSymbol => !SupportedFromSymbols.includes(fromSymbol))
+    const unsupportedToSymbols = toSymbols.filter(toSymbol => !SUPPORTED_TO_SYMBOLS.includes(toSymbol))
+    const unsupportedFromSymbols = fromSymbols.filter(fromSymbol => !SUPPORTED_FROM_SYMBOLS.includes(fromSymbol))
 
     if (unsupportedToSymbols.length > 0 || unsupportedFromSymbols.length > 0) {
       let msg = 'Unknown'
@@ -59,7 +59,7 @@ export async function updater (): Promise<void> {
       const [DbRate] = await Rate.findOrCreate({ where: { token } })
 
       for (const [fiat, price] of Object.entries(fiatsRates)) {
-        if (!SupportedToSymbols.includes(fiat as ToSymbols)) {
+        if (!SUPPORTED_TO_SYMBOLS.includes(fiat as ToSymbols)) {
           throw Error('Unsupported fiat')
         }
 

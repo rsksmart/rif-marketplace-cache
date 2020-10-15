@@ -8,10 +8,11 @@ import { EventData } from 'web3-eth-contract'
 import { asciiToHex, soliditySha3 } from 'web3-utils'
 import Eth from 'web3-eth'
 import { Substitute, SubstituteOf } from '@fluffy-spoon/substitute'
-import { Sequelize } from 'sequelize-typescript'
+import { Sequelize } from 'sequelize'
 
-import eventProcessor from '../../../../src/services/storage/storage.processor'
-import { AgreementService, OfferService, StakeService, StorageServices } from '../../../../src/services/storage'
+import eventProcessor from '../../../../src/services/storage/processor'
+import { StorageServices } from '../../../../src/services/storage'
+import { AgreementService, OfferService, StakeService } from '../../../../src/services/storage/services'
 import { sequelizeFactory } from '../../../../src/sequelize'
 import Offer from '../../../../src/services/storage/models/offer.model'
 import { blockMock, eventMock } from '../../../utils'
@@ -21,6 +22,15 @@ import StakeModel from '../../../../src/services/storage/models/stake.model'
 import Agreement from '../../../../src/services/storage/models/agreement.model'
 import { decodeByteArray, wrapEvent } from '../../../../src/utils'
 import { getBlockDate } from '../../../../src/blockchain/utils'
+import { StakeEvents, StorageEvents } from '../../../../src/definitions'
+import {
+  AgreementFundsDeposited, AgreementFundsPayout, AgreementFundsWithdrawn,
+  AgreementStopped,
+  BillingPlanSet,
+  MessageEmitted, NewAgreement,
+  TotalCapacitySet
+} from '@rsksmart/rif-marketplace-storage/types/web3-v1-contracts/StorageManager'
+import { Staked, Unstaked } from '@rsksmart/rif-marketplace-storage/types/web3-v1-contracts/Staking'
 
 chai.use(sinonChai)
 chai.use(chaiAsPromised)
@@ -38,7 +48,7 @@ describe('Storage services: Events Processor', () => {
   })
 
   describe('Offer events', () => {
-    let processor: (event: EventData) => Promise<void>
+    let processor: (event: StorageEvents) => Promise<void>
     let offerService: OfferService
     let offerServiceEmitSpy: sinon.SinonSpy
 
@@ -54,7 +64,7 @@ describe('Storage services: Events Processor', () => {
     })
 
     it('should create new Offer if not existed', async () => {
-      const event = eventMock({
+      const event = eventMock<MessageEmitted>({
         event: 'MessageEmitted',
         returnValues: { provider }
       })
@@ -65,7 +75,7 @@ describe('Storage services: Events Processor', () => {
       expect(offerServiceEmitSpy).to.have.been.calledOnceWith('created')
     })
     it('should update existed Offer', async () => {
-      const event = eventMock({
+      const event = eventMock<TotalCapacitySet>({
         event: 'TotalCapacitySet',
         returnValues: {
           capacity: 1000,
@@ -79,9 +89,10 @@ describe('Storage services: Events Processor', () => {
 
       expect(offerServiceEmitSpy).to.have.been.calledOnceWith('updated')
     })
+
     describe('TotalCapacitySet', () => {
       it('should update capacity', async () => {
-        const event = eventMock({
+        const event = eventMock<TotalCapacitySet>({
           event: 'TotalCapacitySet',
           returnValues: {
             capacity: 1000,
@@ -95,10 +106,11 @@ describe('Storage services: Events Processor', () => {
         expect(updatedEventFromDB?.totalCapacity).to.be.eql(new BigNumber(event.returnValues.capacity))
       })
     })
+
     describe('BillingPlanSet', () => {
       const token = '0x0000000000000000000000000000000000000000'
       it('create new BillingPlan if not exist', async () => {
-        const event = eventMock({
+        const event = eventMock<BillingPlanSet>({
           event: 'BillingPlanSet',
           returnValues: {
             price: 1000,
@@ -119,7 +131,7 @@ describe('Storage services: Events Processor', () => {
         expect(billingPlan?.period).to.be.eql(new BigNumber(event.returnValues.period))
       })
       it('create new BillingPlan if has one with different period`', async () => {
-        const billingEvent: EventData = eventMock({
+        const billingEvent = eventMock<BillingPlanSet>({
           event: 'BillingPlanSet',
           returnValues: {
             price: 1000,
@@ -131,7 +143,13 @@ describe('Storage services: Events Processor', () => {
 
         await processor(billingEvent)
 
-        const billingPlan = await BillingPlan.findOne({ where: { offerId: provider, period: '99', tokenAddress: token } })
+        const billingPlan = await BillingPlan.findOne({
+          where: {
+            offerId: provider,
+            period: '99',
+            tokenAddress: token
+          }
+        })
 
         expect(billingPlan).to.be.instanceOf(BillingPlan)
         expect(billingPlan?.createdAt).to.be.eql(billingPlan?.updatedAt) // new instance
@@ -141,7 +159,7 @@ describe('Storage services: Events Processor', () => {
       })
       it('update BillingPlan', async () => {
         const newPrice = 99999
-        const billingEvent: EventData = eventMock({
+        const billingEvent = eventMock<BillingPlanSet>({
           event: 'BillingPlanSet',
           returnValues: {
             price: newPrice,
@@ -153,7 +171,13 @@ describe('Storage services: Events Processor', () => {
 
         // Create new offer and billing plan
         const offer = await Offer.create({ provider })
-        const billing = await BillingPlan.create({ offerId: offer.provider, period: 99, price: 1, tokenAddress: token, rateId: 'rbtc' })
+        const billing = await BillingPlan.create({
+          offerId: offer.provider,
+          period: 99,
+          price: 1,
+          tokenAddress: token,
+          rateId: 'rbtc'
+        })
         expect(offer).to.be.instanceOf(Offer)
         expect(billing?.price).to.be.eql(new BigNumber(1))
         expect(billing?.tokenAddress).to.be.eql(token)
@@ -170,7 +194,7 @@ describe('Storage services: Events Processor', () => {
         expect(billingPlan?.period).to.be.eql(new BigNumber(billingEvent.returnValues.period))
       })
       it('should remove billing plan on price 0', async () => {
-        const billingEvent: EventData = eventMock({
+        const billingEvent = eventMock<BillingPlanSet>({
           event: 'BillingPlanSet',
           returnValues: {
             price: 0, // should remove billing plan on 0 price
@@ -182,7 +206,13 @@ describe('Storage services: Events Processor', () => {
 
         // Create new offer and billing plan
         const offer = await Offer.create({ provider })
-        const billing = await BillingPlan.create({ offerId: offer.provider, period: 99, price: 1, tokenAddress: token, rateId: 'rbtc' })
+        const billing = await BillingPlan.create({
+          offerId: offer.provider,
+          period: 99,
+          price: 1,
+          tokenAddress: token,
+          rateId: 'rbtc'
+        })
         expect(offer).to.be.instanceOf(Offer)
         expect(billing?.price).to.be.eql(new BigNumber(1))
         expect(billing?.tokenAddress).to.be.eql(token)
@@ -190,13 +220,20 @@ describe('Storage services: Events Processor', () => {
 
         await processor(billingEvent)
 
-        const billingPlan = await BillingPlan.findOne({ where: { offerId: offer.provider, period: '99', tokenAddress: token } })
+        const billingPlan = await BillingPlan.findOne({
+          where: {
+            offerId: offer.provider,
+            period: '99',
+            tokenAddress: token
+          }
+        })
         expect(billingPlan).to.be.null()
       })
     })
+
     describe('MessageEmitted', () => {
       it('should not update Offer if message is empty', async () => {
-        const event = eventMock({
+        const event = eventMock<MessageEmitted>({
           event: 'MessageEmitted',
           returnValues: {
             message: [],
@@ -213,7 +250,7 @@ describe('Storage services: Events Processor', () => {
         const testPeerId = 'FakePeerId'
         const testPeerIdHex = asciiToHex(testPeerId, 32).replace('0x', '')
         const unknownId = '02'
-        const event = eventMock({
+        const event = eventMock<MessageEmitted>({
           event: 'MessageEmitted',
           returnValues: {
             message: [`0x${unknownId}${testPeerIdHex}`],
@@ -231,7 +268,7 @@ describe('Storage services: Events Processor', () => {
         const testPeerIdHex = asciiToHex(testPeerId, 32).replace('0x', '')
         const nodeIdFlag = '01'
         const message = `0x${nodeIdFlag}${testPeerIdHex}`
-        const event = eventMock({
+        const event = eventMock<MessageEmitted>({
           event: 'MessageEmitted',
           returnValues: {
             message: [message],
@@ -246,8 +283,9 @@ describe('Storage services: Events Processor', () => {
       })
     })
   })
+
   describe('Agreements events', () => {
-    let processor: (event: EventData) => Promise<void>
+    let processor: (event: StorageEvents) => Promise<void>
     let agreementService: AgreementService
     let agreementServiceEmitSpy: sinon.SinonSpy
     let offer: Offer
@@ -261,12 +299,15 @@ describe('Storage services: Events Processor', () => {
     const dataReference = ['Reference1', 'Reference2'].map(asciiToHex)
     const agreementReference = soliditySha3(agreementCreator, ...dataReference, token)
     const blockNumber = 13
-    const agreementNotExistTest = (event: EventData): Mocha.Test => it('should throw error if agreement not exist', async () => {
-      await expect(processor(event)).to.eventually.be.rejectedWith(
-        EventError,
-        `Agreement with ID ${agreementReference} was not found!`
-      )
-    })
+
+    function agreementNotExistTest (event: StorageEvents): Mocha.Test {
+      return it('should throw error if agreement not exist', async () => {
+        await expect(processor(event)).to.eventually.be.rejectedWith(
+          EventError,
+          `Agreement with ID ${agreementReference} was not found!`
+        )
+      })
+    }
 
     before(async () => {
       agreementService = new AgreementService({ Model: Agreement })
@@ -293,13 +334,19 @@ describe('Storage services: Events Processor', () => {
       await sequelize.sync({ force: true })
       agreementServiceEmitSpy.resetHistory()
       offer = await Offer.create({ provider })
-      plan = await BillingPlan.create({ offerId: offer.provider, price: 100, period: billingPeriod, tokenAddress: token, rateId: 'rbtc' })
+      plan = await BillingPlan.create({
+        offerId: offer.provider,
+        price: 100,
+        period: billingPeriod,
+        tokenAddress: token,
+        rateId: 'rbtc'
+      })
       expect(offer).to.be.instanceOf(Offer)
       expect(plan).to.be.instanceOf(BillingPlan)
     })
 
     describe('NewAgreement', () => {
-      const event = eventMock({
+      const event = eventMock<NewAgreement>({
         event: 'NewAgreement',
         blockNumber,
         returnValues: {
@@ -314,7 +361,13 @@ describe('Storage services: Events Processor', () => {
       })
 
       it('should throw error if billing plan not exist', async () => {
-        await expect(BillingPlan.destroy({ where: { offerId: provider, period: billingPeriod.toString(), tokenAddress: token } })).to.eventually.become(1)
+        await expect(BillingPlan.destroy({
+          where: {
+            offerId: provider,
+            period: billingPeriod.toString(),
+            tokenAddress: token
+          }
+        })).to.eventually.become(1)
         await expect(processor(event)).to.eventually.be.rejectedWith(
           EventError,
           `Price for period ${event.returnValues.billingPeriod.toString()}, token ${token} and offer ${provider} not found when creating new request ${agreementReference}`
@@ -323,7 +376,11 @@ describe('Storage services: Events Processor', () => {
       it('should create/overwrite new agreement', async () => {
         await processor(event)
 
-        const agreement = await Agreement.findOne({ where: { agreementReference, offerId: event.returnValues.provider } })
+        const agreement = await Agreement.findOne({
+          where: {
+            agreementReference
+          }
+        })
         expect(agreement).to.be.instanceOf(Agreement)
         expect(agreement?.agreementReference).to.be.eql(agreementReference)
         expect(agreement?.dataReference).to.be.eql(decodeByteArray(event.returnValues.dataReference))
@@ -338,8 +395,9 @@ describe('Storage services: Events Processor', () => {
         expect(agreementServiceEmitSpy).to.have.been.calledOnceWith('created')
       })
     })
+
     describe('AgreementStopped', () => {
-      const event = eventMock({
+      const event = eventMock<AgreementStopped>({
         event: 'AgreementStopped',
         blockNumber: 13,
         returnValues: {
@@ -357,14 +415,19 @@ describe('Storage services: Events Processor', () => {
 
         await processor(event)
 
-        const agreementAfterUpdate = await Agreement.findOne({ where: { agreementReference, offerId: event.returnValues.provider } })
+        const agreementAfterUpdate = await Agreement.findOne({
+          where: {
+            agreementReference
+          }
+        })
 
         expect(agreementAfterUpdate?.isActive).to.be.eql(false)
         expect(agreementServiceEmitSpy).to.have.been.calledOnceWith('updated', wrapEvent('AgreementStopped', agreementAfterUpdate?.toJSON() as object))
       })
     })
+
     describe('AgreementFundsDeposited', () => {
-      const event = eventMock({
+      const event = eventMock<AgreementFundsDeposited>({
         event: 'AgreementFundsDeposited',
         blockNumber: 13,
         returnValues: {
@@ -382,14 +445,19 @@ describe('Storage services: Events Processor', () => {
 
         await processor(event)
 
-        const agreementAfterUpdate = await Agreement.findOne({ where: { agreementReference, offerId: event.returnValues.provider } })
+        const agreementAfterUpdate = await Agreement.findOne({
+          where: {
+            agreementReference
+          }
+        })
 
         expect(agreementAfterUpdate?.availableFunds).to.be.eql(agreement.availableFunds.plus(event.returnValues.amount))
         expect(agreementServiceEmitSpy).to.have.been.calledOnceWith('updated', wrapEvent('AgreementFundsDeposited', agreementAfterUpdate?.toJSON() as object))
       })
     })
+
     describe('AgreementFundsWithdrawn', () => {
-      const event = eventMock({
+      const event = eventMock<AgreementFundsWithdrawn>({
         event: 'AgreementFundsWithdrawn',
         blockNumber: 13,
         returnValues: {
@@ -407,14 +475,19 @@ describe('Storage services: Events Processor', () => {
 
         await processor(event)
 
-        const agreementAfterUpdate = await Agreement.findOne({ where: { agreementReference, offerId: event.returnValues.provider } })
+        const agreementAfterUpdate = await Agreement.findOne({
+          where: {
+            agreementReference
+          }
+        })
 
         expect(agreementAfterUpdate?.availableFunds).to.be.eql(agreement.availableFunds.minus(event.returnValues.amount))
         expect(agreementServiceEmitSpy).to.have.been.calledOnceWith('updated', wrapEvent('AgreementFundsWithdrawn', agreementAfterUpdate?.toJSON() as object))
       })
     })
+
     describe('AgreementFundsPayout', () => {
-      const event = eventMock({
+      const event = eventMock<AgreementFundsPayout>({
         event: 'AgreementFundsPayout',
         blockNumber: 13,
         returnValues: {
@@ -435,7 +508,11 @@ describe('Storage services: Events Processor', () => {
 
         await processor(event)
 
-        const agreementAfterUpdate = await Agreement.findOne({ where: { agreementReference, offerId: event.returnValues.provider } })
+        const agreementAfterUpdate = await Agreement.findOne({
+          where: {
+            agreementReference
+          }
+        })
 
         expect(agreementAfterUpdate?.availableFunds).to.be.eql(agreement.availableFunds.minus(event.returnValues.amount))
         expect(agreementAfterUpdate?.lastPayout).to.be.eql(await getBlockDate(eth, blockNumber))
@@ -443,10 +520,11 @@ describe('Storage services: Events Processor', () => {
       })
     })
   })
+
   describe('Staking events', () => {
     const token = '0x0000000000000000000000000000000000000000'
     const account = provider
-    let processor: (event: EventData) => Promise<void>
+    let processor: (event: StakeEvents) => Promise<void>
     let stakeService: StakeService
     let stakeServiceEmitSpy: sinon.SinonSpy
 
@@ -456,6 +534,7 @@ describe('Storage services: Events Processor', () => {
       stakeServiceEmitSpy = sinon.spy()
       stakeService.emit = stakeServiceEmitSpy
     })
+
     beforeEach(async () => {
       await sequelize.sync({ force: true })
       stakeServiceEmitSpy.resetHistory()
@@ -463,7 +542,7 @@ describe('Storage services: Events Processor', () => {
 
     it('should create new Stake if not existed', async () => {
       const total = 1000
-      const event = eventMock({
+      const event = eventMock<Staked>({
         event: 'Staked',
         returnValues: { user: account, total, token, amount: 1000 }
       })
@@ -476,11 +555,12 @@ describe('Storage services: Events Processor', () => {
       expect(createdStake?.symbol).to.be.eql('rbtc')
       expect(stakeServiceEmitSpy).to.have.been.calledWith('updated')
     })
+
     describe('Staked', () => {
       it('should update stake', async () => {
         const total = 1000
         const amount = 1000
-        const event = eventMock({
+        const event = eventMock<Staked>({
           event: 'Staked',
           returnValues: {
             amount,
@@ -500,7 +580,7 @@ describe('Storage services: Events Processor', () => {
       it('should update total', async () => {
         const total = 0
         const amount = 1000
-        const event = eventMock({
+        const event = eventMock<Unstaked>({
           event: 'Unstaked',
           returnValues: {
             amount,
@@ -520,7 +600,7 @@ describe('Storage services: Events Processor', () => {
       it('should throw if unstake without stake', async () => {
         const total = 0
         const amount = 1000
-        const event = eventMock({
+        const event = eventMock<Unstaked>({
           event: 'Unstaked',
           returnValues: {
             amount,
