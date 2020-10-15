@@ -22,7 +22,8 @@
   },
 
   notification: {
-    enabled: true
+    enabled: true,
+    countOfNotificationPersistedPerAgreement: 10
   },
 
   blockchain: {

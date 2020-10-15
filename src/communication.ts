@@ -7,7 +7,7 @@ import { loggingFactory } from './logger'
 import Offer from './services/storage/models/offer.model'
 import NotificationModel from './services/notification/notification.model'
 import { NotificationService } from './services/notification'
-import { Application, CommsMessage, CommsPayloads, MessageHandler } from './definitions'
+import { Application, CommsMessage, CommsPayloads, MessageHandler, NotificaitonType } from './definitions'
 import Agreement from './services/storage/models/agreement.model'
 
 const logger = loggingFactory('communication')
@@ -18,18 +18,46 @@ export function getRoomTopic (offerId: string): string {
   return `${config.get<string>('blockchain.networkId')}:${offerId}`
 }
 
+async function gcAgreementNotifications (agreementReference: string) {
+  // Remove old notifications for specific agreement
+  const messageLimit = config.get<number>('notification.countOfNotificationPersistedPerAgreement')
+  const notificationToDelete = await NotificationModel.findAll({
+    offset: messageLimit,
+    order: [['id', 'DESC']],
+    where: {
+      payload: {
+        agreementReference: agreementReference
+      },
+      type: NotificaitonType.AGREEMENT
+    }
+  })
+  await Promise.all(notificationToDelete.map(n => n.destroy()))
+}
+
 export function messageHandler (
   notificationService?: NotificationService
 ): (message: CommsMessage<CommsPayloads>) => Promise<void> {
-  // TODO add GC for notification
   return async function (message: CommsMessage<CommsPayloads>): Promise<void> {
     const agreement = await Agreement.findOne({ where: { agreementReference: message.payload.agreementReference } })
 
-    if (!notificationService) {
-      NotificationModel.create({ account: agreement?.consumer, type: message.code, payload: message.payload })
-    } else {
-      await notificationService.create({ account: agreement?.consumer, type: message.code, payload: message.payload })
+    if (!agreement) {
+      logger.verbose(`Agreement ${message.payload.agreementReference} for message not found`)
+      return
     }
+    const notificationData = {
+      account: agreement.consumer,
+      type: NotificaitonType.AGREEMENT,
+      payload: { ...message.payload, code: message.code }
+    }
+
+    if (!notificationService) {
+      NotificationModel.create(notificationData)
+    } else {
+      await notificationService.create(notificationData)
+    }
+
+    // GC agreement notifications
+    await gcAgreementNotifications(agreement.agreementReference)
   }
 }
 

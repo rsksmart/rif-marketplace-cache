@@ -150,6 +150,7 @@ export interface Config {
 
   notification?: {
     enabled?: boolean
+    countOfNotificationPersistedPerAgreement?: number
   }
 
   blockchain?: {
@@ -326,3 +327,9 @@ export interface CommsMessage<Payload> {
 export type CommsPayloads = ResendMessagesPayload | MultiaddrAnnouncementPayload | AgreementSizeExceededPayload | AgreementInfoPayload | HashInfoPayload | RetryPayload
 
 export type MessageHandler = (message: CommsMessage<CommsPayloads>) => Promise<void>
+
+// NOTIFICATION
+
+export enum NotificaitonType {
+  AGREEMENT = 'agreement'
+}

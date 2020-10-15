@@ -9,12 +9,12 @@ export default class NotificationModel extends Model {
   @Column
   title!: string
 
-  @Column
+  @Column({ allowNull: false })
   type!: string
 
-  @Column
+  @Column({ allowNull: false })
   account!: string
 
-  @Column({ type: DataType.JSON })
+  @Column({ type: DataType.JSON, allowNull: false })
   payload!: Record<any, any> | CommsPayloads
 }
