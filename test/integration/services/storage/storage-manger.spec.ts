@@ -266,14 +266,14 @@ describe('Storage service', function () {
       })
       it('should create new stake', async () => {
         const account = app.getRandomAccount()
-        const amount = 100
+        const amount = new BigNumber(1e18)
 
         await app.stake(amount, account)
         await app.addConfirmations()
 
         const stake = await StakeModel.findOne({ where: { account } })
         expect(stake).to.be.instanceOf(StakeModel)
-        expect(stake?.total.toNumber()).to.be.eql(amount)
+        expect(stake?.total.toString()).to.be.eql(amount.toString())
         expect(stake?.account).to.be.eql(account)
         expect(stake?.symbol).to.be.eql('rbtc')
       })
