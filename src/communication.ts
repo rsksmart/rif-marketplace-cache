@@ -1,5 +1,5 @@
 import config from 'config'
-import { createLibP2P, Room, Message } from '@rsksmart/rif-communications-pubsub'
+import { createLibP2P, Room, Message, DirectChat } from '@rsksmart/rif-communications-pubsub'
 import type Libp2p from 'libp2p'
 import PeerId from 'peer-id'
 
@@ -7,8 +7,9 @@ import { loggingFactory } from './logger'
 import Offer from './services/storage/models/offer.model'
 import NotificationModel from './services/notification/notification.model'
 import { NotificationService } from './services/notification'
-import { Application, CommsMessage, CommsPayloads, MessageHandler, NotificaitonType } from './definitions'
+import { Application, CommsMessage, CommsPayloads, MessageHandler, NotificationType } from './definitions'
 import Agreement from './services/storage/models/agreement.model'
+import { errorHandler } from './utils'
 
 const logger = loggingFactory('communication')
 // (offerId -> room) MAP
@@ -28,7 +29,7 @@ async function gcAgreementNotifications (agreementReference: string): Promise<vo
       payload: {
         agreementReference: agreementReference
       },
-      type: NotificaitonType.AGREEMENT
+      type: NotificationType.AGREEMENT
     }
   })
   await Promise.all(notificationToDelete.map(n => n.destroy()))
@@ -46,7 +47,7 @@ export function messageHandler (
     }
     const notificationData = {
       account: agreement.consumer,
-      type: NotificaitonType.AGREEMENT,
+      type: NotificationType.AGREEMENT,
       payload: { ...message.payload, code: message.code }
     }
 
@@ -107,9 +108,10 @@ export class Comms {
       return
     }
     const roomLogger = loggingFactory(`communication:room:${topic}`)
+    const messageHandler = errorHandler(this._messageHandler, roomLogger)
     const room = new Room(this.libp2p, topic)
-    roomLogger.info(`Created room for topic: ${topic}`)
     rooms.set(topic, room) // store room to be able to leave the channel when offer is terminated
+    roomLogger.info(`Created room for topic: ${topic}`)
 
     room.on('message', async ({ from, data: message }: Message<any>) => {
       // Ignore message from itself
@@ -117,12 +119,12 @@ export class Comms {
         return
       }
 
-      roomLogger.info(`Receive message: ${JSON.stringify(message)}`)
+      roomLogger.debug(`Receive message: ${JSON.stringify(message)}`)
 
       if (from !== offer.peerId) {
         return
       }
-      await this._messageHandler(message as CommsMessage<CommsPayloads>)
+      await messageHandler(message as CommsMessage<CommsPayloads>)
     })
     room.on('peer:joined', (peer) => roomLogger.debug(`${topic}: peer ${peer} joined`))
     room.on('peer:left', (peer) => roomLogger.debug(`${topic}: peer ${peer} left`))
@@ -131,20 +133,20 @@ export class Comms {
 
   async subscribeForOffers (): Promise<void> {
     if (!this.libp2p) {
-      logger.debug('Libp2p not initialized')
+      throw new Error('Libp2p not initialized')
     }
     for (const offer of await Offer.findAll()) {
       this.subscribeForOffer(offer)
     }
   }
 
-  stop (): void {
+  async stop (): Promise<void> {
     for (const [, room] of this.rooms) {
       room.leave()
     }
 
     if (this.libp2p) {
-      this.libp2p.stop()
+      await this.libp2p.stop()
     }
   }
 }

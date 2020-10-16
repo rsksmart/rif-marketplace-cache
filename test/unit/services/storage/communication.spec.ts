@@ -12,7 +12,7 @@ import { awaitForPeerJoined, createLibp2pRoom, sleep, spawnLibp2p } from '../../
 import Agreement from '../../../../src/services/storage/models/agreement.model'
 import NotificationModel from '../../../../src/services/notification/notification.model'
 import Libp2p from 'libp2p'
-import { NotificaitonType } from '../../../../src/definitions'
+import { NotificationType } from '../../../../src/definitions'
 
 chai.use(sinonChai)
 chai.use(chaiAsPromised)
@@ -62,28 +62,28 @@ describe('Communication', function () {
     const notifications = await NotificationModel.findAll()
     expect(notifications.length).to.be.eql(1)
     expect(notifications[0].account).to.be.eql(agreement.consumer)
-    expect(notifications[0].type).to.be.eql(NotificaitonType.AGREEMENT)
+    expect(notifications[0].type).to.be.eql(NotificationType.AGREEMENT)
     expect(notifications[0].payload).to.be.eql({ ...message.payload, code: message.code })
   })
   it('should GC notification', async () => {
     await NotificationModel.bulkCreate([
-      { account: 'testAcc', type: NotificaitonType.AGREEMENT, payload: { agreementReference: 'test123', id: 1 } }, // notification for another agreement
-      { account: 'testAcc', type: NotificaitonType.AGREEMENT, payload: { agreementReference: agreement.agreementReference, id: 2 } },
-      { account: 'testAcc', type: NotificaitonType.AGREEMENT, payload: { agreementReference: agreement.agreementReference, id: 3 } },
-      { account: 'testAcc', type: NotificaitonType.AGREEMENT, payload: { agreementReference: agreement.agreementReference, id: 4 } },
-      { account: 'testAcc', type: NotificaitonType.AGREEMENT, payload: { agreementReference: agreement.agreementReference, id: 5 } },
-      { account: 'testAcc', type: NotificaitonType.AGREEMENT, payload: { agreementReference: agreement.agreementReference, id: 6 } },
-      { account: 'testAcc', type: NotificaitonType.AGREEMENT, payload: { agreementReference: agreement.agreementReference, id: 7 } },
-      { account: 'testAcc', type: NotificaitonType.AGREEMENT, payload: { agreementReference: agreement.agreementReference, id: 8 } },
-      { account: 'testAcc', type: NotificaitonType.AGREEMENT, payload: { agreementReference: agreement.agreementReference, id: 9 } },
-      { account: 'testAcc', type: NotificaitonType.AGREEMENT, payload: { agreementReference: agreement.agreementReference, id: 10 } },
-      { account: 'testAcc', type: NotificaitonType.AGREEMENT, payload: { agreementReference: agreement.agreementReference, id: 11 } }
+      { account: 'testAcc', type: NotificationType.AGREEMENT, payload: { agreementReference: 'test123', id: 1 } }, // notification for another agreement
+      { account: 'testAcc', type: NotificationType.AGREEMENT, payload: { agreementReference: agreement.agreementReference, id: 2 } },
+      { account: 'testAcc', type: NotificationType.AGREEMENT, payload: { agreementReference: agreement.agreementReference, id: 3 } },
+      { account: 'testAcc', type: NotificationType.AGREEMENT, payload: { agreementReference: agreement.agreementReference, id: 4 } },
+      { account: 'testAcc', type: NotificationType.AGREEMENT, payload: { agreementReference: agreement.agreementReference, id: 5 } },
+      { account: 'testAcc', type: NotificationType.AGREEMENT, payload: { agreementReference: agreement.agreementReference, id: 6 } },
+      { account: 'testAcc', type: NotificationType.AGREEMENT, payload: { agreementReference: agreement.agreementReference, id: 7 } },
+      { account: 'testAcc', type: NotificationType.AGREEMENT, payload: { agreementReference: agreement.agreementReference, id: 8 } },
+      { account: 'testAcc', type: NotificationType.AGREEMENT, payload: { agreementReference: agreement.agreementReference, id: 9 } },
+      { account: 'testAcc', type: NotificationType.AGREEMENT, payload: { agreementReference: agreement.agreementReference, id: 10 } },
+      { account: 'testAcc', type: NotificationType.AGREEMENT, payload: { agreementReference: agreement.agreementReference, id: 11 } }
     ])
     const notifications = await NotificationModel.findAll()
     expect(notifications.length).to.be.eql(11)
 
     // Send message
-    const message = { type: NotificaitonType.AGREEMENT, payload: { agreementReference: agreement.agreementReference, id: 12 } }
+    const message = { type: NotificationType.AGREEMENT, payload: { agreementReference: agreement.agreementReference, id: 12 } }
     await roomPinner.broadcast(message)
     await sleep(500)
 

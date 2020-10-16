@@ -330,6 +330,6 @@ export type MessageHandler = (message: CommsMessage<CommsPayloads>) => Promise<v
 
 // NOTIFICATION
 
-export enum NotificaitonType {
+export enum NotificationType {
   AGREEMENT = 'agreement'
 }

@@ -3,14 +3,19 @@ import chai from 'chai'
 import sinonChai from 'sinon-chai'
 import BigNumber from 'bignumber.js'
 import { asciiToHex, hexToAscii } from 'web3-utils'
+import PeerId from 'peer-id'
+import { Room } from '@rsksmart/rif-communications-pubsub'
+import Libp2p from 'libp2p'
 
 import { encodeHash, getFeatherClient, prefixArray, TestingApp, ZERO_ADDRESS } from '../../utils'
+import { createLibp2pRoom, sleep, spawnLibp2p } from '../../../utils'
 import Offer from '../../../../src/services/storage/models/offer.model'
 import BillingPlan from '../../../../src/services/storage/models/billing-plan.model'
 import Rate from '../../../../src/services/rates/rates.model'
 import Agreement from '../../../../src/services/storage/models/agreement.model'
+import NotificationModel from '../../../../src/services/notification/notification.model'
 import StakeModel from '../../../../src/services/storage/models/stake.model'
-import { ServiceAddresses } from '../../../../src/definitions'
+import { MessageCodesEnum, ServiceAddresses } from '../../../../src/definitions'
 import { WEI } from '../../../../src/services/storage/utils'
 
 chai.use(sinonChai)
@@ -338,6 +343,74 @@ describe('Storage service', function () {
         const rate = await Rate.findOne({ where: { token: 'rbtc' }, raw: true })
         expect(min).to.be.eql(Math.floor(rate?.usd as number))
         expect(max).to.be.eql(Math.floor(rate?.usd as number))
+      })
+    })
+    describe('Notification', () => {
+      const client = getFeatherClient()
+      const notificationService = client.service(ServiceAddresses.NOTIFICATION)
+      let roomPinner: Room
+      let libp2p: Libp2p
+      let peerId: PeerId
+      let agreementData: Record<string, any>
+      let offerData: Record<string, any>
+
+      before(async () => {
+        peerId = await PeerId.create()
+        // Create libp2p ndoe for pinner
+        libp2p = await spawnLibp2p(peerId)
+        // Create PubSub room to listen on events
+        roomPinner = await createLibp2pRoom(libp2p, app.providerAddress)
+
+        offerData = {
+          totalCapacity: '1024',
+          periods: [10],
+          prices: [100],
+          msg: generateMsg(peerId.toJSON().id)
+        }
+
+        agreementData = {
+          provider: app.providerAddress,
+          cid: generateCID(),
+          period: offerData.periods[0],
+          size: 10,
+          amount: 10000
+        }
+      })
+
+      after(async () => {
+        roomPinner.leave()
+        await libp2p.stop()
+      })
+
+      it('Should create notification', async () => {
+        // Create offer
+        await app.createOffer(offerData)
+        await app.addConfirmations()
+
+        // Create agreement
+        await app.createAgreement(agreementData)
+        await app.addConfirmations()
+
+        const agreement = await Agreement.findOne({ raw: true }) as Agreement
+
+        await roomPinner.broadcast({ code: MessageCodesEnum.I_AGREEMENT_NEW, payload: { agreementReference: agreement.agreementReference } })
+        await roomPinner.broadcast({ code: MessageCodesEnum.I_HASH_START, payload: { agreementReference: agreement.agreementReference, hash: agreementData.cid } })
+        await roomPinner.broadcast({ code: MessageCodesEnum.I_HASH_PINNED, payload: { agreementReference: agreement.agreementReference, hash: agreementData.cid } })
+        await sleep(2000)
+
+        const notifications = await NotificationModel.findAll({ raw: true })
+
+        expect(notifications.length).to.be.eql(3)
+        const [newAgreement, hashStart, hashStop] = notifications
+
+        expect(newAgreement.account).to.be.eq(app.consumerAddress)
+        expect(newAgreement.payload).to.be.eq(JSON.stringify({ agreementReference: agreement.agreementReference, code: MessageCodesEnum.I_AGREEMENT_NEW }))
+
+        expect(hashStart.account).to.be.eq(app.consumerAddress)
+        expect(hashStart.payload).to.be.eq(JSON.stringify({ agreementReference: agreement.agreementReference, hash: agreementData.cid, code: MessageCodesEnum.I_HASH_START }))
+
+        expect(hashStop.account).to.be.eq(app.consumerAddress)
+        expect(hashStop.payload).to.be.eq(JSON.stringify({ agreementReference: agreement.agreementReference, hash: agreementData.cid, code: MessageCodesEnum.I_HASH_PINNED }))
       })
     })
   })

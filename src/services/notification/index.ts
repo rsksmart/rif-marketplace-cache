@@ -43,9 +43,7 @@ const notification: CachedService = {
     comms.messageHandler = messageHandler(notificationService)
 
     return {
-      stop: () => {
-        comms.stop()
-      }
+      stop: () => undefined
     }
   },
 

@@ -6,9 +6,6 @@ import { CommsPayloads } from '../../definitions'
   tableName: 'notifications'
 })
 export default class NotificationModel extends Model {
-  @Column
-  title!: string
-
   @Column({ allowNull: false })
   type!: string
 
@@ -16,5 +13,5 @@ export default class NotificationModel extends Model {
   account!: string
 
   @Column({ type: DataType.JSON, allowNull: false })
-  payload!: Record<any, any> | CommsPayloads
+  payload!: CommsPayloads & { code: string }
 }

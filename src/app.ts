@@ -91,5 +91,11 @@ export async function appFactory (options: AppOptions): Promise<{ app: Applicati
     setTimeout(() => options.appResetCallBack(), 5000)
   })
 
-  return { app, stop: () => servicesInstances.forEach(service => service.stop()) }
+  return {
+    app,
+    stop: () => {
+      servicesInstances.forEach(service => service.stop())
+      return app.get('comms')?.stop()
+    }
+  }
 }
