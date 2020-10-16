@@ -9,6 +9,7 @@ import { OfferService, StorageServices } from '../index'
 import { decodeByteArray, wrapEvent } from '../../../utils'
 import { EventError } from '../../../errors'
 import { getTokenSymbol } from '../utils'
+import { Comms } from '../../../communication'
 
 const logger = loggingFactory('storage:handler:offer')
 
@@ -53,7 +54,7 @@ const handlers: { [key: string]: Function } = {
     }
     logger.info(`Updating capacity ${offer.totalCapacity} (ID: ${offer.provider})`)
   },
-  async MessageEmitted (event: EventData, offer: Offer, offerService: OfferService): Promise<void> {
+  async MessageEmitted (event: EventData, offer: Offer, offerService: OfferService, { comms }: { comms: Comms }): Promise<void> {
     const msg = event.returnValues.message
 
     if (!msg || msg.length === 0) {
@@ -70,6 +71,11 @@ const handlers: { [key: string]: Function } = {
 
       if (offerService.emit) {
         offerService.emit('updated', wrapEvent('MessageEmitted', offer.toJSON()))
+
+        // Join to libp2p room for that offer
+        if (comms && comms.libp2p) {
+          comms.subscribeForOffer(offer)
+        }
       }
       logger.info(`PeerId ${offer.peerId} defined (ID: ${offer.provider})`)
     } else {
@@ -100,11 +106,6 @@ const handler: Handler<StorageServices> = {
 
     if (created) {
       logger.info(`Created new StorageOffer for ${provider}`)
-
-      // Join to libp2p room for that offer
-      if (comms && comms.libp2p) {
-        comms.subscribeForOffer(offer)
-      }
     }
 
     if (offerService.emit && created) {
@@ -115,7 +116,7 @@ const handler: Handler<StorageServices> = {
       logger.error(`Unknown event ${event.event}`)
     }
 
-    await handlers[event.event](event, offer, offerService)
+    await handlers[event.event](event, offer, offerService, { comms })
   }
 }
 

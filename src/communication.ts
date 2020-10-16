@@ -18,7 +18,7 @@ export function getRoomTopic (offerId: string): string {
   return `${config.get<string>('blockchain.networkId')}:${offerId}`
 }
 
-async function gcAgreementNotifications (agreementReference: string) {
+async function gcAgreementNotifications (agreementReference: string): Promise<void> {
   // Remove old notifications for specific agreement
   const messageLimit = config.get<number>('notification.countOfNotificationPersistedPerAgreement')
   const notificationToDelete = await NotificationModel.findAll({
@@ -102,6 +102,10 @@ export class Comms {
       throw new Error('Libp2p not initialized')
     }
     const topic = getRoomTopic(offer.provider)
+
+    if (rooms.has(topic)) {
+      return
+    }
     const roomLogger = loggingFactory(`communication:room:${topic}`)
     const room = new Room(this.libp2p, topic)
     roomLogger.info(`Created room for topic: ${topic}`)
