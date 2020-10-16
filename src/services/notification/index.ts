@@ -42,9 +42,6 @@ const notification: CachedService = {
     const comms = app.get('comms') as Comms
     comms.messageHandler = messageHandler(notificationService)
 
-    // TODO Pre-populate latest messages using rebroadcast feature
-    // await this.precache()
-
     return {
       stop: () => {
         comms.stop()
@@ -59,8 +56,8 @@ const notification: CachedService = {
     await sleep(1000)
   },
 
-  async precache (eth?: Eth): Promise<void> {
-    return await Promise.resolve()
+  precache (): Promise<void> {
+    return Promise.resolve()
   }
 }
 

@@ -4,13 +4,12 @@ import Agreement from '../storage/models/agreement.model'
 
 const CHANNEL = 'notifications'
 
-async function filterByOwner (app: Application, data: any) {
-  const agreementReference: string = data.payload.agreementReference
-  const agreement = await Agreement.findOne({ where: { agreementReference } })
+function filterByOwner (app: Application, data: any) {
+  const account: string = data.account
   return app.channel(CHANNEL)
     .filter(connection => {
       const connectedAccount: string = connection.ownerAddress
-      return Boolean(agreement && agreement.consumer === connectedAccount)
+      return Boolean(account && account === connectedAccount)
     })
 }
 
