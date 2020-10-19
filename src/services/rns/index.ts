@@ -103,8 +103,8 @@ const rns: CachedService = {
     await waitForReadyApp(app)
 
     // Initialize feather's service
-    app.use(ServiceAddresses.RNS_DOMAINS, new RnsBaseService({ Model: Domain, paginate }))
-    app.use(ServiceAddresses.RNS_SOLD, new RnsBaseService({ Model: SoldDomain, paginate }))
+    app.use(ServiceAddresses.RNS_DOMAINS, new RnsBaseService({ Model: Domain }))
+    app.use(ServiceAddresses.RNS_SOLD, new RnsBaseService({ Model: SoldDomain }))
     app.use(ServiceAddresses.RNS_OFFERS, new RnsBaseService({ Model: DomainOffer, paginate }))
 
     const domains = app.service(ServiceAddresses.RNS_DOMAINS)
