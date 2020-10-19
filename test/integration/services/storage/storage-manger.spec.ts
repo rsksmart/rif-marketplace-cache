@@ -53,7 +53,7 @@ describe('Storage service', function () {
     // @ts-ignore
     config.rns.enabled = true
   })
-  describe('Storage manager', () => {
+  describe('Storage', () => {
     describe('Offers', () => {
       afterEach(async () => {
         await BillingPlan.destroy({ where: {} })
@@ -266,14 +266,14 @@ describe('Storage service', function () {
       })
       it('should create new stake', async () => {
         const account = app.getRandomAccount()
-        const amount = 100
+        const amount = new BigNumber(1e18)
 
         await app.stake(amount, account)
         await app.addConfirmations()
 
         const stake = await StakeModel.findOne({ where: { account } })
         expect(stake).to.be.instanceOf(StakeModel)
-        expect(stake?.total.toNumber()).to.be.eql(amount)
+        expect(stake?.total.toString()).to.be.eql(amount.toString())
         expect(stake?.account).to.be.eql(account)
         expect(stake?.symbol).to.be.eql('rbtc')
       })
@@ -306,7 +306,7 @@ describe('Storage service', function () {
         const rate = await Rate.findOne({ where: { token: 'rbtc' }, raw: true })
         const [stake] = await StakeModel.findAll({ where: { account }, raw: true })
 
-        const totalStakedUSD = Math.floor((new BigNumber(stake.total)).div(WEI).multipliedBy(rate?.usd as number).toNumber())
+        const totalStakedUSD = (new BigNumber(stake.total)).div(WEI).multipliedBy(rate?.usd as number).toString()
         const { totalStakedFiat, stakes } = await stakeService.get(account)
         expect(totalStakedUSD).to.be.eql(totalStakedFiat)
         expect(stakes.length).to.be.eql(1)
