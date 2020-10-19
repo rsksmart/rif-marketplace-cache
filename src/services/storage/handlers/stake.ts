@@ -36,7 +36,7 @@ const handlers = {
     logger.info(`Account ${account}, token ${token} stake amount ${amount}, final balance ${total}`)
 
     if (stakeService.emit) {
-      stakeService.emit('updated', { ...stake.toJSON(), totalStakedUSD: await stakeService.get(stake.account) })
+      stakeService.emit('updated', await stakeService.get(stake.account))
     }
   },
 
@@ -54,7 +54,7 @@ const handlers = {
     logger.info(`Account ${account}, token ${token} un-stake amount ${amount}, final balance ${total}`)
 
     if (stakeService.emit) {
-      stakeService.emit('updated', { ...stake.toJSON(), totalStakedUSD: await stakeService.get(stake.account) })
+      stakeService.emit('updated', await stakeService.get(stake.account))
     }
   }
 }
