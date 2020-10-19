@@ -1,5 +1,5 @@
 import config from 'config'
-import { createLibP2P, Room, Message, DirectChat } from '@rsksmart/rif-communications-pubsub'
+import { createLibP2P, Room, Message } from '@rsksmart/rif-communications-pubsub'
 import type Libp2p from 'libp2p'
 import PeerId from 'peer-id'
 
@@ -105,7 +105,7 @@ export class Comms {
     const topic = getRoomTopic(offer.provider)
 
     if (rooms.has(topic)) {
-      return
+      rooms.get(topic)?.leave()
     }
     const roomLogger = loggingFactory(`communication:room:${topic}`)
     const messageHandler = errorHandler(this._messageHandler, roomLogger)

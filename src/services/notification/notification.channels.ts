@@ -1,6 +1,5 @@
 import '@feathersjs/transport-commons'
 import { Application, ServiceAddresses } from '../../definitions'
-import Agreement from '../storage/models/agreement.model'
 
 const CHANNEL = 'notifications'
 

@@ -1,6 +1,5 @@
 import config from 'config'
 import { Service } from 'feathers-sequelize'
-import Eth from 'web3-eth'
 
 import { Application, CachedService, ServiceAddresses } from '../../definitions'
 import notificationHooks from './notification.hooks'

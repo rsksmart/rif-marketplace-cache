@@ -3,7 +3,7 @@ import chai from 'chai'
 import sinonChai from 'sinon-chai'
 import BigNumber from 'bignumber.js'
 import { asciiToHex, hexToAscii } from 'web3-utils'
-import PeerId from 'peer-id'
+import PeerId, { JSONPeerId } from 'peer-id'
 import { Room } from '@rsksmart/rif-communications-pubsub'
 import Libp2p from 'libp2p'
 
@@ -346,18 +346,16 @@ describe('Storage service', function () {
       })
     })
     describe('Notification', () => {
-      const client = getFeatherClient()
-      const notificationService = client.service(ServiceAddresses.NOTIFICATION)
+      // const client = getFeatherClient()
+      // const notificationService = client.service(ServiceAddresses.NOTIFICATION)
       let roomPinner: Room
       let libp2p: Libp2p
-      let peerId: PeerId
       let agreementData: Record<string, any>
       let offerData: Record<string, any>
 
       before(async () => {
-        peerId = await PeerId.create()
         // Create libp2p ndoe for pinner
-        libp2p = await spawnLibp2p(peerId)
+        libp2p = await spawnLibp2p(await PeerId.createFromJSON(app.peerId as JSONPeerId))
         // Create PubSub room to listen on events
         roomPinner = await createLibp2pRoom(libp2p, app.providerAddress)
 
@@ -365,7 +363,7 @@ describe('Storage service', function () {
           totalCapacity: '1024',
           periods: [10],
           prices: [100],
-          msg: generateMsg(peerId.toJSON().id)
+          msg: generateMsg(app.peerId?.id as string)
         }
 
         agreementData = {
