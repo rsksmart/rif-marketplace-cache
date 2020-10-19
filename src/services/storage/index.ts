@@ -39,12 +39,12 @@ export class AgreementService extends Service {
 export class StakeService extends Service {
   emit?: Function
 
-  async get (account: string): Promise<number> {
+  async get (account: string): Promise<{ totalStakedFiat: number, stakes: Array<StakeModel> }> {
     const sequelize = this.Model.sequelize
 
     const query = getStakesForAccount(sequelize, account)
     const [{ totalStakedFiat }] = await sequelize.query(query, { type: QueryTypes.SELECT, raw: true })
-    return totalStakedFiat
+    return { totalStakedFiat, stakes: await StakeModel.findAll({ where: { account } }) }
   }
 }
 

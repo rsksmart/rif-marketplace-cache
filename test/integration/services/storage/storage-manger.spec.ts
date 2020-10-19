@@ -307,8 +307,9 @@ describe('Storage service', function () {
         const [stake] = await StakeModel.findAll({ where: { account }, raw: true })
 
         const totalStakedUSD = Math.floor((new BigNumber(stake.total)).div(WEI).multipliedBy(rate?.usd as number).toNumber())
-        const totalStakedUsdFromQuery = await stakeService.get(account)
-        expect(totalStakedUSD).to.be.eql(totalStakedUsdFromQuery)
+        const { totalStakedFiat, stakes } = await stakeService.get(account)
+        expect(totalStakedUSD).to.be.eql(totalStakedFiat)
+        expect(stakes.length).to.be.eql(1)
       })
     })
     describe('Avg Billing Plan', () => {
