@@ -396,19 +396,21 @@ describe('Storage service', function () {
         await roomPinner.broadcast({ code: MessageCodesEnum.I_HASH_PINNED, payload: { agreementReference: agreement.agreementReference, hash: agreementData.cid } })
         await sleep(2000)
 
-        const notifications = await NotificationModel.findAll({ raw: true })
+        const notifications = await NotificationModel.findAll()
 
         expect(notifications.length).to.be.eql(3)
-        const [newAgreement, hashStart, hashStop] = notifications
+        const newAgreement = notifications.find(n => n.payload.code === MessageCodesEnum.I_AGREEMENT_NEW)
+        const hashStart = notifications.find(n => n.payload.code === MessageCodesEnum.I_HASH_START)
+        const hashStop = notifications.find(n => n.payload.code === MessageCodesEnum.I_HASH_PINNED)
 
-        expect(newAgreement.account).to.be.eq(app.consumerAddress)
-        expect(newAgreement.payload).to.be.eq(JSON.stringify({ agreementReference: agreement.agreementReference, code: MessageCodesEnum.I_AGREEMENT_NEW }))
+        expect(newAgreement?.account).to.be.eql(app.consumerAddress)
+        expect(newAgreement?.payload).to.be.eql({ agreementReference: agreement.agreementReference, code: MessageCodesEnum.I_AGREEMENT_NEW })
 
-        expect(hashStart.account).to.be.eq(app.consumerAddress)
-        expect(hashStart.payload).to.be.eq(JSON.stringify({ agreementReference: agreement.agreementReference, hash: agreementData.cid, code: MessageCodesEnum.I_HASH_START }))
+        expect(hashStart?.account).to.be.eql(app.consumerAddress)
+        expect(hashStart?.payload).to.be.eql({ agreementReference: agreement.agreementReference, hash: agreementData.cid, code: MessageCodesEnum.I_HASH_START })
 
-        expect(hashStop.account).to.be.eq(app.consumerAddress)
-        expect(hashStop.payload).to.be.eq(JSON.stringify({ agreementReference: agreement.agreementReference, hash: agreementData.cid, code: MessageCodesEnum.I_HASH_PINNED }))
+        expect(hashStop?.account).to.be.eql(app.consumerAddress)
+        expect(hashStop?.payload).to.be.eql({ agreementReference: agreement.agreementReference, hash: agreementData.cid, code: MessageCodesEnum.I_HASH_PINNED })
       })
     })
   })
