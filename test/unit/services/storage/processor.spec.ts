@@ -495,7 +495,7 @@ describe('Storage services: Events Processor', () => {
         await processor(event)
         const updatedStake = await StakeModel.findOne({ where: { token, account } })
         expect(updatedStake?.total).to.be.eql(new BigNumber(event.returnValues.total))
-        expect(stakeServiceEmitSpy).to.have.been.calledWith('updated', { ...updatedStake?.toJSON(), totalStakedUSD: '1000.00' })
+        expect(stakeServiceEmitSpy).to.have.been.calledWith('updated', { stakes: await StakeModel.findAll({ where: { account } }), totalStakedFiat: '1000.00' })
       })
     })
     describe('Unstaked', () => {
@@ -517,7 +517,7 @@ describe('Storage services: Events Processor', () => {
         await processor(event)
         const updatedStake = await StakeModel.findOne({ where: { token, account } })
 
-        expect(stakeServiceEmitSpy).to.have.been.calledWith('updated', { ...updatedStake?.toJSON(), totalStakedUSD: '0.00' })
+        expect(stakeServiceEmitSpy).to.have.been.calledWith('updated', { stakes: await StakeModel.findAll({ where: { account } }), totalStakedFiat: '0.00' })
         expect(updatedStake?.total).to.be.eql(new BigNumber(event.returnValues.total))
       })
       it('should throw if unstake without stake', async () => {
