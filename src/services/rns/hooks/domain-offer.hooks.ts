@@ -5,10 +5,21 @@ import { numberToHex, sha3 } from 'web3-utils'
 import Domain from '../models/domain.model'
 import DomainExpiration from '../models/expiration.model'
 
+const paginate = (context: HookContext): HookContext => {
+  const paginateOverride = context.params.query?.paginate
+
+  if (typeof paginate !== 'undefined') {
+    context.params.paginate = paginateOverride
+    discardQuery('paginate')(context)
+  }
+
+  return context
+}
+
 export default {
   before: {
     all: [
-      (context: HookContext) => {
+      (context: HookContext): HookContext => {
         context.params.sequelize = {
           raw: false,
           nest: true,
@@ -25,10 +36,13 @@ export default {
         if (!context.params.query) {
           context.params.query = {}
         }
+
+        return context
       }
     ],
     find: [
-      (context: HookContext) => {
+      paginate,
+      (context: HookContext): HookContext => {
         context.params.sequelize = {
           raw: false,
           nest: true,
@@ -45,7 +59,7 @@ export default {
           }
         }
         const { params: { sequelize: { include } } } = context
-        const { domain } = context.params.query as any
+        const domain = context.params.query?.domain
 
         if (include && domain) {
           const { name: { $like } } = domain
@@ -60,6 +74,8 @@ export default {
             }
           }
         }
+
+        return context
       },
       discardQuery('domain')
     ],

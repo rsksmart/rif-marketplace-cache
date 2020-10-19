@@ -9,7 +9,7 @@ import DomainOwner from '../models/owner.model'
 export default {
   before: {
     all: [
-      (context: HookContext) => {
+      (context: HookContext): HookContext => {
         context.params.sequelize = {
           raw: false,
           nest: true
@@ -22,6 +22,8 @@ export default {
         if (context.params.route?.ownerAddress) {
           context.params.query.ownerAddress = context.params.route.ownerAddress.toLowerCase()
         }
+
+        return context
       }
     ],
     find: [
@@ -35,7 +37,7 @@ export default {
         }
         return context
       },
-      (context: HookContext) => {
+      (context: HookContext): HookContext => {
         if (context.params.query) {
           const { ownerAddress, placed, name } = context.params.query
 
@@ -87,6 +89,8 @@ export default {
             }
           }
         }
+
+        return context
       }
     ],
     get: [],

@@ -8,7 +8,7 @@ import Transfer from '../models/transfer.model'
 export default {
   before: {
     all: [
-      (context: HookContext) => {
+      (context: HookContext): HookContext => {
         context.params.sequelize = {
           raw: false,
           nest: true,
@@ -18,10 +18,12 @@ export default {
         if (!context.params.query) {
           context.params.query = {}
         }
+
+        return context
       }
     ],
     find: [
-      (context: HookContext) => {
+      (context: HookContext): HookContext => {
         const { params: { query } } = context
         const sellerAddress = query?.ownerAddress.toLowerCase()
         const domain = query?.domain
@@ -56,6 +58,8 @@ export default {
             }
           }
         }
+
+        return context
       },
       discardQuery('ownerAddress'),
       discardQuery('domain')
