@@ -21,6 +21,7 @@ import { Sequelize as SequelizeTs } from 'sequelize-typescript'
 type Commands = { fn: keyof QueryInterface, [key: string]: any }[]
 const migrationCommands = function (transaction: any): Commands {
   return [
+    // Event
     {
       fn: 'createTable',
       params: [
@@ -82,40 +83,7 @@ const migrationCommands = function (transaction: any): Commands {
         }
       ]
     },
-    {
-      fn: 'createTable',
-      params: [
-        'storage_offer',
-        {
-          provider: {
-            type: Sequelize.STRING(64),
-            field: 'provider',
-            primaryKey: true
-          },
-          totalCapacity: {
-            type: Sequelize.STRING,
-            field: 'totalCapacity'
-          },
-          peerId: {
-            type: Sequelize.STRING,
-            field: 'peerId'
-          },
-          createdAt: {
-            type: Sequelize.DATE,
-            field: 'createdAt',
-            allowNull: false
-          },
-          updatedAt: {
-            type: Sequelize.DATE,
-            field: 'updatedAt',
-            allowNull: false
-          }
-        },
-        {
-          transaction: transaction
-        }
-      ]
-    },
+    // Rate
     {
       fn: 'createTable',
       params: [
@@ -170,20 +138,247 @@ const migrationCommands = function (transaction: any): Commands {
         }
       ]
     },
+    // Storage
+    {
+      fn: 'createTable',
+      params: [
+        'storage_offer',
+        {
+          provider: {
+            type: Sequelize.STRING(64),
+            field: 'provider',
+            primaryKey: true
+          },
+          totalCapacity: {
+            type: Sequelize.STRING,
+            field: 'totalCapacity'
+          },
+          peerId: {
+            type: Sequelize.STRING,
+            field: 'peerId'
+          },
+          createdAt: {
+            type: Sequelize.DATE,
+            field: 'createdAt',
+            allowNull: false
+          },
+          updatedAt: {
+            type: Sequelize.DATE,
+            field: 'updatedAt',
+            allowNull: false
+          }
+        },
+        {
+          transaction: transaction
+        }
+      ]
+    },
+    {
+      fn: 'createTable',
+      params: [
+        'storage_agreement',
+        {
+          agreementReference: {
+            type: Sequelize.STRING(67),
+            field: 'agreementReference',
+            primaryKey: true
+          },
+          dataReference: {
+            type: Sequelize.STRING,
+            field: 'dataReference'
+          },
+          consumer: {
+            type: Sequelize.STRING(64),
+            field: 'consumer'
+          },
+          size: {
+            type: Sequelize.STRING,
+            field: 'size'
+          },
+          isActive: {
+            type: Sequelize.BOOLEAN,
+            field: 'isActive',
+            defaultValue: true
+          },
+          billingPeriod: {
+            type: Sequelize.STRING,
+            field: 'billingPeriod'
+          },
+          billingPrice: {
+            type: Sequelize.STRING,
+            field: 'billingPrice'
+          },
+          tokenAddress: {
+            type: Sequelize.STRING,
+            field: 'tokenAddress'
+          },
+          availableFunds: {
+            type: Sequelize.STRING,
+            field: 'availableFunds'
+          },
+          lastPayout: {
+            type: Sequelize.DATE,
+            field: 'lastPayout'
+          },
+          offerId: {
+            type: Sequelize.STRING,
+            onUpdate: 'CASCADE',
+            onDelete: 'NO ACTION',
+            references: {
+              model: 'storage_offer',
+              key: 'provider'
+            },
+            allowNull: false,
+            name: 'offerId',
+            field: 'offerId'
+          }
+        },
+        {
+          transaction: transaction
+        }
+      ]
+    },
+    {
+      fn: 'createTable',
+      params: [
+        'storage_billing-plan',
+        {
+          id: {
+            type: Sequelize.INTEGER,
+            field: 'id',
+            autoIncrement: true,
+            primaryKey: true,
+            allowNull: false
+          },
+          period: {
+            type: Sequelize.STRING,
+            field: 'period',
+            allowNull: false
+          },
+          price: {
+            type: Sequelize.STRING,
+            field: 'price',
+            allowNull: false
+          },
+          tokenAddress: {
+            type: Sequelize.STRING,
+            field: 'tokenAddress',
+            allowNull: false
+          },
+          offerId: {
+            type: Sequelize.STRING,
+            onUpdate: 'CASCADE',
+            onDelete: 'NO ACTION',
+            references: {
+              model: 'storage_offer',
+              key: 'provider'
+            },
+            name: 'offerId',
+            field: 'offerId',
+            allowNull: false
+          },
+          rateId: {
+            type: Sequelize.STRING,
+            onUpdate: 'CASCADE',
+            onDelete: 'NO ACTION',
+            references: {
+              model: 'rates',
+              key: 'token'
+            },
+            name: 'rateId',
+            field: 'rateId',
+            allowNull: false
+          },
+          createdAt: {
+            type: Sequelize.DATE,
+            field: 'createdAt',
+            allowNull: false
+          },
+          updatedAt: {
+            type: Sequelize.DATE,
+            field: 'updatedAt',
+            allowNull: false
+          }
+        },
+        {
+          transaction: transaction
+        }
+      ]
+    },
+    {
+      fn: 'createTable',
+      params: [
+        'storage_stakes',
+        {
+          id: {
+            type: Sequelize.INTEGER,
+            field: 'id',
+            autoIncrement: true,
+            primaryKey: true,
+            allowNull: false
+          },
+          total: {
+            type: Sequelize.STRING,
+            field: 'total',
+            allowNull: false
+          },
+          token: {
+            type: Sequelize.STRING,
+            field: 'token',
+            allowNull: false
+          },
+          account: {
+            type: Sequelize.STRING,
+            field: 'account',
+            allowNull: false
+          },
+          symbol: {
+            type: Sequelize.STRING,
+            onUpdate: 'CASCADE',
+            onDelete: 'NO ACTION',
+            references: {
+              model: 'rates',
+              key: 'token'
+            },
+            name: 'symbol',
+            field: 'symbol',
+            allowNull: false
+          },
+          createdAt: {
+            type: Sequelize.DATE,
+            field: 'createdAt',
+            allowNull: false
+          },
+          updatedAt: {
+            type: Sequelize.DATE,
+            field: 'updatedAt',
+            allowNull: false
+          }
+        },
+        {
+          transaction: transaction
+        }
+      ]
+    },
+    // RNS
     {
       fn: 'createTable',
       params: [
         'rns_transfer',
         {
           id: {
-            type: Sequelize.STRING,
+            type: Sequelize.INTEGER,
             field: 'id',
-            primaryKey: true
+            primaryKey: true,
+            autoIncrement: true
+          },
+          txHash: {
+            type: Sequelize.STRING,
+            field: 'txHash'
           },
           tokenId: {
             type: Sequelize.STRING,
-            field: 'tokenId',
-            primaryKey: true
+            field: 'tokenId'
           },
           sellerAddress: {
             type: Sequelize.STRING,
@@ -253,8 +448,9 @@ const migrationCommands = function (transaction: any): Commands {
         'rns_sold-domain',
         {
           id: {
-            type: Sequelize.STRING,
+            type: Sequelize.INTEGER,
             allowNull: true,
+            autoIncrement: true,
             name: 'id',
             field: 'id',
             primaryKey: true
@@ -270,6 +466,22 @@ const migrationCommands = function (transaction: any): Commands {
             allowNull: true,
             name: 'tokenId',
             field: 'tokenId'
+          },
+          transferId: {
+            type: Sequelize.INTEGER,
+            onUpdate: 'CASCADE',
+            onDelete: 'CASCADE',
+            references: {
+              model: 'rns_transfer',
+              key: 'id'
+            },
+            allowNull: true,
+            name: 'transferId',
+            field: 'transferId'
+          },
+          txHash: {
+            type: Sequelize.STRING,
+            field: 'txHash'
           },
           paymentToken: {
             type: Sequelize.STRING,
@@ -298,10 +510,15 @@ const migrationCommands = function (transaction: any): Commands {
       params: [
         'rns_domain-offer',
         {
-          offerId: {
+          id: {
+            type: Sequelize.INTEGER,
+            field: 'id',
+            primaryKey: true,
+            autoIncrement: true
+          },
+          txHash: {
             type: Sequelize.STRING,
-            field: 'offerId',
-            primaryKey: true
+            name: 'txHash'
           },
           tokenId: {
             type: Sequelize.STRING,
@@ -335,118 +552,13 @@ const migrationCommands = function (transaction: any): Commands {
             type: Sequelize.STRING,
             field: 'priceString'
           },
+          approved: {
+            type: Sequelize.BOOLEAN,
+            field: 'approved'
+          },
           creationDate: {
             type: Sequelize.DATE,
             field: 'creationDate'
-          }
-        },
-        {
-          transaction: transaction
-        }
-      ]
-    },
-    {
-      fn: 'createTable',
-      params: [
-        'storage_agreement',
-        {
-          agreementReference: {
-            type: Sequelize.STRING(67),
-            field: 'agreementReference',
-            primaryKey: true
-          },
-          dataReference: {
-            type: Sequelize.STRING,
-            field: 'dataReference'
-          },
-          consumer: {
-            type: Sequelize.STRING(64),
-            field: 'consumer'
-          },
-          size: {
-            type: Sequelize.STRING,
-            field: 'size'
-          },
-          isActive: {
-            type: Sequelize.BOOLEAN,
-            field: 'isActive',
-            defaultValue: true
-          },
-          billingPeriod: {
-            type: Sequelize.STRING,
-            field: 'billingPeriod'
-          },
-          billingPrice: {
-            type: Sequelize.STRING,
-            field: 'billingPrice'
-          },
-          availableFunds: {
-            type: Sequelize.STRING,
-            field: 'availableFunds'
-          },
-          lastPayout: {
-            type: Sequelize.DATE,
-            field: 'lastPayout'
-          },
-          offerId: {
-            type: Sequelize.STRING,
-            onUpdate: 'CASCADE',
-            onDelete: 'NO ACTION',
-            references: {
-              model: 'storage_offer',
-              key: 'provider'
-            },
-            allowNull: true,
-            name: 'offerId',
-            field: 'offerId'
-          }
-        },
-        {
-          transaction: transaction
-        }
-      ]
-    },
-    {
-      fn: 'createTable',
-      params: [
-        'storage_billing-plan',
-        {
-          id: {
-            type: Sequelize.INTEGER,
-            field: 'id',
-            autoIncrement: true,
-            primaryKey: true,
-            allowNull: false
-          },
-          period: {
-            type: Sequelize.STRING,
-            field: 'period'
-          },
-          price: {
-            type: Sequelize.STRING,
-            field: 'price'
-          },
-          offerId: {
-            type: Sequelize.STRING,
-            onUpdate: 'CASCADE',
-            onDelete: 'NO ACTION',
-            references: {
-              model: 'storage_offer',
-              key: 'provider'
-            },
-            allowNull: true,
-            name: 'offerId',
-            field: 'offerId'
-          },
-          createdAt: {
-            type: Sequelize.DATE,
-            field: 'createdAt',
-            allowNull: false
-          },
-          updatedAt: {
-            type: Sequelize.DATE,
-            field: 'updatedAt',
-            allowNull: false
           }
         },
         {
@@ -482,6 +594,7 @@ const migrationCommands = function (transaction: any): Commands {
         }
       ]
     },
+    // Indexes
     {
       fn: 'addIndex',
       params: [
@@ -584,6 +697,14 @@ const rollbackCommands = function (transaction: any): Commands {
       fn: 'dropTable',
       params: [
         'storage_offer', {
+          transaction: transaction
+        }
+      ]
+    },
+    {
+      fn: 'dropTable',
+      params: [
+        'storage_stakes', {
           transaction: transaction
         }
       ]

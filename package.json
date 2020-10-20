@@ -120,7 +120,6 @@
     "@types/validator": "^13.1.0",
     "@types/umzug": "^2.2.3",
     "bignumber.js": "^9.0.0",
-    "@types/validator": "^13.0.0",
     "chai": "^4.2.0",
     "chai-as-promised": "^7.1.1",
     "cross-env": "^7.0.2",
