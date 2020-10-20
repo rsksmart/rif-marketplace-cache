@@ -24,6 +24,7 @@ import { initStore } from '../../src/store'
 import { Application, SupportedServices } from '../../src/definitions'
 import { ethFactory } from '../../src/blockchain'
 import { sleep } from '../utils'
+import DbMigration from '../../src/migrations'
 
 export const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000'
 export const ZERO_BYTES_32 = '0x0000000000000000000000000000000000000000000000000000000000000000'
@@ -124,7 +125,8 @@ export class TestingApp {
     this.logger.info('Database removed')
     // Init DB
     const sequelize = await sequelizeFactory()
-    await sequelize.sync({ force: true })
+    const migration = new DbMigration(sequelize)
+    await migration.up()
     await initStore(sequelize)
     this.logger.info('Database initialized')
 
