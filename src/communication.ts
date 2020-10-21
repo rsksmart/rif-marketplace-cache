@@ -7,9 +7,22 @@ import { loggingFactory } from './logger'
 import Offer from './services/storage/models/offer.model'
 import NotificationModel from './services/notification/notification.model'
 import { NotificationService } from './services/notification'
-import { Application, CommsMessage, CommsPayloads, MessageHandler, NotificationType } from './definitions'
+import {
+  Application,
+  CommsMessage,
+  CommsPayloads,
+  MessageCodesEnum,
+  MessageHandler,
+  NotificationType
+} from './definitions'
 import Agreement from './services/storage/models/agreement.model'
 import { errorHandler } from './utils'
+
+type NotificationData = {
+  accounts: string[]
+  type: string
+  payload: CommsPayloads
+}
 
 const logger = loggingFactory('communication')
 // (offerId -> room) MAP
@@ -29,10 +42,37 @@ async function gcAgreementNotifications (agreementReference: string): Promise<vo
       payload: {
         agreementReference: agreementReference
       },
-      type: NotificationType.AGREEMENT
+      type: NotificationType.PINNER
     }
   })
   await Promise.all(notificationToDelete.map(n => n.destroy()))
+}
+
+function buildNotification (agreement: Agreement, message: CommsMessage<CommsPayloads>): NotificationData | undefined {
+  const notification = {
+    type: NotificationType.PINNER,
+    payload: { ...message.payload, code: message.code }
+  }
+  switch (message.code) {
+    case MessageCodesEnum.I_AGREEMENT_NEW:
+      return {
+        accounts: [agreement.offerId],
+        ...notification
+      }
+    case MessageCodesEnum.I_AGREEMENT_EXPIRED:
+      return {
+        accounts: [agreement.consumer, agreement.offerId],
+        ...notification
+      }
+    case MessageCodesEnum.I_HASH_PINNED:
+    case MessageCodesEnum.E_AGREEMENT_SIZE_LIMIT_EXCEEDED:
+      return {
+        accounts: [agreement.consumer],
+        ...notification
+      }
+    default:
+      return undefined
+  }
 }
 
 export function messageHandler (
@@ -45,10 +85,11 @@ export function messageHandler (
       logger.verbose(`Agreement ${message.payload.agreementReference} for message not found`)
       return
     }
-    const notificationData = {
-      account: agreement.consumer,
-      type: NotificationType.AGREEMENT,
-      payload: { ...message.payload, code: message.code }
+    const notificationData = buildNotification(agreement, message)
+    logger.debug('Build Notification: ', notificationData)
+
+    if (!notificationData) {
+      return
     }
 
     if (!notificationService) {

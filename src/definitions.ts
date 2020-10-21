@@ -267,19 +267,20 @@ export interface Handler<T> {
  */
 
 export enum MessageCodesEnum {
-  I_GENERAL = 'I_GEN',
-  I_AGREEMENT_NEW = 'I_AGR_NEW',
-  I_AGREEMENT_STOPPED = 'I_AGR_STOP',
-  I_AGREEMENT_EXPIRED = 'I_AGR_EXP',
+  I_AGREEMENT_NEW = 'I_AGR_NEW', // PROVIDER
+  I_AGREEMENT_EXPIRED = 'I_AGR_EXP', // BOTH
+  I_HASH_PINNED = 'I_HASH_STOP', // CONSUMER
+  E_AGREEMENT_SIZE_LIMIT_EXCEEDED = 'E_AGR_SIZE_OVERFLOW', // CONSUMER
+  //
   I_HASH_START = 'I_HASH_START',
-  I_HASH_PINNED = 'I_HASH_STOP',
+  E_GENERAL = 'E_GEN',
+  W_HASH_RETRY = 'W_HASH_RETRY',
+  I_AGREEMENT_STOPPED = 'I_AGR_STOP',
+  I_GENERAL = 'I_GEN',
   I_MULTIADDR_ANNOUNCEMENT = 'I_ADDR_ANNOUNCE',
   I_RESEND_LATEST_MESSAGES = 'I_RESEND',
   W_GENERAL = 'W_GEN',
-  W_HASH_RETRY = 'W_HASH_RETRY',
-  E_GENERAL = 'E_GEN',
   E_HASH_NOT_FOUND = 'E_HASH_404',
-  E_AGREEMENT_SIZE_LIMIT_EXCEEDED = 'E_AGR_SIZE_OVERFLOW'
 }
 
 interface BasePayload {
@@ -331,5 +332,5 @@ export type MessageHandler = (message: CommsMessage<CommsPayloads>) => Promise<v
 // NOTIFICATION
 
 export enum NotificationType {
-  AGREEMENT = 'agreement'
+  PINNER = 'pinner'
 }

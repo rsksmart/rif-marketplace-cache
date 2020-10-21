@@ -392,24 +392,29 @@ describe('Storage service', function () {
         const agreement = await Agreement.findOne({ raw: true }) as Agreement
 
         await roomPinner.broadcast({ code: MessageCodesEnum.I_AGREEMENT_NEW, payload: { agreementReference: agreement.agreementReference } })
-        await roomPinner.broadcast({ code: MessageCodesEnum.I_HASH_START, payload: { agreementReference: agreement.agreementReference, hash: agreementData.cid } })
         await roomPinner.broadcast({ code: MessageCodesEnum.I_HASH_PINNED, payload: { agreementReference: agreement.agreementReference, hash: agreementData.cid } })
+        await roomPinner.broadcast({ code: MessageCodesEnum.I_AGREEMENT_EXPIRED, payload: { agreementReference: agreement.agreementReference, hash: agreementData.cid } })
+        await roomPinner.broadcast({ code: MessageCodesEnum.E_AGREEMENT_SIZE_LIMIT_EXCEEDED, payload: { agreementReference: agreement.agreementReference, hash: agreementData.cid } })
         await sleep(2000)
 
         const notifications = await NotificationModel.findAll()
 
-        expect(notifications.length).to.be.eql(3)
+        expect(notifications.length).to.be.eql(4)
         const newAgreement = notifications.find(n => n.payload.code === MessageCodesEnum.I_AGREEMENT_NEW)
-        const hashStart = notifications.find(n => n.payload.code === MessageCodesEnum.I_HASH_START)
+        const agrExpired = notifications.find(n => n.payload.code === MessageCodesEnum.I_AGREEMENT_EXPIRED)
         const hashStop = notifications.find(n => n.payload.code === MessageCodesEnum.I_HASH_PINNED)
+        const sizeLimit = notifications.find(n => n.payload.code === MessageCodesEnum.E_AGREEMENT_SIZE_LIMIT_EXCEEDED)
 
-        expect(newAgreement?.account).to.be.eql(app.consumerAddress)
+        expect(newAgreement?.accounts).to.be.eql([app.providerAddress])
         expect(newAgreement?.payload).to.be.eql({ agreementReference: agreement.agreementReference, code: MessageCodesEnum.I_AGREEMENT_NEW })
 
-        expect(hashStart?.account).to.be.eql(app.consumerAddress)
-        expect(hashStart?.payload).to.be.eql({ agreementReference: agreement.agreementReference, hash: agreementData.cid, code: MessageCodesEnum.I_HASH_START })
+        expect(agrExpired?.accounts).to.be.eql([app.consumerAddress, app.providerAddress])
+        expect(agrExpired?.payload).to.be.eql({ agreementReference: agreement.agreementReference, hash: agreementData.cid, code: MessageCodesEnum.I_AGREEMENT_EXPIRED })
 
-        expect(hashStop?.account).to.be.eql(app.consumerAddress)
+        expect(sizeLimit?.accounts).to.be.eql([app.consumerAddress])
+        expect(sizeLimit?.payload).to.be.eql({ agreementReference: agreement.agreementReference, hash: agreementData.cid, code: MessageCodesEnum.E_AGREEMENT_SIZE_LIMIT_EXCEEDED })
+
+        expect(hashStop?.accounts).to.be.eql([app.consumerAddress])
         expect(hashStop?.payload).to.be.eql({ agreementReference: agreement.agreementReference, hash: agreementData.cid, code: MessageCodesEnum.I_HASH_PINNED })
       })
     })

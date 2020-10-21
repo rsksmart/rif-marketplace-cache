@@ -9,8 +9,9 @@ export default class NotificationModel extends Model {
   @Column({ allowNull: false })
   type!: string
 
-  @Column({ allowNull: false })
-  account!: string
+  // TODO: implement get/set and make it type of String. This is needed for quering notification for specific account
+  @Column({ type: DataType.JSON, allowNull: false })
+  accounts!: string[]
 
   @Column({ type: DataType.JSON, allowNull: false })
   payload!: CommsPayloads & { code: string }

@@ -4,11 +4,11 @@ import { Application, ServiceAddresses } from '../../definitions'
 const CHANNEL = 'notifications'
 
 function filterByOwner (app: Application, data: any) {
-  const account: string = data.account
+  const accounts: string[] = data.accounts
   return app.channel(CHANNEL)
     .filter(connection => {
       const connectedAccount: string = connection.ownerAddress
-      return Boolean(account && account === connectedAccount)
+      return Boolean(accounts && accounts.includes(connectedAccount))
     })
 }
 

@@ -12,7 +12,7 @@ import { awaitForPeerJoined, createLibp2pRoom, sleep, spawnLibp2p } from '../../
 import Agreement from '../../../../src/services/storage/models/agreement.model'
 import NotificationModel from '../../../../src/services/notification/notification.model'
 import Libp2p from 'libp2p'
-import { NotificationType } from '../../../../src/definitions'
+import { MessageCodesEnum, NotificationType } from '../../../../src/definitions'
 
 chai.use(sinonChai)
 chai.use(chaiAsPromised)
@@ -33,7 +33,7 @@ describe('Communication', function () {
     await sequelize.sync({ force: true })
     const peerId = await PeerId.create()
     offer = await Offer.create({ provider: 'abc', totalCapacity: 123, peerId: peerId.toJSON().id })
-    agreement = await Agreement.create({ agreementReference: 'test', consumer: 'testAccount' })
+    agreement = await Agreement.create({ agreementReference: 'test', consumer: 'testAccount', offerId: offer.provider })
 
     // Create libp2p ndoe for pinner
     libp2p = await spawnLibp2p(peerId)
@@ -55,35 +55,35 @@ describe('Communication', function () {
 
   it('Should create notification', async () => {
     // Send message
-    const message = { code: 2, payload: { agreementReference: agreement.agreementReference, hello: 'hello' } }
+    const message = { code: MessageCodesEnum.I_AGREEMENT_EXPIRED, payload: { agreementReference: agreement.agreementReference, hello: 'hello' } }
     await roomPinner.broadcast(message)
     await sleep(500)
 
     const notifications = await NotificationModel.findAll()
     expect(notifications.length).to.be.eql(1)
-    expect(notifications[0].account).to.be.eql(agreement.consumer)
-    expect(notifications[0].type).to.be.eql(NotificationType.AGREEMENT)
+    expect(notifications[0].accounts).to.be.eql([agreement.consumer, agreement.offerId])
+    expect(notifications[0].type).to.be.eql(NotificationType.PINNER)
     expect(notifications[0].payload).to.be.eql({ ...message.payload, code: message.code })
   })
   it('should GC notification', async () => {
     await NotificationModel.bulkCreate([
-      { account: 'testAcc', type: NotificationType.AGREEMENT, payload: { agreementReference: 'test123', id: 1 } }, // notification for another agreement
-      { account: 'testAcc', type: NotificationType.AGREEMENT, payload: { agreementReference: agreement.agreementReference, id: 2 } },
-      { account: 'testAcc', type: NotificationType.AGREEMENT, payload: { agreementReference: agreement.agreementReference, id: 3 } },
-      { account: 'testAcc', type: NotificationType.AGREEMENT, payload: { agreementReference: agreement.agreementReference, id: 4 } },
-      { account: 'testAcc', type: NotificationType.AGREEMENT, payload: { agreementReference: agreement.agreementReference, id: 5 } },
-      { account: 'testAcc', type: NotificationType.AGREEMENT, payload: { agreementReference: agreement.agreementReference, id: 6 } },
-      { account: 'testAcc', type: NotificationType.AGREEMENT, payload: { agreementReference: agreement.agreementReference, id: 7 } },
-      { account: 'testAcc', type: NotificationType.AGREEMENT, payload: { agreementReference: agreement.agreementReference, id: 8 } },
-      { account: 'testAcc', type: NotificationType.AGREEMENT, payload: { agreementReference: agreement.agreementReference, id: 9 } },
-      { account: 'testAcc', type: NotificationType.AGREEMENT, payload: { agreementReference: agreement.agreementReference, id: 10 } },
-      { account: 'testAcc', type: NotificationType.AGREEMENT, payload: { agreementReference: agreement.agreementReference, id: 11 } }
+      { accounts: ['testAcc'], type: NotificationType.PINNER, payload: { agreementReference: 'test123', id: 1 } }, // notification for another agreement
+      { accounts: ['testAcc'], type: NotificationType.PINNER, payload: { agreementReference: agreement.agreementReference, id: 2 } },
+      { accounts: ['testAcc'], type: NotificationType.PINNER, payload: { agreementReference: agreement.agreementReference, id: 3 } },
+      { accounts: ['testAcc'], type: NotificationType.PINNER, payload: { agreementReference: agreement.agreementReference, id: 4 } },
+      { accounts: ['testAcc'], type: NotificationType.PINNER, payload: { agreementReference: agreement.agreementReference, id: 5 } },
+      { accounts: ['testAcc'], type: NotificationType.PINNER, payload: { agreementReference: agreement.agreementReference, id: 6 } },
+      { accounts: ['testAcc'], type: NotificationType.PINNER, payload: { agreementReference: agreement.agreementReference, id: 7 } },
+      { accounts: ['testAcc'], type: NotificationType.PINNER, payload: { agreementReference: agreement.agreementReference, id: 8 } },
+      { accounts: ['testAcc'], type: NotificationType.PINNER, payload: { agreementReference: agreement.agreementReference, id: 9 } },
+      { accounts: ['testAcc'], type: NotificationType.PINNER, payload: { agreementReference: agreement.agreementReference, id: 10 } },
+      { accounts: ['testAcc'], type: NotificationType.PINNER, payload: { agreementReference: agreement.agreementReference, id: 11 } }
     ])
     const notifications = await NotificationModel.findAll()
     expect(notifications.length).to.be.eql(11)
 
     // Send message
-    const message = { type: NotificationType.AGREEMENT, payload: { agreementReference: agreement.agreementReference, id: 12 } }
+    const message = { code: MessageCodesEnum.I_AGREEMENT_EXPIRED, type: NotificationType.PINNER, payload: { agreementReference: agreement.agreementReference, id: 12 } }
     await roomPinner.broadcast(message)
     await sleep(500)
 
