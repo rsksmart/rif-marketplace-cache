@@ -311,6 +311,17 @@ describe('Storage service', function () {
         expect(totalStakedUSD).to.be.eql(totalStakedFiat)
         expect(stakes.length).to.be.eql(1)
       })
+      it('should return total staked fiat equal to 0.00 for empty account', async () => {
+        const client = getFeatherClient()
+        const stakeService = client.service(ServiceAddresses.STORAGE_STAKES)
+
+        const account = app.getRandomAccount()
+        const { totalStakedFiat, stakes } = await stakeService.get(account)
+        const totalStakedUSD = '0.00'
+
+        expect(totalStakedUSD).to.be.eql(totalStakedFiat)
+        expect(stakes.length).to.be.eql(0)
+      })
     })
     describe('Avg Billing Plan', () => {
       before(async () => {
