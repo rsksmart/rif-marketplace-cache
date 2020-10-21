@@ -95,7 +95,6 @@ export async function appFactory (options: AppOptions): Promise<{ app: Applicati
     app,
     stop: () => {
       servicesInstances.forEach(service => service.stop())
-      return app.get('comms')?.stop()
     }
   }
 }

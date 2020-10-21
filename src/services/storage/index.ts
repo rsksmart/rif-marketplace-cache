@@ -196,6 +196,7 @@ const storage: CachedService = {
         confirmationService.removeAllListeners()
         stakingEventsEmitter.stop()
         storageManagerEventsEmitter.stop()
+        comms.stop()
       }
     }
   },
