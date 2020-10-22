@@ -332,5 +332,7 @@ export type MessageHandler = (message: CommsMessage<CommsPayloads>) => Promise<v
 // NOTIFICATION
 
 export enum NotificationType {
-  PINNER = 'pinner'
+  STORAGE = 'storage'
 }
+
+export type NotificationPayload = CommsPayloads & { code: string }

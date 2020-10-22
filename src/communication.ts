@@ -42,7 +42,7 @@ async function gcAgreementNotifications (agreementReference: string): Promise<vo
       payload: {
         agreementReference: agreementReference
       },
-      type: NotificationType.PINNER
+      type: NotificationType.STORAGE
     }
   })
   await Promise.all(notificationToDelete.map(n => n.destroy()))
@@ -50,7 +50,7 @@ async function gcAgreementNotifications (agreementReference: string): Promise<vo
 
 function buildNotification (agreement: Agreement, message: CommsMessage<CommsPayloads>): NotificationData | undefined {
   const notification = {
-    type: NotificationType.PINNER,
+    type: NotificationType.STORAGE,
     payload: { ...message.payload, code: message.code }
   }
   switch (message.code) {

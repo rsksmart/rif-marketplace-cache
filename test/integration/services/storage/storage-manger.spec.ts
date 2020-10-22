@@ -15,7 +15,7 @@ import Rate from '../../../../src/services/rates/rates.model'
 import Agreement from '../../../../src/services/storage/models/agreement.model'
 import NotificationModel from '../../../../src/services/notification/notification.model'
 import StakeModel from '../../../../src/services/storage/models/stake.model'
-import { MessageCodesEnum, ServiceAddresses } from '../../../../src/definitions'
+import { MessageCodesEnum, NotificationType, ServiceAddresses } from '../../../../src/definitions'
 import { WEI } from '../../../../src/services/storage/utils'
 
 chai.use(sinonChai)
@@ -406,15 +406,19 @@ describe('Storage service', function () {
         const sizeLimit = notifications.find(n => n.payload.code === MessageCodesEnum.E_AGREEMENT_SIZE_LIMIT_EXCEEDED)
 
         expect(newAgreement?.accounts).to.be.eql([app.providerAddress])
+        expect(newAgreement?.type).to.be.eql(NotificationType.STORAGE)
         expect(newAgreement?.payload).to.be.eql({ agreementReference: agreement.agreementReference, code: MessageCodesEnum.I_AGREEMENT_NEW })
 
         expect(agrExpired?.accounts).to.be.eql([app.consumerAddress, app.providerAddress])
+        expect(agrExpired?.type).to.be.eql(NotificationType.STORAGE)
         expect(agrExpired?.payload).to.be.eql({ agreementReference: agreement.agreementReference, hash: agreementData.cid, code: MessageCodesEnum.I_AGREEMENT_EXPIRED })
 
         expect(sizeLimit?.accounts).to.be.eql([app.consumerAddress])
+        expect(sizeLimit?.type).to.be.eql(NotificationType.STORAGE)
         expect(sizeLimit?.payload).to.be.eql({ agreementReference: agreement.agreementReference, hash: agreementData.cid, code: MessageCodesEnum.E_AGREEMENT_SIZE_LIMIT_EXCEEDED })
 
         expect(hashStop?.accounts).to.be.eql([app.consumerAddress])
+        expect(hashStop?.type).to.be.eql(NotificationType.STORAGE)
         expect(hashStop?.payload).to.be.eql({ agreementReference: agreement.agreementReference, hash: agreementData.cid, code: MessageCodesEnum.I_HASH_PINNED })
       })
     })

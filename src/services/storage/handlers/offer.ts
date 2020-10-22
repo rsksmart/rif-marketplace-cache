@@ -54,7 +54,12 @@ const handlers: { [key: string]: Function } = {
     }
     logger.info(`Updating capacity ${offer.totalCapacity} (ID: ${offer.provider})`)
   },
-  async MessageEmitted (event: EventData, offer: Offer, offerService: OfferService, { comms }: { comms: Comms }): Promise<void> {
+  async MessageEmitted (
+    event: EventData,
+    offer: Offer,
+    offerService: OfferService,
+    { comms }: { comms: Comms }
+  ): Promise<void> {
     const msg = event.returnValues.message
 
     if (!msg || msg.length === 0) {

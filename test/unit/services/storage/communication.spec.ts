@@ -62,28 +62,28 @@ describe('Communication', function () {
     const notifications = await NotificationModel.findAll()
     expect(notifications.length).to.be.eql(1)
     expect(notifications[0].accounts).to.be.eql([agreement.consumer, agreement.offerId])
-    expect(notifications[0].type).to.be.eql(NotificationType.PINNER)
+    expect(notifications[0].type).to.be.eql(NotificationType.STORAGE)
     expect(notifications[0].payload).to.be.eql({ ...message.payload, code: message.code })
   })
   it('should GC notification', async () => {
     await NotificationModel.bulkCreate([
-      { accounts: ['testAcc'], type: NotificationType.PINNER, payload: { agreementReference: 'test123', id: 1 } }, // notification for another agreement
-      { accounts: ['testAcc'], type: NotificationType.PINNER, payload: { agreementReference: agreement.agreementReference, id: 2 } },
-      { accounts: ['testAcc'], type: NotificationType.PINNER, payload: { agreementReference: agreement.agreementReference, id: 3 } },
-      { accounts: ['testAcc'], type: NotificationType.PINNER, payload: { agreementReference: agreement.agreementReference, id: 4 } },
-      { accounts: ['testAcc'], type: NotificationType.PINNER, payload: { agreementReference: agreement.agreementReference, id: 5 } },
-      { accounts: ['testAcc'], type: NotificationType.PINNER, payload: { agreementReference: agreement.agreementReference, id: 6 } },
-      { accounts: ['testAcc'], type: NotificationType.PINNER, payload: { agreementReference: agreement.agreementReference, id: 7 } },
-      { accounts: ['testAcc'], type: NotificationType.PINNER, payload: { agreementReference: agreement.agreementReference, id: 8 } },
-      { accounts: ['testAcc'], type: NotificationType.PINNER, payload: { agreementReference: agreement.agreementReference, id: 9 } },
-      { accounts: ['testAcc'], type: NotificationType.PINNER, payload: { agreementReference: agreement.agreementReference, id: 10 } },
-      { accounts: ['testAcc'], type: NotificationType.PINNER, payload: { agreementReference: agreement.agreementReference, id: 11 } }
+      { accounts: ['testAcc'], type: NotificationType.STORAGE, payload: { agreementReference: 'test123', id: 1 } }, // notification for another agreement
+      { accounts: ['testAcc'], type: NotificationType.STORAGE, payload: { agreementReference: agreement.agreementReference, id: 2 } },
+      { accounts: ['testAcc'], type: NotificationType.STORAGE, payload: { agreementReference: agreement.agreementReference, id: 3 } },
+      { accounts: ['testAcc'], type: NotificationType.STORAGE, payload: { agreementReference: agreement.agreementReference, id: 4 } },
+      { accounts: ['testAcc'], type: NotificationType.STORAGE, payload: { agreementReference: agreement.agreementReference, id: 5 } },
+      { accounts: ['testAcc'], type: NotificationType.STORAGE, payload: { agreementReference: agreement.agreementReference, id: 6 } },
+      { accounts: ['testAcc'], type: NotificationType.STORAGE, payload: { agreementReference: agreement.agreementReference, id: 7 } },
+      { accounts: ['testAcc'], type: NotificationType.STORAGE, payload: { agreementReference: agreement.agreementReference, id: 8 } },
+      { accounts: ['testAcc'], type: NotificationType.STORAGE, payload: { agreementReference: agreement.agreementReference, id: 9 } },
+      { accounts: ['testAcc'], type: NotificationType.STORAGE, payload: { agreementReference: agreement.agreementReference, id: 10 } },
+      { accounts: ['testAcc'], type: NotificationType.STORAGE, payload: { agreementReference: agreement.agreementReference, id: 11 } }
     ])
     const notifications = await NotificationModel.findAll()
     expect(notifications.length).to.be.eql(11)
 
     // Send message
-    const message = { code: MessageCodesEnum.I_AGREEMENT_EXPIRED, type: NotificationType.PINNER, payload: { agreementReference: agreement.agreementReference, id: 12 } }
+    const message = { code: MessageCodesEnum.I_AGREEMENT_EXPIRED, type: NotificationType.STORAGE, payload: { agreementReference: agreement.agreementReference, id: 12 } }
     await roomPinner.broadcast(message)
     await sleep(500)
 

@@ -1,5 +1,5 @@
 import { Table, Column, Model, DataType } from 'sequelize-typescript'
-import { CommsPayloads } from '../../definitions'
+import { NotificationPayload } from '../../definitions'
 import { ArrayStringType } from '../../sequelize'
 
 @Table({
@@ -14,5 +14,5 @@ export default class NotificationModel extends Model {
   accounts!: string[]
 
   @Column({ type: DataType.JSON, allowNull: false })
-  payload!: CommsPayloads & { code: string }
+  payload!: NotificationPayload
 }
