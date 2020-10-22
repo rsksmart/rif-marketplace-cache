@@ -21,11 +21,13 @@ const NOTIFICATION = 'notification'
 
 const logger = loggingFactory(NOTIFICATION)
 
+const stop = () => undefined
+
 const notification: CachedService = {
   async initialize (app: Application): Promise<{ stop: () => void }> {
     if (!config.get<boolean>(`${NOTIFICATION}.enabled`)) {
       logger.info('Notification service: disabled')
-      return { stop: () => undefined }
+      return { stop }
     }
     logger.info('Notification service: enabled')
 
@@ -41,9 +43,7 @@ const notification: CachedService = {
     const comms = app.get('comms') as Comms
     comms.messageHandler = messageHandler(notificationService)
 
-    return {
-      stop: () => undefined
-    }
+    return { stop }
   },
 
   async purge (): Promise<void> {
