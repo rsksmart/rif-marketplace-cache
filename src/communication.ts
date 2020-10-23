@@ -51,7 +51,7 @@ async function gcAgreementNotifications (agreementReference: string): Promise<vo
 function buildNotification (agreement: Agreement, message: CommsMessage<CommsPayloads>): NotificationData | undefined {
   const notification = {
     type: NotificationType.STORAGE,
-    payload: { ...message.payload, code: message.code }
+    payload: { ...message.payload, code: message.code, timestamp: message.timestamp }
   }
   switch (message.code) {
     case MessageCodesEnum.I_AGREEMENT_NEW:
