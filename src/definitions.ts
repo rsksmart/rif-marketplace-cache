@@ -335,4 +335,4 @@ export enum NotificationType {
   STORAGE = 'storage'
 }
 
-export type NotificationPayload = CommsPayloads & { code: string }
+export type NotificationPayload = CommsPayloads & { code: string, timestamp: number }
