@@ -9,7 +9,7 @@ import { OfferService, StorageServices } from '../index'
 import { decodeByteArray, wrapEvent } from '../../../utils'
 import { EventError } from '../../../errors'
 import { getTokenSymbol } from '../utils'
-import { Comms } from '../../../communication'
+import { subscribeForOffer, isInitialized as isCommsInitialized } from '../../../communication'
 
 const logger = loggingFactory('storage:handler:offer')
 
@@ -57,8 +57,7 @@ const handlers: { [key: string]: Function } = {
   async MessageEmitted (
     event: EventData,
     offer: Offer,
-    offerService: OfferService,
-    { comms }: { comms: Comms }
+    offerService: OfferService
   ): Promise<void> {
     const msg = event.returnValues.message
 
@@ -78,8 +77,8 @@ const handlers: { [key: string]: Function } = {
         offerService.emit('updated', wrapEvent('MessageEmitted', offer.toJSON()))
 
         // Join to libp2p room for that offer
-        if (comms && comms.libp2p) {
-          comms.subscribeForOffer(offer)
+        if (isCommsInitialized()) {
+          subscribeForOffer(offer)
         }
       }
       logger.info(`PeerId ${offer.peerId} defined (ID: ${offer.provider})`)
@@ -102,7 +101,7 @@ const handlers: { [key: string]: Function } = {
 
 const handler: Handler<StorageServices> = {
   events: ['TotalCapacitySet', 'MessageEmitted', 'BillingPlanSet'],
-  async process (event: EventData, { offerService }: StorageServices, { comms }): Promise<void> {
+  async process (event: EventData, { offerService }: StorageServices): Promise<void> {
     const provider = event.returnValues.provider
 
     // TODO: Ignored until https://github.com/sequelize/sequelize/pull/11924
@@ -121,7 +120,7 @@ const handler: Handler<StorageServices> = {
       logger.error(`Unknown event ${event.event}`)
     }
 
-    await handlers[event.event](event, offer, offerService, { comms })
+    await handlers[event.event](event, offer, offerService)
   }
 }
 

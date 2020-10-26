@@ -12,7 +12,6 @@ import { ConfirmatorService } from './blockchain/confirmator'
 import { NewBlockEmitterService } from './blockchain/new-block-emitters'
 import { ReorgEmitterService } from './blockchain/reorg-emitter'
 import { NotificationService } from './services/notification'
-import { Comms } from './communication'
 
 export enum SupportedServices {
   STORAGE = 'storage',
@@ -259,7 +258,7 @@ export interface Logger {
  */
 export interface Handler<T> {
   events: string[]
-  process: (event: EventData, services: T, deps: { eth?: Eth, comms?: Comms }) => Promise<void>
+  process: (event: EventData, services: T, deps: { eth?: Eth }) => Promise<void>
 }
 
 /****************************************************************************************

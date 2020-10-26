@@ -7,10 +7,8 @@ import notificationChannels from './notification.channels'
 import { loggingFactory } from '../../logger'
 import { waitForReadyApp } from '../../utils'
 import NotificationModel from './notification.model'
-import {
-  messageHandler,
-  Comms
-} from '../../communication'
+import { setMessageHandler } from '../../communication'
+import { messageHandler } from '../../communication/handlers'
 import { sleep } from '../../../test/utils'
 
 export class NotificationService extends Service {
@@ -39,9 +37,8 @@ const notification: CachedService = {
     notificationService.hooks(notificationHooks)
     app.configure(notificationChannels)
 
-    // Init comms
-    const comms = app.get('comms') as Comms
-    comms.messageHandler = messageHandler(notificationService)
+    // Set message handler for comms
+    setMessageHandler(messageHandler(notificationService))
 
     return { stop }
   },

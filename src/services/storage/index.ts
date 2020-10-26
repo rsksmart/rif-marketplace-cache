@@ -27,7 +27,7 @@ import avgBillingPlanHook from './hooks/avg-billing-plan.hook'
 import eventProcessor from './storage.processor'
 import storageChannels from './storage.channels'
 import { sleep } from '../../../test/utils'
-import { Comms } from '../../communication'
+import { initComms, subscribeForOffers, stop as commsStop } from '../../communication'
 
 export class OfferService extends Service {
   emit?: Function
@@ -163,17 +163,16 @@ const storage: CachedService = {
     }
 
     const eth = app.get('eth') as Eth
-    const comms = app.get('comms') as Comms
 
     // Init comms
-    await comms.init()
-    await comms.subscribeForOffers()
+    await initComms()
+    await subscribeForOffers()
 
     const confirmationService = app.service(ServiceAddresses.CONFIRMATIONS)
 
     // Storage Manager watcher
     const storageManagerEventsEmitter = getEventsEmitterForService(STORAGE_MANAGER, eth, storageManagerContract.abi as AbiItem[])
-    storageManagerEventsEmitter.on('newEvent', errorHandler(eventProcessor(services, { eth, comms }), storageManagerLogger))
+    storageManagerEventsEmitter.on('newEvent', errorHandler(eventProcessor(services, { eth }), storageManagerLogger))
     storageManagerEventsEmitter.on('error', (e: Error) => {
       storageManagerLogger.error(`There was unknown error in Events Emitter! ${e}`)
     })
@@ -183,7 +182,7 @@ const storage: CachedService = {
 
     // Staking watcher
     const stakingEventsEmitter = getEventsEmitterForService(STAKING, eth, stakingContract.abi as AbiItem[])
-    stakingEventsEmitter.on('newEvent', errorHandler(eventProcessor(services, { eth, comms }), stakingLogger))
+    stakingEventsEmitter.on('newEvent', errorHandler(eventProcessor(services, { eth }), stakingLogger))
     stakingEventsEmitter.on('error', (e: Error) => {
       stakingLogger.error(`There was unknown error in Events Emitter! ${e}`)
     })
@@ -196,7 +195,7 @@ const storage: CachedService = {
         confirmationService.removeAllListeners()
         stakingEventsEmitter.stop()
         storageManagerEventsEmitter.stop()
-        comms.stop()
+        commsStop()
       }
     }
   },

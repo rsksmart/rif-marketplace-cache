@@ -6,7 +6,7 @@ import PeerId from 'peer-id'
 import { Room } from '@rsksmart/rif-communications-pubsub'
 
 import { sequelizeFactory } from '../../../../src/sequelize'
-import { Comms, getRoomTopic } from '../../../../src/communication'
+import { getRoom, getRoomTopic, initComms, subscribeForOffers } from '../../../../src/communication'
 import Offer from '../../../../src/services/storage/models/offer.model'
 import { awaitForPeerJoined, createLibp2pRoom, sleep, spawnLibp2p } from '../../../utils'
 import Agreement from '../../../../src/services/storage/models/agreement.model'
@@ -26,7 +26,6 @@ describe('Communication', function () {
   let libp2p: Libp2p
   let roomPinner: Room
   let room: Room
-  let comms: Comms
   const sequelize = sequelizeFactory()
 
   before(async () => {
@@ -41,11 +40,10 @@ describe('Communication', function () {
     roomPinner = await createLibp2pRoom(libp2p, offer.provider)
 
     // Init comms
-    comms = new Comms()
-    await comms.init()
+    await initComms()
     // Subscribe for offers
-    await comms.subscribeForOffers()
-    room = comms.getRoom(getRoomTopic(offer.provider)) as Room
+    await subscribeForOffers()
+    room = getRoom(getRoomTopic(offer.provider)) as Room
     // Await for nodes find each other
     await awaitForPeerJoined(roomPinner)
   })

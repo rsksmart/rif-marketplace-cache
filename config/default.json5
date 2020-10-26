@@ -27,6 +27,7 @@
   },
 
   blockchain: {
+    networkId: '8545',
     // Number of blocks that is waited AFTER the event is confirmed before
     // it is removed from database.
     // Such parameter is needed for a REST API where a host could miss that an event has

@@ -12,7 +12,6 @@ import { loggingFactory } from './logger'
 import sequelize from './sequelize'
 import blockchain from './blockchain'
 import healthcheck from './healthcheck'
-import communication from './communication'
 import { configureStore } from './store'
 import { errorHandler } from './utils'
 
@@ -60,7 +59,6 @@ export async function appFactory (options: AppOptions): Promise<{ app: Applicati
   app.configure(configureStore)
   app.configure(blockchain)
   app.configure(healthcheck)
-  app.configure(communication)
 
   /**********************************************************/
   // Configure each services
