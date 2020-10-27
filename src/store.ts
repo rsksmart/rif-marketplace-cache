@@ -2,31 +2,26 @@ import { init } from 'sequelize-store'
 import { Application } from './definitions'
 import type { Sequelize } from 'sequelize'
 
+function addBlockTrackerDefinitionFor (service: string, obj: object): void {
+  obj[`web3events.${service}.lastFetchedBlockNumber`] = 'int'
+  obj[`web3events.${service}.lastFetchedBlockHash`] = 'string'
+  obj[`web3events.${service}.lastProcessedBlockNumber`] = 'int'
+  obj[`web3events.${service}.lastProcessedBlockHash`] = 'string'
+}
+
 export function initStore (sequelize: Sequelize): Promise<void> {
-  return init(sequelize, {
+  const schema = {
     'blockchain.lastFetchedBlock': 'json',
-    'web3events.storage.storageManager.lastFetchedBlockNumber': 'int',
-    'web3events.storage.storageManager.lastFetchedBlockHash': 'string',
-    'web3events.storage.storageManager.lastProcessedBlockNumber': 'int',
-    'web3events.storage.storageManager.lastProcessedBlockHash': 'string',
-    'web3events.storage.staking.lastFetchedBlockNumber': 'int',
-    'web3events.storage.staking.lastFetchedBlockHash': 'string',
-    'web3events.storage.staking.lastProcessedBlockNumber': 'int',
-    'web3events.storage.staking.lastProcessedBlockHash': 'string',
-    'rates.lastUpdate': 'int',
-    'web3events.rns.owner.lastFetchedBlockNumber': 'int',
-    'web3events.rns.owner.lastFetchedBlockHash': 'string',
-    'web3events.rns.reverse.lastFetchedBlockNumber': 'int',
-    'web3events.rns.reverse.lastFetchedBlockHash': 'string',
-    'web3events.rns.placement.lastFetchedBlockNumber': 'int',
-    'web3events.rns.placement.lastFetchedBlockHash': 'string',
-    'web3events.rns.owner.lastProcessedBlockNumber': 'int',
-    'web3events.rns.owner.lastProcessedBlockHash': 'string',
-    'web3events.rns.reverse.lastProcessedBlockNumber': 'int',
-    'web3events.rns.reverse.lastProcessedBlockHash': 'string',
-    'web3events.rns.placement.lastProcessedBlockNumber': 'int',
-    'web3events.rns.placement.lastProcessedBlockHash': 'string'
-  })
+    'rates.lastUpdate': 'int'
+  }
+
+  addBlockTrackerDefinitionFor('storage.storageManager', schema)
+  addBlockTrackerDefinitionFor('storage.staking', schema)
+  addBlockTrackerDefinitionFor('rns.owner', schema)
+  addBlockTrackerDefinitionFor('rns.reverse', schema)
+  addBlockTrackerDefinitionFor('rns.placement', schema)
+
+  return init(sequelize, schema)
 }
 
 export function configureStore (app: Application): void {
