@@ -98,6 +98,11 @@ function precache (eth: Eth, web3events: Web3Events): Observable<string> {
   )
 }
 
+const paginate = {
+  default: 10,
+  max: 25
+}
+
 const rns: CachedService = {
   // eslint-disable-next-line require-await
   async initialize (app: Application): Promise<{ stop: () => void }> {
@@ -123,7 +128,7 @@ const rns: CachedService = {
     const sold = app.service(ServiceAddresses.RNS_SOLD)
     sold.hooks(soldDomainHooks)
 
-    app.use(ServiceAddresses.RNS_OFFERS, new RnsBaseService({ Model: DomainOffer }))
+    app.use(ServiceAddresses.RNS_OFFERS, new RnsBaseService({ Model: DomainOffer, paginate }))
     const offers = app.service(ServiceAddresses.RNS_OFFERS)
     offers.hooks(domainOfferHooks)
 

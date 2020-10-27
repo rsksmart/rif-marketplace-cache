@@ -30,7 +30,7 @@ export function getStakesForAccount (
   return `
     SELECT
       CAST(
-        SUM((cast(total as real) / ${WEI}) * coalesce("rates".${sequelize.escape(currency)}, 0)) as INTEGER
+        SUM((cast(total as real) / ${WEI}) * coalesce("rates".${sequelize.escape(currency)}, 0)) as REAL
       ) as totalStakedFiat
     FROM
       storage_stakes

@@ -25,8 +25,9 @@ const generateModelGettersTests = (
       () => cases.forEach(([arg, exp]) => {
         it(`${fn} for ${JSON.stringify(arg)} should be ${exp}`,
           () => {
-            const model = modelFactory(arg)
-            expect((model as { [key: string]: any })[fn]).to.be.eql(exp)
+            const model = modelFactory(arg) as { [key: string]: any }
+            const value = model[fn]
+            expect(value).to.be.eql(exp)
           }
         )
       })
@@ -202,6 +203,71 @@ const AGREEMENT_TEST_SCHEMA = [
           lastPayout: new Date(Date.now() - 4 * month)
         },
         true
+      ]
+    ]
+  },
+  {
+    fn: 'expiresIn',
+    cases: [
+      [
+        {
+          availableFunds: 100, // Not enough for period
+          size: 10,
+          billingPrice: 10,
+          billingPeriod: toSecond(hour),
+          lastPayout: new Date(Date.now() - day)
+        },
+        new BigNumber(0)
+      ],
+      [
+        {
+          availableFunds: 2500, // enough for 1 period
+          size: 10,
+          billingPrice: 10,
+          billingPeriod: toSecond(hour),
+          lastPayout: new Date(Date.now() - day)
+        },
+        new BigNumber(3600)
+      ],
+      [
+        {
+          availableFunds: 250, // enough for half period
+          size: 10,
+          billingPrice: 10,
+          billingPeriod: toSecond(hour),
+          lastPayout: new Date(Date.now() - 2 * hour)
+        },
+        new BigNumber(0)
+      ],
+      [
+        {
+          availableFunds: 400, // enough for 2 periods
+          size: 10,
+          billingPrice: 10,
+          billingPeriod: toSecond(hour),
+          lastPayout: new Date(Date.now() - 2 * hour)
+        },
+        new BigNumber(7200)
+      ],
+      [
+        {
+          availableFunds: 400, // enough for 2 periods
+          size: 10,
+          billingPrice: 10,
+          billingPeriod: toSecond(hour),
+          lastPayout: new Date(Date.now() - 2.5 * hour)
+        },
+        new BigNumber(1.5 * 3600)
+      ],
+      [
+        {
+          availableFunds: 100, // has for one period
+          size: 10,
+          billingPrice: 10,
+          billingPeriod: toSecond(hour),
+          lastPayout: new Date(Date.now() - 0.7 * hour) // period already started and has 0.3 hour left
+        },
+        new BigNumber(3600 * 0.3)
       ]
     ]
   }
