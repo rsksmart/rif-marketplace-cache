@@ -1,7 +1,6 @@
-import { init } from 'sequelize-store'
+import { init, Schema } from 'sequelize-store'
 import { Application } from './definitions'
 import type { Sequelize } from 'sequelize'
-import { Schema } from 'sequelize-store/types/definitions'
 
 function addBlockTrackerDefinitionFor (service: string, obj: Schema): void {
   obj[`web3events.${service}.lastFetchedBlockNumber`] = 'int'
