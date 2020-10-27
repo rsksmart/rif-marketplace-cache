@@ -43,11 +43,11 @@ ${formattedServices}`
 
     // Init required components
     const sequelize = sequelizeFactory()
-    const eth = ethFactory()
-    const web3events = await web3eventsFactory(eth, sequelize)
-
     // Init Store
     await initStore(sequelize)
+
+    const eth = ethFactory()
+    const web3events = await web3eventsFactory(eth, sequelize)
 
     const tasksDefinition = servicesToPreCache.map(
       serviceName => {
