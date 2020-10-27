@@ -148,6 +148,15 @@ export function wrapEvent (event: string, payload: Record<string, any>) {
   }
 }
 
+export function waitForConfigure (app: Application, configure: (app: Application) => Promise<void>): Promise<void> {
+  let promise: Promise<void>
+  app.configure(app => {
+    promise = configure(app)
+  })
+
+  return promise!
+}
+
 export abstract class BaseCLICommand extends Command {
   static flags = {
     config: flags.string({

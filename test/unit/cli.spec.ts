@@ -1,22 +1,22 @@
 import sinon from 'sinon'
 import config from 'config'
 import path from 'path'
-import * as AppModule from '../../src/app'
 import chai from 'chai'
-
-import RnsService from '../../src/services/rns'
-import StorageService from '../../src/services/storage'
 import { unlinkSync, copyFileSync, mkdirSync, existsSync } from 'fs'
+import { Arg, Substitute } from '@fluffy-spoon/substitute'
+import { getEndPromise } from 'sequelize-store'
+import sinonChai from 'sinon-chai'
+import { Eth } from 'web3-eth'
+import { NewBlockEmitter } from '@rsksmart/web3-events'
+
+import * as AppModule from '../../src/app'
 import { sequelizeFactory } from '../../src/sequelize'
 import { initStore } from '../../src/store'
-import { getEndPromise } from 'sequelize-store'
 import StartCommand from '../../src/cli/start'
-import { rmDir, sleep } from '../utils'
-import sinonChai from 'sinon-chai'
-import * as blockchainUtils from '../../src/blockchain'
-import { Eth } from 'web3-eth'
+import { blockMock, rmDir, sleep } from '../utils'
 import Rate from '../../src/services/rates/rates.model'
 import { Application, DbBackUpConfig } from '../../src/definitions'
+import { DbBackUpJob } from '../../src/db-backup'
 
 chai.use(sinonChai)
 const expect = chai.expect
@@ -59,6 +59,10 @@ describe('CLI', function () {
     copyFileSync(db, path.resolve(backupPath, `0x0123:10-${db}`))
     copyFileSync(db, path.resolve(backupPath, `0x0123:20-${db}`))
 
+    const eth = Substitute.for<Eth>()
+    eth.getBlock(Arg.all()).returns(Promise.resolve(blockMock(10)))
+    const backups = new DbBackUpJob(eth, Substitute.for<NewBlockEmitter>())
+
     // Create fake rate
     await Rate.create({
       token: '123456789012345',
@@ -79,30 +83,25 @@ describe('CLI', function () {
     }) as () => void
     const stopSpy = sinon.spy()
     const initAppStub = sinon.stub(AppModule, 'appFactory')
-    initAppStub.callsFake((options: AppModule.AppOptions): Promise<{ app: Application, stop: () => void }> => {
+    initAppStub.callsFake((options: AppModule.AppOptions): Promise<AppModule.AppReturns> => {
       appResetCallback = options.appResetCallBack
-
-      return Promise.resolve({ app: { listen: () => ({ on: () => undefined }) } as unknown as Application, stop: stopSpy })
+      return Promise.resolve({
+        app: { listen: () => ({ on: () => undefined }) } as unknown as Application,
+        backups: backups,
+        stop: stopSpy
+      })
     })
-    sinon.stub(blockchainUtils, 'ethFactory').returns({
-      getBlock: sinon.stub().resolves(true)
-    } as unknown as Eth)
-    const rnsPrecacheStub = sinon.stub(RnsService, 'precache').resolves()
-    const storagePrecacheStub = sinon.stub(StorageService, 'precache').resolves()
 
     // Launches the Daemon
     // @ts-ignore
     StartCommand.run([]).then(() => null, (e) => expect.fail(e))
 
     await sleep(3000)
-    //
+
     appResetCallback() // Trigger reset
     //
     await sleep(3000)
 
-    // Precache called
-    expect(rnsPrecacheStub.called).to.be.true()
-    expect(storagePrecacheStub.called).to.be.true()
     // restart connection after db restored
     sequelizeFactory()
     // db restored

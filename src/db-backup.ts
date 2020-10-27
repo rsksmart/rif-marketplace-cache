@@ -3,10 +3,9 @@ import config from 'config'
 import path from 'path'
 import BigNumber from 'bignumber.js'
 import { BlockHeader, Eth } from 'web3-eth'
+import { Web3Events, NewBlockEmitter, NEW_BLOCK_EVENT_NAME } from '@rsksmart/web3-events'
 
-import { AutoStartStopEventEmitter, NEW_BLOCK_EVENT_NAME } from './blockchain/new-block-emitters'
-import { DbBackUpConfig } from './definitions'
-import { getNewBlockEmitter } from './blockchain/utils'
+import { Application, DbBackUpConfig } from './definitions'
 import { loggingFactory } from './logger'
 
 const logger = loggingFactory('db:backups')
@@ -41,12 +40,13 @@ export function getBackUps (): BackUpEntry[] {
 }
 
 export class DbBackUpJob {
-  readonly newBlockEmitter: AutoStartStopEventEmitter
+  readonly newBlockEmitter: NewBlockEmitter
   readonly db: string
   readonly eth: Eth
   readonly backUpConfig: DbBackUpConfig
+  private listenerUnsubscribe?: () => void
 
-  constructor (eth: Eth) {
+  constructor (eth: Eth, newBlockEmitter: NewBlockEmitter) {
     if (!config.has('dbBackUp')) {
       throw new Error('DB Backup config not exist')
     }
@@ -58,7 +58,7 @@ export class DbBackUpJob {
     }
 
     this.eth = eth
-    this.newBlockEmitter = getNewBlockEmitter(eth)
+    this.newBlockEmitter = newBlockEmitter
   }
 
   /**
@@ -107,13 +107,22 @@ export class DbBackUpJob {
     await fs.promises.copyFile(path.resolve(this.backUpConfig.path, oldest.name), path.resolve(process.cwd(), this.db))
   }
 
-  public run (): void {
-    this.newBlockEmitter.on(NEW_BLOCK_EVENT_NAME, this.backupDb.bind(this))
+  public startBackingUp (): void {
+    this.listenerUnsubscribe = this.newBlockEmitter.on(NEW_BLOCK_EVENT_NAME, this.backupDb.bind(this))
   }
 
   public stop (): void {
-    this.newBlockEmitter.stop()
+    if (this.listenerUnsubscribe) {
+      this.listenerUnsubscribe()
+    }
   }
 }
 
-export default DbBackUpJob
+export function initBackups (app: Application) {
+  const eth = app.get('eth') as Eth
+  const web3events = app.get('web3events') as Web3Events
+
+  const backups = new DbBackUpJob(eth, web3events.defaultNewBlockEmitter)
+  backups.startBackingUp()
+  app.set('backups', backups)
+}

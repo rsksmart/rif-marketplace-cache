@@ -1,5 +1,5 @@
-import { DataType, Model, Sequelize, SequelizeOptions } from 'sequelize-typescript'
-import { ModelAttributeColumnOptions } from 'sequelize'
+import { DataType, Model, Sequelize as TSSequelize, SequelizeOptions } from 'sequelize-typescript'
+import { ModelAttributeColumnOptions, Sequelize } from 'sequelize'
 import BigNumber from 'bignumber.js'
 import path from 'path'
 import config from 'config'
@@ -31,7 +31,7 @@ export function sequelizeFactory (): Sequelize {
     transactionType: 'IMMEDIATE'
   }
 
-  return new Sequelize(`sqlite:${config.get('db')}`, dbSettings)
+  return new TSSequelize(`sqlite:${config.get('db')}`, dbSettings) as unknown as Sequelize
 }
 
 /**

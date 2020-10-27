@@ -1,9 +1,8 @@
-import { EventData } from 'web3-eth-contract'
 import { soliditySha3 } from 'web3-utils'
 import { Eth } from 'web3-eth'
 
 import { loggingFactory } from '../../../logger'
-import { Handler } from '../../../definitions'
+import { Handler, StorageAgreementEvents } from '../../../definitions'
 import { EventError } from '../../../errors'
 import { decodeByteArray, wrapEvent } from '../../../utils'
 import { getBlockDate } from '../../../blockchain/utils'
@@ -11,11 +10,16 @@ import { getBlockDate } from '../../../blockchain/utils'
 import Agreement from '../models/agreement.model'
 import BillingPlan from '../models/billing-plan.model'
 import { StorageServices } from '../index'
+import {
+  AgreementFundsDeposited, AgreementFundsPayout, AgreementFundsWithdrawn,
+  AgreementStopped,
+  NewAgreement
+} from '@rsksmart/rif-marketplace-storage/types/web3-v1-contracts/StorageManager'
 
 const logger = loggingFactory('storage:handler:request')
 
 const handlers = {
-  async NewAgreement (event: EventData, { agreementService }: StorageServices, eth: Eth): Promise<void> {
+  async NewAgreement (event: NewAgreement, { agreementService }: StorageServices, eth: Eth): Promise<void> {
     const { provider: offerId, billingPeriod: period, token: tokenAddress } = event.returnValues
     const id = soliditySha3(event.returnValues.agreementCreator, ...event.returnValues.dataReference, tokenAddress)
     const dataReference = decodeByteArray(event.returnValues.dataReference)
@@ -44,7 +48,7 @@ const handlers = {
     logger.info(`Created new Agreement with ID ${id} for offer ${offerId}`)
   },
 
-  async AgreementStopped (event: EventData, { agreementService }: StorageServices): Promise<void> {
+  async AgreementStopped (event: AgreementStopped, { agreementService }: StorageServices): Promise<void> {
     const id = event.returnValues.agreementReference
     const agreement = await Agreement.findByPk(id)
 
@@ -59,7 +63,7 @@ const handlers = {
     logger.info(`Agreement ${id} was stopped.`)
   },
 
-  async AgreementFundsDeposited (event: EventData, { agreementService }: StorageServices): Promise<void> {
+  async AgreementFundsDeposited (event: AgreementFundsDeposited, { agreementService }: StorageServices): Promise<void> {
     const id = event.returnValues.agreementReference
     const agreement = await Agreement.findByPk(id)
 
@@ -74,7 +78,7 @@ const handlers = {
     logger.info(`Agreement ${id} was topped up with ${event.returnValues.amount}.`)
   },
 
-  async AgreementFundsWithdrawn (event: EventData, { agreementService }: StorageServices): Promise<void> {
+  async AgreementFundsWithdrawn (event: AgreementFundsWithdrawn, { agreementService }: StorageServices): Promise<void> {
     const id = event.returnValues.agreementReference
     const agreement = await Agreement.findByPk(id)
 
@@ -89,7 +93,7 @@ const handlers = {
     logger.info(`${event.returnValues.amount} was withdrawn from funds of Agreement ${id}.`)
   },
 
-  async AgreementFundsPayout (event: EventData, { agreementService }: StorageServices, eth: Eth): Promise<void> {
+  async AgreementFundsPayout (event: AgreementFundsPayout, { agreementService }: StorageServices, eth: Eth): Promise<void> {
     const id = event.returnValues.agreementReference
     const agreement = await Agreement.findByPk(id)
 
@@ -110,13 +114,14 @@ function isValidEvent (value: string): value is keyof typeof handlers {
   return value in handlers
 }
 
-const handler: Handler<StorageServices> = {
+const handler: Handler<StorageAgreementEvents, StorageServices> = {
   events: ['NewAgreement', 'AgreementFundsDeposited', 'AgreementFundsWithdrawn', 'AgreementFundsPayout', 'AgreementStopped'],
-  process (event: EventData, services: StorageServices, eth: Eth): Promise<void> {
+  process (event: StorageAgreementEvents, services: StorageServices, eth: Eth): Promise<void> {
     if (!isValidEvent(event.event)) {
       return Promise.reject(new Error(`Unknown event ${event.event}`))
     }
 
+    // @ts-ignore
     return handlers[event.event](event, services, eth)
   }
 }

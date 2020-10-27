@@ -4,7 +4,10 @@
   dbBackUp: { blocks: 10, path:  'db-backups' },
   blockchain: {
     provider: 'ws://localhost:8545',
-    waitBlockCountBeforeConfirmationRemoved: 10
+    waitBlockCountBeforeConfirmationRemoved: 10,
+    newBlockEmitter: {
+      pollingInterval: 500
+    }
   },
   storage: {
     tokens: {
@@ -14,17 +17,11 @@
       eventsEmitter: {
         confirmations: 1,
         pollingInterval: 500
-      },
-      newBlockEmitter: {
-        pollingInterval: 500
       }
     },
     staking: {
       eventsEmitter: {
         confirmations: 1,
-        pollingInterval: 500
-      },
-      newBlockEmitter: {
         pollingInterval: 500
       }
     }

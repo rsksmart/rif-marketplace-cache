@@ -5,14 +5,17 @@ import chai from 'chai'
 import sinonChai from 'sinon-chai'
 import { Eth } from 'web3-eth'
 import { Substitute, Arg } from '@fluffy-spoon/substitute'
+import { NEW_BLOCK_EVENT_NAME, NewBlockEmitter } from '@rsksmart/web3-events'
+import { EventEmitter } from 'events'
+import util from 'util'
 
-import DbBackUpJob from '../../src/db-backup'
+import { DbBackUpJob } from '../../src/db-backup'
 import { blockMock, rmDir, sleep } from '../utils'
-import { NEW_BLOCK_EVENT_NAME } from '../../src/blockchain/new-block-emitters'
 import { DbBackUpConfig } from '../../src/definitions'
 
 chai.use(sinonChai)
 const expect = chai.expect
+const setImmediatePromise = util.promisify(setImmediate)
 
 describe('DB back-up/restore', function () {
   const configBackUp = { db: config.get('db'), dbBackUp: config.get('dbBackUp') }
@@ -24,7 +27,7 @@ describe('DB back-up/restore', function () {
 
     it('should throw if not enough backups', async () => {
       const eth = Substitute.for<Eth>()
-      const backupJob = new DbBackUpJob(eth)
+      const backupJob = new DbBackUpJob(eth, Substitute.for<NewBlockEmitter>())
 
       expect(fs.readdirSync(config.get<DbBackUpConfig>('dbBackUp').path).length).to.be.eql(0)
       await expect(backupJob.restoreDb()).to.eventually.be.rejectedWith(
@@ -38,7 +41,7 @@ describe('DB back-up/restore', function () {
       const db = config.get<string>('db')
 
       eth.getBlock(Arg.all()).rejects(new Error('Not found'))
-      const backupJob = new DbBackUpJob(eth)
+      const backupJob = new DbBackUpJob(eth, Substitute.for<NewBlockEmitter>())
       fs.writeFileSync(path.resolve(backupPath, `0x0123:10-${db}`), 'First ')
       fs.writeFileSync(path.resolve(backupPath, `0x0123:20-${db}`), 'Second')
 
@@ -53,7 +56,7 @@ describe('DB back-up/restore', function () {
       const backupPath = config.get<DbBackUpConfig>('dbBackUp').path
       const db = config.get<string>('db')
 
-      const backupJob = new DbBackUpJob(eth)
+      const backupJob = new DbBackUpJob(eth, Substitute.for<NewBlockEmitter>())
       eth.getBlock('0x0123').resolves(blockMock(10))
 
       fs.writeFileSync(path.resolve(backupPath, `0x0123:10-${db}`), 'First db backup')
@@ -78,7 +81,7 @@ describe('DB back-up/restore', function () {
 
       expect(config.has('dbBackUp')).to.be.false()
 
-      expect(() => new DbBackUpJob(Substitute.for<Eth>())).to.throw(
+      expect(() => new DbBackUpJob(Substitute.for<Eth>(), Substitute.for<NewBlockEmitter>())).to.throw(
         Error,
         'DB Backup config not exist'
       )
@@ -91,7 +94,7 @@ describe('DB back-up/restore', function () {
 
       expect(fs.existsSync(dbPath)).to.be.false()
 
-      const job = new DbBackUpJob(Substitute.for<Eth>())
+      const job = new DbBackUpJob(Substitute.for<Eth>(), Substitute.for<NewBlockEmitter>())
 
       expect(job).to.be.instanceOf(DbBackUpJob)
       expect(fs.existsSync(dbPath)).to.be.true()
@@ -100,10 +103,12 @@ describe('DB back-up/restore', function () {
       const eth = Substitute.for<Eth>()
       eth.getBlock(Arg.all()).returns(Promise.resolve(blockMock(10)))
       const backUpPath = config.get<DbBackUpConfig>('dbBackUp').path
+      const newBlockEmitter = new EventEmitter()
+      const job = new DbBackUpJob(eth, newBlockEmitter as unknown as NewBlockEmitter)
 
-      const job = new DbBackUpJob(eth)
-
-      job.run()
+      job.startBackingUp()
+      await setImmediatePromise()
+      newBlockEmitter.emit(NEW_BLOCK_EVENT_NAME, blockMock(10))
       await sleep(300)
 
       // should have one db back up already
@@ -115,10 +120,12 @@ describe('DB back-up/restore', function () {
       const eth = Substitute.for<Eth>()
       eth.getBlock(Arg.all()).returns(Promise.resolve(blockMock(10)))
       const backUpPath = config.get<DbBackUpConfig>('dbBackUp').path
+      const newBlockEmitter = new EventEmitter()
+      const job = new DbBackUpJob(eth, newBlockEmitter as unknown as NewBlockEmitter)
 
-      const job = new DbBackUpJob(eth)
-
-      job.run()
+      job.startBackingUp()
+      await setImmediatePromise()
+      newBlockEmitter.emit(NEW_BLOCK_EVENT_NAME, blockMock(10))
       await sleep(300)
 
       // should have one db back up already
@@ -139,9 +146,12 @@ describe('DB back-up/restore', function () {
       eth.getBlock(Arg.all()).returns(Promise.resolve(blockMock(10)))
       const backups = []
       const backUpPath = path.resolve(config.get<DbBackUpConfig>('dbBackUp').path)
-      const job = new DbBackUpJob(eth)
+      const newBlockEmitter = new EventEmitter()
+      const job = new DbBackUpJob(eth, newBlockEmitter as unknown as NewBlockEmitter)
 
-      job.run()
+      job.startBackingUp()
+      await setImmediatePromise()
+      newBlockEmitter.emit(NEW_BLOCK_EVENT_NAME, blockMock(10))
       await sleep(300)
 
       // should have one db back up already
@@ -164,9 +174,12 @@ describe('DB back-up/restore', function () {
       eth.getBlock(Arg.all()).returns(Promise.resolve(blockMock(10)))
       const backups = []
       const backUpPath = config.get<DbBackUpConfig>('dbBackUp').path
-      const job = new DbBackUpJob(eth)
+      const newBlockEmitter = new EventEmitter()
+      const job = new DbBackUpJob(eth, newBlockEmitter as unknown as NewBlockEmitter)
 
-      job.run()
+      job.startBackingUp()
+      await setImmediatePromise()
+      newBlockEmitter.emit(NEW_BLOCK_EVENT_NAME, blockMock(10))
       await sleep(300)
 
       // should have one db back up already
