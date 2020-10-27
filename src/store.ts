@@ -1,8 +1,9 @@
 import { init } from 'sequelize-store'
 import { Application } from './definitions'
 import type { Sequelize } from 'sequelize'
+import { Schema } from 'sequelize-store/types/definitions'
 
-function addBlockTrackerDefinitionFor (service: string, obj: object): void {
+function addBlockTrackerDefinitionFor (service: string, obj: Schema): void {
   obj[`web3events.${service}.lastFetchedBlockNumber`] = 'int'
   obj[`web3events.${service}.lastFetchedBlockHash`] = 'string'
   obj[`web3events.${service}.lastProcessedBlockNumber`] = 'int'
@@ -13,7 +14,7 @@ export function initStore (sequelize: Sequelize): Promise<void> {
   const schema = {
     'blockchain.lastFetchedBlock': 'json',
     'rates.lastUpdate': 'int'
-  }
+  } as Schema
 
   addBlockTrackerDefinitionFor('storage.storageManager', schema)
   addBlockTrackerDefinitionFor('storage.staking', schema)
