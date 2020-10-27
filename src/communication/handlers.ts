@@ -1,8 +1,8 @@
 import config from 'config'
-import NotificationModel from '../services/notification/notification.model'
+import NotificationModel from '../notification/notification.model'
 import { CommsMessage, CommsPayloads, MessageCodesEnum, NotificationType } from '../definitions'
 import Agreement from '../services/storage/models/agreement.model'
-import { NotificationService } from '../services/notification'
+import { NotificationService } from '../notification'
 import { loggingFactory } from '../logger'
 
 const logger = loggingFactory('communication:handlers')

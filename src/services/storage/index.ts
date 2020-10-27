@@ -27,7 +27,7 @@ import avgBillingPlanHook from './hooks/avg-billing-plan.hook'
 import eventProcessor from './storage.processor'
 import storageChannels from './storage.channels'
 import { sleep } from '../../../test/utils'
-import { initComms, subscribeForOffers, stop as commsStop } from '../../communication'
+import { subscribeForOffers } from '../../communication'
 
 export class OfferService extends Service {
   emit?: Function
@@ -151,7 +151,7 @@ const storage: CachedService = {
     const stakeService = app.service(ServiceAddresses.STORAGE_STAKES)
     stakeService.hooks(stakeHooks)
 
-    const services = { offerService, agreementService, stakeService } // stakingService
+    const services = { offerService, agreementService, stakeService }
 
     app.configure(storageChannels)
 
@@ -163,16 +163,16 @@ const storage: CachedService = {
     }
 
     const eth = app.get('eth') as Eth
+    const libp2p = app.get('libp2p')
 
-    // Init comms
-    await initComms()
-    await subscribeForOffers()
+    // Subscribe for offers rooms
+    await subscribeForOffers(libp2p)
 
     const confirmationService = app.service(ServiceAddresses.CONFIRMATIONS)
 
     // Storage Manager watcher
     const storageManagerEventsEmitter = getEventsEmitterForService(STORAGE_MANAGER, eth, storageManagerContract.abi as AbiItem[])
-    storageManagerEventsEmitter.on('newEvent', errorHandler(eventProcessor(services, { eth }), storageManagerLogger))
+    storageManagerEventsEmitter.on('newEvent', errorHandler(eventProcessor(services, { eth, libp2p }), storageManagerLogger))
     storageManagerEventsEmitter.on('error', (e: Error) => {
       storageManagerLogger.error(`There was unknown error in Events Emitter! ${e}`)
     })
@@ -195,7 +195,6 @@ const storage: CachedService = {
         confirmationService.removeAllListeners()
         stakingEventsEmitter.stop()
         storageManagerEventsEmitter.stop()
-        commsStop()
       }
     }
   },

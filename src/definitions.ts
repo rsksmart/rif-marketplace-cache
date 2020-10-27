@@ -3,6 +3,7 @@ import { ServiceAddons } from '@feathersjs/feathers'
 import * as Parser from '@oclif/parser'
 import { EventData } from 'web3-eth-contract'
 import { Eth } from 'web3-eth'
+import Libp2p from 'libp2p'
 import type { Options as Libp2pOptions } from 'libp2p'
 
 import type { AvgBillingPriceService, AgreementService, OfferService, StakeService } from './services/storage'
@@ -11,13 +12,12 @@ import type { RnsBaseService } from './services/rns'
 import { ConfirmatorService } from './blockchain/confirmator'
 import { NewBlockEmitterService } from './blockchain/new-block-emitters'
 import { ReorgEmitterService } from './blockchain/reorg-emitter'
-import { NotificationService } from './services/notification'
+import { NotificationService } from './notification'
 
 export enum SupportedServices {
   STORAGE = 'storage',
   RATES = 'rates',
   RNS = 'rns',
-  NOTIFICATION = 'notification',
 }
 
 export type SupportedTokens = 'rif' | 'rbtc'
@@ -148,11 +148,11 @@ export interface Config {
   }
 
   notification?: {
-    enabled?: boolean
     countOfNotificationPersistedPerAgreement?: number
   }
 
   blockchain?: {
+    networkId?: number
     // Address to where web3js should connect to. Should be WS endpoint.
     provider?: string
 
@@ -258,7 +258,7 @@ export interface Logger {
  */
 export interface Handler<T> {
   events: string[]
-  process: (event: EventData, services: T, deps: { eth?: Eth }) => Promise<void>
+  process: (event: EventData, services: T, deps: { eth?: Eth, libp2p?: Libp2p }) => Promise<void>
 }
 
 /****************************************************************************************

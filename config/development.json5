@@ -15,6 +15,7 @@
   },
   blockchain: {
     provider: "ws://localhost:8545",
+    networkId: 8545
   },
   storage: {
     storageManager: {

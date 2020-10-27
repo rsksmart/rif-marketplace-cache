@@ -59,7 +59,7 @@ export function BigNumberStringType (propName: string): Partial<ModelAttributeCo
 }
 
 /**
- * consider that the field will be stored as string separated by '|' symbol in the data base,
+ * consider that the field will be stored as string separated by '|' symbol in the database,
  * so you not be able to use array comparision when querying
  * ArrayStringType for sequelize models
  * @param propName
@@ -73,6 +73,11 @@ export function ArrayStringType (propName: string): Partial<ModelAttributeColumn
       return this.getDataValue(propName as any).split(separator)
     },
     set (this: Model, value: string[]): void {
+      const invalidEl = value.find(el => el.indexOf(separator) !== -1)
+
+      if (invalidEl) {
+        throw new Error(`Element ${invalidEl} should not containe separator symbol (${separator})`)
+      }
       this.setDataValue(propName as any, value.join(separator))
     }
   }

@@ -6,20 +6,21 @@ import PeerId from 'peer-id'
 import { loggingFactory } from '../logger'
 import Offer from '../services/storage/models/offer.model'
 import {
+  Application,
   CommsMessage,
   CommsPayloads,
-  MessageHandler
+  MessageHandler,
+  ServiceAddresses
 } from '../definitions'
 import { errorHandler } from '../utils'
 import { messageHandler } from './handlers'
 
 const logger = loggingFactory('communication')
 
+let _messageHandler: MessageHandler = messageHandler()
+
 // (offerId -> room) MAP
 export const rooms = new Map<string, Room>()
-
-let libp2p: Libp2p
-let _messageHandler = messageHandler()
 
 export function getRoomTopic (offerId: string): string {
   return `${config.get<string>('blockchain.networkId')}:${offerId}`
@@ -29,25 +30,7 @@ export function getRoom (topic: string): Room | undefined {
   return rooms.get(topic)
 }
 
-export function getPeerId (): string {
-  if (!libp2p) {
-    throw new Error('Libp2p not initialized')
-  }
-  return libp2p.peerId.toJSON().id as string
-}
-
-export function setMessageHandler (handler: MessageHandler): void {
-  _messageHandler = handler
-}
-
-export function isInitialized (): boolean {
-  return Boolean(libp2p)
-}
-
-export function subscribeForOffer (offer: Offer): void {
-  if (!libp2p) {
-    throw new Error('Libp2p not initialized')
-  }
+export function subscribeForOffer (libp2p: Libp2p, offer: Offer): void {
   const topic = getRoomTopic(offer.provider)
 
   if (rooms.has(topic)) {
@@ -83,29 +66,33 @@ export async function initLibp2p (): Promise<Libp2p> {
   return createLibP2P({ ...libp2pConf, peerId: await PeerId.create() })
 }
 
-export async function subscribeForOffers (): Promise<void> {
-  if (!libp2p) {
-    throw new Error('Libp2p not initialized')
-  }
-
+export async function subscribeForOffers (libp2p: Libp2p): Promise<void> {
   for (const offer of await Offer.findAll()) {
-    subscribeForOffer(offer)
+    subscribeForOffer(libp2p, offer)
   }
 }
 
-export async function initComms (): Promise<void> {
-  if (libp2p) {
+export async function initComms (app: Application): Promise<void> {
+  if (app.get('libp2p')) {
     throw new Error('libp2p node already spawned')
   }
-  libp2p = await initLibp2p()
+  app.set('libp2p', await initLibp2p())
+  const notificationService = app.service(ServiceAddresses.NOTIFICATION)
+  _messageHandler = messageHandler(notificationService)
 }
 
-export async function stop (): Promise<void> {
+export async function stop (app: Application): Promise<void> {
   for (const [, room] of rooms) {
     room.leave()
   }
 
+  const libp2p = app.get('libp2p')
+
   if (libp2p) {
     await libp2p.stop()
   }
+}
+
+export default function (app: Application): void {
+  app.set('commsInit', initComms(app))
 }

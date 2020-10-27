@@ -1,4 +1,7 @@
 {
+  blockchain: {
+    networkId: 30
+  },
   storage: {
     enabled: false,
   },

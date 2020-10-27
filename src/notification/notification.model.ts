@@ -1,6 +1,6 @@
 import { Table, Column, Model, DataType } from 'sequelize-typescript'
-import { NotificationPayload } from '../../definitions'
-import { ArrayStringType } from '../../sequelize'
+import { NotificationPayload } from '../definitions'
+import { ArrayStringType } from '../sequelize'
 
 @Table({
   freezeTableName: true,

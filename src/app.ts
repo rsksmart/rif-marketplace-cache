@@ -12,6 +12,7 @@ import { loggingFactory } from './logger'
 import sequelize from './sequelize'
 import blockchain from './blockchain'
 import healthcheck from './healthcheck'
+import comms, { stop as commsStop } from './communication'
 import { configureStore } from './store'
 import { errorHandler } from './utils'
 
@@ -20,7 +21,7 @@ import authentication from './services/authentication'
 import storage from './services/storage'
 import rates from './services/rates'
 import rns from './services/rns'
-import notification from './services/notification'
+import notification from './notification'
 import { REORG_OUT_OF_RANGE_EVENT_NAME } from './blockchain/events'
 
 const logger = loggingFactory()
@@ -28,8 +29,7 @@ const logger = loggingFactory()
 export const services = {
   [SupportedServices.STORAGE]: storage,
   [SupportedServices.RATES]: rates,
-  [SupportedServices.RNS]: rns,
-  [SupportedServices.NOTIFICATION]: notification
+  [SupportedServices.RNS]: rns
 }
 
 export type AppOptions = { appResetCallBack: (...args: any) => void }
@@ -51,7 +51,7 @@ export async function appFactory (options: AppOptions): Promise<{ app: Applicati
   app.configure(express.rest())
   app.configure(socketio())
 
-  // Authenticatoin service
+  // Authentication service
   app.configure(authentication)
 
   // Custom general services
@@ -59,6 +59,8 @@ export async function appFactory (options: AppOptions): Promise<{ app: Applicati
   app.configure(configureStore)
   app.configure(blockchain)
   app.configure(healthcheck)
+  app.configure(notification)
+  app.configure(comms)
 
   /**********************************************************/
   // Configure each services
@@ -93,6 +95,7 @@ export async function appFactory (options: AppOptions): Promise<{ app: Applicati
     app,
     stop: () => {
       servicesInstances.forEach(service => service.stop())
+      commsStop(app)
     }
   }
 }

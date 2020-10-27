@@ -1,4 +1,5 @@
 import BigNumber from 'bignumber.js'
+import Libp2p from 'libp2p'
 
 import Offer from '../models/offer.model'
 import BillingPlan from '../models/billing-plan.model'
@@ -9,7 +10,7 @@ import { OfferService, StorageServices } from '../index'
 import { decodeByteArray, wrapEvent } from '../../../utils'
 import { EventError } from '../../../errors'
 import { getTokenSymbol } from '../utils'
-import { subscribeForOffer, isInitialized as isCommsInitialized } from '../../../communication'
+import { subscribeForOffer } from '../../../communication'
 
 const logger = loggingFactory('storage:handler:offer')
 
@@ -57,7 +58,8 @@ const handlers: { [key: string]: Function } = {
   async MessageEmitted (
     event: EventData,
     offer: Offer,
-    offerService: OfferService
+    offerService: OfferService,
+    { libp2p }: { libp2p?: Libp2p }
   ): Promise<void> {
     const msg = event.returnValues.message
 
@@ -77,8 +79,8 @@ const handlers: { [key: string]: Function } = {
         offerService.emit('updated', wrapEvent('MessageEmitted', offer.toJSON()))
 
         // Join to libp2p room for that offer
-        if (isCommsInitialized()) {
-          subscribeForOffer(offer)
+        if (libp2p) {
+          subscribeForOffer(libp2p, offer)
         }
       }
       logger.info(`PeerId ${offer.peerId} defined (ID: ${offer.provider})`)
@@ -101,7 +103,7 @@ const handlers: { [key: string]: Function } = {
 
 const handler: Handler<StorageServices> = {
   events: ['TotalCapacitySet', 'MessageEmitted', 'BillingPlanSet'],
-  async process (event: EventData, { offerService }: StorageServices): Promise<void> {
+  async process (event: EventData, { offerService }: StorageServices, { libp2p }): Promise<void> {
     const provider = event.returnValues.provider
 
     // TODO: Ignored until https://github.com/sequelize/sequelize/pull/11924
@@ -120,7 +122,7 @@ const handler: Handler<StorageServices> = {
       logger.error(`Unknown event ${event.event}`)
     }
 
-    await handlers[event.event](event, offer, offerService)
+    await handlers[event.event](event, offer, offerService, { libp2p })
   }
 }
 

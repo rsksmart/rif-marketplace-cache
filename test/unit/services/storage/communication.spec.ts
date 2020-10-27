@@ -3,6 +3,7 @@ import sinonChai from 'sinon-chai'
 import chaiAsPromised from 'chai-as-promised'
 import dirtyChai from 'dirty-chai'
 import PeerId from 'peer-id'
+import Libp2p from 'libp2p'
 import { Room } from '@rsksmart/rif-communications-pubsub'
 
 import { sequelizeFactory } from '../../../../src/sequelize'
@@ -10,9 +11,8 @@ import { getRoom, getRoomTopic, initComms, subscribeForOffers } from '../../../.
 import Offer from '../../../../src/services/storage/models/offer.model'
 import { awaitForPeerJoined, createLibp2pRoom, sleep, spawnLibp2p } from '../../../utils'
 import Agreement from '../../../../src/services/storage/models/agreement.model'
-import NotificationModel from '../../../../src/services/notification/notification.model'
-import Libp2p from 'libp2p'
-import { MessageCodesEnum, NotificationType } from '../../../../src/definitions'
+import NotificationModel from '../../../../src/notification/notification.model'
+import { Application, MessageCodesEnum, NotificationType } from '../../../../src/definitions'
 
 chai.use(sinonChai)
 chai.use(chaiAsPromised)
@@ -29,6 +29,17 @@ describe('Communication', function () {
   const sequelize = sequelizeFactory()
 
   before(async () => {
+    const app: { [key: string]: any } = {
+      get (key: string) {
+        return this[key]
+      },
+      set (key: string, value: any) {
+        this[key] = value
+      },
+      service (key: string) {
+        return this.get(key)
+      }
+    }
     await sequelize.sync({ force: true })
     const peerId = await PeerId.create()
     offer = await Offer.create({ provider: 'abc', totalCapacity: 123, peerId: peerId.toJSON().id })
@@ -40,9 +51,9 @@ describe('Communication', function () {
     roomPinner = await createLibp2pRoom(libp2p, offer.provider)
 
     // Init comms
-    await initComms()
+    await initComms(app as Application)
     // Subscribe for offers
-    await subscribeForOffers()
+    await subscribeForOffers(app.get('libp2p'))
     room = getRoom(getRoomTopic(offer.provider)) as Room
     // Await for nodes find each other
     await awaitForPeerJoined(roomPinner)
