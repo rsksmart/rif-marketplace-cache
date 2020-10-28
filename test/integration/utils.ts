@@ -208,6 +208,7 @@ export class TestingApp {
     this.storageContract = await deploy.send({ from: this.contractOwner, gas: await deploy.estimateGas() })
     await this.storageContract?.methods.initialize().send({ from: this.contractOwner })
     await this.storageContract?.methods.setWhitelistedTokens(ZERO_ADDRESS, true).send({ from: this.contractOwner })
+    await this.storageContract?.methods.setWhitelistedProvider(this.providerAddress, true).send({ from: this.contractOwner })
   }
 
   private async deployStaking (): Promise<void> {
