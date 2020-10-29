@@ -30,6 +30,12 @@ export function getRoom (topic: string): Room | undefined {
   return rooms.get(topic)
 }
 
+export function leaveRoom (topic: string): void {
+  const room = rooms.get(topic)
+  room?.leave()
+  rooms.delete(topic)
+}
+
 export function subscribeForOffer (libp2p: Libp2p, offer: Offer): void {
   const topic = getRoomTopic(offer.provider)
 
@@ -82,8 +88,8 @@ export async function initComms (app: Application): Promise<void> {
 }
 
 export async function stop (app: Application): Promise<void> {
-  for (const [, room] of rooms) {
-    room.leave()
+  for (const [topic] of rooms) {
+    leaveRoom(topic)
   }
 
   const libp2p = app.get('libp2p')

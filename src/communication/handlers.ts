@@ -76,7 +76,7 @@ export function messageHandler (
     const agreement = await Agreement.findOne({ where: { agreementReference: message.payload.agreementReference } })
 
     if (!agreement) {
-      logger.verbose(`Agreement ${message.payload.agreementReference} for message not found`)
+      logger.error(`Agreement ${message.payload.agreementReference} for message not found`)
       return
     }
     const notificationData = buildNotification(agreement, message)
