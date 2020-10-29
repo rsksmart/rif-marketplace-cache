@@ -1,8 +1,8 @@
-import { EventData } from 'web3-eth-contract'
 import BigNumber from 'bignumber.js'
+import { Staked, Unstaked } from '@rsksmart/rif-marketplace-storage/types/web3-v1-contracts/Staking'
 
 import { loggingFactory } from '../../../logger'
-import { Handler } from '../../../definitions'
+import { Handler, StakeEvents } from '../../../definitions'
 import { StorageServices } from '../index'
 import StakeModel from '../models/stake.model'
 import { getTokenSymbol } from '../utils'
@@ -26,21 +26,21 @@ async function findOrCreateStake (account: string, token: string): Promise<Stake
 }
 
 const handlers = {
-  async Staked (event: EventData, { stakeService }: StorageServices): Promise<void> {
+  async Staked (event: Staked, { stakeService }: StorageServices): Promise<void> {
     const { user: account, total, token, amount } = event.returnValues
 
     const stake = await findOrCreateStake(account, token)
 
     stake.total = new BigNumber(stake.total).plus(amount)
     await stake.save()
-    logger.info(`Account ${account} stake amount ${amount}, final balance ${total}`)
+    logger.info(`Account ${account}, token ${token} stake amount ${amount}, final balance ${total}`)
 
     if (stakeService.emit) {
-      stakeService.emit('updated', stake.toJSON())
+      stakeService.emit('updated', await stakeService.get(stake.account))
     }
   },
 
-  async Unstaked (event: EventData, { stakeService }: StorageServices): Promise<void> {
+  async Unstaked (event: Unstaked, { stakeService }: StorageServices): Promise<void> {
     const { user: account, total, token, amount } = event.returnValues
 
     const stake = await StakeModel.findOne({ where: { token, account } })
@@ -51,10 +51,10 @@ const handlers = {
 
     stake.total = new BigNumber(stake.total).minus(amount)
     await stake.save()
-    logger.info(`Account ${account} un-stake amount ${amount}, final balance ${total}`)
+    logger.info(`Account ${account}, token ${token} un-stake amount ${amount}, final balance ${total}`)
 
     if (stakeService.emit) {
-      stakeService.emit('updated', stake.toJSON())
+      stakeService.emit('updated', await stakeService.get(stake.account))
     }
   }
 }
@@ -63,9 +63,9 @@ function isValidEvent (value: string): value is keyof typeof handlers {
   return value in handlers
 }
 
-const handler: Handler<StorageServices> = {
+const handler: Handler<StakeEvents, StorageServices> = {
   events: ['Staked', 'Unstaked'],
-  process (event: EventData, services: StorageServices): Promise<void> {
+  process (event: StakeEvents, services: StorageServices): Promise<void> {
     if (!isValidEvent(event.event)) {
       return Promise.reject(new Error(`Unknown event ${event.event}`))
     }

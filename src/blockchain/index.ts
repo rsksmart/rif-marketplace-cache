@@ -1,14 +1,13 @@
 import config from 'config'
 import Eth, { BlockHeader } from 'web3-eth'
 import { getObject } from 'sequelize-store'
+import { Web3Events, NewBlockEmitterOptions, NEW_BLOCK_EVENT_NAME } from '@rsksmart/web3-events'
+import type { Sequelize } from 'sequelize'
 
-import { ConfirmatorService } from './confirmator'
 import { Application, ServiceAddresses } from '../definitions'
 import { loggingFactory } from '../logger'
-import { NEW_BLOCK_EVENT_NAME, NewBlockEmitterService } from './new-block-emitters'
-import { getNewBlockEmitter } from './utils'
 import { waitForReadyApp } from '../utils'
-import { ReorgEmitterService } from './reorg-emitter'
+import { ReorgEmitterService, NewBlockEmitterService, ConfirmatorService } from './services'
 
 const logger = loggingFactory('blockchain')
 
@@ -17,6 +16,15 @@ export function ethFactory (): Eth {
   logger.info(`Connecting to provider ${provider}`)
 
   return new Eth(provider)
+}
+
+export async function web3eventsFactory (eth: Eth, sequelize: Sequelize): Promise<Web3Events> {
+  await Web3Events.init(sequelize) // And Web3Events models to Sequelize
+  return new Web3Events(eth, {
+    store: getObject('web3events.'),
+    logger: loggingFactory('web3events'),
+    defaultNewBlockEmitter: config.get<NewBlockEmitterOptions>('blockchain.newBlockEmitter')
+  })
 }
 
 const CONFIRMATION_CHANNEL = 'confirmations'
@@ -38,10 +46,9 @@ function channelSetup (app: Application): void {
   app.service(ServiceAddresses.REORG_EMITTER).publish(() => app.channel(REORG_CHANNEL))
 }
 
-function subscribeAndEmitNewBlocks (app: Application): void {
-  const eth = app.get('eth')
+function subscribeAndEmitNewBlocks (app: Application, web3Events: Web3Events): void {
+  const newBlockEmitter = web3Events.defaultNewBlockEmitter
   const store = getObject()
-  const newBlockEmitter = getNewBlockEmitter(eth)
   const newBlockEmitterService = app.service(ServiceAddresses.NEW_BLOCK_EMITTER)
 
   // Subscribe for new blocks
@@ -55,12 +62,16 @@ function subscribeAndEmitNewBlocks (app: Application): void {
 export default async function (app: Application): Promise<void> {
   await waitForReadyApp(app)
   const eth = ethFactory()
-
   app.set('eth', eth)
+
+  const sequelize = app.get('sequelize') as Sequelize
+  const web3events = await web3eventsFactory(eth, sequelize)
+  app.set('web3events', web3events)
+
   app.use(ServiceAddresses.CONFIRMATIONS, new ConfirmatorService(eth))
   app.use(ServiceAddresses.NEW_BLOCK_EMITTER, new NewBlockEmitterService())
   app.use(ServiceAddresses.REORG_EMITTER, new ReorgEmitterService())
 
-  subscribeAndEmitNewBlocks(app)
+  subscribeAndEmitNewBlocks(app, web3events)
   channelSetup(app)
 }

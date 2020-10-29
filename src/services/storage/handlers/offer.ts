@@ -5,11 +5,12 @@ import Offer from '../models/offer.model'
 import BillingPlan from '../models/billing-plan.model'
 import { EventData } from 'web3-eth-contract'
 import { loggingFactory } from '../../../logger'
-import { Handler } from '../../../definitions'
-import { OfferService, StorageServices } from '../index'
+import { Handler, StorageEvents, StorageAgreementEvents, StorageOfferEvents } from '../../../definitions'
+import { StorageServices } from '../index'
 import { decodeByteArray, wrapEvent } from '../../../utils'
 import { EventError } from '../../../errors'
 import { getTokenSymbol } from '../utils'
+import { OfferService } from '../services'
 import { subscribeForOffer } from '../../../communication'
 
 const logger = loggingFactory('storage:handler:offer')
@@ -101,9 +102,9 @@ const handlers: { [key: string]: Function } = {
   }
 }
 
-const handler: Handler<StorageServices> = {
+const handler: Handler<StorageOfferEvents, StorageServices> = {
   events: ['TotalCapacitySet', 'MessageEmitted', 'BillingPlanSet'],
-  async process (event: EventData, { offerService }: StorageServices, { libp2p }): Promise<void> {
+  async process (event: StorageOfferEvents, { offerService }: StorageServices, { libp2p }): Promise<void> {
     const provider = event.returnValues.provider
 
     // TODO: Ignored until https://github.com/sequelize/sequelize/pull/11924

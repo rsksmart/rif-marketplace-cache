@@ -16,7 +16,10 @@
   blockchain: {
     provider: 'ws://localhost:8545',
     networkId: 420,
-    waitBlockCountBeforeConfirmationRemoved: 10
+    waitBlockCountBeforeConfirmationRemoved: 10,
+    newBlockEmitter: {
+      pollingInterval: 500
+    }
   },
   storage: {
     tokens: {
@@ -26,17 +29,11 @@
       eventsEmitter: {
         confirmations: 1,
         pollingInterval: 500
-      },
-      newBlockEmitter: {
-        pollingInterval: 500
       }
     },
     staking: {
       eventsEmitter: {
         confirmations: 1,
-        pollingInterval: 500
-      },
-      newBlockEmitter: {
         pollingInterval: 500
       }
     }

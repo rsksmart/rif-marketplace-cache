@@ -49,7 +49,7 @@ export function subscribeMock (sequence: Array<Error | BlockHeader>, interval = 
   }
 }
 
-export function eventMock (options?: Partial<EventData>): EventData {
+export function eventMock<T = EventData> (options?: Partial<EventData>): T {
   const testEvent = Substitute.for<EventData>()
   options = options || {}
 
@@ -62,7 +62,7 @@ export function eventMock (options?: Partial<EventData>): EventData {
     testEvent.event.returns!('testEvent')
   }
 
-  return testEvent
+  return testEvent as unknown as T
 }
 
 export function blockMock (blockNumber: number, blockHash = '0x123', options: Partial<BlockTransactionString> = {}): BlockTransactionString {

@@ -1,68 +1,41 @@
 import storageManagerContract from '@rsksmart/rif-marketplace-storage/build/contracts/StorageManager.json'
 import stakingContract from '@rsksmart/rif-marketplace-storage/build/contracts/Staking.json'
 import config from 'config'
-import { Service } from 'feathers-sequelize'
-import { QueryTypes } from 'sequelize'
-import { getObject } from 'sequelize-store'
+import { getEndPromise } from 'sequelize-store'
 import Eth from 'web3-eth'
-import { EventData } from 'web3-eth-contract'
-import { AbiItem } from 'web3-utils'
-import { EventEmitter } from 'events'
+import type { AbiItem } from 'web3-utils'
+import { Web3Events, REORG_OUT_OF_RANGE_EVENT_NAME, EventsEmitter } from '@rsksmart/web3-events'
+import { Observable } from 'rxjs'
 
-import { ethFactory } from '../../blockchain'
-import { getEventsEmitterForService, isServiceInitialized } from '../../blockchain/utils'
-import { REORG_OUT_OF_RANGE_EVENT_NAME } from '../../blockchain/events'
-import { Application, CachedService, Logger, ServiceAddresses } from '../../definitions'
+import {
+  getEventsEmitterForService,
+  isServiceInitialized,
+  ProgressCb,
+  purgeBlockTrackerData,
+  reportProgress
+} from '../../blockchain/utils'
+import {
+  Application,
+  CachedService,
+  Logger,
+  ServiceAddresses,
+  StakeEvents, StorageEvents,
+  StorageAgreementEvents
+} from '../../definitions'
 import { loggingFactory } from '../../logger'
 import { errorHandler, waitForReadyApp } from '../../utils'
-import { getAvgMinMaxBillingPriceQuery } from './utils'
 import Agreement from './models/agreement.model'
 import Offer from './models/offer.model'
 import BillingPlan from './models/billing-plan.model'
-import StakeModel, { getStakesForAccount } from './models/stake.model'
+import StakeModel from './models/stake.model'
 import offerHooks from './hooks/offers.hooks'
 import agreementHooks from './hooks/agreements.hooks'
 import stakeHooks from './hooks/stakes.hook'
 import avgBillingPlanHook from './hooks/avg-billing-plan.hook'
-import eventProcessor from './storage.processor'
-import storageChannels from './storage.channels'
-import { sleep } from '../../../test/utils'
+import eventProcessor from './processor'
+import storageChannels from './channels'
+import { AgreementService, OfferService, StakeService, AvgBillingPriceService } from './services'
 import { subscribeForOffers } from '../../communication'
-
-export class OfferService extends Service {
-  emit?: Function
-}
-
-export class AgreementService extends Service {
-  emit?: Function
-}
-
-export class StakeService extends Service {
-  emit?: Function
-
-  async get (account: string): Promise<number> {
-    const sequelize = this.Model.sequelize
-
-    const query = getStakesForAccount(sequelize, account)
-    const [{ totalStakedFiat }] = await sequelize.query(query, { type: QueryTypes.SELECT, raw: true })
-    return totalStakedFiat
-  }
-}
-
-export class AvgBillingPriceService extends Service {
-  emit?: Function
-
-  async get (): Promise<{ min: number, max: number }> {
-    if (!config.get('storage.tokens')) {
-      throw new Error('"storage.tokens" not exist in config')
-    }
-    const sequelize = this.Model.sequelize
-
-    const [{ avgPrice: min }] = await sequelize.query(getAvgMinMaxBillingPriceQuery(-1), { type: QueryTypes.SELECT, raw: true })
-    const [{ avgPrice: max }] = await sequelize.query(getAvgMinMaxBillingPriceQuery(1), { type: QueryTypes.SELECT, raw: true })
-    return { min, max }
-  }
-}
 
 export interface StorageServices {
   agreementService: AgreementService
@@ -77,48 +50,39 @@ const storageLogger = loggingFactory('storage')
 const storageManagerLogger = loggingFactory(STORAGE_MANAGER)
 const stakingLogger = loggingFactory(STAKING)
 
-function precacheContract (eventEmitter: EventEmitter, services: StorageServices, eth: Eth, logger: Logger): Promise<void> {
-  return new Promise<void>((resolve, reject) => {
-    const dataQueue: EventData[] = []
-    const dataQueuePusher = (event: EventData): void => { dataQueue.push(event) }
-
-    eventEmitter.on('initFinished', async () => {
-      eventEmitter.off('newEvent', dataQueuePusher)
-
-      // Needs to be sequentially processed
-      const processor = eventProcessor(services, { eth })
-      try {
-        for (const event of dataQueue) {
-          await processor(event)
-        }
-        resolve()
-      } catch (e) {
-        reject(e)
-      }
-    })
-    eventEmitter.on('newEvent', dataQueuePusher)
-    eventEmitter.on('error', (e: Error) => {
-      logger.error(`There was unknown error in Events Emitter! ${e}`)
-    })
-  })
+async function precacheContract (eventsEmitter: EventsEmitter<StorageEvents>, services: StorageServices, eth: Eth, logger: Logger, progressCb: ProgressCb, contractName: string): Promise<void> {
+  const processor = eventProcessor(services, { eth })
+  for await (const batch of eventsEmitter.fetch()) {
+    for (const event of batch.events) {
+      await processor(event)
+    }
+    progressCb(batch, contractName)
+  }
 }
 
-async function precache (possibleEth?: Eth): Promise<void> {
-  const eth = possibleEth || ethFactory()
-  const storageEventsEmitter = getEventsEmitterForService(STORAGE_MANAGER, eth, storageManagerContract.abi as AbiItem[])
-  const stakingEventsEmitter = getEventsEmitterForService(STAKING, eth, stakingContract.abi as AbiItem[])
+function precache (eth: Eth, web3events: Web3Events): Observable<string> {
+  return reportProgress(storageLogger,
+    async (progressCb): Promise<void> => {
+      const storageEventsEmitter = getEventsEmitterForService<StorageAgreementEvents>(STORAGE_MANAGER, web3events, storageManagerContract.abi as AbiItem[])
+      const stakingEventsEmitter = getEventsEmitterForService<StakeEvents>(STAKING, web3events, stakingContract.abi as AbiItem[])
 
-  const services: StorageServices = {
-    stakeService: new StakeService({ Model: StakeModel }),
-    offerService: new OfferService({ Model: Offer }),
-    agreementService: new AgreementService({ Model: Agreement })
-  }
+      const services: StorageServices = {
+        stakeService: new StakeService({ Model: StakeModel }),
+        offerService: new OfferService({ Model: Offer }),
+        agreementService: new AgreementService({ Model: Agreement })
+      }
 
-  // Precache Storage Manager
-  await precacheContract(storageEventsEmitter, services, eth, storageManagerLogger)
+      // TODO: Can be processed in parallel
+      // Precache Storage Manager
+      await precacheContract(storageEventsEmitter, services, eth, storageManagerLogger, progressCb, 'StorageManager')
 
-  // Precache Staking
-  await precacheContract(stakingEventsEmitter, services, eth, stakingLogger)
+      // Precache Staking
+      await precacheContract(stakingEventsEmitter, services, eth, stakingLogger, progressCb, 'Staking')
+
+      web3events.removeEventsEmitter(storageEventsEmitter)
+      web3events.removeEventsEmitter(stakingEventsEmitter)
+    }
+  )
 }
 
 const storage: CachedService = {
@@ -130,6 +94,11 @@ const storage: CachedService = {
     storageLogger.info('Storage service: enabled')
 
     await waitForReadyApp(app)
+
+    // We require services to be precached before running server
+    if (!isServiceInitialized(STORAGE_MANAGER) || !isServiceInitialized(STAKING)) {
+      return storageLogger.critical('Storage service is not initialized! Run precache command.')
+    }
 
     // Initialize Offer service
     app.use(ServiceAddresses.STORAGE_OFFERS, new OfferService({ Model: Offer }))
@@ -151,40 +120,33 @@ const storage: CachedService = {
     const stakeService = app.service(ServiceAddresses.STORAGE_STAKES)
     stakeService.hooks(stakeHooks)
 
-    const services = { offerService, agreementService, stakeService }
-
     app.configure(storageChannels)
 
-    const reorgEmitterService = app.service(ServiceAddresses.REORG_EMITTER)
-
-    // We require services to be precached before running server
-    if (!isServiceInitialized(STORAGE_MANAGER) || !isServiceInitialized(STAKING)) {
-      return storageLogger.critical('Storage service is not initialized! Run precache command.')
-    }
-
     const eth = app.get('eth') as Eth
+    const web3events = app.get('web3events') as Web3Events
     const libp2p = app.get('libp2p')
+    const confirmationService = app.service(ServiceAddresses.CONFIRMATIONS)
+    const reorgEmitterService = app.service(ServiceAddresses.REORG_EMITTER)
+    const services = { offerService, agreementService, stakeService }
 
     // Subscribe for offers rooms
     await subscribeForOffers(libp2p)
 
-    const confirmationService = app.service(ServiceAddresses.CONFIRMATIONS)
-
     // Storage Manager watcher
-    const storageManagerEventsEmitter = getEventsEmitterForService(STORAGE_MANAGER, eth, storageManagerContract.abi as AbiItem[])
+    const storageManagerEventsEmitter = getEventsEmitterForService(STORAGE_MANAGER, web3events, storageManagerContract.abi as AbiItem[])
     storageManagerEventsEmitter.on('newEvent', errorHandler(eventProcessor(services, { eth, libp2p }), storageManagerLogger))
-    storageManagerEventsEmitter.on('error', (e: Error) => {
-      storageManagerLogger.error(`There was unknown error in Events Emitter! ${e}`)
+    storageManagerEventsEmitter.on('error', (e: object) => {
+      storageManagerLogger.error(`There was unknown error in Events Emitter for ${STORAGE_MANAGER}! ${e}`)
     })
     storageManagerEventsEmitter.on('newConfirmation', (data) => confirmationService.emit('newConfirmation', data))
     storageManagerEventsEmitter.on('invalidConfirmation', (data) => confirmationService.emit('invalidConfirmation', data))
     storageManagerEventsEmitter.on(REORG_OUT_OF_RANGE_EVENT_NAME, (blockNumber: number) => reorgEmitterService.emitReorg(blockNumber, 'storage'))
 
     // Staking watcher
-    const stakingEventsEmitter = getEventsEmitterForService(STAKING, eth, stakingContract.abi as AbiItem[])
+    const stakingEventsEmitter = getEventsEmitterForService(STAKING, web3events, stakingContract.abi as AbiItem[])
     stakingEventsEmitter.on('newEvent', errorHandler(eventProcessor(services, { eth }), stakingLogger))
-    stakingEventsEmitter.on('error', (e: Error) => {
-      stakingLogger.error(`There was unknown error in Events Emitter! ${e}`)
+    stakingEventsEmitter.on('error', (e: object) => {
+      stakingLogger.error(`There was unknown error in Events Emitter for ${STAKING}! ${e}`)
     })
     stakingEventsEmitter.on('newConfirmation', (data) => confirmationService.emit('newConfirmation', data))
     stakingEventsEmitter.on('invalidConfirmation', (data) => confirmationService.emit('invalidConfirmation', data))
@@ -206,13 +168,10 @@ const storage: CachedService = {
     const stakeCount = await StakeModel.destroy({ where: {}, truncate: true, cascade: true })
     storageLogger.info(`Removed ${priceCount} billing plans entries, ${stakeCount} stakes, ${offersCount} offers and ${agreementsCount} agreements`)
 
-    const store = getObject()
-    delete store[`${STORAGE_MANAGER}.lastFetchedBlockNumber`]
-    delete store[`${STAKING}.lastFetchedBlockNumber`]
-    delete store[`${STORAGE_MANAGER}.lastFetchedBlockHash`]
-    delete store[`${STAKING}.lastFetchedBlockHash`]
+    purgeBlockTrackerData(STORAGE_MANAGER)
+    purgeBlockTrackerData(STAKING)
 
-    await sleep(1000)
+    await getEndPromise()
   },
 
   precache

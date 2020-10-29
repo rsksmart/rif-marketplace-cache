@@ -127,21 +127,12 @@ export class TestingApp {
     await sequelize.sync({ force: true })
     await initStore(sequelize)
     this.logger.info('Database initialized')
-
-    // Precache
-    await this.precache()
-    this.logger.info('Database precached')
-  }
-
-  async precache () {
-    for (const service of Object.values(SupportedServices).filter(service => config.get(`${service}.enabled`))) {
-      await services[service].precache()
-    }
   }
 
   async start (options?: Partial<AppOptions>): Promise<void> {
     // Run Cache service
     const appOptions = Object.assign({
+      requirePrecache: true,
       appResetCallback: appResetCallbackSpy
     }, options) as AppOptions
     this.app = await appFactory(appOptions)
@@ -215,7 +206,9 @@ export class TestingApp {
     const contract = new this.eth.Contract(storageManagerContract.abi as AbiItem[])
     const deploy = await contract.deploy({ data: storageManagerContract.bytecode })
     this.storageContract = await deploy.send({ from: this.contractOwner, gas: await deploy.estimateGas() })
+    await this.storageContract?.methods.initialize().send({ from: this.contractOwner })
     await this.storageContract?.methods.setWhitelistedTokens(ZERO_ADDRESS, true).send({ from: this.contractOwner })
+    await this.storageContract?.methods.setWhitelistedProvider(this.providerAddress, true).send({ from: this.contractOwner })
   }
 
   private async deployStaking (): Promise<void> {
