@@ -116,13 +116,13 @@ function isValidEvent (value: string): value is keyof typeof handlers {
 
 const handler: Handler<StorageAgreementEvents, StorageServices> = {
   events: ['NewAgreement', 'AgreementFundsDeposited', 'AgreementFundsWithdrawn', 'AgreementFundsPayout', 'AgreementStopped'],
-  process (event: StorageAgreementEvents, services: StorageServices, eth: Eth): Promise<void> {
+  process (event: StorageAgreementEvents, services: StorageServices, { eth }): Promise<void> {
     if (!isValidEvent(event.event)) {
       return Promise.reject(new Error(`Unknown event ${event.event}`))
     }
 
     // @ts-ignore
-    return handlers[event.event](event, services, eth)
+    return handlers[event.event](event, services, eth as Eth)
   }
 }
 export default handler

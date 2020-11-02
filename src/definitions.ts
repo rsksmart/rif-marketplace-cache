@@ -4,6 +4,8 @@ import * as Parser from '@oclif/parser'
 import type { Eth } from 'web3-eth'
 import type { Web3Events, EventsEmitterOptions, NewBlockEmitterOptions } from '@rsksmart/web3-events'
 import type { Observable } from 'rxjs'
+import Libp2p from 'libp2p'
+import type { Options as Libp2pOptions } from 'libp2p'
 
 import type { AvgBillingPriceService, AgreementService, OfferService, StakeService } from './services/storage/services'
 import type { RatesService } from './services/rates'
@@ -12,11 +14,12 @@ import type { ReorgEmitterService, NewBlockEmitterService, ConfirmatorService } 
 
 import * as storageEvents from '@rsksmart/rif-marketplace-storage/types/web3-v1-contracts/StorageManager'
 import * as stakingEvents from '@rsksmart/rif-marketplace-storage/types/web3-v1-contracts/Staking'
+import { NotificationService } from './notification'
 
 export enum SupportedServices {
   STORAGE = 'storage',
   RATES = 'rates',
-  RNS = 'rns'
+  RNS = 'rns',
 }
 
 export type SupportedTokens = 'rif' | 'rbtc'
@@ -26,6 +29,7 @@ export function isSupportedServices (value: any): value is SupportedServices {
 }
 
 export enum ServiceAddresses {
+  NOTIFICATION = '/notification',
   RNS_DOMAINS = '/rns/v0/domains',
   RNS_SOLD = '/rns/v0/sold',
   RNS_OFFERS = '/rns/v0/offers',
@@ -50,6 +54,7 @@ interface ServiceTypes {
   [ServiceAddresses.RNS_SOLD]: RnsBaseService & ServiceAddons<any>
   [ServiceAddresses.RNS_OFFERS]: RnsBaseService & ServiceAddons<any>
   [ServiceAddresses.CONFIRMATIONS]: ConfirmatorService & ServiceAddons<any>
+  [ServiceAddresses.NOTIFICATION]: NotificationService & ServiceAddons<any>
   [ServiceAddresses.NEW_BLOCK_EMITTER]: NewBlockEmitterService & ServiceAddons<any>
   [ServiceAddresses.REORG_EMITTER]: ReorgEmitterService & ServiceAddons<any>
 }
@@ -92,7 +97,17 @@ export interface Config {
     path?: string
   }
 
+  comms?: {
+    libp2p?: Libp2pOptions
+    countOfMessagesPersistedPerAgreement?: number
+  }
+
+  notification?: {
+    countOfNotificationPersistedPerAgreement?: number
+  }
+
   blockchain?: {
+    networkId?: number
     // Address to where web3js should connect to. Should be WS endpoint.
     provider?: string
 
@@ -203,7 +218,7 @@ export interface Logger {
  */
 export interface Handler<E, T> {
   events: string[]
-  process: (event: E, services: T, eth: Eth) => Promise<void>
+  process: (event: E, services: T, deps: { eth?: Eth, libp2p?: Libp2p }) => Promise<void>
 }
 
 /// //////////////////////////////////////////////////////////////////////////////////////////////////
@@ -241,3 +256,78 @@ export type StorageOfferEvents = storageEvents.BillingPlanSet
 export type StakeEvents = stakingEvents.Staked | stakingEvents.Unstaked
 
 export type StorageEvents = StorageOfferEvents | StorageAgreementEvents | StakeEvents
+
+/****************************************************************************************
+ * Communications
+ */
+
+export enum MessageCodesEnum {
+  I_AGREEMENT_NEW = 'I_AGR_NEW', // PROVIDER
+  I_AGREEMENT_EXPIRED = 'I_AGR_EXP', // BOTH
+  I_HASH_PINNED = 'I_HASH_STOP', // CONSUMER
+  E_AGREEMENT_SIZE_LIMIT_EXCEEDED = 'E_AGR_SIZE_OVERFLOW', // CONSUMER
+  //
+  I_HASH_START = 'I_HASH_START',
+  E_GENERAL = 'E_GEN',
+  W_HASH_RETRY = 'W_HASH_RETRY',
+  I_AGREEMENT_STOPPED = 'I_AGR_STOP',
+  I_GENERAL = 'I_GEN',
+  I_MULTIADDR_ANNOUNCEMENT = 'I_ADDR_ANNOUNCE',
+  I_RESEND_LATEST_MESSAGES = 'I_RESEND',
+  W_GENERAL = 'W_GEN',
+  E_HASH_NOT_FOUND = 'E_HASH_404',
+}
+
+interface BasePayload {
+  agreementReference: string
+}
+
+export interface RetryPayload extends BasePayload {
+  error: string
+  retryNumber: number
+  totalRetries: number
+}
+
+export interface HashInfoPayload extends BasePayload {
+  hash: string
+}
+
+export type AgreementInfoPayload = BasePayload
+
+export interface AgreementSizeExceededPayload extends BasePayload {
+  hash: string
+  size: number
+  expectedSize: number
+}
+
+// Incoming messages
+
+export interface MultiaddrAnnouncementPayload {
+  agreementReference: string
+  peerId: string
+}
+
+export interface ResendMessagesPayload {
+  requestId: string
+  agreementReference: string
+  code?: string
+}
+
+export interface CommsMessage<Payload> {
+  timestamp: number
+  version: number
+  code: string
+  payload: Payload
+}
+
+export type CommsPayloads = ResendMessagesPayload | MultiaddrAnnouncementPayload | AgreementSizeExceededPayload | AgreementInfoPayload | HashInfoPayload | RetryPayload
+
+export type MessageHandler = (message: CommsMessage<CommsPayloads>) => Promise<void>
+
+// NOTIFICATION
+
+export enum NotificationType {
+  STORAGE = 'storage'
+}
+
+export type NotificationPayload = CommsPayloads & { code: string, timestamp: number }

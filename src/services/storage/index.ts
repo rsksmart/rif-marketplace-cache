@@ -5,10 +5,12 @@ import { getEndPromise } from 'sequelize-store'
 import Eth from 'web3-eth'
 import type { AbiItem } from 'web3-utils'
 import { Web3Events, REORG_OUT_OF_RANGE_EVENT_NAME, EventsEmitter } from '@rsksmart/web3-events'
+import { Observable } from 'rxjs'
 
 import {
   getEventsEmitterForService,
-  isServiceInitialized, ProgressCb,
+  isServiceInitialized,
+  ProgressCb,
   purgeBlockTrackerData,
   reportProgress
 } from '../../blockchain/utils'
@@ -33,7 +35,7 @@ import avgBillingPlanHook from './hooks/avg-billing-plan.hook'
 import eventProcessor from './processor'
 import storageChannels from './channels'
 import { AgreementService, OfferService, StakeService, AvgBillingPriceService } from './services'
-import { Observable } from 'rxjs'
+import { subscribeForOffers } from '../../communication'
 
 export interface StorageServices {
   agreementService: AgreementService
@@ -49,7 +51,7 @@ const storageManagerLogger = loggingFactory(STORAGE_MANAGER)
 const stakingLogger = loggingFactory(STAKING)
 
 async function precacheContract (eventsEmitter: EventsEmitter<StorageEvents>, services: StorageServices, eth: Eth, logger: Logger, progressCb: ProgressCb, contractName: string): Promise<void> {
-  const processor = eventProcessor(services, eth)
+  const processor = eventProcessor(services, { eth })
   for await (const batch of eventsEmitter.fetch()) {
     for (const event of batch.events) {
       await processor(event)
@@ -122,13 +124,17 @@ const storage: CachedService = {
 
     const eth = app.get('eth') as Eth
     const web3events = app.get('web3events') as Web3Events
+    const libp2p = app.get('libp2p')
     const confirmationService = app.service(ServiceAddresses.CONFIRMATIONS)
     const reorgEmitterService = app.service(ServiceAddresses.REORG_EMITTER)
     const services = { offerService, agreementService, stakeService }
 
+    // Subscribe for offers rooms
+    await subscribeForOffers(libp2p)
+
     // Storage Manager watcher
     const storageManagerEventsEmitter = getEventsEmitterForService(STORAGE_MANAGER, web3events, storageManagerContract.abi as AbiItem[])
-    storageManagerEventsEmitter.on('newEvent', errorHandler(eventProcessor(services, eth), storageManagerLogger))
+    storageManagerEventsEmitter.on('newEvent', errorHandler(eventProcessor(services, { eth, libp2p }), storageManagerLogger))
     storageManagerEventsEmitter.on('error', (e: object) => {
       storageManagerLogger.error(`There was unknown error in Events Emitter for ${STORAGE_MANAGER}! ${e}`)
     })
@@ -138,7 +144,7 @@ const storage: CachedService = {
 
     // Staking watcher
     const stakingEventsEmitter = getEventsEmitterForService(STAKING, web3events, stakingContract.abi as AbiItem[])
-    stakingEventsEmitter.on('newEvent', errorHandler(eventProcessor(services, eth), stakingLogger))
+    stakingEventsEmitter.on('newEvent', errorHandler(eventProcessor(services, { eth }), stakingLogger))
     stakingEventsEmitter.on('error', (e: object) => {
       stakingLogger.error(`There was unknown error in Events Emitter for ${STAKING}! ${e}`)
     })

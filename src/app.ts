@@ -15,6 +15,7 @@ import sequelize from './sequelize'
 import blockchain from './blockchain'
 import healthcheck from './healthcheck'
 import { DbBackUpJob, initBackups } from './db-backup'
+import comms, { stop as commsStop } from './communication'
 import { configureStore } from './store'
 import { errorHandler, waitForConfigure } from './utils'
 
@@ -23,6 +24,7 @@ import authentication from './services/authentication'
 import storage from './services/storage'
 import rates from './services/rates'
 import rns from './services/rns'
+import notification from './notification'
 import { Eth } from 'web3-eth'
 
 const logger = loggingFactory()
@@ -70,6 +72,8 @@ export async function appFactory (options: AppOptions): Promise<AppReturns> {
   await waitForConfigure(app, blockchain)
   app.configure(initBackups)
   app.configure(healthcheck)
+  app.configure(notification)
+  app.configure(comms)
 
   /**********************************************************/
   // Configure each services
@@ -119,6 +123,7 @@ export async function appFactory (options: AppOptions): Promise<AppReturns> {
     stop: async (): Promise<void> => {
       const sequelize = app.get('sequelize') as Sequelize
       await sequelize.close()
+      await commsStop(app)
       servicesInstances.forEach(service => service.stop())
     }
   }
