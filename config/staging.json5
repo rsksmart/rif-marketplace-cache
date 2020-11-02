@@ -1,0 +1,49 @@
+{
+  storage: {
+    enabled: true,
+    storageManager: {
+      contractAddress: "0x2e851dD35163fb4FFc6a8D0aDe95D4f8B8D4BCEa",
+      eventsEmitter: {
+        confirmations: 3
+      }
+    },
+    staking: {
+      contractAddress: "0x976f2727d5eaC1eb1043aE48241008c071983bAC",
+      eventsEmitter: {
+        confirmations: 3
+      }
+    },
+  },
+  rns: {
+    batchContractAddress: "0x380a47e2a1cec8a21cf00374ea5d092166a702fc",
+    owner: {
+      contractAddress: "0xca0a477e19bac7e0e172ccfd2e3c28a7200bdb71",
+      eventsEmitter: {
+        startingBlock: 385433,
+        confirmations: 3
+      }
+    },
+    reverse: {
+      contractAddress: "0x8587385ad60038bB181aFfDF687c4D1B80C4787e",
+      eventsEmitter: {
+        startingBlock: 419976,
+        confirmations: 3
+      }
+    },
+    placement: {
+      contractAddress: "0x978908db72E43DB49A80c74A1383Bd5b3e832c46",
+      eventsEmitter: {
+        startingBlock: 1299473,
+        confirmations: 3
+      }
+    },
+    registrar: {
+      startingBlock: 385324,
+      contractAddress: "0x3d1a11c623bd21375f2b69f4eec814f4ceeb1d8d"
+    },
+    fifsAddrRegistrar: {
+      startingBlock: 385324,
+      contractAddress: "0x90734bd6bf96250a7b262e2bc34284b0d47c1e8d"
+    }
+  }
+}
