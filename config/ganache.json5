@@ -1,7 +1,8 @@
 {
   port: 3030,
   blockchain: {
-    provider: "ws://127.0.0.1:8545/"
+    provider: "ws://127.0.0.1:8545/",
+    networkId: 8545
   },
   storage: {
     enabled: true,
