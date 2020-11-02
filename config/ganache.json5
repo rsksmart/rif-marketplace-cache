@@ -51,5 +51,16 @@
         confirmations: 2
       }
     }
+  },
+  comms: {
+    libp2p: {
+      config: {
+        peerDiscovery: {
+          bootstrap: {
+            enabled: false
+          }
+        }
+      }
+    }
   }
 }
