@@ -2,6 +2,8 @@ import type { AbiItem } from 'web3-utils'
 import Eth from 'web3-eth'
 import config from 'config'
 import { EventLog } from 'web3-core'
+import { Observable } from 'rxjs'
+import { getObject } from 'sequelize-store'
 import {
   Web3Events,
   Contract,
@@ -13,10 +15,8 @@ import {
   LAST_PROCESSED_BLOCK_NUMBER_KEY,
   LAST_PROCESSED_BLOCK_HASH_KEY
 } from '@rsksmart/web3-events'
-import { getObject } from 'sequelize-store'
 
 import { loggingFactory } from '../logger'
-import { Observable } from 'rxjs'
 import { Logger } from '../definitions'
 
 export async function getBlockDate (eth: Eth, blockNumber: number): Promise<Date> {
@@ -50,8 +50,8 @@ export type ProgressCb = (progress: ProgressInfo, name: string) => void
 
 export function reportProgress (logger: Logger, handler: (progress: ProgressCb) => Promise<void>): Observable<string> {
   return new Observable<string>((subscriber) => {
-    const progressCb = (progress: ProgressInfo, name: string): void => {
-      subscriber.next(`Processing ${name}: ${Math.round(progress.stepsComplete / progress.totalSteps * 100)}%`)
+    const progressCb = (progress: ProgressInfo, name?: string): void => {
+      subscriber.next(`Processing${' ' + name ?? ''}: ${Math.round(progress.stepsComplete / progress.totalSteps * 100)}%`)
     }
 
     (async (): Promise<void> => {
