@@ -113,12 +113,6 @@ export interface Config {
 
     // Specifies behaviour of the default New Block emitter that will be used across all the EventsEmitters
     newBlockEmitter?: NewBlockEmitterOptions
-
-    // Number of blocks that is waited AFTER the event is confirmed before
-    // it is removed from database.
-    // Such parameter is needed for a REST API where a host could miss that an event has
-    // full confirmations as it could be removed from the DB before the endpoint is queried.
-    waitBlockCountBeforeConfirmationRemoved?: number
   }
 
   rates?: {

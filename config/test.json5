@@ -16,7 +16,6 @@
   blockchain: {
     provider: 'ws://localhost:8545',
     networkId: 420,
-    waitBlockCountBeforeConfirmationRemoved: 10,
     newBlockEmitter: {
       pollingInterval: 500
     }
@@ -28,27 +27,43 @@
     storageManager: {
       eventsEmitter: {
         confirmations: 1,
-        pollingInterval: 500
+        pollingInterval: 500,
+        waitingBlockCount: 10
       }
     },
     staking: {
       eventsEmitter: {
         confirmations: 1,
-        pollingInterval: 500
+        pollingInterval: 500,
+        waitingBlockCount: 10
       }
     }
   },
   rns: {
-    enabled: true,
     batchContractAddress: "0xc0b3b62dd0400e4baa721ddec9b8a384147b23ff", // encoded address used in tests
     owner: {
-      contractAddress: "OWNER_ADDR"
+      contractAddress: "OWNER_ADDR",
+      eventsEmitter: {
+        confirmations: 1,
+        pollingInterval: 500,
+        waitingBlockCount: 10
+      }
     },
     reverse: {
-      contractAddress: "REVERSE_ADDR"
+      contractAddress: "REVERSE_ADDR",
+      eventsEmitter: {
+        confirmations: 1,
+        pollingInterval: 500,
+        waitingBlockCount: 10
+      }
     },
     placement: {
-      contractAddress: "PLACEMENT_ADDR"
+      contractAddress: "PLACEMENT_ADDR",
+      eventsEmitter: {
+        confirmations: 1,
+        pollingInterval: 500,
+        waitingBlockCount: 10
+      }
     },
     registrar: {
       contractAddress: "REGISTRAR_ADDR"
