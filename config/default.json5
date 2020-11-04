@@ -14,6 +14,17 @@
     methods: 'GET,HEAD'
   },
 
+  // libp2p
+  comms: {
+    libp2p: {
+      addresses: { listen: ['/ip4/127.0.0.1/tcp/0', '/ip4/127.0.0.1/tcp/0/ws'] }
+    }
+  },
+
+  notification: {
+    countOfNotificationPersistedPerAgreement: 10
+  },
+
   blockchain: {
     // Specify behavior of NewBlockEmitter, that detects new blocks on blockchain.
     newBlockEmitter: {

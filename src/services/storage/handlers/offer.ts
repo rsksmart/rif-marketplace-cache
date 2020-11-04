@@ -1,4 +1,5 @@
 import BigNumber from 'bignumber.js'
+import Libp2p from 'libp2p'
 
 import Offer from '../models/offer.model'
 import BillingPlan from '../models/billing-plan.model'
@@ -10,6 +11,7 @@ import { decodeByteArray, wrapEvent } from '../../../utils'
 import { EventError } from '../../../errors'
 import { getTokenSymbol } from '../utils'
 import { OfferService } from '../services'
+import { subscribeForOffer } from '../../../communication'
 
 const logger = loggingFactory('storage:handler:offer')
 
@@ -54,7 +56,12 @@ const handlers: { [key: string]: Function } = {
     }
     logger.info(`Updating capacity ${offer.totalCapacity} (ID: ${offer.provider})`)
   },
-  async MessageEmitted (event: EventData, offer: Offer, offerService: OfferService): Promise<void> {
+  async MessageEmitted (
+    event: EventData,
+    offer: Offer,
+    offerService: OfferService,
+    { libp2p }: { libp2p?: Libp2p }
+  ): Promise<void> {
     const msg = event.returnValues.message
 
     if (!msg || msg.length === 0) {
@@ -71,6 +78,11 @@ const handlers: { [key: string]: Function } = {
 
       if (offerService.emit) {
         offerService.emit('updated', wrapEvent('MessageEmitted', offer.toJSON()))
+
+        // Join to libp2p room for that offer
+        if (libp2p) {
+          subscribeForOffer(libp2p, offer)
+        }
       }
       logger.info(`PeerId ${offer.peerId} defined (ID: ${offer.provider})`)
     } else {
@@ -92,7 +104,7 @@ const handlers: { [key: string]: Function } = {
 
 const handler: Handler<StorageOfferEvents, StorageServices> = {
   events: ['TotalCapacitySet', 'MessageEmitted', 'BillingPlanSet'],
-  async process (event: StorageOfferEvents, { offerService }: StorageServices): Promise<void> {
+  async process (event: StorageOfferEvents, { offerService }: StorageServices, { libp2p }): Promise<void> {
     const provider = event.returnValues.provider
 
     // TODO: Ignored until https://github.com/sequelize/sequelize/pull/11924
@@ -111,7 +123,7 @@ const handler: Handler<StorageOfferEvents, StorageServices> = {
       logger.error(`Unknown event ${event.event}`)
     }
 
-    await handlers[event.event](event, offer, offerService)
+    await handlers[event.event](event, offer, offerService, { libp2p })
   }
 }
 

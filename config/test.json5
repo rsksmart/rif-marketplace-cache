@@ -2,8 +2,20 @@
   port: 3030,
   db: 'db_test.sqlite',
   dbBackUp: { blocks: 10, path:  'db-backups' },
+  comms: {
+    libp2p: {
+      config: {
+        peerDiscovery: {
+          bootstrap: {
+            enabled: false
+          }
+        }
+      }
+    }
+  },
   blockchain: {
     provider: 'ws://localhost:8545',
+    networkId: 420,
     newBlockEmitter: {
       pollingInterval: 500
     }
