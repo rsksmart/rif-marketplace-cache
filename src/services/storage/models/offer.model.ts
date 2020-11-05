@@ -6,7 +6,6 @@ import { Literal } from 'sequelize/types/lib/utils'
 import BillingPlan from './billing-plan.model'
 import { SupportedTokens } from '../../../definitions'
 import Agreement from './agreement.model'
-import { BigNumberStringType } from '../../../sequelize'
 import { WEI } from '../utils'
 
 @Scopes(() => ({
@@ -28,8 +27,8 @@ export default class Offer extends Model {
   @Column({ primaryKey: true, type: DataType.STRING(64) })
   provider!: string
 
-  @Column({ ...BigNumberStringType('totalCapacity') })
-  totalCapacity!: BigNumber
+  @Column
+  totalCapacity!: number
 
   @Column
   peerId!: string
@@ -49,7 +48,7 @@ export default class Offer extends Model {
 
   @Column(DataType.VIRTUAL)
   get availableCapacity (): BigNumber {
-    return this.totalCapacity.minus(this.utilizedCapacity)
+    return new BigNumber(this.totalCapacity).minus(this.utilizedCapacity)
   }
 
   @Column(DataType.VIRTUAL)

@@ -21,8 +21,8 @@ export default class Agreement extends Model {
   consumer!: string
 
   // In Megabytes
-  @Column({ ...BigNumberStringType('size') })
-  size!: BigNumber
+  @Column
+  size!: number
 
   @Column({ defaultValue: true })
   isActive!: boolean
@@ -50,7 +50,7 @@ export default class Agreement extends Model {
   offer!: Offer
 
   periodPrice (): BigNumber {
-    return this.size.times(this.billingPrice)
+    return this.billingPrice.times(this.size)
   }
 
   getPeriodsSinceLastPayout (floor = true): BigNumber {
