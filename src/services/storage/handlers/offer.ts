@@ -72,7 +72,7 @@ const handlers: { [key: string]: Function } = {
     const flag = firstMsg.substring(2, 4)
 
     if (flag === '01') { // PeerId definition
-      const oldPeerId = offer.peerId
+      const previousPeerId = offer.peerId
       offer.peerId = decodeByteArray([`0x${firstMsg.substring(4)}`, ...restMsg])
 
       await offer.save()
@@ -81,7 +81,7 @@ const handlers: { [key: string]: Function } = {
         offerService.emit('updated', wrapEvent('MessageEmitted', offer.toJSON()))
 
         // Join to libp2p room for that offer
-        if (libp2p && oldPeerId !== offer.peerId) {
+        if (libp2p && previousPeerId !== offer.peerId) {
           subscribeForOffer(libp2p, offer)
         }
       }

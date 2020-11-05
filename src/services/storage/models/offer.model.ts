@@ -40,15 +40,15 @@ export default class Offer extends Model {
   agreements!: Agreement[]
 
   @Column(DataType.VIRTUAL)
-  get utilizedCapacity (): BigNumber {
+  get utilizedCapacity (): number {
     return (this.agreements || [])
       .map(request => request.size)
-      .reduce((previousValue, currentValue) => previousValue.plus(currentValue), new BigNumber(0))
+      .reduce((previousValue, currentValue) => previousValue + currentValue, 0)
   }
 
   @Column(DataType.VIRTUAL)
-  get availableCapacity (): BigNumber {
-    return new BigNumber(this.totalCapacity).minus(this.utilizedCapacity)
+  get availableCapacity (): number {
+    return this.totalCapacity - this.utilizedCapacity
   }
 
   @Column(DataType.VIRTUAL)
