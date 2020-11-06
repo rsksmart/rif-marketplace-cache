@@ -7,6 +7,7 @@ import BillingPlan from './billing-plan.model'
 import { SupportedTokens } from '../../../definitions'
 import Agreement from './agreement.model'
 import { WEI } from '../utils'
+import { BigNumberBigIntType } from '../../../sequelize'
 
 @Scopes(() => ({
   active: {
@@ -27,8 +28,8 @@ export default class Offer extends Model {
   @Column({ primaryKey: true, type: DataType.STRING(64) })
   provider!: string
 
-  @Column
-  totalCapacity!: number
+  @Column({ ...BigNumberBigIntType('totalCapacity') })
+  totalCapacity!: BigNumber
 
   @Column
   peerId!: string
@@ -40,15 +41,15 @@ export default class Offer extends Model {
   agreements!: Agreement[]
 
   @Column(DataType.VIRTUAL)
-  get utilizedCapacity (): number {
+  get utilizedCapacity (): BigNumber {
     return (this.agreements || [])
       .map(request => request.size)
-      .reduce((previousValue, currentValue) => previousValue + currentValue, 0)
+      .reduce((previousValue, currentValue) => previousValue.plus(currentValue), new BigNumber(0))
   }
 
   @Column(DataType.VIRTUAL)
-  get availableCapacity (): number {
-    return this.totalCapacity - this.utilizedCapacity
+  get availableCapacity (): BigNumber {
+    return this.totalCapacity.minus(this.utilizedCapacity)
   }
 
   @Column(DataType.VIRTUAL)

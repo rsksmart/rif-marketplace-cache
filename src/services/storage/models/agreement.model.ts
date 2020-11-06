@@ -2,7 +2,7 @@ import { Table, Column, Model, ForeignKey, BelongsTo, DataType } from 'sequelize
 import BigNumber from 'bignumber.js'
 
 import Offer from './offer.model'
-import { BigNumberStringType } from '../../../sequelize'
+import { BigNumberBigIntType, BigNumberStringType } from '../../../sequelize'
 import { bnFloor } from '../../../utils'
 
 @Table({
@@ -21,8 +21,8 @@ export default class Agreement extends Model {
   consumer!: string
 
   // In Megabytes
-  @Column
-  size!: number
+  @Column({ ...BigNumberBigIntType('size') })
+  size!: BigNumber
 
   @Column({ defaultValue: true })
   isActive!: boolean
@@ -50,7 +50,7 @@ export default class Agreement extends Model {
   offer!: Offer
 
   periodPrice (): BigNumber {
-    return this.billingPrice.times(this.size)
+    return this.size.times(this.billingPrice)
   }
 
   getPeriodsSinceLastPayout (floor = true): BigNumber {

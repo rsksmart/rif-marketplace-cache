@@ -104,7 +104,7 @@ describe('Storage services: Events Processor', () => {
         await processor(event)
         const updatedEventFromDB = await Offer.findOne({ where: { provider: event.returnValues.provider } })
 
-        expect(updatedEventFromDB?.totalCapacity).to.be.eql(event.returnValues.capacity)
+        expect(updatedEventFromDB?.totalCapacity).to.be.eql(new BigNumber(event.returnValues.capacity))
       })
     })
 
@@ -387,7 +387,7 @@ describe('Storage services: Events Processor', () => {
         expect(agreement?.dataReference).to.be.eql(decodeByteArray(event.returnValues.dataReference))
         expect(agreement?.consumer).to.be.eql(event.returnValues.agreementCreator)
         expect(agreement?.offerId).to.be.eql(provider)
-        expect(agreement?.size).to.be.eql(event.returnValues.size)
+        expect(agreement?.size).to.be.eql(new BigNumber(event.returnValues.size))
         expect(agreement?.billingPeriod).to.be.eql(new BigNumber(event.returnValues.billingPeriod))
         expect(agreement?.billingPrice).to.be.eql(new BigNumber(plan.price))
         expect(agreement?.availableFunds).to.be.eql(new BigNumber(event.returnValues.availableFunds))

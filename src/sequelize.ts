@@ -35,15 +35,11 @@ export function sequelizeFactory (): Sequelize {
 }
 
 /**
- * consider that the field will be stored as string in the data base,
- * so you not be able to use number comparision when querying
- * BigNumberStringType for sequelize models
+ * BigNumber getter/setter functions for sequelize column declaration
  * @param propName
- * @constructor
  */
-export function BigNumberStringType (propName: string): Partial<ModelAttributeColumnOptions> {
+export function bigNumberGetterSetter (propName: string): Partial<ModelAttributeColumnOptions> {
   return {
-    type: DataType.STRING(),
     get (this: Model): BigNumber {
       return new BigNumber(this.getDataValue(propName as any))
     },
@@ -55,6 +51,33 @@ export function BigNumberStringType (propName: string): Partial<ModelAttributeCo
       }
       this.setDataValue(propName as any, n.toString(10))
     }
+  }
+}
+
+/**
+ * consider that the field will be stored as string in the data base,
+ * so you not be able to use number comparision when querying
+ * BigNumberStringType for sequelize models
+ * @param propName
+ * @constructor
+ */
+export function BigNumberStringType (propName: string): Partial<ModelAttributeColumnOptions> {
+  return {
+    type: DataType.STRING(),
+    ...bigNumberGetterSetter(propName)
+  }
+}
+
+/**
+ * consider that the field will be stored as number in the data base,
+ * BigNumberStringType for sequelize models
+ * @param propName
+ * @constructor
+ */
+export function BigNumberBigIntType (propName: string): Partial<ModelAttributeColumnOptions> {
+  return {
+    type: DataType.BIGINT(),
+    ...bigNumberGetterSetter(propName)
   }
 }
 
