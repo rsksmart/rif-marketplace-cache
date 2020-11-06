@@ -66,7 +66,7 @@ describe('Storage service', function () {
       })
       it('should create an offer and plans', async () => {
         const offerData = {
-          totalCapacity: '1024',
+          totalCapacity: 1024,
           periods: [10],
           prices: [100],
           msg: encodedMessage
@@ -80,7 +80,7 @@ describe('Storage service', function () {
 
         const offer = offers[0]
         expect(offer.peerId).to.be.eql(app.peerId?.id as string)
-        expect(offer.totalCapacity.toString()).to.be.eql(offerData.totalCapacity)
+        expect(offer.totalCapacity).to.be.eql(offerData.totalCapacity)
         expect(offer.provider).to.be.eql(app.providerAddress)
         expect(offer.plans.length).to.be.eql(1)
         expect(offer.plans[0].period.toString()).to.be.eql(offerData.periods[0].toString())
@@ -102,7 +102,7 @@ describe('Storage service', function () {
           rateId: 'rbtc'
         })
         expect(offerFromDb).to.be.instanceOf(Offer)
-        expect(offerFromDb.totalCapacity.toString()).to.be.eql('1000')
+        expect(offerFromDb.totalCapacity).to.be.eql(1000)
         expect(planFromDb).to.be.instanceOf(BillingPlan)
         expect(planFromDb.period.toString()).to.be.eql('10')
         expect(planFromDb.price.toString()).to.be.eql('100')
@@ -115,7 +115,7 @@ describe('Storage service', function () {
         expect(offers.length).to.be.eql(1)
 
         const offer = offers[0]
-        expect(offer.totalCapacity.toString()).to.be.eql(offerData.totalCapacity.toString())
+        expect(offer.totalCapacity).to.be.eql(offerData.totalCapacity)
         expect(offer.provider).to.be.eql(app.providerAddress)
         expect(offer.peerId).to.be.eql(app.peerId?.id as string)
         expect(offer.plans.length).to.be.eql(2)
@@ -372,7 +372,7 @@ describe('Storage service', function () {
         roomPinner = await createLibp2pRoom(libp2p, app.providerAddress)
 
         offerData = {
-          totalCapacity: '1024',
+          totalCapacity: 1024,
           periods: [10],
           prices: [100],
           msg: generateMsg(app.peerId?.id as string)
