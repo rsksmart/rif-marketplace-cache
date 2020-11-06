@@ -72,16 +72,20 @@ const handlers: { [key: string]: Function } = {
     const flag = firstMsg.substring(2, 4)
 
     if (flag === '01') { // PeerId definition
-      const previousPeerId = offer.peerId
-      offer.peerId = decodeByteArray([`0x${firstMsg.substring(4)}`, ...restMsg])
+      const newPeerId = decodeByteArray([`0x${firstMsg.substring(4)}`, ...restMsg])
 
+      if (offer.peerId === newPeerId) {
+        return
+      }
+
+      offer.peerId = newPeerId
       await offer.save()
 
       if (offerService.emit) {
         offerService.emit('updated', wrapEvent('MessageEmitted', offer.toJSON()))
 
         // Join to libp2p room for that offer
-        if (libp2p && previousPeerId !== offer.peerId) {
+        if (libp2p) {
           subscribeForOffer(libp2p, offer)
         }
       }
