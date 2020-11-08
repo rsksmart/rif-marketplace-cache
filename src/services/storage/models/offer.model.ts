@@ -12,7 +12,7 @@ import { BigNumberBigIntType } from '../../../sequelize'
 @Scopes(() => ({
   active: {
     where: {
-      totalCapacity: { [Op.ne]: '0' }
+      totalCapacity: { [Op.gt]: 0 }
       // peerId: { [Op.ne]: null }
     },
     include: [
