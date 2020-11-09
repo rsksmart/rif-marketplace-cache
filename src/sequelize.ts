@@ -55,9 +55,10 @@ export function bigNumberGetterSetter (propName: string): Partial<ModelAttribute
 }
 
 /**
- * consider that the field will be stored as string in the data base,
- * so you not be able to use number comparision when querying
- * BigNumberStringType for sequelize models
+ * Consider that the field will be stored as a string in the database,
+ * so you won't be able to use number comparison when querying and also
+ * data are ordered lexicographically so most probably ordering won't work
+ * as you would expect.
  * @param propName
  * @constructor
  */
