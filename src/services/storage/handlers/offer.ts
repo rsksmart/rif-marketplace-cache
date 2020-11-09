@@ -72,8 +72,13 @@ const handlers: { [key: string]: Function } = {
     const flag = firstMsg.substring(2, 4)
 
     if (flag === '01') { // PeerId definition
-      offer.peerId = decodeByteArray([`0x${firstMsg.substring(4)}`, ...restMsg])
+      const newPeerId = decodeByteArray([`0x${firstMsg.substring(4)}`, ...restMsg])
 
+      if (offer.peerId === newPeerId) {
+        return
+      }
+
+      offer.peerId = newPeerId
       await offer.save()
 
       if (offerService.emit) {

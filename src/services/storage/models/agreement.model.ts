@@ -2,7 +2,7 @@ import { Table, Column, Model, ForeignKey, BelongsTo, DataType } from 'sequelize
 import BigNumber from 'bignumber.js'
 
 import Offer from './offer.model'
-import { BigNumberStringType } from '../../../sequelize'
+import { BigNumberBigIntType, BigNumberStringType } from '../../../sequelize'
 import { bnFloor } from '../../../utils'
 
 @Table({
@@ -21,7 +21,7 @@ export default class Agreement extends Model {
   consumer!: string
 
   // In Megabytes
-  @Column({ ...BigNumberStringType('size') })
+  @Column({ ...BigNumberBigIntType('size') })
   size!: BigNumber
 
   @Column({ defaultValue: true })
