@@ -69,8 +69,9 @@ export function BigNumberStringType (propName: string): Partial<ModelAttributeCo
 }
 
 /**
- * consider that the field will be stored as number in the data base,
- * BigNumberStringType for sequelize models
+ * Consider that the field will be stored as BigInt in the database. 
+ * Based on the database engine this might have limited precision. 
+ * Using comparison and ordering is supported.
  * @param propName
  * @constructor
  */
