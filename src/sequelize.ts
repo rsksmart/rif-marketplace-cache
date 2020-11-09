@@ -70,8 +70,8 @@ export function BigNumberStringType (propName: string): Partial<ModelAttributeCo
 }
 
 /**
- * Consider that the field will be stored as BigInt in the database. 
- * Based on the database engine this might have limited precision. 
+ * Consider that the field will be stored as BigInt in the database.
+ * Based on the database engine this might have limited precision.
  * Using comparison and ordering is supported.
  * @param propName
  * @constructor
