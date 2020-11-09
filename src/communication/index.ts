@@ -14,6 +14,7 @@ import {
 } from '../definitions'
 import { errorHandler } from '../utils'
 import { messageHandler } from './handlers'
+import { STORAGE_MANAGER } from '../services/storage'
 
 const logger = loggingFactory('communication')
 
@@ -23,7 +24,7 @@ let _messageHandler: MessageHandler = messageHandler()
 export const rooms = new Map<string, Room>()
 
 export function getRoomTopic (offerId: string): string {
-  return `${config.get<string>('blockchain.networkId')}:${config.get<string>('storage.contractAddress')}:${offerId}`
+  return `${config.get<string>('blockchain.networkId')}:${config.get<string>(`${STORAGE_MANAGER}.contractAddress`)}:${offerId}`
 }
 
 export function getRoom (topic: string): Room | undefined {
