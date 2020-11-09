@@ -23,7 +23,7 @@ let _messageHandler: MessageHandler = messageHandler()
 export const rooms = new Map<string, Room>()
 
 export function getRoomTopic (offerId: string): string {
-  return `${config.get<string>('blockchain.networkId')}:${offerId}`
+  return `${config.get<string>('blockchain.networkId')}:${config.get<string>('storage.contractAddress')}:${offerId}`
 }
 
 export function getRoom (topic: string): Room | undefined {
