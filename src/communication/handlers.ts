@@ -87,7 +87,7 @@ export function messageHandler (
     }
 
     if (!notificationService) {
-      NotificationModel.create(notificationData)
+      await NotificationModel.create(notificationData)
     } else {
       await notificationService.create(notificationData)
     }
