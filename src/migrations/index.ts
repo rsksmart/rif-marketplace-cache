@@ -2,7 +2,7 @@ import path from 'path'
 import Umzug from 'umzug'
 
 import { loggingFactory } from '../logger'
-import { Sequelize } from 'sequelize-typescript'
+import { Sequelize } from 'sequelize'
 
 const logger = loggingFactory('db:migrations')
 

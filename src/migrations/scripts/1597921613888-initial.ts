@@ -5,6 +5,7 @@ import { Sequelize as SequelizeTs } from 'sequelize-typescript'
  * Actions summary:
  *
  * createTable "event", deps: []
+ * createTable "notifications", deps: []
  * createTable "storage_offer", deps: []
  * createTable "rates", deps: []
  * createTable "rns_transfer", deps: []
@@ -66,6 +67,50 @@ const migrationCommands = function (transaction: any): Commands {
             type: Sequelize.BOOLEAN,
             field: 'emitted',
             defaultValue: false
+          },
+          createdAt: {
+            type: Sequelize.DATE,
+            field: 'createdAt',
+            allowNull: false
+          },
+          updatedAt: {
+            type: Sequelize.DATE,
+            field: 'updatedAt',
+            allowNull: false
+          }
+        },
+        {
+          transaction: transaction
+        }
+      ]
+    },
+    // Notifications
+    {
+      fn: 'createTable',
+      params: [
+        'notifications',
+        {
+          id: {
+            type: Sequelize.INTEGER,
+            field: 'id',
+            autoIncrement: true,
+            primaryKey: true,
+            allowNull: false
+          },
+          type: {
+            type: Sequelize.STRING(),
+            field: 'type',
+            allowNull: false
+          },
+          accounts: {
+            type: Sequelize.STRING,
+            field: 'accounts',
+            allowNull: false
+          },
+          payload: {
+            type: Sequelize.JSON,
+            field: 'payload',
+            allowNull: false
           },
           createdAt: {
             type: Sequelize.DATE,
@@ -150,7 +195,7 @@ const migrationCommands = function (transaction: any): Commands {
             primaryKey: true
           },
           totalCapacity: {
-            type: Sequelize.STRING,
+            type: Sequelize.BIGINT,
             field: 'totalCapacity'
           },
           peerId: {
@@ -192,7 +237,7 @@ const migrationCommands = function (transaction: any): Commands {
             field: 'consumer'
           },
           size: {
-            type: Sequelize.STRING,
+            type: Sequelize.BIGINT,
             field: 'size'
           },
           isActive: {
@@ -613,6 +658,14 @@ const migrationCommands = function (transaction: any): Commands {
 }
 const rollbackCommands = function (transaction: any): Commands {
   return [
+    {
+      fn: 'dropTable',
+      params: [
+        'notifications', {
+          transaction: transaction
+        }
+      ]
+    },
     {
       fn: 'dropTable',
       params: [
