@@ -8,10 +8,10 @@ import Utils from 'web3-utils'
 
 import Eth from 'web3-eth'
 import { Substitute, SubstituteOf } from '@fluffy-spoon/substitute'
-import { Sequelize } from 'sequelize-typescript'
+import { Sequelize } from 'sequelize'
 import { loggingFactory } from '../../../../src/logger'
 
-import eventProcessor from '../../../../src/services/rns/rns.processor'
+import eventProcessor from '../../../../src/services/rns/processor'
 import { RnsBaseService, RnsServices } from '../../../../src/services/rns'
 import { sequelizeFactory } from '../../../../src/sequelize'
 import Domain from '../../../../src/services/rns/models/domain.model'

@@ -14,13 +14,18 @@
     methods: 'GET,HEAD'
   },
 
-  blockchain: {
-    // Number of blocks that is waited AFTER the event is confirmed before
-    // it is removed from database.
-    // Such parameter is needed for a REST API where a host could miss that an event has
-    // full confirmations as it could be removed from the DB before the endpoint is queried.
-    waitBlockCountBeforeConfirmationRemoved: 20,
+  // libp2p
+  comms: {
+    libp2p: {
+      addresses: { listen: ['/ip4/127.0.0.1/tcp/0', '/ip4/127.0.0.1/tcp/0/ws'] }
+    }
+  },
 
+  notification: {
+    countOfNotificationPersistedPerAgreement: 10
+  },
+
+  blockchain: {
     // Specify behavior of NewBlockEmitter, that detects new blocks on blockchain.
     newBlockEmitter: {
       // If to use polling strategy, if false then listening is used.
@@ -55,20 +60,25 @@
 
     // Storage Manager Contract
     storageManager: {
-      // Topics that will be listened to
-      topics: [
-        'TotalCapacitySet(address,uint64)',
-        'BillingPlanSet(address,address,uint64,uint128)',
-        'MessageEmitted(address,bytes32[])',
-        'NewAgreement(bytes32[],address,address,uint128,uint64,uint128,address,uint256)',
-        'AgreementFundsDeposited(bytes32,uint256,address)',
-        'AgreementFundsWithdrawn(bytes32,uint256,address)',
-        'AgreementFundsPayout(bytes32,uint256,address)',
-        'AgreementStopped(bytes32)'
-      ],
-
       // Specify behavior of EventsEmitter, that retrieves events from blockchain and pass them onwards for further processing.
       eventsEmitter: {
+        // Will process one event at a time
+        serialProcessing: true,
+
+        // Topics that will be listened to
+        topics: [
+          [ // It needs to be a "double array" because that represents an "or" of the topics and not "and"
+            'TotalCapacitySet(address,uint64)',
+            'BillingPlanSet(address,address,uint64,uint128)',
+            'MessageEmitted(address,bytes32[])',
+            'NewAgreement(bytes32[],address,address,uint128,uint64,uint128,address,uint256)',
+            'AgreementFundsDeposited(bytes32,uint256,address)',
+            'AgreementFundsWithdrawn(bytes32,uint256,address)',
+            'AgreementFundsPayout(bytes32,uint256,address)',
+            'AgreementStopped(bytes32)'
+          ]
+        ],
+
         // If to use polling strategy, if false then listening is used.
         polling: true,
 
@@ -76,29 +86,33 @@
         pollingInterval: 5000,
 
         // Starting block that upon first start of the service, will the blockchain be crawled for the past events.
-        startingBlock: "genesis",
+        startingBlock: 0,
 
         // Number of blocks that will be waited before passing an event for further processing.
-        confirmations: 6
-      },
+        confirmations: 6,
 
-      // Specify behavior of NewBlockEmitter, that detects new blocks on blockchain.
-      newBlockEmitter: {
-        // If to use polling strategy, if false then listening is used.
-        polling: true
+        // Number of blocks that is waited AFTER the event is confirmed before it is removed from database.
+        // Such parameter is needed for a REST API where a host could miss that an event has
+        // full confirmations as it could be removed from the DB before the endpoint is queried.
+        waitingBlockCount: 20
       }
     },
 
     // Staking Contract
     staking: {
-      // Topics that will be listened to
-      topics: [
-        'Staked(address,uint256,uint256,address,bytes)',
-        'Unstaked(address,uint256,uint256,address,bytes)',
-      ],
-
       // Specify behavior of EventsEmitter, that retrieves events from blockchain and pass them onwards for further processing.
       eventsEmitter: {
+        // Will process one event at a time
+        serialProcessing: true,
+
+        // Topics that will be listened to
+        topics: [
+          [ // It needs to be a "double array" because that represents an "or" of the topics and not "and"
+            'Staked(address,uint256,uint256,address,bytes)',
+            'Unstaked(address,uint256,uint256,address,bytes)',
+          ]
+        ],
+
         // If to use polling strategy, if false then listening is used.
         polling: true,
 
@@ -106,16 +120,15 @@
         pollingInterval: 5000,
 
         // Starting block that upon first start of the service, will the blockchain be crawled for the past events.
-        startingBlock: "genesis",
+        startingBlock: 0,
 
         // Number of blocks that will be waited before passing an event for further processing.
-        confirmations: 6
-      },
+        confirmations: 6,
 
-      // Specify behavior of NewBlockEmitter, that detects new blocks on blockchain.
-      newBlockEmitter: {
-        // If to use polling strategy, if false then listening is used.
-        polling: true
+        // Number of blocks that is waited AFTER the event is confirmed before it is removed from database.
+        // Such parameter is needed for a REST API where a host could miss that an event has
+        // full confirmations as it could be removed from the DB before the endpoint is queried.
+        waitingBlockCount: 20
       }
     }
   },
@@ -128,12 +141,11 @@
 
     // RSKOwner contract settings
     owner: {
-
-      // Events that will be listened to
-      events: ['Transfer', 'ExpirationChanged', 'Approval'],
-
       // Specify behavior of EventsEmitter, that retrieves events from blockchain and pass them onwards for further processing.
       eventsEmitter: {
+        // Events that will be listened to
+        events: ['Transfer', 'ExpirationChanged', 'Approval'],
+
         // If to use polling strategy, if false then listening is used.
         polling: true,
 
@@ -141,27 +153,25 @@
         pollingInterval: 5000,
 
         // Starting block that upon first start of the service, will the blockchain be crawled for the past events.
-        startingBlock: "genesis",
+        startingBlock: 0,
 
         // Number of blocks that will be waited before passing an event for further processing.
-        confirmations: 6
-      },
+        confirmations: 6,
 
-      // Specify behavior of NewBlockEmitter, that detects new blocks on blockchain.
-      newBlockEmitter: {
-        // If to use polling strategy, if false then listening is used.
-        polling: true
+        // Number of blocks that is waited AFTER the event is confirmed before it is removed from database.
+        // Such parameter is needed for a REST API where a host could miss that an event has
+        // full confirmations as it could be removed from the DB before the endpoint is queried.
+        waitingBlockCount: 20
       }
     },
 
     // Reverse resolution contract settings
     reverse: {
-
-      // Events that will be listened to
-      'events': ['NameChanged'],
-
       // Specify behavior of EventsEmitter, that retrieves events from blockchain and pass them onwards for further processing.
       eventsEmitter: {
+        // Events that will be listened to
+        'events': ['NameChanged'],
+
         // If to use polling strategy, if false then listening is used.
         polling: true,
 
@@ -169,27 +179,25 @@
         pollingInterval: 5000,
 
         // Starting block that upon first start of the service, will the blockchain be crawled for the past events.
-        startingBlock: "genesis",
+        startingBlock: 0,
 
         // Number of blocks that will be waited before passing an event for further processing.
-        confirmations: 6
-      },
+        confirmations: 6,
 
-      // Specify behavior of NewBlockEmitter, that detects new blocks on blockchain.
-      newBlockEmitter: {
-        // If to use polling strategy, if false then listening is used.
-        polling: true
+        // Number of blocks that is waited AFTER the event is confirmed before it is removed from database.
+        // Such parameter is needed for a REST API where a host could miss that an event has
+        // full confirmations as it could be removed from the DB before the endpoint is queried.
+        waitingBlockCount: 20
       }
     },
 
     // Placement contract settings
     placement: {
-
-      // Events that will be listened to
-      events: ['TokenPlaced', 'TokenUnplaced', 'TokenSold'],
-
       // Specify behavior of EventsEmitter, that retrieves events from blockchain and pass them onwards for further processing.
       eventsEmitter: {
+        // Events that will be listened to
+        events: ['TokenPlaced', 'TokenUnplaced', 'TokenSold'],
+
         // If to use polling strategy, if false then listening is used.
         polling: true,
 
@@ -197,22 +205,21 @@
         pollingInterval: 5000,
 
         // Starting block that upon first start of the service, will the blockchain be crawled for the past events.
-        startingBlock: "genesis",
+        startingBlock: 0,
 
         // Number of blocks that will be waited before passing an event for further processing.
-        confirmations: 6
-      },
+        confirmations: 6,
 
-      // Specify behavior of NewBlockEmitter, that detects new blocks on blockchain.
-      newBlockEmitter: {
-        // If to use polling strategy, if false then listening is used.
-        polling: true
+        // Number of blocks that is waited AFTER the event is confirmed before it is removed from database.
+        // Such parameter is needed for a REST API where a host could miss that an event has
+        // full confirmations as it could be removed from the DB before the endpoint is queried.
+        waitingBlockCount: 20
       }
     },
 
     // RNS Registrar contract settings used for RNS precache
     registrar: {
-      startingBlock: "genesis"
+      startingBlock: 0
     }
   }
 }

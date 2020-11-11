@@ -1,7 +1,8 @@
 {
   port: 3030,
   blockchain: {
-    provider: "ws://127.0.0.1:8545/"
+    provider: "ws://127.0.0.1:8545/",
+    networkId: 8545
   },
   storage: {
     enabled: true,
@@ -12,7 +13,7 @@
       }
     },
     staking: {
-      contractAddress: "0xe97DbD7116D168190F8A6E7beB1092c103c53a12",
+      contractAddress: "0x7231ECd1355a60251eE56Bf81f987969fc9bAe29",
       eventsEmitter: {
         confirmations: 2
       }
@@ -49,6 +50,17 @@
       contractAddress: "0xFF6049B87215476aBf744eaA3a476cBAd46fB1cA",
       eventsEmitter: {
         confirmations: 2
+      }
+    }
+  },
+  comms: {
+    libp2p: {
+      config: {
+        peerDiscovery: {
+          bootstrap: {
+            enabled: false
+          }
+        }
       }
     }
   }

@@ -1,8 +1,9 @@
 import abiDecoder, { DecodedData } from 'abi-decoder'
 import config from 'config'
 import { Eth } from 'web3-eth'
-import { EventData } from 'web3-eth-contract'
 import Utils from 'web3-utils'
+import { EventLog } from 'web3-core'
+
 import { RnsBaseService, RnsServices } from '.'
 import { getBlockDate } from '../../blockchain/utils'
 import { Logger } from '../../definitions'
@@ -102,7 +103,7 @@ function getDomainName (decodedData: DecodedData, tokenId: string, batchAddr: st
   }
 }
 
-async function transferHandler (logger: Logger, eventData: EventData, eth: Eth, services: RnsServices): Promise<void> {
+async function transferHandler (logger: Logger, eventData: EventLog, eth: Eth, services: RnsServices): Promise<void> {
   const tokenId = Utils.numberToHex(eventData.returnValues.tokenId)
   const ownerAddress = eventData.returnValues.to.toLowerCase()
   const fifsAddr = config.get<string>('rns.fifsAddrRegistrar.contractAddress').toLowerCase()
@@ -166,7 +167,7 @@ async function transferHandler (logger: Logger, eventData: EventData, eth: Eth, 
   }
 }
 
-async function expirationChangedHandler (logger: Logger, eventData: EventData, _: Eth, services: RnsServices): Promise<void> {
+async function expirationChangedHandler (logger: Logger, eventData: EventLog, _: Eth, services: RnsServices): Promise<void> {
   // event ExpirationChanged(uint256 tokenId, uint expirationTime);
 
   const tokenId = Utils.numberToHex(eventData.returnValues.tokenId)
@@ -201,7 +202,7 @@ async function expirationChangedHandler (logger: Logger, eventData: EventData, _
   }
 }
 
-async function approvalHandler (logger: Logger, eventData: EventData, eth: Eth, services: RnsServices): Promise<void> {
+async function approvalHandler (logger: Logger, eventData: EventLog, eth: Eth, services: RnsServices): Promise<void> {
   const tokenId = Utils.numberToHex(eventData.returnValues.tokenId)
   const approvedAddress = eventData.returnValues.approved.toLowerCase()
   const marketplace = config.get<string>('rns.placement.contractAddress').toLowerCase()
@@ -223,7 +224,7 @@ async function approvalHandler (logger: Logger, eventData: EventData, eth: Eth, 
   logger.info(`Approval event: ${tokenId} approved for ${approvedAddress}`)
 }
 
-async function nameChangedHandler (logger: Logger, eventData: EventData, _: Eth, services: RnsServices): Promise<void> {
+async function nameChangedHandler (logger: Logger, eventData: EventLog, _: Eth, services: RnsServices): Promise<void> {
   const name = eventData.returnValues.name
   const domainsService = services.domains
 
@@ -241,7 +242,7 @@ async function nameChangedHandler (logger: Logger, eventData: EventData, _: Eth,
   }
 }
 
-async function tokenPlacedHandler (logger: Logger, eventData: EventData, eth: Eth, services: RnsServices): Promise<void> {
+async function tokenPlacedHandler (logger: Logger, eventData: EventLog, eth: Eth, services: RnsServices): Promise<void> {
   // event TokenPlaced(uint256 indexed tokenId, address indexed paymentToken, uint256 cost);
 
   const transactionHash = eventData.transactionHash
@@ -284,7 +285,7 @@ async function tokenPlacedHandler (logger: Logger, eventData: EventData, eth: Et
   logger.info(`TokenPlaced event: ${tokenId} created`)
 }
 
-async function tokenUnplacedHandler (logger: Logger, eventData: EventData, eth: Eth, services: RnsServices): Promise<void> {
+async function tokenUnplacedHandler (logger: Logger, eventData: EventLog, eth: Eth, services: RnsServices): Promise<void> {
   // event TokenUnplaced(uint256 indexed tokenId);
   const tokenId = Utils.numberToHex(eventData.returnValues.tokenId)
   const storedOffer = await DomainOffer.findOne({ where: { tokenId } })
@@ -306,7 +307,7 @@ async function tokenUnplacedHandler (logger: Logger, eventData: EventData, eth: 
 
 async function tokenSoldHandler (
   logger: Logger,
-  eventData: EventData,
+  eventData: EventLog,
   eth: Eth,
   { sold: soldService, offers: offersService, domains: domainsService }: RnsServices
 ): Promise<void> {
@@ -373,8 +374,9 @@ function isValidEvent (value: string): value is keyof typeof commands {
   return value in commands
 }
 
+// TODO: Add correct types checks as in Storage service.
 export default function rnsProcessorFactory (logger: Logger, eth: Eth, services: RnsServices) {
-  return async function (eventData: EventData): Promise<void> {
+  return async function (eventData: EventLog): Promise<void> {
     if (isValidEvent(eventData.event)) {
       logger.info(`Processing event ${eventData.event}`)
       await commands[eventData.event](logger, eventData, eth, services)

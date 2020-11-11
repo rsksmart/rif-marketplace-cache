@@ -1,65 +1,66 @@
-import { AbiItem, keccak256 } from 'web3-utils'
+import type { AbiItem } from 'web3-utils'
 import Eth from 'web3-eth'
 import config from 'config'
+import { EventLog } from 'web3-core'
+import { Observable } from 'rxjs'
 import { getObject } from 'sequelize-store'
+import {
+  Web3Events,
+  Contract,
+  EventsEmitter,
+  EventsEmitterCreationOptions,
+  ProgressInfo,
+  LAST_FETCHED_BLOCK_NUMBER_KEY,
+  LAST_FETCHED_BLOCK_HASH_KEY,
+  LAST_PROCESSED_BLOCK_NUMBER_KEY,
+  LAST_PROCESSED_BLOCK_HASH_KEY
+} from '@rsksmart/web3-events'
 
 import { loggingFactory } from '../logger'
-import eventsEmitterFactory, { BaseEventsEmitter, EventsEmitterOptions } from './events'
-import { NewBlockEmitterOptions } from '../definitions'
-import { BlockTracker } from './block-tracker'
-import { AutoStartStopEventEmitter, ListeningNewBlockEmitter, PollingNewBlockEmitter } from './new-block-emitters'
-
-function getBlockTracker (keyPrefix?: string): BlockTracker {
-  const store = getObject(keyPrefix)
-  return new BlockTracker(store)
-}
-
-function hashTopics (topics?: string[]): string[] {
-  if (!topics) return []
-  return topics.map(e => keccak256(e))
-}
+import { Logger } from '../definitions'
 
 export async function getBlockDate (eth: Eth, blockNumber: number): Promise<Date> {
   return new Date(((await eth.getBlock(blockNumber)).timestamp as number) * 1000)
 }
 
 export function isServiceInitialized (serviceName: string): boolean {
-  const blockTracker = getBlockTracker(`${serviceName}.`)
-  return blockTracker.getLastFetchedBlock()[0] !== undefined
+  const store = getObject()
+  return store[`web3events.${serviceName}.${LAST_FETCHED_BLOCK_NUMBER_KEY}`] !== undefined
 }
 
-export function getEventsEmitterForService (serviceName: string, eth: Eth, contractAbi: AbiItem[]): BaseEventsEmitter {
+export function purgeBlockTrackerData (serviceName: string): void {
+  const store = getObject()
+  delete store[`web3events.${serviceName}.${LAST_FETCHED_BLOCK_NUMBER_KEY}`]
+  delete store[`web3events.${serviceName}.${LAST_FETCHED_BLOCK_HASH_KEY}`]
+  delete store[`web3events.${serviceName}.${LAST_PROCESSED_BLOCK_NUMBER_KEY}`]
+  delete store[`web3events.${serviceName}.${LAST_PROCESSED_BLOCK_HASH_KEY}`]
+}
+
+export function getEventsEmitterForService<E extends EventLog> (serviceName: string, web3events: Web3Events, contractAbi: AbiItem[]): EventsEmitter<E> {
   const contractAddresses = config.get<string>(`${serviceName}.contractAddress`)
-  const contract = new eth.Contract(contractAbi, contractAddresses)
+  const contract = new Contract(contractAbi, contractAddresses, serviceName)
   const logger = loggingFactory(`${serviceName}:blockchain`)
-
-  const eventsToListen = config.has(`${serviceName}.events`) ? config.get<string[]>(`${serviceName}.events`) : undefined
-  const topicsToListen = config.has(`${serviceName}.topics`) ? config.get<string[]>(`${serviceName}.topics`) : undefined
-
   logger.info(`For listening on service '${serviceName}' using contract on address: ${contractAddresses}`)
-  const eventsEmitterOptions = config.get<EventsEmitterOptions>(`${serviceName}.eventsEmitter`)
-  const newBlockEmitterOptions = config.get<NewBlockEmitterOptions>(`${serviceName}.newBlockEmitter`)
-  const options = Object.assign(
-    {},
-    eventsEmitterOptions,
-    {
-      newBlockEmitter: newBlockEmitterOptions,
-      loggerBaseName: serviceName,
-      blockTracker: { keyPrefix: `${serviceName}.` }
-    } as EventsEmitterOptions
-  )
 
-  // The topics has to be nested because that represents "or" operation between the topics and not "and".
-  // https://eth.wiki/json-rpc/API#parameters-45
-  return eventsEmitterFactory(eth, contract, eventsToListen, [hashTopics(topicsToListen)], options)
+  const options = config.get<EventsEmitterCreationOptions>(`${serviceName}.eventsEmitter`)
+  return web3events.createEventsEmitter<E>(contract, options)
 }
 
-export function getNewBlockEmitter (eth: Eth): AutoStartStopEventEmitter {
-  const newBlockEmitterOptions = config.get<NewBlockEmitterOptions>('blockchain.newBlockEmitter')
+export type ProgressCb = (progress: ProgressInfo, name: string) => void
 
-  if (newBlockEmitterOptions.polling) {
-    return new PollingNewBlockEmitter(eth, newBlockEmitterOptions.pollingInterval)
-  } else {
-    return new ListeningNewBlockEmitter(eth)
-  }
+export function reportProgress (logger: Logger, handler: (progress: ProgressCb) => Promise<void>): Observable<string> {
+  return new Observable<string>((subscriber) => {
+    const progressCb = (progress: ProgressInfo, name?: string): void => {
+      subscriber.next(`Processing${' ' + name ?? ''}: ${Math.round(progress.stepsComplete / progress.totalSteps * 100)}%`)
+    }
+
+    (async (): Promise<void> => {
+      subscriber.next('Processing: 0%')
+      await handler(progressCb)
+      subscriber.complete()
+    })().catch(e => {
+      logger.error(e)
+      subscriber.error(e)
+    })
+  })
 }

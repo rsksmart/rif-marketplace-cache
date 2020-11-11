@@ -1,5 +1,5 @@
-import { DataType, Model, Sequelize, SequelizeOptions } from 'sequelize-typescript'
-import { ModelAttributeColumnOptions } from 'sequelize'
+import { DataType, Model, Sequelize as TSSequelize, SequelizeOptions } from 'sequelize-typescript'
+import { ModelAttributeColumnOptions, Sequelize } from 'sequelize'
 import BigNumber from 'bignumber.js'
 import path from 'path'
 import config from 'config'
@@ -32,19 +32,15 @@ export function sequelizeFactory (): Sequelize {
     transactionType: 'IMMEDIATE'
   }
 
-  return new Sequelize(`sqlite:${config.get('db')}`, dbSettings)
+  return new TSSequelize(`sqlite:${config.get('db')}`, dbSettings) as unknown as Sequelize
 }
 
 /**
- * consider that the field will be stored as string in the data base,
- * so you not be able to use number comparision when querying
- * BigNumberStringType for sequelize models
+ * BigNumber getter/setter functions for sequelize column declaration
  * @param propName
- * @constructor
  */
-export function BigNumberStringType (propName: string): Partial<ModelAttributeColumnOptions> {
+export function bigNumberGetterSetter (propName: string): Partial<ModelAttributeColumnOptions> {
   return {
-    type: DataType.STRING(),
     get (this: Model): BigNumber {
       return new BigNumber(this.getDataValue(propName as any))
     },
@@ -55,6 +51,60 @@ export function BigNumberStringType (propName: string): Partial<ModelAttributeCo
         throw new Error(`${this.constructor.name + ' ' || ''}Model Error: ${propName} should be a one of [number, string(number), BigNumber]`)
       }
       this.setDataValue(propName as any, n.toString(10))
+    }
+  }
+}
+
+/**
+ * Consider that the field will be stored as a string in the database,
+ * so you won't be able to use number comparison when querying and also
+ * data are ordered lexicographically so most probably ordering won't work
+ * as you would expect.
+ * @param propName
+ * @constructor
+ */
+export function BigNumberStringType (propName: string): Partial<ModelAttributeColumnOptions> {
+  return {
+    type: DataType.STRING(),
+    ...bigNumberGetterSetter(propName)
+  }
+}
+
+/**
+ * Consider that the field will be stored as BigInt in the database.
+ * Based on the database engine this might have limited precision.
+ * Using comparison and ordering is supported.
+ * @param propName
+ * @constructor
+ */
+export function BigNumberBigIntType (propName: string): Partial<ModelAttributeColumnOptions> {
+  return {
+    type: DataType.BIGINT(),
+    ...bigNumberGetterSetter(propName)
+  }
+}
+
+/**
+ * consider that the field will be stored as string separated by '|' symbol in the database,
+ * so you not be able to use array comparision when querying
+ * ArrayStringType for sequelize models
+ * @param propName
+ * @constructor
+ */
+export function ArrayStringType (propName: string): Partial<ModelAttributeColumnOptions> {
+  const separator = '|'
+  return {
+    type: DataType.STRING(),
+    get (this: Model): Array<string> {
+      return this.getDataValue(propName as any).split(separator)
+    },
+    set (this: Model, value: string[]): void {
+      const invalidEl = value.find(el => el.indexOf(separator) !== -1)
+
+      if (invalidEl) {
+        throw new Error(`Element ${invalidEl} should not containe separator symbol (${separator})`)
+      }
+      this.setDataValue(propName as any, value.join(separator))
     }
   }
 }

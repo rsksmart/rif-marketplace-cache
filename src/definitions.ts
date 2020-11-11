@@ -1,20 +1,25 @@
-import { Application as ExpressFeathers } from '@feathersjs/express'
-import { ServiceAddons } from '@feathersjs/feathers'
+import type { Application as ExpressFeathers } from '@feathersjs/express'
+import type { ServiceAddons } from '@feathersjs/feathers'
 import * as Parser from '@oclif/parser'
-import { EventData } from 'web3-eth-contract'
-import { Eth } from 'web3-eth'
+import type { Eth } from 'web3-eth'
+import type { Web3Events, EventsEmitterOptions, NewBlockEmitterOptions } from '@rsksmart/web3-events'
+import type { Observable } from 'rxjs'
+import Libp2p from 'libp2p'
+import type { Options as Libp2pOptions } from 'libp2p'
 
-import type { AvgBillingPriceService, AgreementService, OfferService, StakeService } from './services/storage'
+import type { AvgBillingPriceService, AgreementService, OfferService, StakeService } from './services/storage/services'
 import type { RatesService } from './services/rates'
 import type { RnsBaseService } from './services/rns'
-import { ConfirmatorService } from './blockchain/confirmator'
-import { NewBlockEmitterService } from './blockchain/new-block-emitters'
-import { ReorgEmitterService } from './blockchain/reorg-emitter'
+import type { ReorgEmitterService, NewBlockEmitterService, ConfirmatorService } from './blockchain/services'
+
+import * as storageEvents from '@rsksmart/rif-marketplace-storage/types/web3-v1-contracts/StorageManager'
+import * as stakingEvents from '@rsksmart/rif-marketplace-storage/types/web3-v1-contracts/Staking'
+import { NotificationService } from './notification'
 
 export enum SupportedServices {
   STORAGE = 'storage',
   RATES = 'rates',
-  RNS = 'rns'
+  RNS = 'rns',
 }
 
 export type SupportedTokens = 'rif' | 'rbtc'
@@ -24,6 +29,7 @@ export function isSupportedServices (value: any): value is SupportedServices {
 }
 
 export enum ServiceAddresses {
+  NOTIFICATION = '/notification',
   RNS_DOMAINS = '/rns/v0/domains',
   RNS_SOLD = '/rns/v0/sold',
   RNS_OFFERS = '/rns/v0/offers',
@@ -48,6 +54,7 @@ interface ServiceTypes {
   [ServiceAddresses.RNS_SOLD]: RnsBaseService & ServiceAddons<any>
   [ServiceAddresses.RNS_OFFERS]: RnsBaseService & ServiceAddons<any>
   [ServiceAddresses.CONFIRMATIONS]: ConfirmatorService & ServiceAddons<any>
+  [ServiceAddresses.NOTIFICATION]: NotificationService & ServiceAddons<any>
   [ServiceAddresses.NEW_BLOCK_EMITTER]: NewBlockEmitterService & ServiceAddons<any>
   [ServiceAddresses.REORG_EMITTER]: ReorgEmitterService & ServiceAddons<any>
 }
@@ -56,64 +63,17 @@ interface ServiceTypes {
 export type Application = ExpressFeathers<ServiceTypes>;
 
 export interface CachedService {
-  precache (eth?: Eth): Promise<void>
+  precache (eth: Eth, web3events: Web3Events): Observable<string>
   purge (): Promise<void>
   initialize (app: Application): Promise<{ stop: () => void }>
-}
-
-export enum RatesProvider {
-  coingecko = 'coingecko'
-}
-
-export function isRatesProvider (value: any): value is RatesProvider {
-  return Object.values(RatesProvider).includes(value)
-}
-
-export type ToSymbols = 'usd' | 'eur' | 'btc' | 'ars' | 'cny' | 'krw' | 'jpy'
-export const SupportedToSymbols: ToSymbols[] = ['usd', 'eur', 'btc', 'ars', 'cny', 'krw', 'jpy']
-
-export type FromSymbols = 'rbtc' | 'rif'
-export const SupportedFromSymbols: FromSymbols[] = ['rbtc', 'rif']
-
-export type FetchedRates = Record<FromSymbols, Record<ToSymbols, number>>
-
-export interface EventsEmitterOptions {
-  // If to use polling strategy, if false then listening is used.
-  polling?: boolean
-
-  // Interval in milliseconds, how often is blockchain checked.
-  pollingInterval?: number
-
-  // Starting block that upon first start of the service, will the blockchain be crawled for the past events.
-  startingBlock?: string
-
-  // Number of blocks that will be waited before passing an event for further processing.
-  confirmations?: number
-}
-
-export interface NewBlockEmitterOptions {
-  // If to use polling strategy, if false then listening is used.
-  polling?: boolean
-
-  // Interval in milliseconds, how often is blockchain checked.
-  pollingInterval?: number
 }
 
 export interface BlockchainServiceOptions {
   // Address of deployed  contract
   contractAddress?: string
 
-  // Topics that will be listened to, if specified than has priority over "events" configuration
-  topics?: string[]
-
-  // Events that will be listened to
-  events?: string[]
-
   // Specify behavior of EventsEmitter, that retrieves events from blockchain and pass them onwards for further processing.
   eventsEmitter?: EventsEmitterOptions
-
-  // Specify behavior of NewBlockEmitter, that detects new blocks on blockchain.
-  newBlockEmitter?: NewBlockEmitterOptions
 }
 
 export interface DbBackUpConfig {
@@ -137,15 +97,22 @@ export interface Config {
     path?: string
   }
 
+  comms?: {
+    libp2p?: Libp2pOptions
+    countOfMessagesPersistedPerAgreement?: number
+  }
+
+  notification?: {
+    countOfNotificationPersistedPerAgreement?: number
+  }
+
   blockchain?: {
+    networkId?: number
     // Address to where web3js should connect to. Should be WS endpoint.
     provider?: string
 
-    // Number of blocks that is waited AFTER the event is confirmed before
-    // it is removed from database.
-    // Such parameter is needed for a REST API where a host could miss that an event has
-    // full confirmations as it could be removed from the DB before the endpoint is queried.
-    waitBlockCountBeforeConfirmationRemoved?: number
+    // Specifies behaviour of the default New Block emitter that will be used across all the EventsEmitters
+    newBlockEmitter?: NewBlockEmitterOptions
   }
 
   rates?: {
@@ -236,12 +203,125 @@ export interface Logger {
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   debug (message: string | object, ...meta: any[]): void
+
+  extend?: (name: string) => Logger
 }
 
 /**
  * Interface for more complex handling of events.
  */
-export interface Handler<T> {
+export interface Handler<E, T> {
   events: string[]
-  process: (event: EventData, services: T, eth: Eth) => Promise<void>
+  process: (event: E, services: T, deps: { eth?: Eth, libp2p?: Libp2p }) => Promise<void>
 }
+
+/// //////////////////////////////////////////////////////////////////////////////////////////////////
+// RATES
+
+export enum RatesProvider {
+  coingecko = 'coingecko'
+}
+
+export function isRatesProvider (value: any): value is RatesProvider {
+  return Object.values(RatesProvider).includes(value)
+}
+
+export type ToSymbols = 'usd' | 'eur' | 'btc' | 'ars' | 'cny' | 'krw' | 'jpy'
+export const SUPPORTED_TO_SYMBOLS: ToSymbols[] = ['usd', 'eur', 'btc', 'ars', 'cny', 'krw', 'jpy']
+
+export type FromSymbols = 'rbtc' | 'rif'
+export const SUPPORTED_FROM_SYMBOLS: FromSymbols[] = ['rbtc', 'rif']
+
+export type FetchedRates = Record<FromSymbols, Record<ToSymbols, number>>
+
+/// //////////////////////////////////////////////////////////////////////////////////////////////////
+// STORAGE
+
+export type StorageAgreementEvents = storageEvents.AgreementFundsDeposited
+  | storageEvents.AgreementFundsPayout
+  | storageEvents.AgreementFundsWithdrawn
+  | storageEvents.AgreementStopped
+  | storageEvents.NewAgreement
+
+export type StorageOfferEvents = storageEvents.BillingPlanSet
+  | storageEvents.MessageEmitted
+  | storageEvents.TotalCapacitySet
+
+export type StakeEvents = stakingEvents.Staked | stakingEvents.Unstaked
+
+export type StorageEvents = StorageOfferEvents | StorageAgreementEvents | StakeEvents
+
+/****************************************************************************************
+ * Communications
+ */
+
+export enum MessageCodesEnum {
+  I_AGREEMENT_NEW = 'I_AGR_NEW', // PROVIDER
+  I_AGREEMENT_EXPIRED = 'I_AGR_EXP', // BOTH
+  I_HASH_PINNED = 'I_HASH_STOP', // CONSUMER
+  E_AGREEMENT_SIZE_LIMIT_EXCEEDED = 'E_AGR_SIZE_OVERFLOW', // CONSUMER
+  //
+  I_HASH_START = 'I_HASH_START',
+  E_GENERAL = 'E_GEN',
+  W_HASH_RETRY = 'W_HASH_RETRY',
+  I_AGREEMENT_STOPPED = 'I_AGR_STOP',
+  I_GENERAL = 'I_GEN',
+  I_MULTIADDR_ANNOUNCEMENT = 'I_ADDR_ANNOUNCE',
+  I_RESEND_LATEST_MESSAGES = 'I_RESEND',
+  W_GENERAL = 'W_GEN',
+  E_HASH_NOT_FOUND = 'E_HASH_404',
+}
+
+interface BasePayload {
+  agreementReference: string
+}
+
+export interface RetryPayload extends BasePayload {
+  error: string
+  retryNumber: number
+  totalRetries: number
+}
+
+export interface HashInfoPayload extends BasePayload {
+  hash: string
+}
+
+export type AgreementInfoPayload = BasePayload
+
+export interface AgreementSizeExceededPayload extends BasePayload {
+  hash: string
+  size: number
+  expectedSize: number
+}
+
+// Incoming messages
+
+export interface MultiaddrAnnouncementPayload {
+  agreementReference: string
+  peerId: string
+}
+
+export interface ResendMessagesPayload {
+  requestId: string
+  agreementReference: string
+  code?: string
+}
+
+export interface CommsMessage<Payload> {
+  timestamp: number
+  version: number
+  code: string
+  payload: Payload
+}
+
+export type CommsPayloads = ResendMessagesPayload | MultiaddrAnnouncementPayload | AgreementSizeExceededPayload | AgreementInfoPayload | HashInfoPayload | RetryPayload
+
+export type MessageHandler = (message: CommsMessage<CommsPayloads>) => Promise<void>
+
+// NOTIFICATION
+
+export enum NotificationType {
+  STORAGE = 'storage'
+}
+
+export type NotificationPayload = CommsPayloads & { code: string, timestamp: number }

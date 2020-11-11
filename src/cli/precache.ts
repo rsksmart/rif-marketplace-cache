@@ -1,11 +1,14 @@
 import { services } from '../app'
 import Listr from 'listr'
 import { getEndPromise as awaitStoreToEndProcessing } from 'sequelize-store'
+import type { Observable } from 'rxjs'
+
 import { sequelizeFactory } from '../sequelize'
 import { BaseCLICommand, capitalizeFirstLetter, validateServices } from '../utils'
 import { initStore } from '../store'
 import { SupportedServices } from '../definitions'
 import DbMigration from '../migrations'
+import { ethFactory, web3eventsFactory } from '../blockchain'
 
 export default class PreCache extends BaseCLICommand {
   static get description () {
@@ -39,7 +42,7 @@ ${formattedServices}`
       this.error(e.message)
     }
 
-    // Init database connection
+    // Init required components
     const sequelize = sequelizeFactory()
     const migration = new DbMigration(sequelize)
 
@@ -50,11 +53,14 @@ ${formattedServices}`
     // Init Store
     await initStore(sequelize)
 
+    const eth = ethFactory()
+    const web3events = await web3eventsFactory(eth, sequelize)
+
     const tasksDefinition = servicesToPreCache.map(
       serviceName => {
         return {
           title: capitalizeFirstLetter(serviceName),
-          task: (): Promise<void> => services[serviceName].precache()
+          task: (): Observable<string> => services[serviceName].precache(eth, web3events)
         }
       }
     )

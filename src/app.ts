@@ -2,6 +2,8 @@ import compress from 'compression'
 import helmet from 'helmet'
 import cors, { CorsOptionsDelegate } from 'cors'
 import config from 'config'
+import { Web3Events, REORG_OUT_OF_RANGE_EVENT_NAME } from '@rsksmart/web3-events'
+import { Sequelize } from 'sequelize'
 
 import feathers from '@feathersjs/feathers'
 import express from '@feathersjs/express'
@@ -12,15 +14,18 @@ import { loggingFactory } from './logger'
 import sequelize from './sequelize'
 import blockchain from './blockchain'
 import healthcheck from './healthcheck'
+import { DbBackUpJob, initBackups } from './db-backup'
+import comms, { stop as commsStop } from './communication'
 import { configureStore } from './store'
-import { errorHandler } from './utils'
+import { errorHandler, waitForConfigure } from './utils'
 
 import authentication from './services/authentication'
 
 import storage from './services/storage'
 import rates from './services/rates'
 import rns from './services/rns'
-import { REORG_OUT_OF_RANGE_EVENT_NAME } from './blockchain/events'
+import notification from './notification'
+import { Eth } from 'web3-eth'
 
 const logger = loggingFactory()
 
@@ -30,9 +35,18 @@ export const services = {
   [SupportedServices.RNS]: rns
 }
 
-export type AppOptions = { appResetCallBack: (...args: any) => void }
+export interface AppOptions {
+  appResetCallBack: (...args: any) => void
+  requirePrecache?: boolean
+}
 
-export async function appFactory (options: AppOptions): Promise<{ app: Application, stop: () => void }> {
+export interface AppReturns {
+  app: Application
+  backups: DbBackUpJob
+  stop: () => Promise<void>
+}
+
+export async function appFactory (options: AppOptions): Promise<AppReturns> {
   const app: Application = express(feathers())
 
   logger.verbose('Current configuration: ', config)
@@ -49,17 +63,33 @@ export async function appFactory (options: AppOptions): Promise<{ app: Applicati
   app.configure(express.rest())
   app.configure(socketio())
 
-  // Authenticatoin service
+  // Authentication service
   app.configure(authentication)
 
   // Custom general services
   app.configure(sequelize)
   app.configure(configureStore)
-  app.configure(blockchain)
+  await waitForConfigure(app, blockchain)
+  app.configure(initBackups)
   app.configure(healthcheck)
+  app.configure(notification)
+  app.configure(comms)
 
   /**********************************************************/
   // Configure each services
+
+  // If precache is required, then do it
+  if (options.requirePrecache) {
+    logger.info('Precache required! Starting...')
+    const eth = app.get('eth') as Eth
+    const web3events = app.get('web3events') as Web3Events
+
+    const toBePrecache = (Object.keys(services) as Array<keyof typeof services>)
+      .filter(service => config.get<boolean>(`${service}.enabled`))
+    await Promise.all(
+      toBePrecache.map((service) => services[service].precache(eth, web3events).toPromise())
+    )
+  }
 
   const servicePromises: Promise<{ stop: () => void }>[] = []
   for (const service of Object.values(services)) {
@@ -87,5 +117,14 @@ export async function appFactory (options: AppOptions): Promise<{ app: Applicati
     setTimeout(() => options.appResetCallBack(), 5000)
   })
 
-  return { app, stop: () => servicesInstances.forEach(service => service.stop()) }
+  return {
+    app,
+    backups: app.get('backups') as DbBackUpJob,
+    stop: async (): Promise<void> => {
+      const sequelize = app.get('sequelize') as Sequelize
+      await sequelize.close()
+      await commsStop(app)
+      servicesInstances.forEach(service => service.stop())
+    }
+  }
 }

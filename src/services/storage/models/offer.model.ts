@@ -6,13 +6,13 @@ import { Literal } from 'sequelize/types/lib/utils'
 import BillingPlan from './billing-plan.model'
 import { SupportedTokens } from '../../../definitions'
 import Agreement from './agreement.model'
-import { BigNumberStringType } from '../../../sequelize'
 import { WEI } from '../utils'
+import { BigNumberBigIntType } from '../../../sequelize'
 
 @Scopes(() => ({
   active: {
     where: {
-      totalCapacity: { [Op.ne]: '0' }
+      totalCapacity: { [Op.gt]: 0 }
       // peerId: { [Op.ne]: null }
     },
     include: [
@@ -28,7 +28,7 @@ export default class Offer extends Model {
   @Column({ primaryKey: true, type: DataType.STRING(64) })
   provider!: string
 
-  @Column({ ...BigNumberStringType('totalCapacity') })
+  @Column({ ...BigNumberBigIntType('totalCapacity') })
   totalCapacity!: BigNumber
 
   @Column

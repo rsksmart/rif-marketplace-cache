@@ -1,7 +1,6 @@
 # RIF Marketplace Cache
 
 [![CircleCI](https://flat.badgen.net/circleci/github/rsksmart/rif-marketplace-cache/master)](https://circleci.com/gh/rsksmart/rif-marketplace-cache/)
-[![Dependency Status](https://david-dm.org/rsksmart/rif-marketplace-cache.svg?style=flat-square)](https://david-dm.org/rsksmart/rif-marketplace-cache)
 [![](https://img.shields.io/badge/made%20by-IOVLabs-blue.svg?style=flat-square)](http://iovlabs.org)
 [![](https://img.shields.io/badge/project-RIF%20Marketplace-blue.svg?style=flat-square)](https://www.rifos.org/)
 [![standard-readme compliant](https://img.shields.io/badge/standard--readme-OK-brightgreen.svg?style=flat-square)](https://github.com/RichardLitt/standard-readme)
@@ -13,6 +12,12 @@
 > API server that caches different metrics from blockchain across RIF services
 
 **Warning: This project is in alpha state. There might (and most probably will) be changes in the future to its API and working. Also, no guarantees can be made about its stability, efficiency, and security at this stage.**
+
+## Lead Maintainer
+
+[Adam Uhlíř](https://github.com/AuHau)
+
+See what "Lead Maintainer" means [here](https://github.com/rsksmart/lead-maintainer).
 
 ## Table of Contents
 
