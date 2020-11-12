@@ -8,10 +8,20 @@ import { loggingFactory } from '../logger'
 const logger = loggingFactory('communication:handlers')
 
 type NotificationData = {
-  accounts: string[]
   type: string
   payload: CommsPayloads
-}
+} & (
+  | {
+    provider: string
+    consumer: string 
+  } | {
+    provider?: never
+    consumer: string 
+  } | {
+    provider: string
+    consumer?: never 
+  }
+)
 
 /**
  * GC for Storage notifications
@@ -38,7 +48,13 @@ async function gcStorageNotifications (agreementReference: string): Promise<void
  * @param agreement
  * @param message
  */
-function buildNotification (agreement: Agreement, message: CommsMessage<CommsPayloads>): NotificationData | undefined {
+function buildNotification (
+  {
+    consumer,
+    offerId: provider
+  }: Agreement, 
+  message: CommsMessage<CommsPayloads>
+): NotificationData | undefined {
   const notification = {
     type: NotificationType.STORAGE,
     payload: { ...message.payload, code: message.code, timestamp: message.timestamp }
@@ -46,18 +62,19 @@ function buildNotification (agreement: Agreement, message: CommsMessage<CommsPay
   switch (message.code) {
     case MessageCodesEnum.I_AGREEMENT_NEW:
       return {
-        accounts: [agreement.offerId],
+        provider,
         ...notification
       }
     case MessageCodesEnum.I_AGREEMENT_EXPIRED:
       return {
-        accounts: [agreement.consumer, agreement.offerId],
+        provider,
+        consumer,
         ...notification
       }
     case MessageCodesEnum.I_HASH_PINNED:
     case MessageCodesEnum.E_AGREEMENT_SIZE_LIMIT_EXCEEDED:
       return {
-        accounts: [agreement.consumer],
+        consumer,
         ...notification
       }
     default:
