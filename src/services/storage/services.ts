@@ -14,9 +14,12 @@ export class AvgBillingPriceService extends Service {
     }
     const sequelize = this.Model.sequelize
 
-    const [{ avgPrice: min }] = await sequelize.query(getAvgMinMaxBillingPriceQuery(-1), { type: QueryTypes.SELECT, raw: true })
-    const [{ avgPrice: max }] = await sequelize.query(getAvgMinMaxBillingPriceQuery(1), { type: QueryTypes.SELECT, raw: true })
-    return { min, max }
+    const avgMin = await sequelize.query(getAvgMinMaxBillingPriceQuery(-1), { type: QueryTypes.SELECT, raw: true })
+    const avgMax = await sequelize.query(getAvgMinMaxBillingPriceQuery(1), { type: QueryTypes.SELECT, raw: true })
+    return {
+      min: avgMin[0]?.avgPrice || 0,
+      max: avgMax[0]?.avgPrice || 0
+    }
   }
 }
 
