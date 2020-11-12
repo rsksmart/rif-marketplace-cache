@@ -385,8 +385,8 @@ $ npm install -g @rsksmart/rif-marketplace-cache
 // Connection to your database
 $ export RIFM_DB=postgres://user:pass@localhost/db
 
-// Sync the schema of database
-$ rif-marketplace-cache db-sync
+// Database migrations
+$ rif-marketplace-cache db-migration --up
 
 // Connection to your blockchain provider
 $ export RIFM_PROVIDER=ws://localhost:8545
@@ -405,26 +405,39 @@ For some more details on how to deploy this server please see [Deployment guide]
 
 ### Commands
 <!-- commands -->
-* [`rif-marketplace-cache db-sync`](#rif-marketplace-cache-db-sync)
+* [`rif-marketplace-cache db-migration`](#rif-marketplace-cache-db-migration)
 * [`rif-marketplace-cache precache [SERVICE]`](#rif-marketplace-cache-precache-service)
 * [`rif-marketplace-cache purge [SERVICE]`](#rif-marketplace-cache-purge-service)
 * [`rif-marketplace-cache start`](#rif-marketplace-cache-start)
 
-#### `rif-marketplace-cache db-sync`
+#### `rif-marketplace-cache db-migration`
 
 synchronize database schema
 
 ```
 USAGE
-  $ rif-marketplace-cache db-sync
+  $ rif-marketplace-cache db-migration
 
 OPTIONS
-  --config=config              path to JSON config file to load
-  --db=db                      database connection URI
-  --force                      removes all tables and recreates them
-  --log=error|warn|info|debug  [default: error] what level of information to log
-  --log-filter=log-filter      what components should be logged (+-, chars allowed)
-  --log-path=log-path          log to file, default is STDOUT
+  -d, --down                           Undo db migrations
+  -d, --generate=generate              Generate migrations using template [--generate=migration_name]
+  -m, --migration=migration            Migration file
+  -t, --to=to                          Migrate to
+  -u, --up                             Migrate DB
+  --config=config                      path to JSON config file to load
+  --db=db                              database connection URI
+  --log=error|warn|info|verbose|debug  [default: warn] what level of information to log
+  --log-filter=log-filter              what components should be logged (+-, chars allowed)
+  --log-path=log-path                  log to file, default is STDOUT
+
+EXAMPLES
+  $ rif-marketplace-cache db --up
+  $ rif-marketplace-cache db --down
+  $ rif-marketplace-cache db --up --to 0-test
+  $ rif-marketplace-cache --up --migrations 01-test --migrations 02-test
+  $ rif-marketplace-cache --up --db ./test.sqlite --to 09-test
+  $ rif-marketplace-cache --down --db ./test.sqlite --to 09-test
+  $ rif-pinning db --generate my_first_migration
 ```
 
 #### `rif-marketplace-cache precache [SERVICE]`

@@ -7,6 +7,7 @@ import sqlFormatter from 'sql-formatter'
 
 import { Application } from './definitions'
 import { loggingFactory } from './logger'
+import DbMigration from './migrations'
 
 const logger = loggingFactory('db')
 
@@ -108,11 +109,17 @@ export function ArrayStringType (propName: string): Partial<ModelAttributeColumn
   }
 }
 
-export default function (app: Application): void {
+export default async function (app: Application): Promise<void> {
   const sequelize = sequelizeFactory()
+  const migration = new DbMigration(sequelize)
   const oldSetup = app.setup
 
   app.set('sequelize', sequelize)
+
+  if ((await migration.pending()).length) {
+    logger.error('DB Migration required. Please use \'db-migration\' command to proceed')
+    process.exit()
+  }
 
   app.setup = function (...args): ReturnType<Application['setup']> {
     const result = oldSetup.apply(this, args)
@@ -124,8 +131,6 @@ export default function (app: Application): void {
         (models[name] as any).associate(models)
       }
     })
-    // Sync to the database
-    app.set('sequelizeSync', sequelize.sync())
 
     return result
   }

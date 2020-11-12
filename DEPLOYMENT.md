@@ -46,7 +46,7 @@ npm install -g @rsksmart/rif-marketplace-cache
 First synchronize database scheme:
 
 ```bash
-$ rif-marketplace-cache db-sync --config ./path/to/custom_config
+$ rif-marketplace-cache db-migration --up --config ./path/to/custom_config
 ```
 
 Pre-fetch all previous events:

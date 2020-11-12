@@ -7,6 +7,7 @@ import { sequelizeFactory } from '../sequelize'
 import { BaseCLICommand, capitalizeFirstLetter, validateServices } from '../utils'
 import { initStore } from '../store'
 import { SupportedServices } from '../definitions'
+import DbMigration from '../migrations'
 import { ethFactory, web3eventsFactory } from '../blockchain'
 
 export default class PreCache extends BaseCLICommand {
@@ -43,6 +44,12 @@ ${formattedServices}`
 
     // Init required components
     const sequelize = sequelizeFactory()
+    const migration = new DbMigration(sequelize)
+
+    if ((await migration.pending()).length) {
+      throw new Error('DB Migration required. Please use \'db-migration\' command to proceed')
+    }
+
     // Init Store
     await initStore(sequelize)
 
