@@ -562,6 +562,10 @@ You might have some problems during development, here are few pointers about wha
  - check if confirmations are enabled (when ran in [`VERBOSE` mode](#Logging), you should see the whole Config logged). If they are, make sure you emit empty blocks to get enough confirmations.
  - run Cache with log level [`DEBUG`](#Logging) (you can filter out database logging with log filter `-db`) and see if events are incoming to Cache
 
+#### CLI issues
+
+ - if you created new command, but you are getting message that the command does not exist, check if in root of the project is `oclif.manifest.json`, if so delete it. (It is cached information about available commands and their help pages)
+
 ## License
 
 [MIT](./LICENSE)
