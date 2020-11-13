@@ -71,7 +71,7 @@
             'TotalCapacitySet(address,uint64)',
             'BillingPlanSet(address,address,uint64,uint128)',
             'MessageEmitted(address,bytes32[])',
-            'NewAgreement(bytes32[],address,address,uint128,uint64,uint128,address,uint256)',
+            'NewAgreement(bytes32[],address,address,uint64,uint64,uint128,address,uint256)',
             'AgreementFundsDeposited(bytes32,uint256,address)',
             'AgreementFundsWithdrawn(bytes32,uint256,address)',
             'AgreementFundsPayout(bytes32,uint256,address)',
