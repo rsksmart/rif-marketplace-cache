@@ -26,8 +26,6 @@ RUN sed -i 's#"./src/cli"#"./lib/cli"#g' package.json
 
 EXPOSE 3030
 
-ENV RIFM_PRECACHE_TARGETS all
-
 ENTRYPOINT [ "./bin/entrypoint" ]
 
 LABEL maintainer="adam@iovlabs.org"

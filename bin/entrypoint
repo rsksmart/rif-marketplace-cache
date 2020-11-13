@@ -1,5 +1,4 @@
 #!/bin/sh
 
-./bin/run db-sync "$@"
-./bin/run precache "$@" $RIFM_PRECACHE_TARGETS
+./bin/run db-migration --up
 ./bin/run start "$@"
