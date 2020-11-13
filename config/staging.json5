@@ -5,14 +5,16 @@
   storage: {
     enabled: true,
     storageManager: {
-      contractAddress: "0x2e851dD35163fb4FFc6a8D0aDe95D4f8B8D4BCEa",
+      contractAddress: "0xEaEff4a8A8622B7520eE34f4CC2e50f1e58411C0",
       eventsEmitter: {
+        startingBlock: 1333889,
         confirmations: 3
       }
     },
     staking: {
-      contractAddress: "0x976f2727d5eaC1eb1043aE48241008c071983bAC",
+      contractAddress: "0xB45BbC3B983E9d60c131F177831e911043a36b6f",
       eventsEmitter: {
+        startingBlock: 133904,
         confirmations: 3
       }
     },
