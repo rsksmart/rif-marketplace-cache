@@ -326,9 +326,9 @@ describe('Models', () => {
         order: [literal('avgBillingPrice')]
       })
       const expectedRes = [
-        { provider: 'abc', avgBillingPrice: 1 },
-        { provider: 'abc2', avgBillingPrice: 2 },
-        { provider: 'abc3', avgBillingPrice: 3 }
+        { provider: 'abc', avgBillingPrice: 30 },
+        { provider: 'abc2', avgBillingPrice: 60 },
+        { provider: 'abc3', avgBillingPrice: 90 }
       ]
       expect(offers).to.be.deep.equal(expectedRes)
     })
