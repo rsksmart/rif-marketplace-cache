@@ -7,7 +7,7 @@ import { Sequelize } from 'sequelize'
 import { Eth } from 'web3-eth'
 import type { HttpProvider } from 'web3-core'
 import { Contract } from 'web3-eth-contract'
-import { AbiItem, asciiToHex } from 'web3-utils'
+import { AbiItem, asciiToHex, padRight } from 'web3-utils'
 import BigNumber from 'bignumber.js'
 import { promisify } from 'util'
 import storageManagerContract from '@rsksmart/rif-marketplace-storage/build/contracts/StorageManager.json'
@@ -32,7 +32,7 @@ export const appResetCallbackSpy = sinon.spy()
 
 export function encodeHash (hash: string): string[] {
   if (hash.length <= 32) {
-    return [asciiToHex(hash)]
+    return [padRight(asciiToHex(hash), 64)]
   }
 
   return [asciiToHex(hash.slice(0, 32)), ...encodeHash(hash.slice(32))]
