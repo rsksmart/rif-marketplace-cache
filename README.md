@@ -561,6 +561,7 @@ You might have some problems during development, here are few pointers about wha
  - make sure that the ABIs in Cache match contracts deployed on your network (Ganache, Testnet, etc). The same version of contracts has to be everywhere.
  - check if confirmations are enabled (when ran in [`VERBOSE` mode](#Logging), you should see the whole Config logged). If they are, make sure you emit empty blocks to get enough confirmations.
  - run Cache with log level [`DEBUG`](#Logging) (you can filter out database logging with log filter `-db`) and see if events are incoming to Cache
+ - if updating contract's version, make sure that topics of the contract's Events matches!
 
 #### CLI issues
 
