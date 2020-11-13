@@ -57,7 +57,14 @@ export default class Agreement extends Model {
     // Date.now = ms
     // this.lastPayout.getTime = ms
     // this.billingPeriod = seconds ==> * 1000
-    const periods = new BigNumber(Date.now() - this.lastPayout.getTime()).div(this.billingPeriod.times(1000))
+    const timePassedMs = Date.now() - this.lastPayout.getTime()
+
+    if (timePassedMs < 0) {
+      // We cannot fully rely on blockchain time, as it can be a little bit ahead of real time
+      return new BigNumber(0)
+    }
+
+    const periods = new BigNumber(timePassedMs).div(this.billingPeriod.times(1000))
     return floor
       ? bnFloor(periods)
       : periods
