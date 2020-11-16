@@ -1,3 +1,66 @@
+<a name="1.1.0-dev.0"></a>
+# [1.1.0-dev.0](https://github.com/rsksmart/rif-marketplace-cache/compare/v1.0.0...v1.1.0-dev.0) (2020-11-16)
+
+
+### Bug Fixes
+
+* **dev:** re-adds the watch arg to bin script ([#381](https://github.com/rsksmart/rif-marketplace-cache/issues/381)) ([c8704b4](https://github.com/rsksmart/rif-marketplace-cache/commit/c8704b4))
+* **storage:** makes periodsSinceLastPayout 0 if not positive ([#384](https://github.com/rsksmart/rif-marketplace-cache/issues/384)) ([c98ea78](https://github.com/rsksmart/rif-marketplace-cache/commit/c98ea78))
+* add missing await ([#379](https://github.com/rsksmart/rif-marketplace-cache/issues/379)) ([baf5981](https://github.com/rsksmart/rif-marketplace-cache/commit/baf5981))
+* agreement expires-in calculation ([#332](https://github.com/rsksmart/rif-marketplace-cache/issues/332)) ([1b123df](https://github.com/rsksmart/rif-marketplace-cache/commit/1b123df))
+* authentication typings ([2bec0ad](https://github.com/rsksmart/rif-marketplace-cache/commit/2bec0ad))
+* avg billing plan hook ([#328](https://github.com/rsksmart/rif-marketplace-cache/issues/328)) ([bc48a46](https://github.com/rsksmart/rif-marketplace-cache/commit/bc48a46))
+* avg billing price min-max calculation ([9d294f7](https://github.com/rsksmart/rif-marketplace-cache/commit/9d294f7))
+* casts totalCapacity in offers ([b1b4c32](https://github.com/rsksmart/rif-marketplace-cache/commit/b1b4c32))
+* escapes sequelize literal query params ([7bec56b](https://github.com/rsksmart/rif-marketplace-cache/commit/7bec56b))
+* fix topics ([#258](https://github.com/rsksmart/rif-marketplace-cache/issues/258)) ([76ae051](https://github.com/rsksmart/rif-marketplace-cache/commit/76ae051))
+* fixes plan price ([b882870](https://github.com/rsksmart/rif-marketplace-cache/commit/b882870))
+* ganache storage contract addr ([9bbc8c7](https://github.com/rsksmart/rif-marketplace-cache/commit/9bbc8c7))
+* make total-capacity(offer) and size(agreement) number type ([#367](https://github.com/rsksmart/rif-marketplace-cache/issues/367)) ([8b8d0dc](https://github.com/rsksmart/rif-marketplace-cache/commit/8b8d0dc))
+* makes the avg price into GB ([15c9e09](https://github.com/rsksmart/rif-marketplace-cache/commit/15c9e09))
+* precache command ([#347](https://github.com/rsksmart/rif-marketplace-cache/issues/347)) ([7b453d5](https://github.com/rsksmart/rif-marketplace-cache/commit/7b453d5))
+* prevents error when no plans ([8b8919e](https://github.com/rsksmart/rif-marketplace-cache/commit/8b8919e))
+* remove usage of test util in src ([#295](https://github.com/rsksmart/rif-marketplace-cache/issues/295)) ([f1b5e0b](https://github.com/rsksmart/rif-marketplace-cache/commit/f1b5e0b))
+* return total staked fiat as 0.00 for empty account ([#345](https://github.com/rsksmart/rif-marketplace-cache/issues/345)) ([fc0d6a9](https://github.com/rsksmart/rif-marketplace-cache/commit/fc0d6a9))
+* separates filters ([a35b8ee](https://github.com/rsksmart/rif-marketplace-cache/commit/a35b8ee))
+* temporarily disables peerId check in scopes ([366ec3f](https://github.com/rsksmart/rif-marketplace-cache/commit/366ec3f))
+* TotalCapacitySet topic sig typo ([#285](https://github.com/rsksmart/rif-marketplace-cache/issues/285)) ([c37ea81](https://github.com/rsksmart/rif-marketplace-cache/commit/c37ea81))
+* wCumAvg null value safety ([42ea215](https://github.com/rsksmart/rif-marketplace-cache/commit/42ea215))
+* **storage:** hasSufficientFunds check funds for at least one period ([8d245c6](https://github.com/rsksmart/rif-marketplace-cache/commit/8d245c6))
+
+
+### Features
+
+* add general error message handler for comms ([#395](https://github.com/rsksmart/rif-marketplace-cache/issues/395)) ([a994929](https://github.com/rsksmart/rif-marketplace-cache/commit/a994929))
+* **storage:** moves average price of offers to monthly basis ([#389](https://github.com/rsksmart/rif-marketplace-cache/issues/389)) ([ee15b43](https://github.com/rsksmart/rif-marketplace-cache/commit/ee15b43))
+* add handling of avg billing price for no offer ([#383](https://github.com/rsksmart/rif-marketplace-cache/issues/383)) ([cab7174](https://github.com/rsksmart/rif-marketplace-cache/commit/cab7174))
+* add multi currency support ([#303](https://github.com/rsksmart/rif-marketplace-cache/issues/303)) ([4223106](https://github.com/rsksmart/rif-marketplace-cache/commit/4223106))
+* add staking address ([#316](https://github.com/rsksmart/rif-marketplace-cache/issues/316)) ([869ba4a](https://github.com/rsksmart/rif-marketplace-cache/commit/869ba4a))
+* add storage config info for ganache ([#229](https://github.com/rsksmart/rif-marketplace-cache/issues/229)) ([69e01a1](https://github.com/rsksmart/rif-marketplace-cache/commit/69e01a1))
+* adds find hook ([7b71db5](https://github.com/rsksmart/rif-marketplace-cache/commit/7b71db5))
+* adds provider name search ([9b35ca9](https://github.com/rsksmart/rif-marketplace-cache/commit/9b35ca9))
+* adjust stake get endpoint ([#343](https://github.com/rsksmart/rif-marketplace-cache/issues/343)) ([27e0efc](https://github.com/rsksmart/rif-marketplace-cache/commit/27e0efc))
+* apply storage contract changes ([#256](https://github.com/rsksmart/rif-marketplace-cache/issues/256)) ([6a25dde](https://github.com/rsksmart/rif-marketplace-cache/commit/6a25dde))
+* awaiting for store to save all data ([4cefd59](https://github.com/rsksmart/rif-marketplace-cache/commit/4cefd59))
+* bignumber support ([#254](https://github.com/rsksmart/rif-marketplace-cache/issues/254)) ([820d695](https://github.com/rsksmart/rif-marketplace-cache/commit/820d695))
+* calculates cummulative weighed average on BillingPlanSet event ([ef1f13c](https://github.com/rsksmart/rif-marketplace-cache/commit/ef1f13c))
+* comms integration ([#329](https://github.com/rsksmart/rif-marketplace-cache/issues/329)) ([3862419](https://github.com/rsksmart/rif-marketplace-cache/commit/3862419))
+* db migrations ([#269](https://github.com/rsksmart/rif-marketplace-cache/issues/269)) ([3bef0a6](https://github.com/rsksmart/rif-marketplace-cache/commit/3bef0a6))
+* new storage contract ([#348](https://github.com/rsksmart/rif-marketplace-cache/issues/348)) ([66ee88c](https://github.com/rsksmart/rif-marketplace-cache/commit/66ee88c))
+* **agreement:** add expiredIn virtual field to agreement model ([#331](https://github.com/rsksmart/rif-marketplace-cache/issues/331)) ([d98416c](https://github.com/rsksmart/rif-marketplace-cache/commit/d98416c))
+* **rns:** integrate RNS from mainnet release ([#342](https://github.com/rsksmart/rif-marketplace-cache/issues/342)) ([50c23c0](https://github.com/rsksmart/rif-marketplace-cache/commit/50c23c0)), closes [#320](https://github.com/rsksmart/rif-marketplace-cache/issues/320)
+* **staking:** add total-staked-usd to stake update event ([#340](https://github.com/rsksmart/rif-marketplace-cache/issues/340)) ([f035130](https://github.com/rsksmart/rif-marketplace-cache/commit/f035130))
+* expose new-block event ([#221](https://github.com/rsksmart/rif-marketplace-cache/issues/221)) ([c7b73db](https://github.com/rsksmart/rif-marketplace-cache/commit/c7b73db))
+* handle Billing plans remove ([#327](https://github.com/rsksmart/rif-marketplace-cache/issues/327)) ([eb8c52e](https://github.com/rsksmart/rif-marketplace-cache/commit/eb8c52e))
+* integration tests ([#315](https://github.com/rsksmart/rif-marketplace-cache/issues/315)) ([66cff4f](https://github.com/rsksmart/rif-marketplace-cache/commit/66cff4f))
+* **storage:** staking support ([#286](https://github.com/rsksmart/rif-marketplace-cache/issues/286)) ([7be56f7](https://github.com/rsksmart/rif-marketplace-cache/commit/7be56f7))
+* reorgs outside of confirmations range handling ([#273](https://github.com/rsksmart/rif-marketplace-cache/issues/273)) ([4d48f80](https://github.com/rsksmart/rif-marketplace-cache/commit/4d48f80))
+* sorts plans + removes rounding of planPrice ([1764a70](https://github.com/rsksmart/rif-marketplace-cache/commit/1764a70))
+* swappes weighted avg for re-calculation ([9fb7c30](https://github.com/rsksmart/rif-marketplace-cache/commit/9fb7c30))
+* **core:** support listening on topics ([eae87e2](https://github.com/rsksmart/rif-marketplace-cache/commit/eae87e2))
+
+
+
 <a name="1.0.0"></a>
 # [1.0.0](https://github.com/rsksmart/rif-marketplace-cache/compare/v1.0.0-rc.0...v1.0.0) (2020-09-15)
 
