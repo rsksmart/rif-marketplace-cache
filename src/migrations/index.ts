@@ -20,7 +20,7 @@ export default class Migration {
       migrations: {
         path: path.resolve(__dirname, './scripts'),
         params: [sequelize.getQueryInterface(), sequelize],
-        pattern: /^\d+[\w-]+\.ts$/
+        pattern: /^\d+[\w-]+\.(ts|js)$/
       }
     })
   }
