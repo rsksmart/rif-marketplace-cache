@@ -49,6 +49,7 @@ function buildNotification (agreement: Agreement, message: CommsMessage<CommsPay
         accounts: [agreement.offerId],
         ...notification
       }
+    case MessageCodesEnum.E_GENERAL:
     case MessageCodesEnum.I_AGREEMENT_EXPIRED:
       return {
         accounts: [agreement.consumer, agreement.offerId],
