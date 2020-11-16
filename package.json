@@ -1,6 +1,6 @@
 {
   "name": "@rsksmart/rif-marketplace-cache",
-  "version": "1.0.0",
+  "version": "1.1.0-dev.0",
   "description": "Caching server for RIF Marketplace",
   "keywords": [
     "RIF",
@@ -44,7 +44,7 @@
     "docs": "typedoc --mode modules --excludeNotExported --readme none --excludePrivate  --tsconfig ./node_modules/tasegir/src/config/tsconfig.json --exclude 'src/providers/*,test/**/*' --out docs src",
     "types-check": "tasegir types-check",
     "lint": "tasegir lint",
-    "release": "tasegir release",
+    "release": "tasegir release --no-build --no-docs --target=node",
     "test": "npm run test:unit && npm run test:integration",
     "test:integration": "cross-env ALLOW_CONFIG_MUTATIONS=true tasegir test --target node --files ./test/integration/**/*.spec.ts --files ./test/integration/**/**/*.spec.ts",
     "test:unit": "cross-env ALLOW_CONFIG_MUTATIONS=true tasegir test --target node --files ./test/unit/*.spec.ts --files ./test/unit/**/*.spec.ts --files ./test/unit/**/**/*.spec.ts",
@@ -138,6 +138,7 @@
   "types": "types/index.d.ts",
   "contributors": [
     "Adam Uhlíř <adam@uhlir.dev>",
+    "Alvaro Fariña <farinalvaro@gmail.com>",
     "Dennis Arslan <dennis@arslan.co.uk>",
     "Julian M. Rodriguez <56316686+julianmrodri@users.noreply.github.com>",
     "Juraj <36888576+jurajpiar@users.noreply.github.com>",
