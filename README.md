@@ -76,7 +76,7 @@ It has following schema:
     "utilizedCapacity": "number",
     "acceptedCurrencies": "string[]", // ['rbtc', 'rif']
     "availableCapacity": "number",
-    "avgBillingPrice": "number",
+    "avgBillingPrice": "number", // on a monthly basis
     "totalStakedUSD": "number",
     "createdAt": "Date",
     "updatedAt": "Date",
@@ -182,7 +182,7 @@ It has following schema:
 GET: /storage/v0/avgBillingPrice
 ```
 
-Return min/max average billing price converted to USD.
+Returns min/max average billing price per month converted to USD.
 
 
 ```json5
