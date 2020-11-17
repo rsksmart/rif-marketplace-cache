@@ -14,7 +14,7 @@
     staking: {
       contractAddress: "0xB45BbC3B983E9d60c131F177831e911043a36b6f",
       eventsEmitter: {
-        startingBlock: 133904,
+        startingBlock: 1333904,
         confirmations: 3
       }
     },
