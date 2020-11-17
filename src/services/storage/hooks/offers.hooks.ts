@@ -82,7 +82,13 @@ export default {
     find: [
       (context: HookContext) => {
         if (context.params.query && !context.params.query.$limit) {
-          const { averagePrice, totalCapacity, periods, provider } = context.params.query
+          const {
+            averagePrice,
+            totalCapacity,
+            periods,
+            provider,
+            account
+          } = context.params.query
           const sequelize = context.app.get('sequelize')
 
           context.params.sequelize = {
@@ -108,9 +114,19 @@ export default {
             where: {}
           }
 
+          const { params: { sequelize: { where: whereClause } } } = context
+
           if (provider && provider.$like) {
-            context.params.sequelize.where.provider = {
+            whereClause.provider = {
+              ...whereClause.provider,
               [Op.like]: `%${provider.$like}%`
+            }
+          }
+
+          if (account) {
+            whereClause.provider = {
+              ...whereClause.provider,
+              [Op.notLike]: `%${account}%`
             }
           }
 
@@ -123,7 +139,7 @@ export default {
           }
 
           if (periods?.length) {
-            context.params.sequelize.where['$plans.period$'] = { [Op.in]: periods }
+            whereClause['$plans.period$'] = { [Op.in]: periods }
           }
         }
       }
