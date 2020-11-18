@@ -1,3 +1,13 @@
+<a name="1.1.0-dev.1"></a>
+# [1.1.0-dev.1](https://github.com/rsksmart/rif-marketplace-cache/compare/v1.1.0-dev.0...v1.1.0-dev.1) (2020-11-16)
+
+
+### Bug Fixes
+
+* gather also js migrations ([d2fafde](https://github.com/rsksmart/rif-marketplace-cache/commit/d2fafde))
+
+
+
 <a name="1.1.0-dev.0"></a>
 # [1.1.0-dev.0](https://github.com/rsksmart/rif-marketplace-cache/compare/v1.0.0...v1.1.0-dev.0) (2020-11-16)
 
