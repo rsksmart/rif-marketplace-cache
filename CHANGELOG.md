@@ -1,3 +1,14 @@
+<a name="1.1.0-dev.2"></a>
+# [1.1.0-dev.2](https://github.com/rsksmart/rif-marketplace-cache/compare/v1.1.0-dev.1...v1.1.0-dev.2) (2020-11-18)
+
+
+### Features
+
+* add check for eth provider availability ([#402](https://github.com/rsksmart/rif-marketplace-cache/issues/402)) ([6f8f16f](https://github.com/rsksmart/rif-marketplace-cache/commit/6f8f16f))
+* adjust room topic computation ([#378](https://github.com/rsksmart/rif-marketplace-cache/issues/378)) ([ea1f134](https://github.com/rsksmart/rif-marketplace-cache/commit/ea1f134))
+
+
+
 <a name="1.1.0-dev.1"></a>
 # [1.1.0-dev.1](https://github.com/rsksmart/rif-marketplace-cache/compare/v1.1.0-dev.0...v1.1.0-dev.1) (2020-11-16)
 
