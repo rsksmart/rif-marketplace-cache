@@ -2,6 +2,27 @@
   port: 'RIFM_PORT',
   db: 'RIFM_DB',
 
+  comms: {
+    libp2p: {
+      addresses: {
+        listen: {
+          "__name": "RIFM_COMMS_LISTEN",
+          "__format": "json"
+        }
+      },
+      config: {
+        peerDiscovery: {
+          bootstrap: {
+            enabled: "RIFM_COMMS_BOOTSTRAP_ENABLED",
+            list: {
+              "__name": "RIFM_COMMS_BOOTSTRAP_LIST",
+              "__format": "json"
+            }
+          }
+        }
+      }
+    },
+  },
   cors: {
     origin: "RIFM_CORS_ORIGIN",
     methods: "RIFM_CORS_METHODS"
