@@ -317,6 +317,10 @@ file and load that either using the `--config` CLI parameter or using environmen
  - `RIFM_PORT` (number): port on which the server should listen to
  - `RIFM_DB` (string): database connection URI
  - `RIFM_PROVIDER` (string): blockchain connection URI
+ - RIF Communication settings:
+    - `RIFM_COMMS_LISTEN` (`array`) - Defines an array of multiaddress that the Pinner's libp2p node will listen on. Same as libp2p config's [`address.listen`](https://github.com/libp2p/js-libp2p/blob/master/doc/CONFIGURATION.md#customizing-libp2p) property.
+    - `RIFM_COMMS_BOOTSTRAP_ENABLED` (`true`/`false`) - Defines if bootstrap should be used. Same as libp2p config's [`bootstrap.enabled`](https://github.com/libp2p/js-libp2p-bootstrap) property.
+    - `RIFM_COMMS_BOOTSTRAP_LIST` (`array`) - Defines an array of multiaddress that the Pinner's libp2p node will use to bootstrap its connectivity. Same as libp2p config's [`bootstrap.list`](https://github.com/libp2p/js-libp2p-bootstrap) property.
  - CORS settings ([see more on expressjs documentation](https://expressjs.com/en/resources/middleware/cors.html)):
     - `RIFM_CORS_ORIGIN` (boolean | string | regexp): Configures the Access-Control-Allow-Origin CORS header
     - `RIFM_CORS_METHODS` (string) Configures the Access-Control-Allow-Methods CORS header
