@@ -143,8 +143,17 @@
     owner: {
       // Specify behavior of EventsEmitter, that retrieves events from blockchain and pass them onwards for further processing.
       eventsEmitter: {
-        // Events that will be listened to
-        events: ['Transfer', 'ExpirationChanged', 'Approval'],
+        // Will process one event at a time
+        serialProcessing: true,
+
+        // Topics that will be listened to
+        topics: [
+          [ // It needs to be a "double array" because that represents an "or" of the topics and not "and"
+            'Transfer(address,address,uint256)',
+            'ExpirationChanged(uint256,uint256)',
+            'Approval(address,address,uint256)'
+          ]
+        ],
 
         // If to use polling strategy, if false then listening is used.
         polling: true,
@@ -169,8 +178,15 @@
     reverse: {
       // Specify behavior of EventsEmitter, that retrieves events from blockchain and pass them onwards for further processing.
       eventsEmitter: {
-        // Events that will be listened to
-        'events': ['NameChanged'],
+        // Will process one event at a time
+        serialProcessing: true,
+
+        // Topics that will be listened to
+        topics: [
+          [ // It needs to be a "double array" because that represents an "or" of the topics and not "and"
+            'NameChanged(bytes32,string)'
+          ]
+        ],
 
         // If to use polling strategy, if false then listening is used.
         polling: true,
@@ -195,8 +211,17 @@
     placement: {
       // Specify behavior of EventsEmitter, that retrieves events from blockchain and pass them onwards for further processing.
       eventsEmitter: {
-        // Events that will be listened to
-        events: ['TokenPlaced', 'TokenUnplaced', 'TokenSold'],
+        // Will process one event at a time
+        serialProcessing: true,
+
+        // Topics that will be listened to
+        topics: [
+          [ // It needs to be a "double array" because that represents an "or" of the topics and not "and"
+            'TokenPlaced(uint256,address,uint256)',
+            'TokenUnplaced(uint256)',
+            'TokenSold(uint256,address)'
+          ]
+        ],
 
         // If to use polling strategy, if false then listening is used.
         polling: true,
