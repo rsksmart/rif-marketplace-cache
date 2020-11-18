@@ -150,7 +150,7 @@
         topics: [
           [ // It needs to be a "double array" because that represents an "or" of the topics and not "and"
             'Transfer(address,address,uint256)',
-            'ExpirationChanged(uint256,uint)',
+            'ExpirationChanged(uint256,uint256)',
             'Approval(address,address,uint256)'
           ]
         ],
