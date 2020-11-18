@@ -183,7 +183,7 @@ export class TestingApp {
   }
 
   private async initBlockchainProvider (): Promise<void> {
-    this.eth = ethFactory()
+    this.eth = await ethFactory()
     const [owner, provider, consumer, ...accounts] = await this.eth.getAccounts()
     this.contractOwner = owner
     this.providerAddress = provider

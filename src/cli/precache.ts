@@ -53,7 +53,7 @@ ${formattedServices}`
     // Init Store
     await initStore(sequelize)
 
-    const eth = ethFactory()
+    const eth = await ethFactory()
     const web3events = await web3eventsFactory(eth, sequelize)
 
     const tasksDefinition = servicesToPreCache.map(

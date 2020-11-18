@@ -11,11 +11,16 @@ import { ReorgEmitterService, NewBlockEmitterService, ConfirmatorService } from 
 
 const logger = loggingFactory('blockchain')
 
-export function ethFactory (): Eth {
+export async function ethFactory (): Promise<Eth> {
   const provider = Eth.givenProvider || config.get('blockchain.provider')
   logger.info(`Connecting to provider ${provider}`)
-
-  return new Eth(provider)
+  const eth = new Eth(provider)
+  try {
+    await eth.getProtocolVersion()
+  } catch (e) {
+    throw new Error(`Can't connect to the node on address ${provider}`)
+  }
+  return eth
 }
 
 export async function web3eventsFactory (eth: Eth, sequelize: Sequelize): Promise<Web3Events> {
@@ -61,7 +66,7 @@ function subscribeAndEmitNewBlocks (app: Application, web3Events: Web3Events): v
 
 export default async function (app: Application): Promise<void> {
   await waitForReadyApp(app)
-  const eth = ethFactory()
+  const eth = await ethFactory()
   app.set('eth', eth)
 
   const sequelize = app.get('sequelize') as Sequelize
