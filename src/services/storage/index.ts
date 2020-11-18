@@ -43,7 +43,7 @@ export interface StorageServices {
   stakeService: StakeService
 }
 
-const STORAGE_MANAGER = 'storage.storageManager'
+export const STORAGE_MANAGER = 'storage.storageManager'
 const STAKING = 'storage.staking'
 
 const storageLogger = loggingFactory('storage')

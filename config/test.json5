@@ -25,6 +25,7 @@
       '0x12345': 'rif'
     },
     storageManager: {
+      contractAddress: '0xStorageContractAddress12312z',
       eventsEmitter: {
         confirmations: 1,
         pollingInterval: 500,
