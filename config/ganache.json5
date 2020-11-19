@@ -58,7 +58,8 @@
       config: {
         peerDiscovery: {
           bootstrap: {
-            enabled: false
+            enabled: true,
+            list: ['/ip4/127.0.0.1/tcp/8998', '/ip4/127.0.0.1/tcp/8999/ws']
           }
         }
       }
