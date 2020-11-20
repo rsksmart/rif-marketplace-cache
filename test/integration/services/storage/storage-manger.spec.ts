@@ -412,7 +412,7 @@ describe('Storage service', function () {
 
         const notifications = await NotificationModel.findAll()
 
-        expect(notifications.length).to.be.eql(4)
+        expect(notifications.length).to.be.eql(5)
         const newAgreement = notifications.find(n => n.payload.code === MessageCodesEnum.I_AGREEMENT_NEW)
         const agrExpired = notifications.find(n => n.payload.code === MessageCodesEnum.I_AGREEMENT_EXPIRED)
         const hashStop = notifications.find(n => n.payload.code === MessageCodesEnum.I_HASH_PINNED)
