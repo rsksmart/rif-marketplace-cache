@@ -44,19 +44,22 @@ function buildNotification (agreement: Agreement, message: CommsMessage<CommsPay
     payload: { ...message.payload, code: message.code, timestamp: message.timestamp }
   }
   switch (message.code) {
+    // Provider
     case MessageCodesEnum.I_AGREEMENT_NEW:
       return {
         accounts: [agreement.offerId],
         ...notification
       }
+    // Provider and Consumer
     case MessageCodesEnum.E_GENERAL:
+    case MessageCodesEnum.E_AGREEMENT_SIZE_LIMIT_EXCEEDED:
     case MessageCodesEnum.I_AGREEMENT_EXPIRED:
       return {
         accounts: [agreement.consumer, agreement.offerId],
         ...notification
       }
+    // Consumer
     case MessageCodesEnum.I_HASH_PINNED:
-    case MessageCodesEnum.E_AGREEMENT_SIZE_LIMIT_EXCEEDED:
       return {
         accounts: [agreement.consumer],
         ...notification
