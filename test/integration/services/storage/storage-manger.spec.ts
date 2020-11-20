@@ -407,6 +407,7 @@ describe('Storage service', function () {
         await roomPinner.broadcast({ code: MessageCodesEnum.I_HASH_PINNED, payload: { agreementReference: agreement.agreementReference, hash: agreementData.cid } })
         await roomPinner.broadcast({ code: MessageCodesEnum.I_AGREEMENT_EXPIRED, payload: { agreementReference: agreement.agreementReference, hash: agreementData.cid } })
         await roomPinner.broadcast({ code: MessageCodesEnum.E_AGREEMENT_SIZE_LIMIT_EXCEEDED, payload: { agreementReference: agreement.agreementReference, hash: agreementData.cid } })
+        await roomPinner.broadcast({ code: MessageCodesEnum.E_GENERAL, payload: { agreementReference: agreement.agreementReference, hash: agreementData.cid, error: 'Error' } })
         await sleep(2000)
 
         const notifications = await NotificationModel.findAll()
@@ -416,6 +417,7 @@ describe('Storage service', function () {
         const agrExpired = notifications.find(n => n.payload.code === MessageCodesEnum.I_AGREEMENT_EXPIRED)
         const hashStop = notifications.find(n => n.payload.code === MessageCodesEnum.I_HASH_PINNED)
         const sizeLimit = notifications.find(n => n.payload.code === MessageCodesEnum.E_AGREEMENT_SIZE_LIMIT_EXCEEDED)
+        const errorGeneral = notifications.find(n => n.payload.code === MessageCodesEnum.E_GENERAL)
 
         expect(newAgreement?.accounts).to.be.eql([app.providerAddress])
         expect(newAgreement?.type).to.be.eql(NotificationType.STORAGE)
@@ -425,9 +427,13 @@ describe('Storage service', function () {
         expect(agrExpired?.type).to.be.eql(NotificationType.STORAGE)
         expect(agrExpired?.payload).to.be.eql({ agreementReference: agreement.agreementReference, hash: agreementData.cid, code: MessageCodesEnum.I_AGREEMENT_EXPIRED })
 
-        expect(sizeLimit?.accounts).to.be.eql([app.consumerAddress])
+        expect(sizeLimit?.accounts).to.be.eql([app.consumerAddress, app.providerAddress])
         expect(sizeLimit?.type).to.be.eql(NotificationType.STORAGE)
         expect(sizeLimit?.payload).to.be.eql({ agreementReference: agreement.agreementReference, hash: agreementData.cid, code: MessageCodesEnum.E_AGREEMENT_SIZE_LIMIT_EXCEEDED })
+
+        expect(errorGeneral?.accounts).to.be.eql([app.consumerAddress, app.providerAddress])
+        expect(errorGeneral?.type).to.be.eql(NotificationType.STORAGE)
+        expect(errorGeneral?.payload).to.be.eql({ agreementReference: agreement.agreementReference, hash: agreementData.cid, code: MessageCodesEnum.E_GENERAL, error: 'Error' })
 
         expect(hashStop?.accounts).to.be.eql([app.consumerAddress])
         expect(hashStop?.type).to.be.eql(NotificationType.STORAGE)
