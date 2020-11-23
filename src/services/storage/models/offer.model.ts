@@ -112,3 +112,23 @@ export function getBillingPriceAvgQuery (
   )
   `)
 }
+
+/**
+ * This function generates nested query for available capacity for offer
+ */
+export function getAvailableCapacityQuery (): Literal {
+  return literal(`
+    totalCapacity - COALESCE(
+      (SELECT
+        CAST(
+          SUM(
+            "storage_agreement"."size"
+            ) as INTEGER
+        ) as availableCapacity
+      FROM
+        "storage_agreement"
+      WHERE
+        "storage_agreement"."offerId" = provider)
+  , 0)
+  `)
+}

@@ -5,7 +5,7 @@ import { Op, literal, Sequelize } from 'sequelize'
 
 import BillingPlan from '../models/billing-plan.model'
 import Agreement from '../models/agreement.model'
-import Offer, { getBillingPriceAvgQuery, getStakesAggregateQuery } from '../models/offer.model'
+import Offer, { getAvailableCapacityQuery, getBillingPriceAvgQuery, getStakesAggregateQuery } from '../models/offer.model'
 import dehydrate = hooks.dehydrate
 
 /**
@@ -62,6 +62,27 @@ function totalCapacityFilter (
   ]
 }
 
+/**
+ * available capacity filter query
+ * @param sequelize
+ * @param context
+ * @param availableCapacity
+ */
+function availableCapacityFilter (
+  sequelize: Sequelize,
+  context: HookContext,
+  availableCapacity: { min: number | string, max: number | string }
+): void {
+  const minCap = sequelize.escape(availableCapacity.min)
+  const maxCap = sequelize.escape(availableCapacity.max)
+  const rawQ = `cast(availableCapacity as integer) BETWEEN ${minCap} AND ${maxCap}`
+  // We should use Op.and to prevent overwriting the scope values
+  context.params.sequelize.where[Op.and] = [
+    ...context.params.sequelize.where[Op.and] || [],
+    literal(rawQ)
+  ]
+}
+
 export default {
   before: {
     all: [
@@ -82,7 +103,13 @@ export default {
     find: [
       (context: HookContext) => {
         if (context.params.query && !context.params.query.$limit) {
-          const { averagePrice, totalCapacity, periods, provider } = context.params.query
+          const {
+            averagePrice,
+            totalCapacity,
+            periods,
+            provider,
+            availableCapacity
+          } = context.params.query
           const sequelize = context.app.get('sequelize')
 
           context.params.sequelize = {
@@ -101,7 +128,8 @@ export default {
             attributes: {
               include: [
                 [getBillingPriceAvgQuery(sequelize, 'usd'), 'avgBillingPrice'],
-                [getStakesAggregateQuery(sequelize, 'usd'), 'totalStakedUSD']
+                [getStakesAggregateQuery(sequelize, 'usd'), 'totalStakedUSD'],
+                [getAvailableCapacityQuery(), 'availableCapacity']
               ]
             },
             order: [literal('totalStakedUSD DESC')],
@@ -124,6 +152,10 @@ export default {
 
           if (periods?.length) {
             context.params.sequelize.where['$plans.period$'] = { [Op.in]: periods }
+          }
+
+          if (availableCapacity) {
+            availableCapacityFilter(sequelize, context, availableCapacity)
           }
         }
       }
