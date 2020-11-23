@@ -1,6 +1,6 @@
 import { Service } from 'feathers-sequelize'
 import config from 'config'
-import { getAvgMinMaxBillingPriceQuery } from './utils'
+import { getAvgMinMaxBillingPriceQuery, getMinMaxAvailableSizeQuery } from './utils'
 import { QueryTypes } from 'sequelize'
 import StakeModel, { getStakesForAccount } from './models/stake.model'
 import BigNumber from 'bignumber.js'
@@ -42,6 +42,22 @@ export class StakeService extends Service {
     return {
       totalStakedFiat: new BigNumber(totalStakedFiat || 0).toFixed(2),
       stakes: await StakeModel.findAll({ where: { account } })
+    }
+  }
+}
+
+export class AvailableSizeService extends Service {
+  emit?: Function
+
+  async get (): Promise<{ min: number, max: number }> {
+    const sequelize = this.Model.sequelize
+
+    const sizeMin = await sequelize.query(getMinMaxAvailableSizeQuery(-1), { type: QueryTypes.SELECT, raw: true })
+    const sizeMax = await sequelize.query(getMinMaxAvailableSizeQuery(1), { type: QueryTypes.SELECT, raw: true })
+
+    return {
+      min: sizeMin[0]?.availableSize || 0,
+      max: sizeMax[0]?.availableSize || 0
     }
   }
 }

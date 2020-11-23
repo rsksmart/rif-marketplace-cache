@@ -32,9 +32,10 @@ import offerHooks from './hooks/offers.hooks'
 import agreementHooks from './hooks/agreements.hooks'
 import stakeHooks from './hooks/stakes.hook'
 import avgBillingPlanHook from './hooks/avg-billing-plan.hook'
+import availableSizeHook from './hooks/available-size.hook'
 import eventProcessor from './processor'
 import storageChannels from './channels'
-import { AgreementService, OfferService, StakeService, AvgBillingPriceService } from './services'
+import { AgreementService, OfferService, StakeService, AvgBillingPriceService, AvailableSizeService } from './services'
 import { subscribeForOffers } from '../../communication'
 
 export interface StorageServices {
@@ -119,6 +120,11 @@ const storage: CachedService = {
     app.use(ServiceAddresses.STORAGE_STAKES, new StakeService({ Model: StakeModel }))
     const stakeService = app.service(ServiceAddresses.STORAGE_STAKES)
     stakeService.hooks(stakeHooks)
+
+    // Initialize Available Size service
+    app.use(ServiceAddresses.STORAGE_AVAILABLE_SIZE, new AvailableSizeService({ Model: Offer }))
+    const availableSizeService = app.service(ServiceAddresses.STORAGE_AVAILABLE_SIZE)
+    availableSizeService.hooks(availableSizeHook)
 
     app.configure(storageChannels)
 
