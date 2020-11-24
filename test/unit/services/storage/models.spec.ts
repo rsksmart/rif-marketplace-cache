@@ -337,17 +337,17 @@ describe('Models', () => {
       // POPULATE DB
       await Offer.bulkCreate([
         { provider: 'provider1', totalCapacity: 100, peerId: '1' },
-        { provider: 'provider2', totalCapacity: 100, peerId: '2' },
+        { provider: 'provider2', totalCapacity: 100, peerId: '2' }
       ])
       await Agreement.bulkCreate([
         { agreementReference: '123', size: 10, offerId: 'provider1' },
-        { agreementReference: '1234', size: 10, offerId: 'provider1' },
+        { agreementReference: '1234', size: 10, offerId: 'provider1' }
       ])
 
       expect((await Agreement.findAll()).length).to.be.eql(2)
 
       // Prepare aggregation query
-      const aggregateAvailableSizeQuery = getAvailableCapacityQuery()
+      const aggregateAvailableCapacityQuery = getAvailableCapacityQuery()
 
       const offers = await Offer.findAll({
         raw: true,
@@ -355,19 +355,18 @@ describe('Models', () => {
           exclude: ['totalCapacity', 'peerId', 'averagePrice', 'createdAt', 'updatedAt'],
           include: [
             [
-              aggregateAvailableSizeQuery,
-              'availableSize'
+              aggregateAvailableCapacityQuery,
+              'availableCapacity'
             ]
           ]
         }
       })
 
       const expectedRes = [
-        { provider: 'provider1', availableSize: 80 },
-        { provider: 'provider2', availableSize: 100 },
+        { provider: 'provider1', availableCapacity: 80 },
+        { provider: 'provider2', availableCapacity: 100 }
       ]
       expect(offers).to.be.deep.equal(expectedRes)
-
     })
     it('should aggregate total stakes for offers and order by stakes', async () => {
       // POPULATE DB

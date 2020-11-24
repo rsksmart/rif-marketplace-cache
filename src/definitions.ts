@@ -7,7 +7,7 @@ import type { Observable } from 'rxjs'
 import Libp2p from 'libp2p'
 import type { Options as Libp2pOptions } from 'libp2p'
 
-import type { AvgBillingPriceService, AgreementService, OfferService, StakeService, AvailableSizeService } from './services/storage/services'
+import type { AvgBillingPriceService, AgreementService, OfferService, StakeService, AvailableCapacityService } from './services/storage/services'
 import type { RatesService } from './services/rates'
 import type { RnsBaseService } from './services/rns'
 import type { ReorgEmitterService, NewBlockEmitterService, ConfirmatorService } from './blockchain/services'
@@ -37,7 +37,7 @@ export enum ServiceAddresses {
   AVG_BILLING_PRICE = '/storage/v0/avgBillingPrice',
   STORAGE_AGREEMENTS = '/storage/v0/agreements',
   STORAGE_STAKES = '/storage/v0/stakes',
-  STORAGE_AVAILABLE_SIZE = '/storage/v0/availableSize',
+  STORAGE_AVAILABLE_CAPACITY = '/storage/v0/availableCapacity',
   XR = '/rates/v0/',
   CONFIRMATIONS = '/confirmations',
   NEW_BLOCK_EMITTER = '/new-block',
@@ -50,7 +50,7 @@ interface ServiceTypes {
   [ServiceAddresses.AVG_BILLING_PRICE]: AvgBillingPriceService & ServiceAddons<any>
   [ServiceAddresses.STORAGE_AGREEMENTS]: AgreementService & ServiceAddons<any>
   [ServiceAddresses.STORAGE_STAKES]: StakeService & ServiceAddons<any>
-  [ServiceAddresses.STORAGE_AVAILABLE_SIZE]: AvailableSizeService & ServiceAddons<any>
+  [ServiceAddresses.STORAGE_AVAILABLE_CAPACITY]: AvailableCapacityService & ServiceAddons<any>
   [ServiceAddresses.XR]: RatesService & ServiceAddons<any>
   [ServiceAddresses.RNS_DOMAINS]: RnsBaseService & ServiceAddons<any>
   [ServiceAddresses.RNS_SOLD]: RnsBaseService & ServiceAddons<any>

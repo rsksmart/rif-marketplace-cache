@@ -43,20 +43,20 @@ export function getAvgMinMaxBillingPriceQuery (minMax: MinMax): string {
  * Get query for generating minimum or maximum available capacity
  * @param minMax
  */
-export function getMinMaxAvailableSizeQuery (minMax: MinMax): string {
+export function getMinMaxAvailableCapacityQuery (minMax: MinMax): string {
   return `
   SELECT
       CAST(
         totalCapacity - SUM(
           COALESCE("storage_agreement"."size", 0)
           ) as INTEGER
-      ) as availableSize
+      ) as availableCapacity
     FROM
       "storage_offer"
     LEFT OUTER JOIN
       "storage_agreement" as "storage_agreement" ON "storage_offer"."provider" = "storage_agreement"."offerId"
     GROUP BY offerId
-    ORDER BY availableSize ${minMax === 1 ? 'DESC' : 'ASC'}
+    ORDER BY availableCapacity ${minMax === 1 ? 'DESC' : 'ASC'}
     LIMIT 1
      `
 }
