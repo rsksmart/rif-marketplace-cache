@@ -6,6 +6,7 @@ import Sequelize, { literal } from 'sequelize'
 import Agreement from '../../../../src/services/storage/models/agreement.model'
 import { sequelizeFactory } from '../../../../src/sequelize'
 import Offer, {
+  getAvailableCapacityQuery,
   getBillingPriceAvgQuery,
   getStakesAggregateQuery
 } from '../../../../src/services/storage/models/offer.model'
@@ -331,6 +332,42 @@ describe('Models', () => {
         { provider: 'abc3', avgBillingPrice: 90 }
       ]
       expect(offers).to.be.deep.equal(expectedRes)
+    })
+    it('should aggregate available size for offers', async () => {
+      // POPULATE DB
+      await Offer.bulkCreate([
+        { provider: 'provider1', totalCapacity: 100, peerId: '1' },
+        { provider: 'provider2', totalCapacity: 100, peerId: '2' },
+      ])
+      await Agreement.bulkCreate([
+        { agreementReference: '123', size: 10, offerId: 'provider1' },
+        { agreementReference: '1234', size: 10, offerId: 'provider1' },
+      ])
+
+      expect((await Agreement.findAll()).length).to.be.eql(2)
+
+      // Prepare aggregation query
+      const aggregateAvailableSizeQuery = getAvailableCapacityQuery()
+
+      const offers = await Offer.findAll({
+        raw: true,
+        attributes: {
+          exclude: ['totalCapacity', 'peerId', 'averagePrice', 'createdAt', 'updatedAt'],
+          include: [
+            [
+              aggregateAvailableSizeQuery,
+              'availableSize'
+            ]
+          ]
+        }
+      })
+
+      const expectedRes = [
+        { provider: 'provider1', availableSize: 80 },
+        { provider: 'provider2', availableSize: 100 },
+      ]
+      expect(offers).to.be.deep.equal(expectedRes)
+
     })
     it('should aggregate total stakes for offers and order by stakes', async () => {
       // POPULATE DB
