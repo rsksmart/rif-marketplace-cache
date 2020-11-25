@@ -65,7 +65,7 @@ GET: /storage/v0/offers
 Returns JSON that represents currently active and available Offers that customers can use to contract their
 pinning requests.
 
-It has following schema:
+It has the following schema:
 
 ```json5
 [
@@ -120,7 +120,7 @@ GET: /storage/v0/agreements
 
 Returns JSON that represent currently active Agreements.
 
-It has following schema:
+It has the following schema:
 
 ```json5
 [
@@ -151,7 +151,7 @@ GET: /storage/v0/stakes'
 
 Returns JSON that represent all stakes for each account.
 
-It has following schema:
+It has the following schema:
 
 ```json5
 [
@@ -167,23 +167,12 @@ It has following schema:
 #### Average Billing Price endpoint
 
 ```
-GET: /storage/v0/stakes/:account'
-```
-
-Returns number of total stakes for specific account converted to USD
-
-It has following schema:
-
-```json5
-11645
-```
-
-```
 GET: /storage/v0/avgBillingPrice
 ```
 
 Returns min/max average billing price per month converted to USD.
 
+It has the following schema:
 
 ```json5
 {
