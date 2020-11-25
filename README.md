@@ -192,6 +192,23 @@ Returns min/max average billing price per month converted to USD.
 }
 ```
 
+#### Available Capacity endpoint
+
+```
+GET: /storage/v0/availableCapacity
+```
+
+Returns min/max available capacity comparing all available offers.
+
+It has the following schema:
+
+```json5
+{
+  min: 'number',
+  max: 'number'
+}
+```
+
 ### Rates
 
 API that caches conversion rates currently for RBTC and RIF Token.
