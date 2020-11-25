@@ -49,7 +49,7 @@ export function getMinMaxAvailableCapacityQuery (minMax: MinMax): string {
       CAST(
         totalCapacity - SUM(
           COALESCE("storage_agreement"."size", 0)
-          ) as INTEGER
+          ) as STRING
       ) as availableCapacity
     FROM
       "storage_offer"
