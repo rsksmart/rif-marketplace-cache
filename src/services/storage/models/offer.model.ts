@@ -118,7 +118,7 @@ export function getAvailableCapacityQuery (): Literal {
         CAST(
           SUM(
             "storage_agreement"."size"
-            ) as INTEGER
+            ) as STRING
         ) as availableCapacity
       FROM
         "storage_agreement"

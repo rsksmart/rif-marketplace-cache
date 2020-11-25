@@ -340,7 +340,7 @@ describe('Models', () => {
         { provider: 'provider2', totalCapacity: 100, peerId: '2' }
       ])
       await Agreement.bulkCreate([
-        { agreementReference: '123', size: 10, offerId: 'provider1' },
+        { agreementReference: '123', size: 10.0000000000000001, offerId: 'provider1' },
         { agreementReference: '1234', size: 10, offerId: 'provider1' }
       ])
 
@@ -363,7 +363,7 @@ describe('Models', () => {
       })
 
       const expectedRes = [
-        { provider: 'provider1', availableCapacity: 80 },
+        { provider: 'provider1', availableCapacity: 79.9999999999999999 },
         { provider: 'provider2', availableCapacity: 100 }
       ]
       expect(offers).to.be.deep.equal(expectedRes)
