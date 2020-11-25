@@ -1,7 +1,8 @@
 import { createLogger, format, transports, addColors, Logger as RealLogger } from 'winston'
 import * as Transport from 'winston-transport'
 
-import colors from 'colors'
+import colors from 'colors/safe'
+import { supportsColor } from 'colors/lib/system/supports-colors'
 import config from 'config'
 
 import { Logger } from './definitions'
@@ -132,7 +133,7 @@ function initLogging (): void {
       upperCaseLevel(),
       // format.padLevels(),
       format.timestamp({ format: 'DD/MM hh:mm:ss' }),
-      format.colorize(),
+      !supportsColor() || process.env.LOG_NO_COLORS === 'true' ? format(i => i)() : format.colorize(),
       format.printf(info => {
         let message: string
         const { service, ...rest } = info.metadata

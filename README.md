@@ -341,6 +341,7 @@ file and load that either using the `--config` CLI parameter or using environmen
     - `LOG_LEVEL` (string)
     - `LOG_FILTER` (string)
     - `LOG_PATH` (string)
+    - `LOG_NO_COLORS` (boolean) - if set the output won't be colorized
 
 ### Database
 
