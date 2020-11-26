@@ -25,6 +25,7 @@ COPY config ./config/
 RUN sed -i 's#"./src/cli"#"./lib/cli"#g' package.json
 
 EXPOSE 3030
+ENV LOG_NO_COLORS 'true'
 
 ENTRYPOINT [ "./bin/entrypoint" ]
 

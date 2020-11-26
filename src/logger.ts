@@ -1,11 +1,14 @@
 import { createLogger, format, transports, addColors, Logger as RealLogger } from 'winston'
 import * as Transport from 'winston-transport'
 
-import colors from 'colors'
+import colors from 'colors/safe'
+import { supportsColor } from 'colors/lib/system/supports-colors'
 import config from 'config'
 
 import { Logger } from './definitions'
 import { inspect } from 'util'
+
+const COLORS_ENABLED = supportsColor() && !process.env.LOG_NO_COLORS
 
 // Inspired from https://github.com/visionmedia/debug
 const names: RegExp[] = []
@@ -148,7 +151,8 @@ function initLogging (): void {
         }
 
         return message
-      })
+      }),
+      COLORS_ENABLED ? format(i => i)() : format.uncolorize()
     ),
     transports: transportsSet
   })
