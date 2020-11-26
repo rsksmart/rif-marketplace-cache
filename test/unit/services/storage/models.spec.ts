@@ -13,6 +13,9 @@ import Offer, {
 import StakeModel from '../../../../src/services/storage/models/stake.model'
 import BillingPlan from '../../../../src/services/storage/models/billing-plan.model'
 import Rate from '../../../../src/services/rates/rates.model'
+import {
+  AvailableCapacityService
+} from '../../../../src/services/storage/services'
 
 chai.use(sinonChai)
 const expect = chai.expect
@@ -414,6 +417,24 @@ describe('Models', () => {
         { provider: 'abc3', totalStakesUSD: 2 }
       ]
       expect(offers).to.be.deep.equal(expectedRes)
+    })
+    it('should retrieve min/max value for availableCapacity', async () => {
+      await Offer.bulkCreate([
+        { provider: 'provider1', totalCapacity: 100, peerId: '1' },
+        { provider: 'provider2', totalCapacity: 100, peerId: '2' }
+      ])
+      await Agreement.bulkCreate([
+        { agreementReference: '123', size: 10, offerId: 'provider1' },
+        { agreementReference: '1234', size: 10, offerId: 'provider1' }
+      ])
+
+      const availableCapacityService = new AvailableCapacityService({ Model: Offer })
+      const expectedRes = {
+        min: 80,
+        max: 100,
+      }
+      const minMax = await availableCapacityService.get()
+      expect(minMax).to.be.deep.equal(expectedRes)
     })
   })
 })
