@@ -48,11 +48,6 @@ export default class Offer extends Model {
   }
 
   @Column(DataType.VIRTUAL)
-  get availableCapacity (): BigNumber {
-    return this.totalCapacity.minus(this.utilizedCapacity)
-  }
-
-  @Column(DataType.VIRTUAL)
   get acceptedCurrencies (): Array<SupportedTokens> {
     return Array.from(
       new Set(
@@ -110,5 +105,26 @@ export function getBillingPriceAvgQuery (
     WHERE
       offerId = provider
   )
+  `)
+}
+
+/**
+ * This function generates nested query for available capacity for offer
+ */
+export function getAvailableCapacityQuery (): Literal {
+  return literal(`
+    CAST(
+      totalCapacity - COALESCE(
+        (SELECT
+            SUM(
+              "storage_agreement"."size"
+              ) 
+          as availableCapacity
+        FROM
+          "storage_agreement"
+        WHERE
+          "storage_agreement"."offerId" = provider)
+    , 0) as STRING
+  ) 
   `)
 }

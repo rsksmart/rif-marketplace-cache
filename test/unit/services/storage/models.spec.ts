@@ -6,12 +6,16 @@ import Sequelize, { literal } from 'sequelize'
 import Agreement from '../../../../src/services/storage/models/agreement.model'
 import { sequelizeFactory } from '../../../../src/sequelize'
 import Offer, {
+  getAvailableCapacityQuery,
   getBillingPriceAvgQuery,
   getStakesAggregateQuery
 } from '../../../../src/services/storage/models/offer.model'
 import StakeModel from '../../../../src/services/storage/models/stake.model'
 import BillingPlan from '../../../../src/services/storage/models/billing-plan.model'
 import Rate from '../../../../src/services/rates/rates.model'
+import {
+  AvailableCapacityService
+} from '../../../../src/services/storage/services'
 
 chai.use(sinonChai)
 const expect = chai.expect
@@ -329,6 +333,41 @@ describe('Models', () => {
         { provider: 'abc', avgBillingPrice: 30 },
         { provider: 'abc2', avgBillingPrice: 60 },
         { provider: 'abc3', avgBillingPrice: 90 }
+      ]
+      expect(offers).to.be.deep.equal(expectedRes)
+    })
+    it('should aggregate available size for offers', async () => {
+      // POPULATE DB
+      await Offer.bulkCreate([
+        { provider: 'provider1', totalCapacity: 100, peerId: '1' },
+        { provider: 'provider2', totalCapacity: 100, peerId: '2' }
+      ])
+      await Agreement.bulkCreate([
+        { agreementReference: '123', size: 10, offerId: 'provider1' },
+        { agreementReference: '1234', size: 10, offerId: 'provider1' }
+      ])
+
+      expect((await Agreement.findAll()).length).to.be.eql(2)
+
+      // Prepare aggregation query
+      const aggregateAvailableCapacityQuery = getAvailableCapacityQuery()
+
+      const offers = await Offer.findAll({
+        raw: true,
+        attributes: {
+          exclude: ['totalCapacity', 'peerId', 'averagePrice', 'createdAt', 'updatedAt'],
+          include: [
+            [
+              aggregateAvailableCapacityQuery,
+              'availableCapacity'
+            ]
+          ]
+        }
+      })
+
+      const expectedRes = [
+        { provider: 'provider1', availableCapacity: 80 },
+        { provider: 'provider2', availableCapacity: 100 }
       ]
       expect(offers).to.be.deep.equal(expectedRes)
     })
