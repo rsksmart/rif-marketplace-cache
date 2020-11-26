@@ -116,11 +116,10 @@ export function getAvailableCapacityQuery (): Literal {
     CAST(
       totalCapacity - COALESCE(
         (SELECT
-          CAST(
             SUM(
               "storage_agreement"."size"
-              ) as STRING
-          ) as availableCapacity
+              ) 
+          as availableCapacity
         FROM
           "storage_agreement"
         WHERE
