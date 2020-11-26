@@ -24,10 +24,12 @@ const handlers = {
     const id = soliditySha3(event.returnValues.agreementCreator, ...event.returnValues.dataReference, tokenAddress)
     const dataReference = decodeByteArray(event.returnValues.dataReference)
 
-    const plan = await BillingPlan.findOne({ where: { offerId, period, tokenAddress } })
+    const nonCksTokenAddress = tokenAddress.toLowerCase()
+
+    const plan = await BillingPlan.findOne({ where: { offerId, period, tokenAddress: nonCksTokenAddress } })
 
     if (!plan) {
-      throw new EventError(`Price for period ${period}, token ${tokenAddress} and offer ${offerId} not found when creating new request ${id}`, 'RequestMade')
+      throw new EventError(`Price for period ${period}, token ${nonCksTokenAddress} and offer ${offerId} not found when creating new request ${id}`, 'RequestMade')
     }
 
     const data = {
@@ -38,7 +40,7 @@ const handlers = {
       size: event.returnValues.size,
       billingPeriod: event.returnValues.billingPeriod,
       billingPrice: plan.price,
-      tokenAddress,
+      tokenAddress: nonCksTokenAddress,
       availableFunds: event.returnValues.availableFunds,
       lastPayout: await getBlockDate(eth, event.blockNumber)
     }

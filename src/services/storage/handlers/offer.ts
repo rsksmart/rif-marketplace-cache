@@ -95,7 +95,7 @@ const handlers: { [key: string]: Function } = {
     }
   },
   async BillingPlanSet ({ returnValues: { period, price, token } }: EventData, offer: Offer, offerService: OfferService): Promise<void> {
-    await updatePrices(offer, period, price, token)
+    await updatePrices(offer, period, price, token.toLowerCase())
 
     if (offerService.emit) {
       const freshOffer = await Offer.findByPk(offer.provider) as Offer

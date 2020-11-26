@@ -29,11 +29,12 @@ const handlers = {
   async Staked (event: Staked, { stakeService }: StorageServices): Promise<void> {
     const { user: account, total, token, amount } = event.returnValues
 
-    const stake = await findOrCreateStake(account, token)
+    const nonCksTokenAddress = token.toLowerCase()
+    const stake = await findOrCreateStake(account, nonCksTokenAddress)
 
     stake.total = new BigNumber(stake.total).plus(amount)
     await stake.save()
-    logger.info(`Account ${account}, token ${token} stake amount ${amount}, final balance ${total}`)
+    logger.info(`Account ${account}, token ${nonCksTokenAddress} stake amount ${amount}, final balance ${total}`)
 
     if (stakeService.emit) {
       stakeService.emit('updated', await stakeService.get(stake.account))
@@ -43,15 +44,16 @@ const handlers = {
   async Unstaked (event: Unstaked, { stakeService }: StorageServices): Promise<void> {
     const { user: account, total, token, amount } = event.returnValues
 
-    const stake = await StakeModel.findOne({ where: { token, account } })
+    const nonCksTokenAddress = token.toLowerCase()
+    const stake = await StakeModel.findOne({ where: { token: nonCksTokenAddress, account } })
 
     if (!stake) {
-      throw new Error(`Stake for account ${account}, token ${token} not exist`)
+      throw new Error(`Stake for account ${account}, token ${nonCksTokenAddress} not exist`)
     }
 
     stake.total = new BigNumber(stake.total).minus(amount)
     await stake.save()
-    logger.info(`Account ${account}, token ${token} un-stake amount ${amount}, final balance ${total}`)
+    logger.info(`Account ${account}, token ${nonCksTokenAddress} un-stake amount ${amount}, final balance ${total}`)
 
     if (stakeService.emit) {
       stakeService.emit('updated', await stakeService.get(stake.account))
