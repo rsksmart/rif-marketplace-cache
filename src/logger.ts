@@ -153,7 +153,7 @@ function initLogging (): void {
         return message
       }),
       COLORS_ENABLED ? format(i => i)() : format.uncolorize()
-  ),
+    ),
     transports: transportsSet
   })
 }
