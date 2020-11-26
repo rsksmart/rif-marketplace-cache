@@ -113,17 +113,19 @@ export function getBillingPriceAvgQuery (
  */
 export function getAvailableCapacityQuery (): Literal {
   return literal(`
-    totalCapacity - COALESCE(
-      (SELECT
-        CAST(
-          SUM(
-            "storage_agreement"."size"
-            ) as STRING
-        ) as availableCapacity
-      FROM
-        "storage_agreement"
-      WHERE
-        "storage_agreement"."offerId" = provider)
-  , 0)
+    CAST(
+      totalCapacity - COALESCE(
+        (SELECT
+          CAST(
+            SUM(
+              "storage_agreement"."size"
+              ) as STRING
+          ) as availableCapacity
+        FROM
+          "storage_agreement"
+        WHERE
+          "storage_agreement"."offerId" = provider)
+    , 0) as STRING
+  ) 
   `)
 }
