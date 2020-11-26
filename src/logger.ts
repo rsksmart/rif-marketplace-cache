@@ -8,6 +8,8 @@ import config from 'config'
 import { Logger } from './definitions'
 import { inspect } from 'util'
 
+const COLORS_ENABLED = supportsColor() && !process.env.LOG_NO_COLORS
+
 // Inspired from https://github.com/visionmedia/debug
 const names: RegExp[] = []
 const skips: RegExp[] = []
@@ -133,7 +135,7 @@ function initLogging (): void {
       upperCaseLevel(),
       // format.padLevels(),
       format.timestamp({ format: 'DD/MM hh:mm:ss' }),
-      !supportsColor() || process.env.LOG_NO_COLORS === 'true' ? format(i => i)() : format.colorize(),
+      format.colorize(),
       format.printf(info => {
         let message: string
         const { service, ...rest } = info.metadata
@@ -149,8 +151,9 @@ function initLogging (): void {
         }
 
         return message
-      })
-    ),
+      }),
+      COLORS_ENABLED ? format(i => i)() : format.uncolorize()
+  ),
     transports: transportsSet
   })
 }

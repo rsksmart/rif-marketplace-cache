@@ -4,3 +4,6 @@ coverage
 lib
 node_modules
 test
+types
+*.sqlite
+db-backups
