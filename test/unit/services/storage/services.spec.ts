@@ -19,20 +19,24 @@ describe('Services', () => {
     })
     it('should retrieve min/max value for availableCapacity', async () => {
       await Offer.bulkCreate([
-        { provider: 'provider1', totalCapacity: 100, peerId: '1' },
-        { provider: 'provider2', totalCapacity: 100, peerId: '2' }
+        { provider: 'provider1', totalCapacity: '102400', peerId: '1' },
+        { provider: 'provider2', totalCapacity: '100', peerId: '2' },
+        { provider: 'provider3', totalCapacity: '1126', peerId: '3' },
+        { provider: 'provider4', totalCapacity: '1', peerId: '4' }
       ])
       await Agreement.bulkCreate([
-        { agreementReference: '123', size: 10, offerId: 'provider1' },
-        { agreementReference: '1234', size: 10, offerId: 'provider1' }
+        { agreementReference: '11', size: '1024', offerId: 'provider1' },
+        { agreementReference: '12', size: '1024', offerId: 'provider1' },
+        { agreementReference: '31', size: '1024', offerId: 'provider3' }
       ])
 
       const availableCapacityService = new AvailableCapacityService({ Model: Offer })
       const expectedRes = {
-        min: 80,
-        max: 100
+        min: 1,
+        max: 100352
       }
       const minMax = await availableCapacityService.get()
+
       expect(minMax).to.be.deep.equal(expectedRes)
     })
   })
