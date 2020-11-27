@@ -1,3 +1,21 @@
+<a name="1.1.0-dev.3"></a>
+# [1.1.0-dev.3](https://github.com/rsksmart/rif-marketplace-cache/compare/v1.1.0-dev.2...v1.1.0-dev.3) (2020-11-27)
+
+
+### Bug Fixes
+
+* **core:** logs colors handling ([#418](https://github.com/rsksmart/rif-marketplace-cache/issues/418)) ([a62b323](https://github.com/rsksmart/rif-marketplace-cache/commit/a62b323))
+* **storage:** groups by provider to get min max available capacity ([#421](https://github.com/rsksmart/rif-marketplace-cache/issues/421)) ([d4694e5](https://github.com/rsksmart/rif-marketplace-cache/commit/d4694e5))
+* make contract address lower case in room topic ([#408](https://github.com/rsksmart/rif-marketplace-cache/issues/408)) ([3c23304](https://github.com/rsksmart/rif-marketplace-cache/commit/3c23304))
+
+
+### Features
+
+* **storage:** adds ability to filter by availableCapacity ([#414](https://github.com/rsksmart/rif-marketplace-cache/issues/414)) ([f7cc7ad](https://github.com/rsksmart/rif-marketplace-cache/commit/f7cc7ad))
+* add agreement exceed limit notification to provider ([#407](https://github.com/rsksmart/rif-marketplace-cache/issues/407)) ([3d092b7](https://github.com/rsksmart/rif-marketplace-cache/commit/3d092b7))
+
+
+
 <a name="1.1.0-dev.2"></a>
 # [1.1.0-dev.2](https://github.com/rsksmart/rif-marketplace-cache/compare/v1.1.0-dev.1...v1.1.0-dev.2) (2020-11-18)
 
