@@ -104,9 +104,9 @@ export class TestingApp {
           await this.deployStorageManager()
           await this.deployStaking()
           // @ts-ignore
-          config.storage.storageManager.contractAddress = this.storageContract?.options.address
+          config.storage.storageManager.contractAddress = this.storageContract?.options.address.toLowerCase()
           // @ts-ignore
-          config.storage.staking.contractAddress = this.stakingContract?.options.address
+          config.storage.staking.contractAddress = this.stakingContract?.options.address.toLowerCase()
           break
         default:
           return
