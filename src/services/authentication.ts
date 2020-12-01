@@ -14,7 +14,7 @@ class AnonymousStrategy extends AuthenticationBaseStrategy {
     const channels: [] = authentication.channels
 
     if (connection) {
-      connection.ownerAddress = authentication.ownerAddress
+      connection.ownerAddress = authentication.ownerAddress.toLowerCase()
       channels.forEach(channel => {
         this.app?.channel(channel).join(connection)
       })

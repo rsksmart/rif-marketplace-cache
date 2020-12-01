@@ -7,7 +7,7 @@ function filterByOwner (app: Application, data: any) {
   const accounts: string[] = data.accounts
   return app.channel(CHANNEL)
     .filter(connection => {
-      const connectedAccount: string = connection.ownerAddress
+      const connectedAccount: string = connection.ownerAddress.toLowerCase()
       return Boolean(accounts && accounts.includes(connectedAccount))
     })
 }

@@ -523,7 +523,7 @@ describe('Storage services: Events Processor', () => {
 
   describe('Staking events', () => {
     const token = '0x0000000000000000000000000000000000000000'
-    const account = provider
+    const account = provider.toLowerCase()
     let processor: (event: StakeEvents) => Promise<void>
     let stakeService: StakeService
     let stakeServiceEmitSpy: sinon.SinonSpy

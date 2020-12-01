@@ -37,11 +37,11 @@ export class StakeService extends Service {
   async get (account: string): Promise<{ totalStakedFiat: string, stakes: Array<StakeModel> }> {
     const sequelize = this.Model.sequelize
 
-    const query = getStakesForAccount(sequelize, account)
+    const query = getStakesForAccount(sequelize, account.toLowerCase())
     const [{ totalStakedFiat }] = await sequelize.query(query, { type: QueryTypes.SELECT, raw: true })
     return {
       totalStakedFiat: new BigNumber(totalStakedFiat || 0).toFixed(2),
-      stakes: await StakeModel.findAll({ where: { account } })
+      stakes: await StakeModel.findAll({ where: { account: account.toLowerCase() } })
     }
   }
 }

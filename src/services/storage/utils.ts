@@ -10,11 +10,16 @@ export type MinMax = 1 | -1
  * @returns {SupportedTokens} token symbol
  */
 export function getTokenSymbol (tokenContractAddress: string): SupportedTokens {
-  if (!config.has(`storage.tokens.${tokenContractAddress}`)) {
+  const supportedTokens = config.get<Record<string, SupportedTokens>>('storage.tokens')
+  const token = Object
+    .keys(supportedTokens)
+    .find(t => t.toLowerCase() === tokenContractAddress.toLowerCase())
+
+  if (!token) {
     throw new Error(`Token on address ${tokenContractAddress} is not supported`)
   }
 
-  return config.get<SupportedTokens>(`storage.tokens.${tokenContractAddress}`)
+  return config.get<SupportedTokens>(`storage.tokens.${token}`)
 }
 
 /**
