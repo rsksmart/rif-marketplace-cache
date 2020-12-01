@@ -13,6 +13,7 @@ import {
   Logger,
   SupportedServices
 } from './definitions'
+import { AsyncRetryError } from './errors'
 
 const readFile = promisify(fs.readFile)
 
@@ -36,7 +37,7 @@ export async function asyncRetry<T> (
         exponential ? interval * 2 : interval,
         exponential
       )
-    } else throw new Error(`Max retries reached for function ${fn.name}`)
+    } else throw new AsyncRetryError(`Max retries reached for function ${fn.name}`)
   }
 }
 

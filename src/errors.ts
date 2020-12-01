@@ -1,3 +1,16 @@
+/**
+ * Async retry error
+ */
+export class AsyncRetryError extends Error {
+  static code = 'ASYNC_RETRY_ERR'
+  public code: string
+
+  constructor (message: string) {
+    super(message)
+    this.name = 'AsyncRetryError'
+    this.code = AsyncRetryError.code
+  }
+}
 
 /**
  * Error for problems during processing of received events

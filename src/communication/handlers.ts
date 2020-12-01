@@ -5,6 +5,7 @@ import Agreement from '../services/storage/models/agreement.model'
 import { NotificationService } from '../notification'
 import { loggingFactory } from '../logger'
 import { asyncRetry } from '../utils'
+import { AsyncRetryError } from '../errors'
 
 const logger = loggingFactory('communication:handlers')
 
@@ -70,11 +71,11 @@ function buildNotification (agreement: Agreement, message: CommsMessage<CommsPay
   }
 }
 
-async function getAgreementWithRetry (
+function getAgreementWithRetry (
   agreementRef: string,
   retriesCount: number,
   retryInterval: number
-): Promise<Agreement | undefined> {
+): Promise<Agreement | void> {
   function getAgreement (): Promise<Agreement> {
     logger.info('Trying to get agreement ' + agreementRef)
     return Agreement
@@ -86,13 +87,13 @@ async function getAgreementWithRetry (
         return agreement
       })
   }
-  return await asyncRetry<Agreement>(
+  return asyncRetry<Agreement>(
     getAgreement,
     retriesCount,
     retryInterval
   ).catch(e => {
-    if (e.message.indexOf('Max retries reached for function') !== -1) {
-      return undefined
+    if (e.code === AsyncRetryError.code) {
+      return
     }
     throw e
   })

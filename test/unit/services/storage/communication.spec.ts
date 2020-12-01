@@ -68,7 +68,7 @@ describe('Communication', function () {
     await NotificationModel.destroy({ where: {} })
   })
 
-  it('Should create notification', async () => {
+  it('should create notification', async () => {
     // Send message
     const message = { code: MessageCodesEnum.I_AGREEMENT_EXPIRED, payload: { agreementReference: agreement.agreementReference, hello: 'hello' } }
     await roomPinner.broadcast(message)
@@ -80,7 +80,7 @@ describe('Communication', function () {
     expect(notifications[0].type).to.be.eql(NotificationType.STORAGE)
     expect(notifications[0].payload).to.be.eql({ ...message.payload, code: message.code })
   })
-  it('Should create notification if agreement comes later on', async () => {
+  it('should create notification if agreement comes later on', async () => {
     const agreementRef = '0x823nd82jdjdkfshjsdf'
     expect(await Agreement.findOne({ where: { agreementReference: agreementRef } })).to.be.eql(null)
 
@@ -100,7 +100,7 @@ describe('Communication', function () {
     expect(notifications[0].type).to.be.eql(NotificationType.STORAGE)
     expect(notifications[0].payload).to.be.eql({ ...message.payload, code: message.code })
   })
-  it('Should not create notification if no agreement', async () => {
+  it('should not create notification if no agreement', async () => {
     const fakeAgreementRef = '0x137984yrsdkjfb'
     expect(await Agreement.findOne({ where: { agreementReference: fakeAgreementRef } })).to.be.eql(null)
 
