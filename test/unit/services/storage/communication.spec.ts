@@ -1,4 +1,5 @@
 import chai from 'chai'
+import config from 'config'
 import sinonChai from 'sinon-chai'
 import chaiAsPromised from 'chai-as-promised'
 import dirtyChai from 'dirty-chai'
@@ -29,6 +30,11 @@ describe('Communication', function () {
   const sequelize = sequelizeFactory()
 
   before(async () => {
+    // @ts-ignore
+    config.notification.retryInterval = 1000
+    // @ts-ignore
+    config.notification.retriesCount = 3
+
     const app: { [key: string]: any } = {
       get (key: string) {
         return this[key]
@@ -62,7 +68,7 @@ describe('Communication', function () {
     await NotificationModel.destroy({ where: {} })
   })
 
-  it('Should create notification', async () => {
+  it('should create notification', async () => {
     // Send message
     const message = { code: MessageCodesEnum.I_AGREEMENT_EXPIRED, payload: { agreementReference: agreement.agreementReference, hello: 'hello' } }
     await roomPinner.broadcast(message)
@@ -73,6 +79,38 @@ describe('Communication', function () {
     expect(notifications[0].accounts).to.be.eql([agreement.consumer, agreement.offerId])
     expect(notifications[0].type).to.be.eql(NotificationType.STORAGE)
     expect(notifications[0].payload).to.be.eql({ ...message.payload, code: message.code })
+  })
+  it('should create notification if agreement comes later on', async () => {
+    const agreementRef = '0x823nd82jdjdkfshjsdf'
+    expect(await Agreement.findOne({ where: { agreementReference: agreementRef } })).to.be.eql(null)
+
+    // Send message
+    const message = { code: MessageCodesEnum.I_AGREEMENT_EXPIRED, payload: { agreementReference: agreementRef, hello: 'hello' } }
+    await roomPinner.broadcast(message)
+    await sleep(500)
+
+    // Create agreement after notification comes
+    await Agreement.create({ agreementReference: agreementRef, consumer: 'testAccount', offerId: offer.provider })
+
+    await sleep(1500)
+
+    const notifications = await NotificationModel.findAll()
+    expect(notifications.length).to.be.eql(1)
+    expect(notifications[0].accounts).to.be.eql([agreement.consumer, agreement.offerId])
+    expect(notifications[0].type).to.be.eql(NotificationType.STORAGE)
+    expect(notifications[0].payload).to.be.eql({ ...message.payload, code: message.code })
+  })
+  it('should not create notification if no agreement', async () => {
+    const fakeAgreementRef = '0x137984yrsdkjfb'
+    expect(await Agreement.findOne({ where: { agreementReference: fakeAgreementRef } })).to.be.eql(null)
+
+    // Send message
+    const message = { code: MessageCodesEnum.I_AGREEMENT_EXPIRED, payload: { agreementReference: fakeAgreementRef, hello: 'hello' } }
+    await roomPinner.broadcast(message)
+    await sleep(3000)
+
+    const notifications = await NotificationModel.findAll()
+    expect(notifications.length).to.be.eql(0)
   })
   it('should GC notification', async () => {
     await NotificationModel.bulkCreate([

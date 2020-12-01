@@ -106,6 +106,8 @@ export interface Config {
 
   notification?: {
     countOfNotificationPersistedPerAgreement?: number
+    retriesCount?: number
+    retryInterval?: number
   }
 
   blockchain?: {

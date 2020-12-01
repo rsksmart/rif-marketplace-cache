@@ -13,8 +13,33 @@ import {
   Logger,
   SupportedServices
 } from './definitions'
+import { AsyncRetryError } from './errors'
 
 const readFile = promisify(fs.readFile)
+
+/**
+ * Promise retry
+ */
+export async function asyncRetry<T> (
+  fn: () => Promise<T>,
+  retriesLeft: number,
+  interval: number,
+  exponential = false
+): Promise<T> {
+  try {
+    return await fn()
+  } catch (error) {
+    if (retriesLeft) {
+      await new Promise(resolve => setTimeout(resolve, interval))
+      return asyncRetry(
+        fn,
+        retriesLeft - 1,
+        exponential ? interval * 2 : interval,
+        exponential
+      )
+    } else throw new AsyncRetryError(`Max retries reached for function ${fn.name}`)
+  }
+}
 
 /**
  * Bignumber.js utils functions

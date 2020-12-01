@@ -4,6 +4,8 @@ import { CommsMessage, CommsPayloads, MessageCodesEnum, NotificationType } from 
 import Agreement from '../services/storage/models/agreement.model'
 import { NotificationService } from '../notification'
 import { loggingFactory } from '../logger'
+import { asyncRetry } from '../utils'
+import { AsyncRetryError } from '../errors'
 
 const logger = loggingFactory('communication:handlers')
 
@@ -69,6 +71,34 @@ function buildNotification (agreement: Agreement, message: CommsMessage<CommsPay
   }
 }
 
+function getAgreementWithRetry (
+  agreementRef: string,
+  retriesCount: number,
+  retryInterval: number
+): Promise<Agreement | void> {
+  function getAgreement (): Promise<Agreement> {
+    logger.info('Trying to get agreement ' + agreementRef)
+    return Agreement
+      .findOne({ where: { agreementReference: agreementRef } })
+      .then(agreement => {
+        if (!agreement) {
+          throw new Error('Agreement not found')
+        }
+        return agreement
+      })
+  }
+  return asyncRetry<Agreement>(
+    getAgreement,
+    retriesCount,
+    retryInterval
+  ).catch(e => {
+    if (e.code === AsyncRetryError.code) {
+      return
+    }
+    throw e
+  })
+}
+
 /**
  * Storage messages handler
  * @param notificationService
@@ -77,7 +107,11 @@ export function messageHandler (
   notificationService?: NotificationService
 ): (message: CommsMessage<CommsPayloads>) => Promise<void> {
   return async function (message: CommsMessage<CommsPayloads>): Promise<void> {
-    const agreement = await Agreement.findOne({ where: { agreementReference: message.payload.agreementReference } })
+    const agreement = await getAgreementWithRetry(
+      message.payload.agreementReference,
+      config.get<number>('notification.retriesCount'),
+      config.get<number>('notification.retryInterval')
+    )
 
     if (!agreement) {
       logger.error(`Agreement ${message.payload.agreementReference} for message not found`)

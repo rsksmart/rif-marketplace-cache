@@ -22,7 +22,9 @@
   },
 
   notification: {
-    countOfNotificationPersistedPerAgreement: 10
+    countOfNotificationPersistedPerAgreement: 10,
+    retriesCount: 3,
+    retryInterval: 5000
   },
 
   blockchain: {
