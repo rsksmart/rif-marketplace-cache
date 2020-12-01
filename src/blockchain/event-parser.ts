@@ -1,6 +1,6 @@
 import { AbiItem } from 'web3-utils'
-import { EventData } from 'web3-eth-contract'
 import { EventLog } from 'web3-core'
+
 import { loggingFactory } from '../logger'
 
 const logger = loggingFactory('event-parser')
@@ -33,7 +33,7 @@ function getFieldType (
   const eventAbi = abi.find(a => a.name === eventName)
 
   if (!eventAbi) {
-    logger.error(`Abi for event ${eventName} not found`)
+    logger.warn(`Abi for event ${eventName} not found`)
   }
 
   return (key: string): string | void => {
@@ -41,7 +41,7 @@ function getFieldType (
     const input = eventAbi.inputs?.find(i => i.name === key)
 
     if (!input) {
-      logger.error(`No input found for event = ${eventName}, key = ${key}`)
+      logger.warn(`No input found for event = ${eventName}, key = ${key}`)
       return
     }
 
@@ -49,16 +49,21 @@ function getFieldType (
   }
 }
 
-export function transformEvent (event: EventData, abi: AbiItem[]): EventLog {
-  const getType = getFieldType(abi.filter(a => a.type === 'event'), event.event)
-  return {
-    ...event,
-    returnValues: Object
-      .entries(event.returnValues)
-      .reduce(
-        (acc, [key, field]) =>
-          ({ ...acc, [key]: transformEventField(field, getType(key)) }),
-        {}
-      )
+export type EventParser = (event: EventLog) => EventLog
+
+export function getEventParser (abi: AbiItem[]): (event: EventLog) => EventLog {
+  return (event: EventLog): EventLog => {
+    const getType = getFieldType(abi.filter(a => a.type === 'event'), event.event)
+    return {
+      ...event,
+      returnValues: Object
+        .entries(event.returnValues)
+        .filter(([key]) => isNaN(parseInt(key))) // Ignore duplicated field with index key
+        .reduce(
+          (acc, [key, field]) =>
+            ({ ...acc, [key]: transformEventField(field, getType(key)) }),
+          {}
+        )
+    }
   }
 }
