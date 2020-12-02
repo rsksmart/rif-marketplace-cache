@@ -93,8 +93,8 @@ export default {
           nest: true
         }
 
-        if (context.params?.query?.['non-active']) {
-          delete context.params?.query?.['non-active']
+        if (context.params?.query?.['inactive']) {
+          delete context.params?.query?.['inactive']
         } else {
           context.params.sequelize.scope = 'active'
         }
