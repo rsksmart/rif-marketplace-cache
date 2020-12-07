@@ -13,6 +13,7 @@ import DomainExpiration from './models/expiration.model'
 import DomainOwner from './models/owner.model'
 import Transfer from './models/transfer.model'
 import SoldDomain from './models/sold-domain.model'
+import { EventParser } from '../../blockchain/event-parser'
 import RLP = require('rlp')
 
 type RLPDecoded = Array<Array<number[]>>
@@ -375,11 +376,11 @@ function isValidEvent (value: string): value is keyof typeof commands {
 }
 
 // TODO: Add correct types checks as in Storage service.
-export default function rnsProcessorFactory (logger: Logger, eth: Eth, services: RnsServices) {
+export default function rnsProcessorFactory (logger: Logger, eth: Eth, services: RnsServices, eventParser?: EventParser) {
   return async function (eventData: EventLog): Promise<void> {
     if (isValidEvent(eventData.event)) {
       logger.info(`Processing event ${eventData.event}`)
-      await commands[eventData.event](logger, eventData, eth, services)
+      await commands[eventData.event](logger, eventParser ? eventParser(eventData) : eventData, eth, services)
     } else {
       logger.error(`Unknown event ${eventData.event}`)
     }
