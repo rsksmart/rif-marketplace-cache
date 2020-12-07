@@ -3,7 +3,21 @@
     networkId: 31
   },
   storage: {
-    enabled: false,
+    enabled: true,
+    storageManager: {
+      contractAddress: "0x2647F2e5C2E6A05487708CBCBd72900Dc339af1b",
+      eventsEmitter: {
+        startingBlock: 1425147,
+        confirmations: 3
+      }
+    },
+    staking: {
+      contractAddress: "0xaE6CB88E0023703faeb19745FB2ae6cE2Cc692DD",
+      eventsEmitter: {
+        startingBlock: 1425147,
+        confirmations: 3
+      }
+    },
   },
   rns: {
     batchContractAddress: "0x380a47e2a1cec8a21cf00374ea5d092166a702fc",
