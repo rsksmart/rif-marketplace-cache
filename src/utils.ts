@@ -174,7 +174,7 @@ export function wrapEvent (event: string, payload: Record<string, any>) {
   }
 }
 
-export function waitForConfigure (app: Application, configure: (app: Application) => Promise<void>): Promise<void> {
+export function waitForConfigure (app: Application, configure: (app: Application) => Promise<any>): Promise<any> {
   let promise: Promise<void>
   app.configure(app => {
     promise = configure(app)

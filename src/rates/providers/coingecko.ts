@@ -1,6 +1,6 @@
-import { FetchedRates, ToSymbols, FromSymbols } from '../../../definitions'
+import { FetchedRates, ToSymbols, FromSymbols } from '../../definitions'
 import CoinGecko from 'coingecko-api'
-import { RatesProviderError } from '../../../errors'
+import { RatesProviderError } from '../../errors'
 
 const SUPPORTED_FROM_SYMBOLS: Record<FromSymbols, string> = {
   rbtc: 'rootstock',

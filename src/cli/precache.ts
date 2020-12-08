@@ -3,6 +3,7 @@ import Listr from 'listr'
 import { getEndPromise as awaitStoreToEndProcessing } from 'sequelize-store'
 import type { Observable } from 'rxjs'
 
+import rate from '../rates/index'
 import { sequelizeFactory } from '../sequelize'
 import { BaseCLICommand, capitalizeFirstLetter, validateServices } from '../utils'
 import { initStore } from '../store'
@@ -56,14 +57,20 @@ ${formattedServices}`
     const eth = await ethFactory()
     const web3events = await web3eventsFactory(eth, sequelize)
 
-    const tasksDefinition = servicesToPreCache.map(
-      serviceName => {
-        return {
-          title: capitalizeFirstLetter(serviceName),
-          task: (): Observable<string> => services[serviceName].precache(eth, web3events)
+    const tasksDefinition = [
+      {
+        title: 'Rates',
+        task: (): Observable<string> => rate.precache(eth, web3events)
+      },
+      ...servicesToPreCache.map(
+        serviceName => {
+          return {
+            title: capitalizeFirstLetter(serviceName),
+            task: (): Observable<string> => services[serviceName].precache(eth, web3events)
+          }
         }
-      }
-    )
+      )
+    ]
 
     this.log('Pre caching data for service:')
     const tasks = new Listr(tasksDefinition)

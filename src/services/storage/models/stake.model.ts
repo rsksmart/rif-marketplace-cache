@@ -2,7 +2,7 @@ import { Table, Column, Model, ForeignKey } from 'sequelize-typescript'
 import BigNumber from 'bignumber.js'
 import { Sequelize } from 'sequelize'
 
-import Rate from '../../rates/rates.model'
+import Rate from '../../../rates/rates.model'
 import { SupportedTokens } from '../../../definitions'
 import { BigNumberStringType } from '../../../sequelize'
 import { WEI } from '../utils'
