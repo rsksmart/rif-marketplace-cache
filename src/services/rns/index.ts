@@ -31,7 +31,7 @@ import rnsChannels from './channels'
 import { processAuctionRegistrar, processRskOwner } from './precache'
 import eventProcessor from './processor'
 import { Observable } from 'rxjs'
-import { getEventParser } from '../../blockchain/event-parser'
+import { getEventTransformer } from '../../blockchain/event-transformer'
 
 const logger = loggingFactory('rns')
 const precacheLogger = loggingFactory('rns:precache:processor')
@@ -52,7 +52,7 @@ const REVERSE = 'rns.reverse'
 
 async function fetchEventsForService (web3events: Web3Events, serviceName: string, abi: AbiItem[], dataPusher: (event: EventLog) => void, progressCb: ProgressCb, contractName: string): Promise<void> {
   const eventsEmitter = getEventsEmitterForService(serviceName, web3events, abi)
-  const eventParser = getEventParser(abi)
+  const eventParser = getEventTransformer(abi)
   for await (const batch of eventsEmitter.fetch()) {
     for (const event of batch.events) {
       await dataPusher(eventParser(event))
@@ -144,7 +144,7 @@ const rns: CachedService = {
     const services = { domains, sold, offers }
 
     const rnsEventsEmitter = getEventsEmitterForService(OWNER, web3events, rnsContractAbi.abi as AbiItem[])
-    const rnsEventParser = getEventParser(rnsContractAbi.abi as AbiItem[])
+    const rnsEventParser = getEventTransformer(rnsContractAbi.abi as AbiItem[])
     rnsEventsEmitter.on('newEvent', errorHandler(eventProcessor(loggingFactory('rns.owner:processor'), eth, services, rnsEventParser), logger))
     rnsEventsEmitter.on('error', (e: object) => {
       logger.error(`There was unknown error in Events Emitter for rns.owner! ${e}`)
@@ -154,7 +154,7 @@ const rns: CachedService = {
     rnsEventsEmitter.on(REORG_OUT_OF_RANGE_EVENT_NAME, (blockNumber: number) => reorgEmitterService.emitReorg(blockNumber, OWNER))
 
     const rnsReverseEventsEmitter = getEventsEmitterForService(REVERSE, web3events, rnsReverseContractAbi.abi as AbiItem[])
-    const rnsReverseEventParser = getEventParser(rnsReverseContractAbi.abi as AbiItem[])
+    const rnsReverseEventParser = getEventTransformer(rnsReverseContractAbi.abi as AbiItem[])
     rnsReverseEventsEmitter.on('newEvent', errorHandler(eventProcessor(loggingFactory('rns.reverse:processor'), eth, services, rnsReverseEventParser), logger))
     rnsReverseEventsEmitter.on('error', (e: object) => {
       logger.error(`There was unknown error in Events Emitter for rns.reverse! ${e}`)
@@ -164,7 +164,7 @@ const rns: CachedService = {
     rnsReverseEventsEmitter.on(REORG_OUT_OF_RANGE_EVENT_NAME, (blockNumber: number) => reorgEmitterService.emitReorg(blockNumber, REVERSE))
 
     const rnsPlacementsEventsEmitter = getEventsEmitterForService(PLACEMENT, web3events, simplePlacementsContractAbi.abi as AbiItem[])
-    const rnsPlacementsEventParser = getEventParser(simplePlacementsContractAbi.abi as AbiItem[])
+    const rnsPlacementsEventParser = getEventTransformer(simplePlacementsContractAbi.abi as AbiItem[])
     rnsPlacementsEventsEmitter.on('newEvent', errorHandler(eventProcessor(loggingFactory('rns.placement:processor'), eth, services, rnsPlacementsEventParser), logger))
     rnsPlacementsEventsEmitter.on('error', (e: object) => {
       logger.error(`There was unknown error in Events Emitter for rns.placement! ${e}`)

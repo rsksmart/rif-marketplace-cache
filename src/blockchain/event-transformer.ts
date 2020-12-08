@@ -49,9 +49,9 @@ function getFieldType (
   }
 }
 
-export type EventParser = (event: EventLog) => EventLog
+export type EventTransformer = (event: EventLog) => EventLog
 
-export function getEventParser (abi: AbiItem[]): (event: EventLog) => EventLog {
+export function getEventTransformer (abi: AbiItem[]): (event: EventLog) => EventLog {
   return (event: EventLog): EventLog => {
     const getType = getFieldType(abi.filter(a => a.type === 'event'), event.event)
     return {

@@ -10,7 +10,7 @@ import {
 import storageManagerContract from '@rsksmart/rif-marketplace-storage/build/contracts/StorageManager.json'
 
 import { eventMock } from '../../../utils'
-import { getEventParser } from '../../../../src/blockchain/event-parser'
+import { getEventTransformer } from '../../../../src/blockchain/event-transformer'
 
 chai.use(sinonChai)
 chai.use(chaiAsPromised)
@@ -41,7 +41,7 @@ const BillingPlanSetEvent = eventMock<BillingPlanSet>({
 
 describe('Event parser', function () {
   it('should lower case address type fields', () => {
-    const parser = getEventParser(storageManagerContract.abi as AbiItem[])
+    const parser = getEventTransformer(storageManagerContract.abi as AbiItem[])
     const parsedEvent = parser(TotalCapacitySetEvent)
     expect(parsedEvent.returnValues.provider).to.be.eql(provider.toLowerCase())
     expect(parsedEvent.returnValues.provider).to.not.be.eql(provider)
@@ -53,7 +53,7 @@ describe('Event parser', function () {
     expect(parsedEvent2.returnValues.token).to.not.be.eql(token)
   })
   it('should return event as is if no abi found', () => {
-    const parser = getEventParser([] as AbiItem[])
+    const parser = getEventTransformer([] as AbiItem[])
     const parsedEvent = parser(TotalCapacitySetEvent)
     expect(parsedEvent.returnValues.provider).to.be.eql(provider)
 
