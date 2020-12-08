@@ -25,6 +25,9 @@ const rates: CachedService = {
     const service = app.service(ServiceAddresses.XR)
     service.hooks(hooks)
 
+    // Init rates
+    await updater().catch(logger.error)
+
     // Start periodical refresh
     const updatePeriod = config.get<number>(CONFIG_UPDATE_PERIOD) * 1000 // Converting seconds to ms
     const intervalId = setInterval(() => updater().catch(logger.error), updatePeriod)
