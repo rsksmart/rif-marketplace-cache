@@ -11,6 +11,13 @@ enum AbiInputType {
   UINT128 = 'uint128',
 }
 
+export type EventTransformer = (event: EventLog) => EventLog
+
+/**
+ * Transform field based on field type
+ * @param field
+ * @param type
+ */
 function transformEventField (
   field: any,
   type: AbiInputType | string | void
@@ -26,6 +33,11 @@ function transformEventField (
   }
 }
 
+/**
+ * Factory which return function for retrieving field type based on ABI
+ * @param abi
+ * @param eventName
+ */
 function getFieldType (
   abi: AbiItem[],
   eventName: string
@@ -49,8 +61,12 @@ function getFieldType (
   }
 }
 
-export type EventTransformer = (event: EventLog) => EventLog
-
+/**
+ * Factory for event transformer function
+ * This function has cutom logic to transform event field based on ABI
+ * Currently support only address type (lower case all address tyype fields in event)
+ * @param abi
+ */
 export function getEventTransformer (abi: AbiItem[]): (event: EventLog) => EventLog {
   return (event: EventLog): EventLog => {
     const getType = getFieldType(abi.filter(a => a.type === 'event'), event.event)
