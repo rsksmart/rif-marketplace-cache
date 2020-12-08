@@ -81,7 +81,7 @@ describe('Storage service', function () {
         const offer = offers[0]
         expect(offer.peerId).to.be.eql(app.peerId?.id as string)
         expect(offer.totalCapacity.toString()).to.be.eql(offerData.totalCapacity)
-        expect(offer.provider).to.be.eql(app.providerAddress)
+        expect(offer.provider).to.be.eql(app.providerAddress.toLowerCase())
         expect(offer.plans.length).to.be.eql(1)
         expect(offer.plans[0].period.toString()).to.be.eql(offerData.periods[0].toString())
         expect(offer.plans[0].price.toString()).to.be.eql(offerData.prices[0].toString())
@@ -93,7 +93,7 @@ describe('Storage service', function () {
           prices: [200, 300],
           msg: encodedMessage
         }
-        const offerFromDb = await Offer.create({ provider: app.providerAddress, totalCapacity: 1000 })
+        const offerFromDb = await Offer.create({ provider: app.providerAddress.toLowerCase(), totalCapacity: 1000 })
         const planFromDb = await BillingPlan.create({
           period: 10,
           price: 100,
@@ -116,7 +116,7 @@ describe('Storage service', function () {
 
         const offer = offers[0]
         expect(offer.totalCapacity.toString()).to.be.eql(offerData.totalCapacity.toString())
-        expect(offer.provider).to.be.eql(app.providerAddress)
+        expect(offer.provider).to.be.eql(app.providerAddress.toLowerCase())
         expect(offer.peerId).to.be.eql(app.peerId?.id as string)
         expect(offer.plans.length).to.be.eql(2)
         expect(offer.plans[0].period.toString()).to.be.eql(offerData.periods[0].toString())
@@ -157,9 +157,9 @@ describe('Storage service', function () {
         await app.createAgreement(agreementData)
         await app.addConfirmations()
 
-        const agreement = await Agreement.findOne({ where: { offerId: app.providerAddress } })
+        const agreement = await Agreement.findOne({ where: { offerId: app.providerAddress.toLowerCase() } })
         expect(agreement).to.be.instanceOf(Agreement)
-        expect(agreement?.consumer).to.be.eql(app.consumerAddress)
+        expect(agreement?.consumer).to.be.eql(app.consumerAddress.toLowerCase())
         expect(agreement?.dataReference).to.be.eql(hexToAscii(agreementData.cid[0]))
         expect(agreement?.size.toString()).to.be.eql(agreementData.size.toString())
         expect(agreement?.billingPeriod.toString()).to.be.eql(offerData.periods[0].toString())
@@ -178,13 +178,13 @@ describe('Storage service', function () {
         await app.createAgreement(agreementData)
         await app.addConfirmations()
 
-        const agreement = await Agreement.findOne({ where: { offerId: app.providerAddress } })
+        const agreement = await Agreement.findOne({ where: { offerId: app.providerAddress.toLowerCase() } })
         expect(agreement?.availableFunds.toNumber()).to.be.eql(agreementData.amount)
 
         await app.createAgreement({ ...agreementData, amount: 30000 })
         await app.addConfirmations()
 
-        const updatedAgreement = await Agreement.findOne({ where: { offerId: app.providerAddress } })
+        const updatedAgreement = await Agreement.findOne({ where: { offerId: app.providerAddress.toLowerCase() } })
         expect(updatedAgreement?.availableFunds.toNumber()).to.be.eql(60000)
       })
       it('should make agreement inActive on AgreementStopped event', async () => {
@@ -200,7 +200,7 @@ describe('Storage service', function () {
 
         await app.payoutFunds(agreementData.cid)
         await app.addConfirmations()
-        const updatedAgreement = await Agreement.findOne({ where: { offerId: app.providerAddress } })
+        const updatedAgreement = await Agreement.findOne({ where: { offerId: app.providerAddress.toLowerCase() } })
         expect(updatedAgreement?.isActive).to.be.eql(false)
       })
       it('should proceed deposit funds', async () => {
@@ -214,7 +214,7 @@ describe('Storage service', function () {
         await app.createAgreement(agreementData)
         await app.addConfirmations()
 
-        const agreement = await Agreement.findOne({ where: { offerId: app.providerAddress } })
+        const agreement = await Agreement.findOne({ where: { offerId: app.providerAddress.toLowerCase() } })
         const depositData = {
           cid: agreementData.cid,
           token: ZERO_ADDRESS,
@@ -223,7 +223,7 @@ describe('Storage service', function () {
         await app.depositFunds(depositData)
         await app.addConfirmations()
 
-        const updatedAgreement = await Agreement.findOne({ where: { offerId: app.providerAddress } })
+        const updatedAgreement = await Agreement.findOne({ where: { offerId: app.providerAddress.toLowerCase() } })
         expect(agreement?.availableFunds.plus(depositData.amount).toNumber()).to.be.eql(updatedAgreement?.availableFunds.toNumber())
       })
       it('should proceed withdrawal funds', async () => {
@@ -244,7 +244,7 @@ describe('Storage service', function () {
         await app.withdrawalFunds(withdrawData)
         await app.addConfirmations()
 
-        const updatedAgreement = await Agreement.findOne({ where: { offerId: app.providerAddress } })
+        const updatedAgreement = await Agreement.findOne({ where: { offerId: app.providerAddress.toLowerCase() } })
         expect(updatedAgreement?.availableFunds.toString()).to.be.eql((new BigNumber(1e18)).toString())
       })
       it('should proceed funds payout', async () => {
@@ -261,7 +261,7 @@ describe('Storage service', function () {
         await app.payoutFunds(agreementData.cid)
         await app.addConfirmations()
 
-        const agreementAfter = await Agreement.findOne({ where: { offerId: app.providerAddress } })
+        const agreementAfter = await Agreement.findOne({ where: { offerId: app.providerAddress.toLowerCase() } })
         expect(agreementAfter?.availableFunds.toNumber()).to.be.eql(0)
       })
     })
@@ -276,10 +276,10 @@ describe('Storage service', function () {
         await app.stake(amount, account)
         await app.addConfirmations()
 
-        const stake = await StakeModel.findOne({ where: { account } })
+        const stake = await StakeModel.findOne({ where: { account: account.toLowerCase() } })
         expect(stake).to.be.instanceOf(StakeModel)
         expect(stake?.total.toString()).to.be.eql(amount.toString())
-        expect(stake?.account).to.be.eql(account)
+        expect(stake?.account).to.be.eql(account.toLowerCase())
         expect(stake?.symbol).to.be.eql('rbtc')
       })
       it('should be able to unstake', async () => {
@@ -289,13 +289,13 @@ describe('Storage service', function () {
         await app.stake(amount, account)
         await app.addConfirmations()
 
-        const stake = await StakeModel.findOne({ where: { account } })
+        const stake = await StakeModel.findOne({ where: { account: account.toLowerCase() } })
         expect(stake?.total.toNumber()).to.be.eql(amount)
 
         await app.unstake(amount, account)
         await app.addConfirmations()
 
-        const updatedStake = await StakeModel.findOne({ where: { account } })
+        const updatedStake = await StakeModel.findOne({ where: { account: account.toLowerCase() } })
         expect(updatedStake?.total.toNumber()).to.be.eql(0)
       })
       it('should be able to query total stake in USD', async () => {
@@ -309,7 +309,7 @@ describe('Storage service', function () {
         await app.addConfirmations()
 
         const rate = await Rate.findOne({ where: { token: 'rbtc' }, raw: true })
-        const [stake] = await StakeModel.findAll({ where: { account }, raw: true })
+        const [stake] = await StakeModel.findAll({ where: { account: account.toLowerCase() }, raw: true })
 
         const totalStakedUSD = (new BigNumber(stake.total)).div(WEI).multipliedBy(rate?.usd as number).toFixed(2).toString()
         const { totalStakedFiat, stakes } = await stakeService.get(account)
@@ -419,23 +419,23 @@ describe('Storage service', function () {
         const sizeLimit = notifications.find(n => n.payload.code === MessageCodesEnum.E_AGREEMENT_SIZE_LIMIT_EXCEEDED)
         const errorGeneral = notifications.find(n => n.payload.code === MessageCodesEnum.E_GENERAL)
 
-        expect(newAgreement?.accounts).to.be.eql([app.providerAddress])
+        expect(newAgreement?.accounts).to.be.eql([app.providerAddress.toLowerCase()])
         expect(newAgreement?.type).to.be.eql(NotificationType.STORAGE)
         expect(newAgreement?.payload).to.be.eql({ agreementReference: agreement.agreementReference, code: MessageCodesEnum.I_AGREEMENT_NEW })
 
-        expect(agrExpired?.accounts).to.be.eql([app.consumerAddress, app.providerAddress])
+        expect(agrExpired?.accounts).to.be.eql([app.consumerAddress.toLowerCase(), app.providerAddress.toLowerCase()])
         expect(agrExpired?.type).to.be.eql(NotificationType.STORAGE)
         expect(agrExpired?.payload).to.be.eql({ agreementReference: agreement.agreementReference, hash: agreementData.cid, code: MessageCodesEnum.I_AGREEMENT_EXPIRED })
 
-        expect(sizeLimit?.accounts).to.be.eql([app.consumerAddress, app.providerAddress])
+        expect(sizeLimit?.accounts).to.be.eql([app.consumerAddress.toLowerCase(), app.providerAddress.toLowerCase()])
         expect(sizeLimit?.type).to.be.eql(NotificationType.STORAGE)
         expect(sizeLimit?.payload).to.be.eql({ agreementReference: agreement.agreementReference, hash: agreementData.cid, code: MessageCodesEnum.E_AGREEMENT_SIZE_LIMIT_EXCEEDED })
 
-        expect(errorGeneral?.accounts).to.be.eql([app.consumerAddress, app.providerAddress])
+        expect(errorGeneral?.accounts).to.be.eql([app.consumerAddress.toLowerCase(), app.providerAddress.toLowerCase()])
         expect(errorGeneral?.type).to.be.eql(NotificationType.STORAGE)
         expect(errorGeneral?.payload).to.be.eql({ agreementReference: agreement.agreementReference, hash: agreementData.cid, code: MessageCodesEnum.E_GENERAL, error: 'Error' })
 
-        expect(hashStop?.accounts).to.be.eql([app.consumerAddress])
+        expect(hashStop?.accounts).to.be.eql([app.consumerAddress.toLowerCase()])
         expect(hashStop?.type).to.be.eql(NotificationType.STORAGE)
         expect(hashStop?.payload).to.be.eql({ agreementReference: agreement.agreementReference, hash: agreementData.cid, code: MessageCodesEnum.I_HASH_PINNED })
       })

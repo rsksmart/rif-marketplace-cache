@@ -4,7 +4,6 @@ import chaiAsPromised from 'chai-as-promised'
 import sinonChai from 'sinon-chai'
 import dirtyChai from 'dirty-chai'
 import sinon from 'sinon'
-import { EventData } from 'web3-eth-contract'
 import { asciiToHex, soliditySha3 } from 'web3-utils'
 import Eth from 'web3-eth'
 import { Substitute, SubstituteOf } from '@fluffy-spoon/substitute'
@@ -524,7 +523,7 @@ describe('Storage services: Events Processor', () => {
 
   describe('Staking events', () => {
     const token = '0x0000000000000000000000000000000000000000'
-    const account = provider
+    const account = provider.toLowerCase()
     let processor: (event: StakeEvents) => Promise<void>
     let stakeService: StakeService
     let stakeServiceEmitSpy: sinon.SinonSpy
