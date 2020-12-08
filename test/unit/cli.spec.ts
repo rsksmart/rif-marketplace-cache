@@ -14,7 +14,7 @@ import { sequelizeFactory } from '../../src/sequelize'
 import { initStore } from '../../src/store'
 import StartCommand from '../../src/cli/start'
 import { blockMock, rmDir, sleep } from '../utils'
-import Rate from '../../src/services/rates/rates.model'
+import Rate from '../../src/rates/rates.model'
 import { Application, DbBackUpConfig } from '../../src/definitions'
 import { DbBackUpJob } from '../../src/db-backup'
 

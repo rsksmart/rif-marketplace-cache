@@ -12,7 +12,7 @@ import Offer, {
 } from '../../../../src/services/storage/models/offer.model'
 import StakeModel from '../../../../src/services/storage/models/stake.model'
 import BillingPlan from '../../../../src/services/storage/models/billing-plan.model'
-import Rate from '../../../../src/services/rates/rates.model'
+import Rate from '../../../../src/rates/rates.model'
 import {
   AvailableCapacityService
 } from '../../../../src/services/storage/services'
