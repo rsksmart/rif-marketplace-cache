@@ -62,9 +62,11 @@ function getFieldType (
 }
 
 /**
- * Factory for event transformer function
- * This function has cutom logic to transform event field based on ABI
- * Currently support only address type (lower case all address tyype fields in event)
+ * Factory for event transformer closure.
+ * This function has custom logic to transform event fields based on ABI types.
+ * Currently supported transformations:
+ *   - address fields are lower cased
+ *
  * @param abi
  */
 export function getEventTransformer (abi: AbiItem[]): (event: EventLog) => EventLog {
