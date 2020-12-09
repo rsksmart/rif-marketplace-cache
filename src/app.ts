@@ -22,7 +22,7 @@ import { errorHandler, waitForConfigure } from './utils'
 import authentication from './services/authentication'
 
 import storage from './services/storage'
-import rates from './services/rates'
+import rates from './rates'
 import rns from './services/rns'
 import notification from './notification'
 import { Eth } from 'web3-eth'
@@ -31,7 +31,6 @@ const logger = loggingFactory()
 
 export const services = {
   [SupportedServices.STORAGE]: storage,
-  [SupportedServices.RATES]: rates,
   [SupportedServices.RNS]: rns
 }
 
@@ -70,6 +69,7 @@ export async function appFactory (options: AppOptions): Promise<AppReturns> {
   app.configure(sequelize)
   app.configure(configureStore)
   await waitForConfigure(app, blockchain)
+  const { stop: stopRates } = await waitForConfigure(app, rates.initialize)
   app.configure(initBackups)
   app.configure(healthcheck)
   app.configure(notification)
@@ -122,6 +122,7 @@ export async function appFactory (options: AppOptions): Promise<AppReturns> {
     backups: app.get('backups') as DbBackUpJob,
     stop: async (): Promise<void> => {
       const sequelize = app.get('sequelize') as Sequelize
+      await stopRates()
       await sequelize.close()
       await commsStop(app)
       servicesInstances.forEach(service => service.stop())

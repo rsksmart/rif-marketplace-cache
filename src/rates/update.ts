@@ -1,10 +1,10 @@
 import config from 'config'
 
 import { fetch as coingeckoFetch } from './providers/coingecko'
-import { ToSymbols, isRatesProvider, RatesProvider, SUPPORTED_TO_SYMBOLS, SUPPORTED_FROM_SYMBOLS, FromSymbols } from '../../definitions'
-import { ConfigurationError } from '../../errors'
+import { ToSymbols, isRatesProvider, RatesProvider, SUPPORTED_TO_SYMBOLS, SUPPORTED_FROM_SYMBOLS, FromSymbols } from '../definitions'
+import { ConfigurationError } from '../errors'
 import Rate from './rates.model'
-import { loggingFactory } from '../../logger'
+import { loggingFactory } from '../logger'
 import { Sema } from 'async-sema/lib'
 
 const logger = loggingFactory('rates:updater')

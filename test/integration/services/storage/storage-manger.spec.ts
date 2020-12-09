@@ -11,7 +11,7 @@ import { encodeHash, getFeatherClient, prefixArray, TestingApp, ZERO_ADDRESS } f
 import { createLibp2pRoom, sleep, spawnLibp2p } from '../../../utils'
 import Offer from '../../../../src/services/storage/models/offer.model'
 import BillingPlan from '../../../../src/services/storage/models/billing-plan.model'
-import Rate from '../../../../src/services/rates/rates.model'
+import Rate from '../../../../src/rates/rates.model'
 import Agreement from '../../../../src/services/storage/models/agreement.model'
 import NotificationModel from '../../../../src/notification/notification.model'
 import StakeModel from '../../../../src/services/storage/models/stake.model'

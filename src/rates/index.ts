@@ -1,8 +1,8 @@
 import { Service } from 'feathers-sequelize'
 import config from 'config'
 
-import { Application, CachedService, ServiceAddresses } from '../../definitions'
-import { loggingFactory } from '../../logger'
+import { Application, CachedService, ServiceAddresses } from '../definitions'
+import { loggingFactory } from '../logger'
 import hooks from './hooks'
 import Rate from './rates.model'
 import { updater } from './update'
@@ -15,19 +15,18 @@ const SERVICE_NAME = 'rates'
 const CONFIG_UPDATE_PERIOD = 'rates.refresh'
 const logger = loggingFactory(SERVICE_NAME)
 
-const storage: CachedService = {
+const rates: CachedService = {
   // eslint-disable-next-line require-await
   async initialize (app: Application): Promise<{ stop: () => void }> {
-    if (!config.get<boolean>('rates.enabled')) {
-      logger.info('Rates service: disabled')
-      return { stop: () => undefined }
-    }
-    logger.info('Rates service: enabled')
+    logger.info('Rates service: initialization')
 
     // Initialize feather's service
     app.use(ServiceAddresses.XR, new RatesService({ Model: Rate }))
     const service = app.service(ServiceAddresses.XR)
     service.hooks(hooks)
+
+    // Init rates
+    await updater().catch(logger.error)
 
     // Start periodical refresh
     const updatePeriod = config.get<number>(CONFIG_UPDATE_PERIOD) * 1000 // Converting seconds to ms
@@ -48,4 +47,4 @@ const storage: CachedService = {
   }
 }
 
-export default storage
+export default rates

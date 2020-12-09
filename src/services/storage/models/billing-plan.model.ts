@@ -4,7 +4,7 @@ import BigNumber from 'bignumber.js'
 import { BigNumberStringType } from '../../../sequelize'
 import { SupportedTokens } from '../../../definitions'
 import Offer from './offer.model'
-import Rate from '../../rates/rates.model'
+import Rate from '../../../rates/rates.model'
 
 @Table({ freezeTableName: true, tableName: 'storage_billing-plan' })
 export default class BillingPlan extends Model {

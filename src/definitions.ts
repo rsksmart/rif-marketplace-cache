@@ -8,7 +8,7 @@ import Libp2p from 'libp2p'
 import type { Options as Libp2pOptions } from 'libp2p'
 
 import type { AvgBillingPriceService, AgreementService, OfferService, StakeService, AvailableCapacityService } from './services/storage/services'
-import type { RatesService } from './services/rates'
+import type { RatesService } from './rates'
 import type { RnsBaseService } from './services/rns'
 import type { ReorgEmitterService, NewBlockEmitterService, ConfirmatorService } from './blockchain/services'
 
@@ -18,7 +18,6 @@ import { NotificationService } from './notification'
 
 export enum SupportedServices {
   STORAGE = 'storage',
-  RATES = 'rates',
   RNS = 'rns',
 }
 
@@ -120,9 +119,6 @@ export interface Config {
   }
 
   rates?: {
-
-    // Sets if Rates service should be enabled
-    enabled?: boolean
 
     // Which provider to use for fetching the rates
     provider?: RatesProvider

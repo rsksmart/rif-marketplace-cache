@@ -3,6 +3,7 @@ import Listr from 'listr'
 import { getEndPromise as awaitStoreToEndProcessing } from 'sequelize-store'
 import { Event } from '@rsksmart/web3-events'
 
+import rate from '../rates/index'
 import { sequelizeFactory } from '../sequelize'
 import { BaseCLICommand, capitalizeFirstLetter, validateServices } from '../utils'
 import { initStore } from '../store'
@@ -59,6 +60,12 @@ ${formattedServices}`
       title: 'Events',
       task: async () => {
         await Event.destroy({ where: {}, truncate: true, cascade: true })
+      }
+    })
+    tasksDefinition.push({
+      title: 'Rates',
+      task: async () => {
+        await rate.purge()
       }
     })
 

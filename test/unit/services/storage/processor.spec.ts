@@ -30,7 +30,7 @@ import {
   TotalCapacitySet
 } from '@rsksmart/rif-marketplace-storage/types/web3-v1-contracts/StorageManager'
 import { Staked, Unstaked } from '@rsksmart/rif-marketplace-storage/types/web3-v1-contracts/Staking'
-import Rate from '../../../../src/services/rates/rates.model'
+import Rate from '../../../../src/rates/rates.model'
 
 chai.use(sinonChai)
 chai.use(chaiAsPromised)
