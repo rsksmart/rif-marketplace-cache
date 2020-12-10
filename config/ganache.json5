@@ -7,7 +7,7 @@
   storage: {
     enabled: true,
     tokens: {
-      '0x67B5656d60a809915323Bf2C40A8bEF15A152e3e': 'rif'
+      '0x67b5656d60a809915323bf2c40a8bef15a152e3e': 'rif'
     },
     storageManager: {
       contractAddress: "0xDDb64fE46a91D46ee29420539FC25FD07c5FEa3E",
