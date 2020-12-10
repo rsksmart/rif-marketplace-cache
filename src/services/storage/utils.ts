@@ -1,5 +1,6 @@
 import { SupportedTokens } from '../../definitions'
 import config from 'config'
+import { HookContext } from '@feathersjs/feathers'
 
 export const WEI = 1e18
 export type MinMax = 1 | -1
@@ -64,4 +65,31 @@ export function getMinMaxAvailableCapacityQuery (minMax: MinMax): string {
     ORDER BY availableCapacity ${minMax === 1 ? 'DESC' : 'ASC'}
     LIMIT 1
      `
+}
+
+export function lowerCaseAddressesQueryParamsHook (props: Array<string>): (context: HookContext) => void {
+  return (context: HookContext) => {
+    if (!context.params.query) {
+      return
+    }
+
+    context.params.query = {
+      ...context.params.query,
+      ...props
+        .reduce(
+          (acc, prop) => {
+            const field = context.params.query?.[prop]
+
+            if (!field || typeof field !== 'string') {
+              return acc
+            }
+            return {
+              ...acc,
+              [prop]: field.toLowerCase()
+            }
+          },
+          {}
+        )
+    }
+  }
 }

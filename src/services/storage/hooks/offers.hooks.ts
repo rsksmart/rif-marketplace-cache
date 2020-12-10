@@ -5,6 +5,7 @@ import { Op, literal, Sequelize } from 'sequelize'
 
 import BillingPlan from '../models/billing-plan.model'
 import Agreement from '../models/agreement.model'
+import { lowerCaseAddressesQueryParamsHook } from '../utils'
 import Offer, { getAvailableCapacityQuery, getBillingPriceAvgQuery, getStakesAggregateQuery } from '../models/offer.model'
 import dehydrate = hooks.dehydrate
 
@@ -83,6 +84,8 @@ function availableCapacityFilter (
   ]
 }
 
+const ADDRESSES_FIELDS = ['provider']
+
 export default {
   before: {
     all: [
@@ -98,7 +101,8 @@ export default {
         } else {
           context.params.sequelize.scope = 'active'
         }
-      }
+      },
+      lowerCaseAddressesQueryParamsHook(ADDRESSES_FIELDS)
     ],
     find: [
       (context: HookContext) => {
