@@ -114,8 +114,8 @@ export default class DbMigrationCommand extends BaseCLICommand {
   }
 
   generateMigration (name: string): void {
-    const migrationsFolder = path.resolve(process.cwd(), './migrations')
-    const scriptsFolder = path.resolve(process.cwd(), './migrations/scripts')
+    const migrationsFolder = path.resolve(__dirname, '../migrations')
+    const scriptsFolder = path.resolve(__dirname, '../migrations/scripts')
     const fileName = `./${Date.now()}-${name}.ts`
     const filePath = path.resolve(scriptsFolder, fileName)
 
