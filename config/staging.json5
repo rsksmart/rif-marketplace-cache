@@ -5,10 +5,10 @@
         peerDiscovery: {
           bootstrap: {
             list: [
-              '/dns4/pubsub-01.marketplace.staging.rifcomputing.net/tcp/8998',
-              '/dns4/pubsub-02.marketplace.staging.rifcomputing.net/tcp/8998',
-              '/dns4/pubsub-01.marketplace.staging.rifcomputing.net/tcp/8999/ws',
-              '/dns4/pubsub-02.marketplace.staging.rifcomputing.net/tcp/8999/ws',
+              '/dns4/pubsub-01.marketplace.staging.rifcomputing.net/tcp/8998/p2p/QmdbVCFvrzZpgyxxv8pw57X7363hXLo7uYQHTijv3tQNP1',
+              '/dns4/pubsub-02.marketplace.staging.rifcomputing.net/tcp/8998/p2p/QmWUuncJMX5KDwWq4aEEy7cVX3hvyc1NGqdLxoYwQ8JYYZ',
+              '/dns4/pubsub-01.marketplace.staging.rifcomputing.net/tcp/8999/ws/p2p/QmdbVCFvrzZpgyxxv8pw57X7363hXLo7uYQHTijv3tQNP1',
+              '/dns4/pubsub-02.marketplace.staging.rifcomputing.net/tcp/8999/ws/p2p/QmWUuncJMX5KDwWq4aEEy7cVX3hvyc1NGqdLxoYwQ8JYYZ',
             ]
           }
         },
