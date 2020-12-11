@@ -14,6 +14,7 @@ export default {
       await transaction.commit()
     } catch (e) {
       await transaction.rollback()
+      throw e
     }
   },
   // Lower-casing can not be restored
