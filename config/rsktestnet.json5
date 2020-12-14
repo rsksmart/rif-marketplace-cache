@@ -1,4 +1,20 @@
 {
+  comms: {
+    libp2p: {
+      config: {
+        peerDiscovery: {
+          bootstrap: {
+            list: [
+              '/dns4/pubsub-01.marketplace.testnet.rifos.org/tcp/8998/p2p/QmRstX1GjxktJhks6Pdu99CQxXMgS499Rw4FqDaqobCupW',
+              '/dns4/pubsub-02.marketplace.testnet.rifos.org/tcp/8998/p2p/QmRS1KbNRQPaQMHRu3pQJG8VxnC3yAr51bHK2hnS5gdeyh',
+              '/dns4/pubsub-01.marketplace.testnet.rifos.org/tcp/8999/ws/p2p/QmRstX1GjxktJhks6Pdu99CQxXMgS499Rw4FqDaqobCupW',
+              '/dns4/pubsub-02.marketplace.testnet.rifos.org/tcp/8999/ws/p2p/QmRS1KbNRQPaQMHRu3pQJG8VxnC3yAr51bHK2hnS5gdeyh',
+            ]
+          }
+        },
+      },
+    },
+  },
   blockchain: {
     networkId: 31
   },
