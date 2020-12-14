@@ -1,3 +1,22 @@
+<a name="1.1.0"></a>
+# [1.1.0](https://github.com/rsksmart/rif-marketplace-cache/compare/v1.1.0-dev.3...v1.1.0) (2020-12-14)
+
+
+### Bug Fixes
+
+* handle libp2p messages which comes before agreement event ([#423](https://github.com/rsksmart/rif-marketplace-cache/issues/423)) ([bd09f4c](https://github.com/rsksmart/rif-marketplace-cache/commit/bd09f4c))
+* lower case migration ([#451](https://github.com/rsksmart/rif-marketplace-cache/issues/451)) ([d8c1d89](https://github.com/rsksmart/rif-marketplace-cache/commit/d8c1d89))
+
+
+### Features
+
+* **core:** rates as core service ([#444](https://github.com/rsksmart/rif-marketplace-cache/issues/444)) ([6ee1bb1](https://github.com/rsksmart/rif-marketplace-cache/commit/6ee1bb1))
+* add migration for lower-casing addresses in storage ([#448](https://github.com/rsksmart/rif-marketplace-cache/issues/448)) ([a4b9591](https://github.com/rsksmart/rif-marketplace-cache/commit/a4b9591))
+* draft for event parser ([#429](https://github.com/rsksmart/rif-marketplace-cache/issues/429)) ([8a29cfb](https://github.com/rsksmart/rif-marketplace-cache/commit/8a29cfb))
+* lower case all addresses query params ([#449](https://github.com/rsksmart/rif-marketplace-cache/issues/449)) ([a9819f4](https://github.com/rsksmart/rif-marketplace-cache/commit/a9819f4))
+
+
+
 <a name="1.1.0-dev.3"></a>
 # [1.1.0-dev.3](https://github.com/rsksmart/rif-marketplace-cache/compare/v1.1.0-dev.2...v1.1.0-dev.3) (2020-11-27)
 
