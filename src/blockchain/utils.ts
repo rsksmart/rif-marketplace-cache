@@ -7,9 +7,9 @@ import { getObject } from 'sequelize-store'
 import {
   Web3Events,
   Contract,
-  EventsEmitter,
   EventsEmitterCreationOptions,
   ProgressInfo,
+  AutoEventsEmitter,
   LAST_FETCHED_BLOCK_NUMBER_KEY,
   LAST_FETCHED_BLOCK_HASH_KEY,
   LAST_PROCESSED_BLOCK_NUMBER_KEY,
@@ -36,7 +36,7 @@ export function purgeBlockTrackerData (serviceName: string): void {
   delete store[`web3events.${serviceName}.${LAST_PROCESSED_BLOCK_HASH_KEY}`]
 }
 
-export function getEventsEmitterForService<E extends EventLog> (serviceName: string, web3events: Web3Events, contractAbi: AbiItem[]): EventsEmitter<E> {
+export function getEventsEmitterForService<E extends EventLog> (serviceName: string, web3events: Web3Events, contractAbi: AbiItem[]): AutoEventsEmitter<E> {
   const contractAddresses = config.get<string>(`${serviceName}.contractAddress`)
   const contract = new Contract(contractAbi, contractAddresses, serviceName)
   const logger = loggingFactory(`${serviceName}:blockchain`)

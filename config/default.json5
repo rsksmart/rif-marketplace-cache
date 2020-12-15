@@ -141,12 +141,20 @@
     // Sets if RNS service should be enabled
     enabled: true,
 
+    groupEmitter: {
+      // Will process one event at a time
+      serialProcessing: true,
+
+      // Will order events in the groupped batches from all the Emitters
+      orderedProcessing: true,
+
+      name: 'rns'
+    },
+
     // RSKOwner contract settings
     owner: {
       // Specify behavior of EventsEmitter, that retrieves events from blockchain and pass them onwards for further processing.
       eventsEmitter: {
-        // Will process one event at a time
-        serialProcessing: true,
 
         // Topics that will be listened to
         topics: [
@@ -180,9 +188,6 @@
     reverse: {
       // Specify behavior of EventsEmitter, that retrieves events from blockchain and pass them onwards for further processing.
       eventsEmitter: {
-        // Will process one event at a time
-        serialProcessing: true,
-
         // Topics that will be listened to
         topics: [
           [ // It needs to be a "double array" because that represents an "or" of the topics and not "and"
@@ -213,9 +218,6 @@
     placement: {
       // Specify behavior of EventsEmitter, that retrieves events from blockchain and pass them onwards for further processing.
       eventsEmitter: {
-        // Will process one event at a time
-        serialProcessing: true,
-
         // Topics that will be listened to
         topics: [
           [ // It needs to be a "double array" because that represents an "or" of the topics and not "and"

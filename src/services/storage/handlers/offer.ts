@@ -3,7 +3,7 @@ import Libp2p from 'libp2p'
 
 import Offer from '../models/offer.model'
 import BillingPlan from '../models/billing-plan.model'
-import { EventData } from 'web3-eth-contract'
+import { EventLog } from 'web3-core'
 import { loggingFactory } from '../../../logger'
 import { Handler, StorageOfferEvents } from '../../../definitions'
 import { StorageServices } from '../index'
@@ -47,7 +47,7 @@ async function updatePrices (offer: Offer, period: number, price: number, tokenA
 }
 
 const handlers: { [key: string]: Function } = {
-  async TotalCapacitySet (event: EventData, offer: Offer, offerService: OfferService): Promise<void> {
+  async TotalCapacitySet (event: EventLog, offer: Offer, offerService: OfferService): Promise<void> {
     offer.totalCapacity = event.returnValues.capacity
     await offer.save()
 
@@ -57,7 +57,7 @@ const handlers: { [key: string]: Function } = {
     logger.info(`Updating capacity ${offer.totalCapacity} (ID: ${offer.provider})`)
   },
   async MessageEmitted (
-    event: EventData,
+    event: EventLog,
     offer: Offer,
     offerService: OfferService,
     { libp2p }: { libp2p?: Libp2p }
@@ -94,7 +94,7 @@ const handlers: { [key: string]: Function } = {
       throw new EventError(`Unknown message flag ${flag}!`, event.event)
     }
   },
-  async BillingPlanSet ({ returnValues: { period, price, token } }: EventData, offer: Offer, offerService: OfferService): Promise<void> {
+  async BillingPlanSet ({ returnValues: { period, price, token } }: EventLog, offer: Offer, offerService: OfferService): Promise<void> {
     await updatePrices(offer, period, price, token)
 
     if (offerService.emit) {

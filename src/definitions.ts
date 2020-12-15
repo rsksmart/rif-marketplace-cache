@@ -2,7 +2,7 @@ import type { Application as ExpressFeathers } from '@feathersjs/express'
 import type { ServiceAddons } from '@feathersjs/feathers'
 import * as Parser from '@oclif/parser'
 import type { Eth } from 'web3-eth'
-import type { Web3Events, EventsEmitterOptions, NewBlockEmitterOptions } from '@rsksmart/web3-events'
+import type { Web3Events, EventsEmitterCreationOptions, NewBlockEmitterOptions } from '@rsksmart/web3-events'
 import type { Observable } from 'rxjs'
 import Libp2p from 'libp2p'
 import type { Options as Libp2pOptions } from 'libp2p'
@@ -74,7 +74,7 @@ export interface BlockchainServiceOptions {
   contractAddress?: string
 
   // Specify behavior of EventsEmitter, that retrieves events from blockchain and pass them onwards for further processing.
-  eventsEmitter?: EventsEmitterOptions
+  eventsEmitter?: EventsEmitterCreationOptions
 }
 
 export interface DbBackUpConfig {

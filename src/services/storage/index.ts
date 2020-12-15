@@ -4,7 +4,7 @@ import config from 'config'
 import { getEndPromise } from 'sequelize-store'
 import Eth from 'web3-eth'
 import type { AbiItem } from 'web3-utils'
-import { Web3Events, REORG_OUT_OF_RANGE_EVENT_NAME, EventsEmitter } from '@rsksmart/web3-events'
+import { Web3Events, REORG_OUT_OF_RANGE_EVENT_NAME, AutoEventsEmitter, EventsFetcher } from '@rsksmart/web3-events'
 import { Observable } from 'rxjs'
 
 import {
@@ -37,7 +37,7 @@ import eventProcessor from './processor'
 import storageChannels from './channels'
 import { AgreementService, OfferService, StakeService, AvgBillingPriceService, AvailableCapacityService } from './services'
 import { subscribeForOffers } from '../../communication'
-import { EventTransformer, getEventTransformer } from '../../blockchain/event-transformer'
+import { EventTransformer, eventTransformerFactory } from '../../blockchain/event-transformer'
 
 export interface StorageServices {
   agreementService: AgreementService
@@ -53,7 +53,7 @@ const storageManagerLogger = loggingFactory(STORAGE_MANAGER)
 const stakingLogger = loggingFactory(STAKING)
 
 async function precacheContract (
-  eventsEmitter: EventsEmitter<StorageEvents>,
+  eventsEmitter: EventsFetcher<StorageEvents>,
   services: StorageServices,
   eth: Eth,
   logger: Logger,
@@ -74,9 +74,9 @@ function precache (eth: Eth, web3events: Web3Events): Observable<string> {
   return reportProgress(storageLogger,
     async (progressCb): Promise<void> => {
       const storageEventsEmitter = getEventsEmitterForService<StorageAgreementEvents>(STORAGE_MANAGER, web3events, storageManagerContract.abi as AbiItem[])
-      const storageEventParser = getEventTransformer(storageManagerContract.abi as AbiItem[])
+      const storageEventParser = eventTransformerFactory(storageManagerContract.abi as AbiItem[])
       const stakingEventsEmitter = getEventsEmitterForService<StakeEvents>(STAKING, web3events, stakingContract.abi as AbiItem[])
-      const stakingEventParser = getEventTransformer(stakingContract.abi as AbiItem[])
+      const stakingEventParser = eventTransformerFactory(stakingContract.abi as AbiItem[])
 
       const services: StorageServices = {
         stakeService: new StakeService({ Model: StakeModel }),
@@ -168,7 +168,7 @@ const storage: CachedService = {
 
     // Storage Manager watcher
     const storageManagerEventsEmitter = getEventsEmitterForService(STORAGE_MANAGER, web3events, storageManagerContract.abi as AbiItem[])
-    const storageEventParser = getEventTransformer(storageManagerContract.abi as AbiItem[])
+    const storageEventParser = eventTransformerFactory(storageManagerContract.abi as AbiItem[])
     storageManagerEventsEmitter.on('newEvent', errorHandler(eventProcessor(services, { eth, libp2p, eventParser: storageEventParser }), storageManagerLogger))
     storageManagerEventsEmitter.on('error', (e: object) => {
       storageManagerLogger.error(`There was unknown error in Events Emitter for ${STORAGE_MANAGER}! ${e}`)
@@ -179,7 +179,7 @@ const storage: CachedService = {
 
     // Staking watcher
     const stakingEventsEmitter = getEventsEmitterForService(STAKING, web3events, stakingContract.abi as AbiItem[])
-    const stakingEventParser = getEventTransformer(stakingContract.abi as AbiItem[])
+    const stakingEventParser = eventTransformerFactory(stakingContract.abi as AbiItem[])
     stakingEventsEmitter.on('newEvent', errorHandler(eventProcessor(services, { eth, eventParser: stakingEventParser }), stakingLogger))
     stakingEventsEmitter.on('error', (e: object) => {
       stakingLogger.error(`There was unknown error in Events Emitter for ${STAKING}! ${e}`)

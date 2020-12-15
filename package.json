@@ -67,7 +67,7 @@
     "@rsksmart/rns-auction-registrar": "1.0.2",
     "@rsksmart/rns-reverse": "^1.0.2",
     "@rsksmart/rns-rskregistrar": "^1.2.1",
-    "@rsksmart/web3-events": "^0.1.0-dev.3",
+    "@rsksmart/web3-events": "^0.1.0-dev.4",
     "abi-decoder": "^2.3.0",
     "async-sema": "^3.1.0",
     "bignumber.js": "^9.0.0",
