@@ -2,6 +2,8 @@
   port: 'RIFM_PORT',
   db: 'RIFM_DB',
 
+  dataDir: 'RIFM_DATA_DIR',
+
   comms: {
     libp2p: {
       addresses: {

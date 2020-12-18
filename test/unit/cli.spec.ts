@@ -17,19 +17,26 @@ import { blockMock, rmDir, sleep } from '../utils'
 import Rate from '../../src/rates/rates.model'
 import { Application, DbBackUpConfig } from '../../src/definitions'
 import { DbBackUpJob } from '../../src/db-backup'
+import { resolvePath } from '../../src/utils'
+import Migration from '../../src/migrations'
 
 chai.use(sinonChai)
 const expect = chai.expect
 
 describe('CLI', function () {
   this.timeout(10000)
+
+  const dbPath = resolvePath(config.get('db'))
+  const dbName = dbPath.replace(new RegExp(path.sep, 'g'), '_')
+  const dbBackupDirectory = resolvePath(config.get('dbBackUp.path'))
+
   after(() => {
     sinon.reset()
-    rmDir(config.get<DbBackUpConfig>('dbBackUp').path)
+    rmDir(dbBackupDirectory)
   })
+
   before(async () => {
     // Prepare DB and set it to be used
-    const dbPath = path.join(__dirname, '..', '..', config.get<string>('db'))
     try {
       unlinkSync(dbPath)
     } catch (e) {
@@ -41,23 +48,19 @@ describe('CLI', function () {
 
     // Init the DB
     const sequelize = sequelizeFactory()
-    // const migration = new Migration(sequelize)
-    // await migration.up()
-    await sequelize.sync({ force: true })
+    const migration = new Migration(sequelize)
+    await migration.up()
     await initStore(sequelize)
     await getEndPromise()
   })
 
   it('should restart when appResetCallback is triggered', async () => {
-    // create backups
-    const db = config.get<string>('db')
-    const backupPath = path.resolve(process.cwd(), config.get<string>('dbBackUp.path'))
-
-    if (!existsSync(path.resolve(config.get<DbBackUpConfig>('dbBackUp').path))) {
-      mkdirSync(path.resolve(config.get<DbBackUpConfig>('dbBackUp').path))
+    if (!existsSync(dbBackupDirectory)) {
+      mkdirSync(dbBackupDirectory, { recursive: true })
     }
-    copyFileSync(db, path.resolve(backupPath, `0x0123:10-${db}`))
-    copyFileSync(db, path.resolve(backupPath, `0x0123:20-${db}`))
+
+    copyFileSync(dbPath, path.join(dbBackupDirectory, `0x0123:10:${dbName}`))
+    copyFileSync(dbPath, path.join(dbBackupDirectory, `0x0123:20:${dbName}`))
 
     const eth = Substitute.for<Eth>()
     eth.getBlock(Arg.all()).returns(Promise.resolve(blockMock(10)))
@@ -107,7 +110,7 @@ describe('CLI', function () {
     // db restored
     expect(await Rate.findByPk('123456789012345')).to.be.eql(null)
 
-    rmDir(backupPath)
+    rmDir(dbBackupDirectory)
     sinon.reset()
   })
 })

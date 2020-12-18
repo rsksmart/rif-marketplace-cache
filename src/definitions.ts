@@ -79,6 +79,8 @@ export interface BlockchainServiceOptions {
 
 export interface DbBackUpConfig {
   blocks: number
+
+  // Place where the backups will be put. If relative than it is relative to `dataDir`. Absolute path is honored.
   path: string
 }
 
@@ -86,11 +88,15 @@ export interface Config {
   host?: string
   port?: number
 
-  // DB URI to connect to database
+  // Place where the DB file will be put. If relative than it is relative to `dataDir`. Absolute path is honored.
   db?: string
 
   // DB backup config
   dbBackUp?: DbBackUpConfig
+
+  // Place where all the persistent data should be stored
+  // Recommended is absolute path, if relative then it will be based on root of the project (not CWD)
+  dataDir?: string
 
   log?: {
     level?: string

@@ -18,13 +18,14 @@ import io from 'socket.io-client'
 import PeerId from 'peer-id'
 
 import { loggingFactory } from '../../src/logger'
-import { appFactory, AppOptions, services } from '../../src/app'
+import { appFactory, AppOptions } from '../../src/app'
 import { sequelizeFactory } from '../../src/sequelize'
 import { initStore } from '../../src/store'
 import { Application, SupportedServices } from '../../src/definitions'
 import { ethFactory } from '../../src/blockchain'
 import { sleep } from '../utils'
 import DbMigration from '../../src/migrations'
+import { resolvePath } from '../../src/utils'
 
 export const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000'
 export const ZERO_BYTES_32 = '0x0000000000000000000000000000000000000000000000000000000000000000'
@@ -173,7 +174,7 @@ export class TestingApp {
   private async purgeDb (): Promise<void> {
     try {
       await fs
-        .unlink(path.join(process.cwd(), config.get<string>('db')))
+        .unlink(resolvePath(config.get<string>('db')))
     } catch (e) {
       // File does not exist
       if (e.code !== 'ENOENT') {

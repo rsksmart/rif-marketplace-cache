@@ -1,10 +1,18 @@
 // For full syntax see /src/types.ts::Config interface
 {
+
+  // Place where the DB file will be put. If relative than it is relative to `dataDir`. Absolute path is honored.
   db: 'db.sqlite',
+
+  // Place where all the persistent data should be stored
+  // Recommended is absolute path, if relative then it will be based on root of the project (not CWD)
+  dataDir: 'data',
 
   // DB back up config
   dbBackUp: {
     blocks: 1440, // 12 hours * 60 * 60 / 30s (new block every 30s) ==> backuped twice a day
+
+    // Place where the backups will be put. If relative than it is relative to `dataDir`. Absolute path is honored.
     path: 'db-backups'
   },
 

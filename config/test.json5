@@ -1,6 +1,6 @@
 {
   port: 3030,
-  db: 'db_test.sqlite',
+  dataDir: 'data-test',
   dbBackUp: { blocks: 10, path:  'db-backups' },
   comms: {
     libp2p: {
