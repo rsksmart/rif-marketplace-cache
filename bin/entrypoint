@@ -1,4 +1,6 @@
 #!/bin/sh
 
+env
+
 ./bin/run db-migration --up
 ./bin/run start "$@"

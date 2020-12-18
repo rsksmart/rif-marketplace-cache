@@ -5,27 +5,26 @@ import BigNumber from 'bignumber.js'
 import { BlockHeader, Eth } from 'web3-eth'
 import { Web3Events, NewBlockEmitter, NEW_BLOCK_EVENT_NAME } from '@rsksmart/web3-events'
 
-import { Application, DbBackUpConfig } from './definitions'
+import { Application } from './definitions'
 import { loggingFactory } from './logger'
+import { errorHandler, resolvePath } from './utils'
 
 const logger = loggingFactory('db:backups')
 
-export type BackUpEntry = { name: string, block: { hash: string, number: BigNumber } }
+export type BackUpEntry = { backupName: string, fileName: string, block: { hash: string, number: BigNumber } }
 
-export function parseBackUps (backUpName: string): BackUpEntry {
-  const [block] = backUpName.split('.')[0].split('-')
-  const [hash, blockNumber] = block.split(':')
+export function parseBackUps (fileName: string): BackUpEntry {
+  const [hash, blockNumber, name] = fileName.split(':')
 
   return {
-    name: backUpName,
+    fileName,
+    backupName: name,
     block: { number: new BigNumber(blockNumber), hash }
   }
 }
 
-export function getBackUps (): BackUpEntry[] {
-  const backupConfig = config.get<DbBackUpConfig>('dbBackUp')
-
-  const backups = fs.readdirSync(path.resolve(backupConfig.path))
+export async function getBackUps (backupDirectory: string): Promise<BackUpEntry[]> {
+  const backups = await fs.promises.readdir(backupDirectory)
 
   if (backups.length) {
     return backups
@@ -40,21 +39,34 @@ export function getBackUps (): BackUpEntry[] {
 }
 
 export class DbBackUpJob {
-  readonly newBlockEmitter: NewBlockEmitter
-  readonly db: string
-  readonly eth: Eth
-  readonly backUpConfig: DbBackUpConfig
+  private readonly newBlockEmitter: NewBlockEmitter
+  private readonly dbPath: string
+  private readonly dbName: string
+  private readonly eth: Eth
+  private readonly backupDirectory: string
+  private readonly backupBlockFrequency: number
   private listenerUnsubscribe?: () => void
 
   constructor (eth: Eth, newBlockEmitter: NewBlockEmitter) {
     if (!config.has('dbBackUp')) {
       throw new Error('DB Backup config not exist')
     }
-    this.backUpConfig = config.get<DbBackUpConfig>('dbBackUp')
-    this.db = config.get<string>('db')
 
-    if (!fs.existsSync(path.resolve(this.backUpConfig.path))) {
-      fs.mkdirSync(path.resolve(this.backUpConfig.path))
+    this.backupDirectory = resolvePath(config.get<string>('dbBackUp.path'))
+    this.backupBlockFrequency = config.get<number>('dbBackUp.blocks')
+    this.dbPath = resolvePath(config.get<string>('db'))
+    this.dbName = this.dbPath.replace(new RegExp(path.sep, 'g'), '_')
+
+    if (this.dbPath.includes(':')) {
+      throw new Error('The DB Path includes character ":" which is not allowed!')
+    }
+
+    try {
+      fs.accessSync(this.backupDirectory)
+    } catch (e) {
+      if (e.code === 'ENOENT') {
+        fs.mkdirSync(this.backupDirectory, { recursive: true })
+      }
     }
 
     this.eth = eth
@@ -67,17 +79,20 @@ export class DbBackUpJob {
    * @param block
    */
   private async backupDb (block: BlockHeader): Promise<void> {
-    const [lastBackUp, previousBackUp] = getBackUps()
+    const [lastBackUp, previousBackUp] = await getBackUps(this.backupDirectory)
 
-    if (!lastBackUp || new BigNumber(block.number).minus(this.backUpConfig.blocks).gte(lastBackUp.block.number)) {
+    if (!lastBackUp || new BigNumber(block.number).minus(this.backupBlockFrequency).gte(lastBackUp.block.number)) {
+      logger.info(`Making DB backup on block ${block.number}`)
+
       // copy and rename current db
-      await fs.promises.copyFile(this.db, path.resolve(this.backUpConfig.path, `${block.hash}:${block.number}-${this.db}`))
+      await fs.promises.copyFile(this.dbPath, path.join(this.backupDirectory, `${block.hash}:${block.number}:${this.dbName}`))
 
       // remove the oldest version
       if (previousBackUp) {
-        await fs.promises.unlink(path.resolve(this.backUpConfig.path, previousBackUp.name))
+        await fs.promises.unlink(path.join(this.backupDirectory, previousBackUp.fileName))
       }
-      logger.info(`Make DB backup on block ${block.number}`)
+
+      logger.info('Making of DB backup finished')
     }
   }
 
@@ -86,7 +101,7 @@ export class DbBackUpJob {
    * @return {Promise<void>}
    */
   public async restoreDb (): Promise<void> {
-    const backUps = getBackUps()
+    const backUps = await getBackUps(this.backupDirectory)
     const [_, oldest] = backUps
 
     if (backUps.length < 2) {
@@ -97,18 +112,18 @@ export class DbBackUpJob {
     const block = await this.eth.getBlock(oldest.block.hash).catch(() => false)
 
     if (!block) {
-      throw new Error('Invalid backup. Block Hash is not valid!')
+      throw new Error('Useless backup. Reorg is deeper then our latest backup')
     }
 
     // remove current db
-    await fs.promises.unlink(this.db)
+    await fs.promises.unlink(this.dbPath)
 
     // restore backup
-    await fs.promises.copyFile(path.resolve(this.backUpConfig.path, oldest.name), path.resolve(process.cwd(), this.db))
+    await fs.promises.copyFile(resolvePath(this.backupDirectory, oldest.fileName), this.dbPath)
   }
 
   public startBackingUp (): void {
-    this.listenerUnsubscribe = this.newBlockEmitter.on(NEW_BLOCK_EVENT_NAME, this.backupDb.bind(this))
+    this.listenerUnsubscribe = this.newBlockEmitter.on(NEW_BLOCK_EVENT_NAME, errorHandler(this.backupDb.bind(this), logger))
   }
 
   public stop (): void {

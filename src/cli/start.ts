@@ -23,8 +23,8 @@ ${formattedServices}`
   static flags = {
     ...BaseCLICommand.flags,
     port: flags.integer({ char: 'p', description: 'port to attach the server to' }),
-    db: flags.string({ description: 'database connection URI', env: 'RIFM_DB' }),
-    provider: flags.string({ description: 'blockchain provider connection URI', env: 'RIFM_PROVIDER' }),
+    db: flags.string({ description: 'database connection URI' }),
+    provider: flags.string({ description: 'blockchain provider connection URI' }),
     enable: flags.string({ char: 'e', multiple: true, description: 'enable specific service' }),
     disable: flags.string({ char: 'd', multiple: true, description: 'disable specific service' })
   }
@@ -92,7 +92,7 @@ ${formattedServices}`
       let requirePrecache = false
 
       // Promise that resolves when reset callback is called
-      const resetPromise = new Promise(resolve => {
+      const resetPromise = new Promise<void>(resolve => {
         appFactory({
           requirePrecache,
           appResetCallBack: () => resolve()

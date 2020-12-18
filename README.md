@@ -320,6 +320,7 @@ file and load that either using the `--config` CLI parameter or using environmen
 
 ### Environment variables overview
 
+ - `RIFM_DATA_DIR` (string/path): directory where all the persistent data will be placed by default
  - `RIFM_PORT` (number): port on which the server should listen to
  - `RIFM_DB` (string): database connection URI
  - `RIFM_PROVIDER` (string): blockchain connection URI
@@ -351,13 +352,15 @@ file and load that either using the `--config` CLI parameter or using environmen
 
 ### Database
 
-As the database layer is written using Sequelize it is pretty much database agnostic.
-You can choose your own particular database engine from the [supported Sequelize engines](https://sequelize.org/v5/manual/dialects.html) yet be aware that currently tested engines are
-PostgreSQL and SQLite (not recommended for production deployments).
+[comment]: <> (Note applicable ATM, but should be in future)
+[comment]: <> (As the database layer is written using Sequelize it is pretty much database agnostic.)
+[comment]: <> (You can choose your own particular database engine from the [supported Sequelize engines]&#40;https://sequelize.org/v5/manual/dialects.html&#41; yet be aware that currently tested engines are)
+[comment]: <> (PostgreSQL and SQLite &#40;not recommended for production deployments&#41;.)
 
-You can configure the database connection using either CLI flag `--db` or environment variable `RIFM_DB`.
+Supported DB engine is only SQLite. You can configure the location of the DB file using either CLI flag `--db` or environment variable `RIFM_DB`
+which should be in format `sqlite://<path to the file>`.
 
-For specification of the database connection use URI connection string in format: `<dialect>://<username>:<password>@<host>:<port>/<database_name>`
+[comment]: <> (For specification of the database connection use URI connection string in format: `<dialect>://<username>:<password>@<host>:<port>/<database_name>`)
 
 ### Blockchain
 

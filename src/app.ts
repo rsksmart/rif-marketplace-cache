@@ -17,7 +17,7 @@ import healthcheck from './healthcheck'
 import { DbBackUpJob, initBackups } from './db-backup'
 import comms, { stop as commsStop } from './communication'
 import { configureStore } from './store'
-import { errorHandler, waitForConfigure } from './utils'
+import { errorHandler, resolvePath, waitForConfigure } from './utils'
 
 import authentication from './services/authentication'
 
@@ -26,6 +26,7 @@ import rates from './rates'
 import rns from './services/rns'
 import notification from './notification'
 import { Eth } from 'web3-eth'
+import * as fs from 'fs'
 
 const logger = loggingFactory()
 
@@ -50,6 +51,16 @@ export async function appFactory (options: AppOptions): Promise<AppReturns> {
 
   logger.verbose('Current configuration: ', config)
   const corsOptions: CorsOptionsDelegate = config.get('cors')
+
+  // Create dataDir if it does not exist
+  const dataDir = resolvePath()
+  try {
+    await fs.promises.access(dataDir)
+  } catch (e) {
+    if (e.code === 'ENOENT') {
+      await fs.promises.mkdir(dataDir, { recursive: true })
+    }
+  }
 
   // Enable security, CORS, compression and body parsing
   app.use(helmet())

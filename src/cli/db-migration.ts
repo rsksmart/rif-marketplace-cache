@@ -4,7 +4,7 @@ import { flags } from '@oclif/command'
 import { OutputFlags } from '@oclif/parser'
 
 import DbMigration from '../migrations'
-import { BaseCLICommand } from '../utils'
+import { BaseCLICommand, resolvePath } from '../utils'
 import { sequelizeFactory } from '../sequelize'
 import config from 'config'
 
@@ -24,7 +24,7 @@ export default {
 `
 
 export default class DbMigrationCommand extends BaseCLICommand {
-  static hidden: boolean;
+  static hidden: boolean
   static flags = {
     ...BaseCLICommand.flags,
     db: flags.string({ description: 'database connection URI', env: 'RIFM_DB' }),
@@ -57,39 +57,16 @@ export default class DbMigrationCommand extends BaseCLICommand {
   static description = 'DB migrations'
 
   static examples = [
-    '$ rif-marketplace-cache db --up',
-    '$ rif-marketplace-cache db --down',
-    '$ rif-marketplace-cache db --up --to 0-test',
-    '$ rif-marketplace-cache --up --migrations 01-test --migrations 02-test',
-    '$ rif-marketplace-cache --up --db ./test.sqlite --to 09-test',
-    '$ rif-marketplace-cache --down --db ./test.sqlite --to 09-test',
-    '$ rif-pinning db --generate my_first_migration'
+    '$ rif-marketplace-cache db-migration --up',
+    '$ rif-marketplace-cache db-migration --down',
+    '$ rif-marketplace-cache db-migration --up --to 0-test',
+    '$ rif-marketplace-cache db-migration --up --migrations 01-test --migrations 02-test',
+    '$ rif-marketplace-cache db-migration --up --db ./test.sqlite --to 09-test',
+    '$ rif-marketplace-cache db-migration --down --db ./test.sqlite --to 09-test',
+    '$ rif-marketplace-cache db-migration --generate my_first_migration'
   ]
 
   private migration: DbMigration | undefined
-
-  protected resolveDbPath (db: string): string {
-    if (!db) {
-      return path.resolve(this.config.dataDir, config.get<string>('db'))
-    }
-
-    const parsed = path.parse(db)
-
-    // File name
-    if (!parsed.dir) {
-      return path.resolve(
-        this.config.dataDir,
-        parsed.ext
-          ? db
-          : `${parsed.base}.sqlite`
-      )
-    } else {
-      if (db[db.length - 1] === '/') {
-        throw new Error('Path should include the file name')
-      }
-      return path.resolve(`${db}${parsed.ext ? '' : '.sqlite'}`)
-    }
-  }
 
   async migrate (migrations?: string[], options?: { to: string }): Promise<void> {
     if (!(await this.migration!.pending()).length) {
@@ -114,13 +91,13 @@ export default class DbMigrationCommand extends BaseCLICommand {
   }
 
   generateMigration (name: string): void {
-    const migrationsFolder = path.resolve(__dirname, '../migrations')
-    const scriptsFolder = path.resolve(__dirname, '../migrations/scripts')
+    const migrationsFolder = path.resolve(__dirname, '..', 'migrations')
+    const scriptsFolder = path.resolve(migrationsFolder, 'scripts')
     const fileName = `./${Date.now()}-${name}.ts`
     const filePath = path.resolve(scriptsFolder, fileName)
 
     if (!fs.existsSync(migrationsFolder)) {
-      throw new Error('Migrations folder not found. Please run command from project root and make sure that you have \'migrations\' folder setup')
+      throw new Error(`Migrations folder not found at path ${migrationsFolder}`)
     }
 
     this.log(`Creating migration ${fileName}`)
@@ -137,21 +114,32 @@ export default class DbMigrationCommand extends BaseCLICommand {
     const { flags: originalFlags } = this.parse(DbMigrationCommand)
     const parsedFlags = originalFlags as OutputFlags<typeof DbMigrationCommand.flags>
 
+    if (!parsedFlags.up && !parsedFlags.down && !parsedFlags.generate) {
+      throw new Error('One of \'--generate, --up, --down\'  required')
+    }
+
     if (parsedFlags.db) {
-      config.util.extendDeep(config, { db: this.resolveDbPath(parsedFlags.db) })
+      config.util.extendDeep(config, { db: parsedFlags.db })
     }
 
     if (parsedFlags.generate) {
       this.generateMigration(parsedFlags.generate)
     }
 
+    // Create dataDir if it does not exist
+    const dataDir = resolvePath()
+
+    try {
+      await fs.promises.access(dataDir)
+    } catch (e) {
+      if (e.code === 'ENOENT') {
+        await fs.promises.mkdir(dataDir, { recursive: true })
+      }
+    }
+
     // Init database connection
     const sequelize = sequelizeFactory()
     this.migration = new DbMigration(sequelize)
-
-    if (!parsedFlags.up && !parsedFlags.down && !parsedFlags.generate) {
-      throw new Error('One of \'--generate, --up, --down\'  required')
-    }
 
     if (parsedFlags.up) {
       await this.migrate(parsedFlags.migration, parsedFlags)

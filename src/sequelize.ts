@@ -8,6 +8,7 @@ import sqlFormatter from 'sql-formatter'
 import { Application } from './definitions'
 import { loggingFactory } from './logger'
 import DbMigration from './migrations'
+import { resolvePath } from './utils'
 
 const logger = loggingFactory('db')
 
@@ -32,7 +33,7 @@ export function sequelizeFactory (): Sequelize {
     transactionType: 'IMMEDIATE'
   }
 
-  return new TSSequelize(`sqlite:${config.get('db')}`, dbSettings) as unknown as Sequelize
+  return new TSSequelize(`sqlite:${resolvePath(config.get('db'))}`, dbSettings) as unknown as Sequelize
 }
 
 /**

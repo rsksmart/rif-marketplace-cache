@@ -5,6 +5,7 @@ import config from 'config'
 import fs from 'fs'
 import { hexToAscii } from 'web3-utils'
 import BigNumber from 'bignumber.js'
+import path from 'path'
 
 import {
   Application,
@@ -181,6 +182,18 @@ export function waitForConfigure (app: Application, configure: (app: Application
   })
 
   return promise!
+}
+
+/**
+ * Resolve given path using dataDir configuration.
+ * @param paths relative or absolute paths. If absolute then no resolution is performed and it is returned as passed. If nothing is passed then the dataDir is returned.
+ */
+export function resolvePath (...paths: string[]): string {
+  // Heavily using feature of path.resolve() that returns the first absolute path it gets when processing from right to left.
+  // Hence if ...paths already have absolute path, it won't even get to the dataDir or __dirname.
+  // Also if dataDir is already absolute then it won't get to __dirname.
+  // See its documentation to understand it better: https://nodejs.org/api/path.html#path_path_resolve_paths
+  return path.resolve(__dirname, '..', config.get('dataDir'), ...paths)
 }
 
 export abstract class BaseCLICommand extends Command {

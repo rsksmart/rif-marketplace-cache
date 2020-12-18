@@ -28,6 +28,8 @@ oclif.manifest.json
 # Local configurations
 /config/local*
 
-# DB file
-*.sqlite
+# Default data dir
+/data
+/data-test
+
 .eslintrc.js

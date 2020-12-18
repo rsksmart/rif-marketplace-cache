@@ -12,7 +12,8 @@ RUN npx tasegir compile
 # Runtime container
 FROM node:10-alpine
 
-RUN mkdir -p /srv/app && chown node:node /srv/app
+RUN mkdir -p /srv/app && chown node:node /srv/app \
+ && mkdir -p /srv/data && chown node:node /srv/data
 
 USER node
 WORKDIR /srv/app
@@ -25,6 +26,7 @@ COPY config ./config/
 RUN sed -i 's#"./src/cli"#"./lib/cli"#g' package.json
 
 EXPOSE 3030
+ENV RIFM_DATA_DIR '/srv/data/'
 ENV LOG_NO_COLORS 'true'
 
 ENTRYPOINT [ "./bin/entrypoint" ]
