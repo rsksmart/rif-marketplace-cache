@@ -8,7 +8,13 @@ import { getEndPromise } from 'sequelize-store'
 import type Eth from 'web3-eth'
 import type { EventLog } from 'web3-core'
 import type { AbiItem } from 'web3-utils'
-import { Web3Events, REORG_OUT_OF_RANGE_EVENT_NAME } from '@rsksmart/web3-events'
+import {
+  Web3Events,
+  REORG_OUT_OF_RANGE_EVENT_NAME,
+  GroupEmitterOptions,
+  NamespacedEvent,
+  NewConfirmationEvent, InvalidConfirmationsEvent
+} from '@rsksmart/web3-events'
 
 import {
   getEventsEmitterForService,
@@ -31,7 +37,7 @@ import rnsChannels from './channels'
 import { processAuctionRegistrar, processRskOwner } from './precache'
 import eventProcessor from './processor'
 import { Observable } from 'rxjs'
-import { getEventTransformer } from '../../blockchain/event-transformer'
+import { eventTransformerFactory } from '../../blockchain/event-transformer'
 
 const logger = loggingFactory('rns')
 const precacheLogger = loggingFactory('rns:precache:processor')
@@ -52,7 +58,7 @@ const REVERSE = 'rns.reverse'
 
 async function fetchEventsForService (web3events: Web3Events, serviceName: string, abi: AbiItem[], dataPusher: (event: EventLog) => void, progressCb: ProgressCb, contractName: string): Promise<void> {
   const eventsEmitter = getEventsEmitterForService(serviceName, web3events, abi)
-  const eventParser = getEventTransformer(abi)
+  const eventParser = eventTransformerFactory(abi)
   for await (const batch of eventsEmitter.fetch()) {
     for (const event of batch.events) {
       await dataPusher(eventParser(event))
@@ -143,41 +149,28 @@ const rns: CachedService = {
     const reorgEmitterService = app.service(ServiceAddresses.REORG_EMITTER)
     const services = { domains, sold, offers }
 
-    const rnsEventsEmitter = getEventsEmitterForService(OWNER, web3events, rnsContractAbi.abi as AbiItem[])
-    const rnsEventParser = getEventTransformer(rnsContractAbi.abi as AbiItem[])
-    rnsEventsEmitter.on('newEvent', errorHandler(eventProcessor(loggingFactory('rns.owner:processor'), eth, services, rnsEventParser), logger))
-    rnsEventsEmitter.on('error', (e: object) => {
-      logger.error(`There was unknown error in Events Emitter for rns.owner! ${e}`)
-    })
-    rnsEventsEmitter.on('newConfirmation', (data) => confirmationService.emit('newConfirmation', data))
-    rnsEventsEmitter.on('invalidConfirmation', (data) => confirmationService.emit('invalidConfirmation', data))
-    rnsEventsEmitter.on(REORG_OUT_OF_RANGE_EVENT_NAME, (blockNumber: number) => reorgEmitterService.emitReorg(blockNumber, OWNER))
-
+    const rnsOwnerEventsEmitter = getEventsEmitterForService(OWNER, web3events, rnsContractAbi.abi as AbiItem[])
     const rnsReverseEventsEmitter = getEventsEmitterForService(REVERSE, web3events, rnsReverseContractAbi.abi as AbiItem[])
-    const rnsReverseEventParser = getEventTransformer(rnsReverseContractAbi.abi as AbiItem[])
-    rnsReverseEventsEmitter.on('newEvent', errorHandler(eventProcessor(loggingFactory('rns.reverse:processor'), eth, services, rnsReverseEventParser), logger))
-    rnsReverseEventsEmitter.on('error', (e: object) => {
-      logger.error(`There was unknown error in Events Emitter for rns.reverse! ${e}`)
-    })
-    rnsReverseEventsEmitter.on('newConfirmation', (data) => confirmationService.emit('newConfirmation', data))
-    rnsReverseEventsEmitter.on('invalidConfirmation', (data) => confirmationService.emit('invalidConfirmation', data))
-    rnsReverseEventsEmitter.on(REORG_OUT_OF_RANGE_EVENT_NAME, (blockNumber: number) => reorgEmitterService.emitReorg(blockNumber, REVERSE))
-
     const rnsPlacementsEventsEmitter = getEventsEmitterForService(PLACEMENT, web3events, simplePlacementsContractAbi.abi as AbiItem[])
-    const rnsPlacementsEventParser = getEventTransformer(simplePlacementsContractAbi.abi as AbiItem[])
-    rnsPlacementsEventsEmitter.on('newEvent', errorHandler(eventProcessor(loggingFactory('rns.placement:processor'), eth, services, rnsPlacementsEventParser), logger))
-    rnsPlacementsEventsEmitter.on('error', (e: object) => {
-      logger.error(`There was unknown error in Events Emitter for rns.placement! ${e}`)
+
+    const groupOptions = config.get<GroupEmitterOptions>('rns.groupEmitter')
+    const rnsGroupEmitter = web3events.groupEventsEmitters([rnsOwnerEventsEmitter, rnsReverseEventsEmitter, rnsPlacementsEventsEmitter], groupOptions)
+
+    const rnsEventParser = eventTransformerFactory(rnsContractAbi.abi as AbiItem[], rnsReverseContractAbi.abi as AbiItem[], simplePlacementsContractAbi.abi as AbiItem[])
+
+    rnsGroupEmitter.on('newEvent', errorHandler(eventProcessor(loggingFactory('rns.owner:processor'), eth, services, rnsEventParser), logger))
+    rnsGroupEmitter.on('error', (e: NamespacedEvent<object>) => {
+      logger.error(`There was unknown error in Events Emitter for ${e.name}! ${e.data}`)
     })
-    rnsPlacementsEventsEmitter.on('newConfirmation', (data) => confirmationService.emit('newConfirmation', data))
-    rnsPlacementsEventsEmitter.on('invalidConfirmation', (data) => confirmationService.emit('invalidConfirmation', data))
-    rnsPlacementsEventsEmitter.on(REORG_OUT_OF_RANGE_EVENT_NAME, (blockNumber: number) => reorgEmitterService.emitReorg(blockNumber, PLACEMENT))
+    rnsGroupEmitter.on('newConfirmation', (data: NamespacedEvent<NewConfirmationEvent>) => confirmationService.emit('newConfirmation', data.data))
+    rnsGroupEmitter.on('invalidConfirmation', (data: NamespacedEvent<InvalidConfirmationsEvent>) => confirmationService.emit('invalidConfirmation', data.data))
+    rnsGroupEmitter.on(REORG_OUT_OF_RANGE_EVENT_NAME, (data: NamespacedEvent<number>) => reorgEmitterService.emitReorg(data.data, data.name))
 
     return {
       stop: () => {
         rnsPlacementsEventsEmitter.stop()
         rnsReverseEventsEmitter.stop()
-        rnsEventsEmitter.stop()
+        rnsGroupEmitter.stop()
         confirmationService.removeAllListeners()
       }
     }

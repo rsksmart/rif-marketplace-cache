@@ -38,7 +38,7 @@ function transformEventField (
  * @param abi
  * @param eventName
  */
-function getFieldType (
+function fieldTypeFactory (
   abi: AbiItem[],
   eventName: string
 ): (key: string) => string | void {
@@ -67,11 +67,16 @@ function getFieldType (
  * Currently supported transformations:
  *   - address fields are lower cased
  *
- * @param abi
+ * @param abis
  */
-export function getEventTransformer (abi: AbiItem[]): (event: EventLog) => EventLog {
+export function eventTransformerFactory (...abis: AbiItem[][]): (event: EventLog) => EventLog {
+  const eventAbis = abis.reduce((previousValue, currentValue) => {
+    previousValue.push(...currentValue.filter(a => a.type === 'event'))
+    return previousValue
+  }, [])
+
   return (event: EventLog): EventLog => {
-    const getType = getFieldType(abi.filter(a => a.type === 'event'), event.event)
+    const getType = fieldTypeFactory(eventAbis, event.event)
     return {
       ...event,
       returnValues: Object
