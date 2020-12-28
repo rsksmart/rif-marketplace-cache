@@ -3,7 +3,6 @@ import { disallow } from 'feathers-hooks-common'
 import { Op } from 'sequelize'
 import { numberToHex, sha3 } from 'web3-utils'
 import DomainOffer from '../models/domain-offer.model'
-import DomainExpiration from '../models/expiration.model'
 import DomainOwner from '../models/owner.model'
 
 export default {
@@ -49,10 +48,6 @@ export default {
             raw: false,
             nest: true,
             include: [
-              {
-                model: DomainExpiration,
-                attributes: ['date']
-              },
               {
                 model: DomainOwner,
                 attributes: ['address'],

@@ -4,7 +4,6 @@ import { Eth } from 'web3-eth'
 import Utils from 'web3-utils'
 import { Logger } from '../../definitions'
 import Domain from './models/domain.model'
-import DomainExpiration from './models/expiration.model'
 import DomainOwner from './models/owner.model'
 
 abiDecoder.addABI([
@@ -84,8 +83,7 @@ export async function processAuctionRegistrar (eth: Eth, logger: Logger, contrac
     const tokenId = Utils.numberToHex(event.returnValues.hash)
     const ownerAddress = event.returnValues.owner.toLowerCase()
     const expirationDate = parseInt(event.returnValues.registrationDate) * 1000
-    await Domain.upsert({ tokenId })
+    await Domain.upsert({ tokenId, expirationDate })
     await DomainOwner.upsert({ tokenId, address: ownerAddress })
-    await DomainExpiration.upsert({ tokenId, date: expirationDate })
   }
 }
