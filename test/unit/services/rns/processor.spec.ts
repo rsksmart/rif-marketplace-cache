@@ -1,4 +1,4 @@
-import chai from 'chai'
+import * as chai from 'chai'
 import chaiAsPromised from 'chai-as-promised'
 import sinonChai from 'sinon-chai'
 import dirtyChai from 'dirty-chai'
@@ -11,12 +11,11 @@ import { Substitute, SubstituteOf } from '@fluffy-spoon/substitute'
 import { Sequelize } from 'sequelize'
 import { loggingFactory } from '../../../../src/logger'
 
-import eventProcessor from '../../../../src/services/rns/processor'
+import eventProcessorFactory from '../../../../src/services/rns/processor'
 import { RnsBaseService, RnsServices } from '../../../../src/services/rns'
 import { sequelizeFactory } from '../../../../src/sequelize'
 import Domain from '../../../../src/services/rns/models/domain.model'
 import DomainOwner from '../../../../src/services/rns/models/owner.model'
-import DomainExpiration from '../../../../src/services/rns/models/expiration.model'
 import DomainOffer from '../../../../src/services/rns/models/domain-offer.model'
 import SoldDomain from '../../../../src/services/rns/models/sold-domain.model'
 
@@ -53,7 +52,7 @@ describe('Domain events', () => {
     sequelize = sequelizeFactory()
     eth = Substitute.for<Eth>()
     domainService = new RnsBaseService({ Model: Domain })
-    processor = eventProcessor(logger, eth, { domains: domainService } as RnsServices)
+    processor = eventProcessorFactory(logger, eth, { domains: domainService } as RnsServices)
     domainServiceEmitSpy = sinon.spy()
     domainService.emit = domainServiceEmitSpy
   })
@@ -139,43 +138,6 @@ describe('Domain events', () => {
     expect(otherOwner?.address).to.be.eql(newEvent.returnValues.to)
   })
 
-  it('should create new Domain with Expiration Date', async () => {
-    const event = eventMock({
-      event: 'ExpirationChanged',
-      returnValues: { tokenId, expirationTime }
-    })
-
-    await processor(event)
-
-    const createdEvent = await DomainExpiration.findByPk(Utils.numberToHex(event.returnValues.tokenId))
-    const domain = await Domain.findByPk(Utils.numberToHex(event.returnValues.tokenId))
-    const expirationTimeDB = (Date.parse(createdEvent?.date.toString() || '') / 1000).toString()
-
-    expect(createdEvent).to.be.instanceOf(DomainExpiration)
-    expect(expirationTimeDB).to.be.eql(event.returnValues.expirationTime)
-    expect(domain).to.be.instanceOf(Domain)
-    expect(domain?.tokenId).to.be.eql(Utils.numberToHex(tokenId))
-  })
-
-  it('should create Expiration Date for existing Domain', async () => {
-    const event = eventMock({
-      event: 'ExpirationChanged',
-      returnValues: { tokenId, expirationTime }
-    })
-
-    // Create domain with owner
-    await Domain.create({ tokenId: Utils.numberToHex(tokenId) })
-    await DomainOwner.create({ tokenId: Utils.numberToHex(tokenId), address: from })
-
-    await processor(event)
-
-    const createdEvent = await DomainExpiration.findByPk(Utils.numberToHex(event.returnValues.tokenId))
-    const expirationTimeDB = (Date.parse(createdEvent?.date.toString() || '') / 1000).toString()
-
-    expect(createdEvent).to.be.instanceOf(DomainExpiration)
-    expect(expirationTimeDB).to.be.eql(event.returnValues.expirationTime)
-  })
-
   it('should update Expiration Date', async () => {
     const event = eventMock({
       event: 'ExpirationChanged',
@@ -189,26 +151,22 @@ describe('Domain events', () => {
     // Setup expiration date
     await processor(event)
 
-    const createdEvent = await DomainExpiration.findByPk(Utils.numberToHex(event.returnValues.tokenId))
-    const expirationTimeDB = (Date.parse(createdEvent?.date.toString() || '') / 1000).toString()
-
-    expect(createdEvent).to.be.instanceOf(DomainExpiration)
-    expect(expirationTimeDB).to.be.eql(event.returnValues.expirationTime)
-
     // Update expiration date
-    const newExpirationTime = (new Date()).getTime().toString()
+    const expectedExpirationTime = (new Date()).getTime().toString()
     const newEvent = eventMock({
       event: 'ExpirationChanged',
-      returnValues: { tokenId, expirationTime: newExpirationTime }
+      returnValues: { tokenId, expirationTime: expectedExpirationTime }
     })
 
     await processor(newEvent)
 
-    const newCreatedEvent = await DomainExpiration.findByPk(Utils.numberToHex(newEvent.returnValues.tokenId))
-    const newExpirationTimeDB = (Date.parse(newCreatedEvent?.date.toString() || '') / 1000).toString()
-    expect(newCreatedEvent).to.be.instanceOf(DomainExpiration)
-    expect(newExpirationTimeDB).to.be.eql(newEvent.returnValues.expirationTime)
-    expect(domainServiceEmitSpy).to.have.been.calledWith('patched')
+    const actualDomain = await Domain.findByPk(Utils.numberToHex(tokenId))
+    const actualExpirationTime = ((actualDomain?.expirationDate || -1) / 1000).toString()
+    expect(actualDomain).to.be.instanceOf(Domain)
+    expect(actualExpirationTime).to.be.eql(expectedExpirationTime)
+
+    // User facing events emition should be tested separately ->
+    // expect(domainServiceEmitSpy).to.have.been.calledWith('patched')
   })
 
   it('should create new Domain with Name', async () => {
@@ -308,7 +266,7 @@ describe('Offer events', () => {
     sequelize = sequelizeFactory()
     eth = Substitute.for<Eth>()
     offersService = new RnsBaseService({ Model: DomainOffer })
-    processor = eventProcessor(logger, eth, { offers: offersService } as RnsServices)
+    processor = eventProcessorFactory(logger, eth, { offers: offersService } as RnsServices)
     offersServiceEmitSpy = sinon.spy()
     offersService.emit = offersServiceEmitSpy
   })
@@ -530,7 +488,7 @@ describe('Sold events', () => {
     offersService = new RnsBaseService({ Model: DomainOffer })
     domainService = new RnsBaseService({ Model: Domain })
 
-    processor = eventProcessor(logger, eth, { sold: soldService, offers: offersService, domains: domainService } as RnsServices)
+    processor = eventProcessorFactory(logger, eth, { sold: soldService, offers: offersService, domains: domainService } as RnsServices)
     soldServiceEmitSpy = sinon.spy()
     soldService.emit = soldServiceEmitSpy
     offersServiceEmitSpy = sinon.spy()
