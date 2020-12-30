@@ -129,7 +129,7 @@
     "sinon": "^9.0.3",
     "sinon-chai": "^3.5.0",
     "socket.io-client": "^2.3.1",
-    "tasegir": "^1.8.0"
+    "tasegir": "^1.9.0"
   },
   "engines": {
     "node": ">=10.0.0",
