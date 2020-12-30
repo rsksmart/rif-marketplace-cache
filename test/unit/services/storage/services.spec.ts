@@ -27,6 +27,7 @@ describe('Services', () => {
       await Agreement.bulkCreate([
         { agreementReference: '11', size: '1024', offerId: 'provider1' },
         { agreementReference: '12', size: '1024', offerId: 'provider1' },
+        { agreementReference: '13', size: '1024', offerId: 'provider1', isActive: false },
         { agreementReference: '31', size: '1024', offerId: 'provider3' }
       ])
 

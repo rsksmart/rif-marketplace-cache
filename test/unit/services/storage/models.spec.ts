@@ -13,9 +13,6 @@ import Offer, {
 import StakeModel from '../../../../src/services/storage/models/stake.model'
 import BillingPlan from '../../../../src/services/storage/models/billing-plan.model'
 import Rate from '../../../../src/rates/rates.model'
-import {
-  AvailableCapacityService
-} from '../../../../src/services/storage/services'
 
 chai.use(sinonChai)
 const expect = chai.expect
@@ -344,10 +341,11 @@ describe('Models', () => {
       ])
       await Agreement.bulkCreate([
         { agreementReference: '123', size: 10, offerId: 'provider1' },
-        { agreementReference: '1234', size: 10, offerId: 'provider1' }
+        { agreementReference: '1234', size: 10, offerId: 'provider1' },
+        { agreementReference: '12345', size: 10, offerId: 'provider1', isActive: false }
       ])
 
-      expect((await Agreement.findAll()).length).to.be.eql(2)
+      expect((await Agreement.findAll()).length).to.be.eql(3)
 
       // Prepare aggregation query
       const aggregateAvailableCapacityQuery = getAvailableCapacityQuery()
