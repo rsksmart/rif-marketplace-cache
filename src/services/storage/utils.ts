@@ -60,7 +60,11 @@ export function getMinMaxAvailableCapacityQuery (minMax: MinMax): string {
     FROM
       "storage_offer"
     LEFT OUTER JOIN
-      "storage_agreement" as "storage_agreement" ON "storage_offer"."provider" = "storage_agreement"."offerId"
+      "storage_agreement" as "storage_agreement" ON (
+        "storage_offer"."provider" = "storage_agreement"."offerId" 
+        AND
+        "storage_agreement".isActive
+      )
     GROUP BY provider
     ORDER BY availableCapacity ${minMax === 1 ? 'DESC' : 'ASC'}
     LIMIT 1
