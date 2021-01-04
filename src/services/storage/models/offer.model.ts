@@ -123,7 +123,10 @@ export function getAvailableCapacityQuery (): Literal {
         FROM
           "storage_agreement"
         WHERE
-          "storage_agreement"."offerId" = provider)
+          "storage_agreement"."offerId" = provider
+          AND
+          "storage_agreement"."isActive"
+          )
     , 0) as STRING
   ) 
   `)
