@@ -5,7 +5,7 @@ RUN apk add --no-cache build-base git python
 
 WORKDIR /usr/src/app
 COPY package*.json ./
-RUN npm ci --only=production && npm install tasegir
+RUN npm ci --only=production && npm install tasegir@1.8.0
 COPY . ./
 RUN npx tasegir compile
 
