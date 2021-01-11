@@ -2,7 +2,6 @@ import { Service } from 'feathers-sequelize'
 
 import { CommsMessage, CommsPayloads, MessageHandler } from '../definitions'
 import Offer from '../services/storage/models/offer.model'
-import { HookContext } from '@feathersjs/feathers'
 import { disallow } from 'feathers-hooks-common'
 
 type CacheIncomingNotification = { signature: Buffer, offerId: string, publicKey: string }
@@ -63,4 +62,3 @@ export const CommsServiceHook = {
     remove: []
   }
 }
-

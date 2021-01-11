@@ -85,6 +85,11 @@ export interface DbBackUpConfig {
   path: string
 }
 
+export enum CommsStrategy {
+  Libp2p = 'libp2p',
+  API = 'api'
+}
+
 export interface Config {
   host?: string
   port?: number
@@ -106,6 +111,7 @@ export interface Config {
   }
 
   comms?: {
+    strategy?: CommsStrategy
     libp2p?: Libp2pOptions
     countOfMessagesPersistedPerAgreement?: number
   }
