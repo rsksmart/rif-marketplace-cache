@@ -29,6 +29,7 @@ export function isSupportedServices (value: any): value is SupportedServices {
 
 export enum ServiceAddresses {
   NOTIFICATION = '/notification',
+  COMMS = '/comms',
   RNS_DOMAINS = '/rns/v0/domains',
   RNS_SOLD = '/rns/v0/sold',
   RNS_OFFERS = '/rns/v0/offers',

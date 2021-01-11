@@ -15,6 +15,8 @@ import {
 import { errorHandler } from '../utils'
 import { messageHandler } from './handlers'
 import { STORAGE_MANAGER } from '../services/storage'
+import { CommsService, CommsServiceHook } from './service'
+import NotificationModel from '../notification/notification.model'
 
 const logger = loggingFactory('communication')
 
@@ -86,6 +88,10 @@ export async function initComms (app: Application): Promise<void> {
   app.set('libp2p', await initLibp2p())
   const notificationService = app.service(ServiceAddresses.NOTIFICATION)
   _messageHandler = messageHandler(notificationService)
+  // Init comms service
+  app.use(ServiceAddresses.COMMS, new CommsService({ Model: NotificationModel }, _messageHandler))
+  const commsService = app.service(ServiceAddresses.COMMS)
+  commsService.hook(CommsServiceHook)
 }
 
 export async function stop (app: Application): Promise<void> {
