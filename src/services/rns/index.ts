@@ -153,7 +153,7 @@ const rns: CachedService = {
     const rnsReverseEventsEmitter = getEventsEmitterForService(REVERSE, web3events, rnsReverseContractAbi.abi as AbiItem[])
     const rnsPlacementsEventsEmitter = getEventsEmitterForService(PLACEMENT, web3events, simplePlacementsContractAbi.abi as AbiItem[])
 
-    const groupOptions = config.get<GroupEmitterOptions>('rns.groupEmitter')
+    const groupOptions = Object.assign({}, config.get<GroupEmitterOptions>('rns.groupEmitter'))
     const rnsGroupEmitter = web3events.groupEventsEmitters([rnsOwnerEventsEmitter, rnsReverseEventsEmitter, rnsPlacementsEventsEmitter], groupOptions)
 
     const rnsEventParser = eventTransformerFactory(rnsContractAbi.abi as AbiItem[], rnsReverseContractAbi.abi as AbiItem[], simplePlacementsContractAbi.abi as AbiItem[])
