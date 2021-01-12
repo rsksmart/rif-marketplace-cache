@@ -3,6 +3,7 @@ import { disallow, discardQuery } from 'feathers-hooks-common'
 import { Op } from 'sequelize'
 import { numberToHex, sha3 } from 'web3-utils'
 import Domain from '../models/domain.model'
+import DomainExpiration from '../models/expiration.model'
 
 const paginate = (context: HookContext): HookContext => {
   const paginateOverride = context.params.query?.paginate
@@ -25,7 +26,10 @@ export default {
           scope: 'approved',
           include: {
             model: Domain,
-            attributes: ['expirationDate']
+            include: {
+              model: DomainExpiration,
+              attributes: ['date']
+            }
           }
         }
 
@@ -48,7 +52,10 @@ export default {
           },
           include: {
             model: Domain,
-            attributes: ['expirationDate']
+            include: {
+              model: DomainExpiration,
+              attributes: ['date']
+            }
           }
         }
         const { params: { sequelize: { include } } } = context
