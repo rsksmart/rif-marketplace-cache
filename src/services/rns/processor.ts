@@ -9,6 +9,7 @@ import { getBlockDate } from '../../blockchain/utils'
 import { Logger } from '../../definitions'
 import DomainOffer from './models/domain-offer.model'
 import Domain from './models/domain.model'
+import DomainExpiration from './models/expiration.model'
 import DomainOwner from './models/owner.model'
 import Transfer from './models/transfer.model'
 import SoldDomain from './models/sold-domain.model'
@@ -167,7 +168,7 @@ async function transferHandler (logger: Logger, eventData: EventLog, eth: Eth, s
   }
 }
 
-async function expirationChangedHandler (logger: Logger, eventData: EventLog, _: Eth, { domains: domainsService }: RnsServices): Promise<void> {
+async function expirationChangedHandler (logger: Logger, eventData: EventLog, _: Eth, services: RnsServices): Promise<void> {
   // event ExpirationChanged(uint256 tokenId, uint expirationTime);
 
   const tokenId = Utils.numberToHex(eventData.returnValues.tokenId)
@@ -182,8 +183,24 @@ async function expirationChangedHandler (logger: Logger, eventData: EventLog, _:
 
   const expirationDate = parseInt(normalizedTimestamp) * 1000
 
-  await domainsService.patch(tokenId, { expirationDate })
-  logger.info(`ExpirationChange event: expiration for domain ${tokenId} patched`)
+  const currentExpiration = await DomainExpiration.findByPk(tokenId)
+  const domainsService = services.domains
+
+  if (currentExpiration) {
+    await DomainExpiration.update({ date: expirationDate }, { where: { tokenId } })
+
+    if (domainsService.emit) {
+      domainsService.emit('patched', { tokenId })
+    }
+    logger.info(`ExpirationChange event: DomainExpiration for token ${tokenId} updated`)
+  } else {
+    await Domain.upsert({ tokenId })
+    await DomainExpiration.create({
+      tokenId,
+      date: expirationDate
+    })
+    logger.info(`ExpirationChange event: DomainExpiration for token ${tokenId} created`)
+  }
 }
 
 async function approvalHandler (logger: Logger, eventData: EventLog, eth: Eth, services: RnsServices): Promise<void> {
