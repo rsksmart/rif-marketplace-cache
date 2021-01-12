@@ -15,6 +15,7 @@ import type { ReorgEmitterService, NewBlockEmitterService, ConfirmatorService } 
 import * as storageEvents from '@rsksmart/rif-marketplace-storage/types/web3-v1-contracts/StorageManager'
 import * as stakingEvents from '@rsksmart/rif-marketplace-storage/types/web3-v1-contracts/Staking'
 import { NotificationService } from './notification'
+import { CommsService } from './communication/service'
 
 export enum SupportedServices {
   STORAGE = 'storage',
@@ -57,6 +58,7 @@ interface ServiceTypes {
   [ServiceAddresses.RNS_OFFERS]: RnsBaseService & ServiceAddons<any>
   [ServiceAddresses.CONFIRMATIONS]: ConfirmatorService & ServiceAddons<any>
   [ServiceAddresses.NOTIFICATION]: NotificationService & ServiceAddons<any>
+  [ServiceAddresses.COMMS]: CommsService & ServiceAddons<any>
   [ServiceAddresses.NEW_BLOCK_EMITTER]: NewBlockEmitterService & ServiceAddons<any>
   [ServiceAddresses.REORG_EMITTER]: ReorgEmitterService & ServiceAddons<any>
 }

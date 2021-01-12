@@ -3,19 +3,23 @@ import { Service } from 'feathers-sequelize'
 import { CommsMessage, CommsPayloads, MessageHandler } from '../definitions'
 import Offer from '../services/storage/models/offer.model'
 import { disallow } from 'feathers-hooks-common'
+import { loggingFactory } from '../logger'
 
-type CacheIncomingNotification = { signature: Buffer, offerId: string, publicKey: string }
+type CacheIncomingNotification = { signature: Buffer, offerId: string, publicKey: string, peerId: string }
+
+const logger = loggingFactory('comms:service')
 
 export class CommsService extends Service {
   emit?: Function
   messageHandler: MessageHandler
 
-  constructor (config, messageHandler: MessageHandler) {
+  constructor (config: any, messageHandler: MessageHandler) {
     super(config)
     this.messageHandler = messageHandler
   }
 
-  async create (message: CacheIncomingNotification & CommsMessage<CommsPayloads>): Promise<void> {
+  async create (message: CacheIncomingNotification & CommsMessage<CommsPayloads>): Promise<boolean> {
+    logger.debug('Receive message: ', message)
     const { offerId, peerId } = message
     const offer = await Offer.findOne({ where: { provider: message.offerId } })
 

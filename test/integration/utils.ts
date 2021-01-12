@@ -1,6 +1,5 @@
 import config from 'config'
 import { promises as fs } from 'fs'
-import path from 'path'
 import sinon from 'sinon'
 import { reset as resetStore } from 'sequelize-store'
 import { Sequelize } from 'sequelize'
@@ -26,6 +25,7 @@ import { ethFactory } from '../../src/blockchain'
 import { sleep } from '../utils'
 import DbMigration from '../../src/migrations'
 import { resolvePath } from '../../src/utils'
+import * as http from 'http'
 
 export const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000'
 export const ZERO_BYTES_32 = '0x0000000000000000000000000000000000000000000000000000000000000000'
@@ -77,6 +77,7 @@ export class TestingApp {
   public storageContract: Contract | undefined
   public stakingContract: Contract | undefined
   public eth: Eth | undefined
+  public server: http.Server | undefined
   public sequelize: Sequelize | undefined
   public accounts: string[] = []
   public nextAccountIndex = 0
@@ -142,10 +143,10 @@ export class TestingApp {
 
     // Start server
     const port = config.get('port')
-    const server = this.app.app.listen(port)
+    this.server = this.app.app.listen(port)
     this.logger.info('Cache service started')
 
-    server.on('listening', () =>
+    this.server.on('listening', () =>
       this.logger.info(`Server started on port ${port}`)
     )
 
@@ -156,8 +157,9 @@ export class TestingApp {
 
   async stop (): Promise<void> {
     if (this.app) {
-      this.app.stop()
+      await this.app.stop()
     }
+    this.server?.close()
 
     await this.sequelize?.close()
     resetStore()
@@ -353,4 +355,24 @@ export function getFeatherClient () {
   app.configure(socketio(socket))
 
   return app
+}
+
+export const generateMsg = (peerId: string) => {
+  const encodedPeerId = encodeHash(peerId).map(el => el.replace('0x', ''))
+  return prefixArray(encodedPeerId, '01', 64)
+    .map(el => `0x${el}`)
+}
+
+export function randomStr (length = 32): string {
+  let result = ''
+  const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
+  const charactersLength = characters.length
+  for (let i = 0; i < length; i++) {
+    result += characters.charAt(Math.floor(Math.random() * charactersLength))
+  }
+  return result
+}
+
+export function generateCID (): string[] {
+  return [asciiToHex(`/ipfs/${randomStr(26)}`)]
 }
