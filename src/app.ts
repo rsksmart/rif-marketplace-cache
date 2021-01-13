@@ -113,7 +113,7 @@ export async function appFactory (options: AppOptions): Promise<AppReturns> {
   // Log errors in hooks
   app.hooks({
     error (context) {
-      logger.error(`Error in '${context.path}' service method '${context.method}'`, context.error.stack)
+      logger.error(`Error in '${context.path}' service method '${context.method}'`, { stack: context.error.stack })
     }
   })
 

@@ -1,7 +1,9 @@
 import '@feathersjs/transport-commons'
 import { Application, ServiceAddresses } from '../definitions'
+import { loggingFactory } from '../logger'
 
 const CHANNEL = 'notifications'
+const logger = loggingFactory('notification:channel')
 
 function filterByOwner (app: Application, data: any) {
   const accounts: string[] = data.accounts
@@ -18,6 +20,7 @@ export default function (app: Application) {
     return
   }
   app.on('connection', (connection: any) => {
+    logger.debug('New connection: ', connection)
     app.channel(CHANNEL).join(connection)
   })
   app.service(ServiceAddresses.NOTIFICATION).publish((data) => {

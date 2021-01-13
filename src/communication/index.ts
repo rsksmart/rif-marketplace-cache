@@ -1,5 +1,5 @@
 import config from 'config'
-import { createLibP2P, Room, Message } from '@rsksmart/rif-communications-pubsub'
+import { createLibP2P, Message, Room } from '@rsksmart/rif-communications-pubsub'
 import type Libp2p from 'libp2p'
 import PeerId from 'peer-id'
 
@@ -8,7 +8,8 @@ import Offer from '../services/storage/models/offer.model'
 import {
   Application,
   CommsMessage,
-  CommsPayloads, CommsStrategy,
+  CommsPayloads,
+  CommsStrategy,
   MessageHandler,
   ServiceAddresses
 } from '../definitions'
@@ -40,6 +41,10 @@ export function leaveRoom (topic: string): void {
 }
 
 export function subscribeForOffer (libp2p: Libp2p, offer: Offer): void {
+  if (config.get<CommsStrategy>('comms.strategy') === CommsStrategy.API) {
+    return
+  }
+
   const topic = getRoomTopic(offer.provider)
 
   if (rooms.has(topic)) {
