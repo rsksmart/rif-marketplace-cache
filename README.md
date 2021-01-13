@@ -15,7 +15,7 @@
 
 ## Lead Maintainer
 
-[Adam Uhlíř](https://github.com/AuHau)
+[Nazar Duchak](https://github.com/nduchak)
 
 See what "Lead Maintainer" means [here](https://github.com/rsksmart/lead-maintainer).
 
