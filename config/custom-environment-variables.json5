@@ -5,6 +5,7 @@
   dataDir: 'RIFM_DATA_DIR',
 
   comms: {
+    strategy: 'RIFM_COMMS_STRATEGY',
     libp2p: {
       addresses: {
         listen: {

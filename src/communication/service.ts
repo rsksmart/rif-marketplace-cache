@@ -6,7 +6,13 @@ import Offer from '../services/storage/models/offer.model'
 import { disallow } from 'feathers-hooks-common'
 import { loggingFactory } from '../logger'
 
-type CacheIncomingNotification = { signature: Buffer, offerId: string, publicKey: string, data: CommsMessage<CommsPayloads> }
+type CacheIncomingNotification = {
+  signature: Buffer
+  offerId: string
+  publicKey: string
+  contractAddress: string
+  data: CommsMessage<CommsPayloads>
+}
 
 const logger = loggingFactory('comms:service')
 
