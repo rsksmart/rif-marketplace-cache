@@ -11,13 +11,10 @@ declare module '../definitions' {
 class AnonymousStrategy extends AuthenticationBaseStrategy {
   authenticate (authentication: AuthenticationRequest, params: Params) {
     const { connection } = params
-    const channels: [] = authentication.channels
 
     if (connection) {
       connection.ownerAddress = authentication.ownerAddress.toLowerCase()
-      channels.forEach(channel => {
-        this.app?.channel(channel).join(connection)
-      })
+      this.app?.channel(`user/${authentication.ownerAddress.toLowerCase()}`).join(connection)
     }
 
     return Promise.resolve({ anonymous: true })
