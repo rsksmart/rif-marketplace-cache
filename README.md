@@ -325,6 +325,7 @@ file and load that either using the `--config` CLI parameter or using environmen
  - `RIFM_DB` (string): database connection URI
  - `RIFM_PROVIDER` (string): blockchain connection URI
  - RIF Communication settings:
+    - `RIFM_COMMS_STRATEGY` (`api`, `libp2p`) - Defines the strategy for communication
     - `RIFM_COMMS_LISTEN` (`array`) - Defines an array of multiaddress that the Pinner's libp2p node will listen on. Same as libp2p config's [`address.listen`](https://github.com/libp2p/js-libp2p/blob/master/doc/CONFIGURATION.md#customizing-libp2p) property.
     - `RIFM_COMMS_BOOTSTRAP_ENABLED` (`true`/`false`) - Defines if bootstrap should be used. Same as libp2p config's [`bootstrap.enabled`](https://github.com/libp2p/js-libp2p-bootstrap) property.
     - `RIFM_COMMS_BOOTSTRAP_LIST` (`array`) - Defines an array of multiaddress that the Pinner's libp2p node will use to bootstrap its connectivity. Same as libp2p config's [`bootstrap.list`](https://github.com/libp2p/js-libp2p-bootstrap) property.

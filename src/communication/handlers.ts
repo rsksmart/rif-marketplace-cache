@@ -118,16 +118,16 @@ export function messageHandler (
       return
     }
     const notificationData = buildNotification(agreement, message)
-    logger.debug('Build Notification: ', notificationData)
 
     if (!notificationData) {
       return
     }
+    logger.debug('Build Notification: ', notificationData)
 
-    if (!notificationService) {
-      await NotificationModel.create(notificationData)
-    } else {
-      await notificationService.create(notificationData)
+    await NotificationModel.create(notificationData)
+
+    if (notificationService && notificationService.emit) {
+      notificationService.emit('created', notificationData)
     }
 
     // GC storage notifications

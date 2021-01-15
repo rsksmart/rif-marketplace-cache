@@ -2,12 +2,18 @@ import config from 'config'
 import chai from 'chai'
 import sinonChai from 'sinon-chai'
 import BigNumber from 'bignumber.js'
-import { asciiToHex, hexToAscii } from 'web3-utils'
+import { hexToAscii } from 'web3-utils'
 import PeerId, { JSONPeerId } from 'peer-id'
 import { Room } from '@rsksmart/rif-communications-pubsub'
 import Libp2p from 'libp2p'
 
-import { encodeHash, getFeatherClient, prefixArray, TestingApp, ZERO_ADDRESS } from '../../utils'
+import {
+  generateCID,
+  generateMsg,
+  getFeatherClient,
+  TestingApp,
+  ZERO_ADDRESS
+} from '../../utils'
 import { createLibp2pRoom, sleep, spawnLibp2p } from '../../../utils'
 import Offer from '../../../../src/services/storage/models/offer.model'
 import BillingPlan from '../../../../src/services/storage/models/billing-plan.model'
@@ -20,26 +26,6 @@ import { WEI } from '../../../../src/services/storage/utils'
 
 chai.use(sinonChai)
 const expect = chai.expect
-
-const generateMsg = (peerId: string) => {
-  const encodedPeerId = encodeHash(peerId).map(el => el.replace('0x', ''))
-  return prefixArray(encodedPeerId, '01', 64)
-    .map(el => `0x${el}`)
-}
-
-function randomStr (length = 32): string {
-  let result = ''
-  const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
-  const charactersLength = characters.length
-  for (let i = 0; i < length; i++) {
-    result += characters.charAt(Math.floor(Math.random() * charactersLength))
-  }
-  return result
-}
-
-function generateCID (): string[] {
-  return [asciiToHex(`/ipfs/${randomStr(26)}`)]
-}
 
 describe('Storage service', function () {
   this.timeout(60000)

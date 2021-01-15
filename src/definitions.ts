@@ -15,6 +15,7 @@ import type { ReorgEmitterService, NewBlockEmitterService, ConfirmatorService } 
 import * as storageEvents from '@rsksmart/rif-marketplace-storage/types/web3-v1-contracts/StorageManager'
 import * as stakingEvents from '@rsksmart/rif-marketplace-storage/types/web3-v1-contracts/Staking'
 import { NotificationService } from './notification'
+import { CommsService } from './communication/service'
 
 export enum SupportedServices {
   STORAGE = 'storage',
@@ -29,6 +30,7 @@ export function isSupportedServices (value: any): value is SupportedServices {
 
 export enum ServiceAddresses {
   NOTIFICATION = '/notification',
+  COMMS = '/comms',
   RNS_DOMAINS = '/rns/v0/domains',
   RNS_SOLD = '/rns/v0/sold',
   RNS_OFFERS = '/rns/v0/offers',
@@ -56,6 +58,7 @@ interface ServiceTypes {
   [ServiceAddresses.RNS_OFFERS]: RnsBaseService & ServiceAddons<any>
   [ServiceAddresses.CONFIRMATIONS]: ConfirmatorService & ServiceAddons<any>
   [ServiceAddresses.NOTIFICATION]: NotificationService & ServiceAddons<any>
+  [ServiceAddresses.COMMS]: CommsService & ServiceAddons<any>
   [ServiceAddresses.NEW_BLOCK_EMITTER]: NewBlockEmitterService & ServiceAddons<any>
   [ServiceAddresses.REORG_EMITTER]: ReorgEmitterService & ServiceAddons<any>
 }
@@ -84,6 +87,11 @@ export interface DbBackUpConfig {
   path: string
 }
 
+export enum CommsStrategy {
+  Libp2p = 'libp2p',
+  API = 'api'
+}
+
 export interface Config {
   host?: string
   port?: number
@@ -105,6 +113,7 @@ export interface Config {
   }
 
   comms?: {
+    strategy?: CommsStrategy
     libp2p?: Libp2pOptions
     countOfMessagesPersistedPerAgreement?: number
   }

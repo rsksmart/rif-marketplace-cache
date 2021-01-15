@@ -1,5 +1,5 @@
 import config from 'config'
-import { createLibP2P, Room, Message } from '@rsksmart/rif-communications-pubsub'
+import { createLibP2P, Message, Room } from '@rsksmart/rif-communications-pubsub'
 import type Libp2p from 'libp2p'
 import PeerId from 'peer-id'
 
@@ -9,12 +9,15 @@ import {
   Application,
   CommsMessage,
   CommsPayloads,
+  CommsStrategy,
   MessageHandler,
   ServiceAddresses
 } from '../definitions'
 import { errorHandler } from '../utils'
 import { messageHandler } from './handlers'
 import { STORAGE_MANAGER } from '../services/storage'
+import { CommsService, CommsServiceHook } from './service'
+import NotificationModel from '../notification/notification.model'
 
 const logger = loggingFactory('communication')
 
@@ -38,6 +41,10 @@ export function leaveRoom (topic: string): void {
 }
 
 export function subscribeForOffer (libp2p: Libp2p, offer: Offer): void {
+  if (config.get<CommsStrategy>('comms.strategy') === CommsStrategy.API) {
+    return
+  }
+
   const topic = getRoomTopic(offer.provider)
 
   if (rooms.has(topic)) {
@@ -80,12 +87,28 @@ export async function subscribeForOffers (libp2p: Libp2p): Promise<void> {
 }
 
 export async function initComms (app: Application): Promise<void> {
-  if (app.get('libp2p')) {
-    throw new Error('libp2p node already spawned')
-  }
-  app.set('libp2p', await initLibp2p())
+  const strategy = config.get<CommsStrategy>('comms.strategy')
+
   const notificationService = app.service(ServiceAddresses.NOTIFICATION)
   _messageHandler = messageHandler(notificationService)
+
+  switch (strategy.toLowerCase()) {
+    case CommsStrategy.Libp2p:
+      logger.info('Init comms libp2p strategy')
+
+      if (app.get('libp2p')) {
+        throw new Error('libp2p node already spawned')
+      }
+      app.set('libp2p', await initLibp2p())
+      break
+    case CommsStrategy.API:
+      logger.info('Init comms API strategy')
+      app.use(ServiceAddresses.COMMS, new CommsService({ Model: NotificationModel }, _messageHandler))
+      app.service(ServiceAddresses.COMMS).hooks(CommsServiceHook)
+      break
+    default:
+      throw new Error('Comms strategy should be defined in config')
+  }
 }
 
 export async function stop (app: Application): Promise<void> {

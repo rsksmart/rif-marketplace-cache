@@ -1,16 +1,9 @@
 import '@feathersjs/transport-commons'
 import { Application, ServiceAddresses } from '../definitions'
+import { loggingFactory } from '../logger'
 
 const CHANNEL = 'notifications'
-
-function filterByOwner (app: Application, data: any) {
-  const accounts: string[] = data.accounts
-  return app.channel(CHANNEL)
-    .filter(connection => {
-      const connectedAccount: string = connection.ownerAddress.toLowerCase()
-      return Boolean(accounts && accounts.includes(connectedAccount))
-    })
-}
+const logger = loggingFactory('notification:channel')
 
 export default function (app: Application) {
   if (typeof app.channel !== 'function') {
@@ -18,9 +11,10 @@ export default function (app: Application) {
     return
   }
   app.on('connection', (connection: any) => {
+    logger.info('New connection: ', connection)
     app.channel(CHANNEL).join(connection)
   })
   app.service(ServiceAddresses.NOTIFICATION).publish((data) => {
-    return filterByOwner(app, data)
+    return data.accounts.map((acc: string) => app.channel(`user/${acc}`))
   })
 }
