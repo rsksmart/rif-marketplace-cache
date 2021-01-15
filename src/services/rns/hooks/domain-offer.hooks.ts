@@ -58,7 +58,8 @@ export default {
             }
           }
         }
-        const { params: { sequelize: { include } } } = context
+        const { params: { sequelize } } = context
+        const { include } = sequelize
         const domain = context.params.query?.domain
 
         if (include && domain) {
@@ -75,6 +76,24 @@ export default {
           }
         }
 
+        const sort = context.params.query?.$sort
+
+        if (sort && sort.domain) {
+          const { domain, ...$sort } = sort
+          context.params.query = {
+            ...context.params.query,
+            $sort
+          }
+
+          sequelize.order = [
+            [
+              {
+                model: Domain,
+                as: 'domain'
+              }, 'name', domain.name > 0 ? 'ASC' : 'DESC'
+            ]
+          ]
+        }
         return context
       },
       discardQuery('domain')
