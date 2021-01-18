@@ -33,7 +33,7 @@ describe('Storage service', function () {
   let encodedMessage: string[]
 
   before(async () => {
-    // @ts-ignore
+    // @ts-ignore: not typed
     config.rns.enabled = false
     app = new TestingApp()
     await app.initAndStart()
@@ -41,7 +41,7 @@ describe('Storage service', function () {
   })
   after(async () => {
     await app.stop()
-    // @ts-ignore
+    // @ts-ignore: not typed
     config.rns.enabled = true
   })
   describe('Storage', () => {

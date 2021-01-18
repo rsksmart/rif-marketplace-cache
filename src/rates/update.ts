@@ -63,7 +63,7 @@ export async function updater (): Promise<void> {
           throw Error('Unsupported fiat')
         }
 
-        // @ts-ignore
+        // @ts-ignore: not typed
         DbRate[fiat] = parseFloat(price)
       }
 

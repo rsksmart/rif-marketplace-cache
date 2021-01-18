@@ -75,7 +75,7 @@ export function subscribeForOffer (libp2p: Libp2p, offer: Offer): void {
 }
 
 export async function initLibp2p (): Promise<Libp2p> {
-  const libp2pConf = config.get<object>('comms.libp2p')
+  const libp2pConf = config.get<any>('comms.libp2p')
   logger.info('Spawn libp2p node')
   return createLibP2P({ ...libp2pConf, peerId: await PeerId.create() })
 }

@@ -29,7 +29,7 @@ export function sequelizeFactory (): Sequelize {
       return filename.substring(0, filename.indexOf('.model')) === member.toLowerCase()
     },
     logging: (msg) => logger.debug(formatLogs(msg)),
-    // @ts-ignore
+    // @ts-ignore: Not typed
     transactionType: 'IMMEDIATE'
   }
 

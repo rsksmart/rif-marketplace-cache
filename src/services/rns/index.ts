@@ -43,13 +43,13 @@ const logger = loggingFactory('rns')
 const precacheLogger = loggingFactory('rns:precache:processor')
 
 export class RnsBaseService extends Service {
-  emit?: Function
+  emit?: (...args: any[]) => void
 }
 
 export interface RnsServices {
-  domains: RnsBaseService & { emit?: Function }
-  sold: RnsBaseService & { emit?: Function }
-  offers: RnsBaseService & { emit?: Function }
+  domains: RnsBaseService & { emit?: (...args: any[]) => void }
+  sold: RnsBaseService & { emit?: (...args: any[]) => void }
+  offers: RnsBaseService & { emit?: (...args: any[]) => void }
 }
 
 const PLACEMENT = 'rns.placement'
@@ -159,7 +159,7 @@ const rns: CachedService = {
     const rnsEventParser = eventTransformerFactory(rnsContractAbi.abi as AbiItem[], rnsReverseContractAbi.abi as AbiItem[], simplePlacementsContractAbi.abi as AbiItem[])
 
     rnsGroupEmitter.on('newEvent', errorHandler(eventProcessor(loggingFactory('rns.owner:processor'), eth, services, rnsEventParser), logger))
-    rnsGroupEmitter.on('error', (e: NamespacedEvent<object>) => {
+    rnsGroupEmitter.on('error', (e) => {
       logger.error(`There was unknown error in Events Emitter for ${e.name}! ${e.data}`)
     })
     rnsGroupEmitter.on('newConfirmation', (data: NamespacedEvent<NewConfirmationEvent>) => confirmationService.emit('newConfirmation', data.data))

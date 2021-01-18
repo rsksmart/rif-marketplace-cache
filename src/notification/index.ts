@@ -6,7 +6,7 @@ import notificationChannels from './notification.channels'
 import NotificationModel from './notification.model'
 
 export class NotificationService extends Service {
-  emit?: Function
+  emit?: (...args: any[]) => void
 }
 
 export default function (app: Application): void {

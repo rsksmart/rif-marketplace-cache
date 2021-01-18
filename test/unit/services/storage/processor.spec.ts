@@ -290,7 +290,7 @@ describe('Storage services: Events Processor', () => {
     let agreementServiceEmitSpy: sinon.SinonSpy
     let offer: Offer
     let plan: BillingPlan
-    let agreementData: object
+    let agreementData: Record<string, unknown>
     const token = '0x0000'
     const billingPeriod = 99
     const size = 100
@@ -422,7 +422,7 @@ describe('Storage services: Events Processor', () => {
         })
 
         expect(agreementAfterUpdate?.isActive).to.be.eql(false)
-        expect(agreementServiceEmitSpy).to.have.been.calledOnceWith('updated', wrapEvent('AgreementStopped', agreementAfterUpdate?.toJSON() as object))
+        expect(agreementServiceEmitSpy).to.have.been.calledOnceWith('updated', wrapEvent('AgreementStopped', agreementAfterUpdate?.toJSON() as Record<string, unknown>))
       })
     })
 
@@ -452,7 +452,7 @@ describe('Storage services: Events Processor', () => {
         })
 
         expect(agreementAfterUpdate?.availableFunds).to.be.eql(agreement.availableFunds.plus(event.returnValues.amount))
-        expect(agreementServiceEmitSpy).to.have.been.calledOnceWith('updated', wrapEvent('AgreementFundsDeposited', agreementAfterUpdate?.toJSON() as object))
+        expect(agreementServiceEmitSpy).to.have.been.calledOnceWith('updated', wrapEvent('AgreementFundsDeposited', agreementAfterUpdate?.toJSON() as Record<string, unknown>))
       })
     })
 
@@ -482,7 +482,7 @@ describe('Storage services: Events Processor', () => {
         })
 
         expect(agreementAfterUpdate?.availableFunds).to.be.eql(agreement.availableFunds.minus(event.returnValues.amount))
-        expect(agreementServiceEmitSpy).to.have.been.calledOnceWith('updated', wrapEvent('AgreementFundsWithdrawn', agreementAfterUpdate?.toJSON() as object))
+        expect(agreementServiceEmitSpy).to.have.been.calledOnceWith('updated', wrapEvent('AgreementFundsWithdrawn', agreementAfterUpdate?.toJSON() as Record<string, unknown>))
       })
     })
 
@@ -516,7 +516,7 @@ describe('Storage services: Events Processor', () => {
 
         expect(agreementAfterUpdate?.availableFunds).to.be.eql(agreement.availableFunds.minus(event.returnValues.amount))
         expect(agreementAfterUpdate?.lastPayout).to.be.eql(await getBlockDate(eth, blockNumber))
-        expect(agreementServiceEmitSpy).to.have.been.calledOnceWith('updated', wrapEvent('AgreementFundsPayout', agreementAfterUpdate?.toJSON() as object))
+        expect(agreementServiceEmitSpy).to.have.been.calledOnceWith('updated', wrapEvent('AgreementFundsPayout', agreementAfterUpdate?.toJSON() as Record<string, unknown>))
       })
     })
   })

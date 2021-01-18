@@ -6,7 +6,7 @@ import StakeModel, { getStakesForAccount } from './models/stake.model'
 import BigNumber from 'bignumber.js'
 
 export class AvgBillingPriceService extends Service {
-  emit?: Function
+  emit?: (...args: any[]) => void
 
   async get (): Promise<{ min: number, max: number }> {
     if (!config.get('storage.tokens')) {
@@ -24,15 +24,15 @@ export class AvgBillingPriceService extends Service {
 }
 
 export class OfferService extends Service {
-  emit?: Function
+  emit?: (...args: any[]) => void
 }
 
 export class AgreementService extends Service {
-  emit?: Function
+  emit?: (...args: any[]) => void
 }
 
 export class StakeService extends Service {
-  emit?: Function
+  emit?: (...args: any[]) => void
 
   async get (account: string): Promise<{ totalStakedFiat: string, stakes: Array<StakeModel> }> {
     const sequelize = this.Model.sequelize
@@ -47,7 +47,7 @@ export class StakeService extends Service {
 }
 
 export class AvailableCapacityService extends Service {
-  emit?: Function
+  emit?: (...args: any[]) => void
 
   async get (): Promise<{ min: number, max: number }> {
     const sequelize = this.Model.sequelize

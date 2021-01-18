@@ -30,9 +30,9 @@ describe('Communication', function () {
   const sequelize = sequelizeFactory()
 
   before(async () => {
-    // @ts-ignore
+    // @ts-ignore: not typed
     config.notification.retryInterval = 1000
-    // @ts-ignore
+    // @ts-ignore: not typed
     config.notification.retriesCount = 3
 
     const app: { [key: string]: any } = {

@@ -5,9 +5,10 @@ import type { ServiceMethods } from '@feathersjs/feathers'
 import { loggingFactory } from '../logger'
 
 const DEFAULT_DEBOUNCE_TIME = 5000
+type emitFn = (...args: any[]) => void
 
 export class NewBlockEmitterService implements Partial<ServiceMethods<any>> {
-  emit?: Function
+  emit?: emitFn
   events: string[]
 
   constructor () {
@@ -33,7 +34,7 @@ export class ConfirmatorService implements Partial<ServiceMethods<any>> {
     this.events = [NEW_CONFIRMATION_EVENT_NAME, INVALID_CONFIRMATION_EVENT_NAME]
   }
 
-  async find (): Promise<object[]> {
+  async find (): Promise<Record<any, any>[]> {
     const transactionsToBeConfirmed = await Event.findAll({
       attributes: ['blockNumber', 'transactionHash', 'event', 'targetConfirmation'],
       group: ['transactionHash', 'event']
@@ -57,7 +58,7 @@ export class ReorgEmitterService implements Partial<ServiceMethods<any>> {
   private lastProcessedBlockNumber = 0
   private timeoutStarted = false
   private logger = loggingFactory('blockchain:reorg-service')
-  emit?: Function
+  emit?: emitFn
   events: string[]
 
   constructor (debounceTime?: number) {

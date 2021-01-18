@@ -79,7 +79,7 @@ describe('DB back-up/restore', function () {
     afterEach(() => rmDir(dbBackupDirectory))
 
     it('should throw error if "dbBackUp" not in config', () => {
-      // @ts-ignore
+      // @ts-ignore: not typed
       config.util.extendDeep(config, { dbBackUp: undefined })
 
       expect(config.has('dbBackUp')).to.be.false()
@@ -89,7 +89,7 @@ describe('DB back-up/restore', function () {
         'DB Backup config not exist'
       )
 
-      // @ts-ignore
+      // @ts-ignore: not typed
       config.util.extendDeep(config, configBackUp)
     })
 

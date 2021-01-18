@@ -38,7 +38,7 @@ export function subscribeMock (sequence: Array<Error | BlockHeader>, interval = 
       }
 
       if (sequence[counter] instanceof Error) {
-        // eslint-disable-next-line standard/no-callback-literal
+        // eslint-disable-next-line node/no-callback-literal
         cb(sequence[counter] as Error, undefined)
       } else {
         cb(undefined, sequence[counter] as BlockHeader)
@@ -54,7 +54,7 @@ export function eventMock<T = EventData> (options?: Partial<EventData>): T {
   options = options || {}
 
   for (const [key, value] of Object.entries(options)) {
-    // @ts-ignore
+    // @ts-ignore: not typed
     testEvent[key].returns!(value)
   }
 
@@ -69,7 +69,7 @@ export function blockMock (blockNumber: number, blockHash = '0x123', options: Pa
   const block = Substitute.for<BlockTransactionString>()
 
   Object.entries(options).forEach(([key, value]) => {
-    // @ts-ignore
+    // @ts-ignore: not typed
     block[key].returns!(value)
   })
 
@@ -82,7 +82,7 @@ export function transactionMock (hash: string, input: string, options: Partial<T
   const transaction = Substitute.for<Transaction>()
 
   Object.entries(options).forEach(([key, value]) => {
-    // @ts-ignore
+    // @ts-ignore: not typed
     transaction[key].returns!(value)
   })
 

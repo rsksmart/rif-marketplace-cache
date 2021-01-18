@@ -31,7 +31,7 @@ async function verifyMessage (
 }
 
 export class CommsService extends Service {
-  emit?: Function
+  emit?: (...args: any[]) => void
   messageHandler: MessageHandler
 
   constructor (config: any, messageHandler: MessageHandler) {

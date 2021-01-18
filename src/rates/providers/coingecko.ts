@@ -44,7 +44,6 @@ export async function fetch (fromSymbols: FromSymbols[], toSymbols: ToSymbols[])
   const CoinGeckoClient = new CoinGecko()
   const res = await CoinGeckoClient.simple.price({
     ids: mappedTokens,
-    // eslint-disable-next-line @typescript-eslint/camelcase
     vs_currencies: toSymbols
   })
 

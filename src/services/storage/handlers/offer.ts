@@ -46,7 +46,7 @@ async function updatePrices (offer: Offer, period: number, price: number, tokenA
   }
 }
 
-const handlers: { [key: string]: Function } = {
+const handlers: { [key: string]: (...args: any[]) => any } = {
   async TotalCapacitySet (event: EventLog, offer: Offer, offerService: OfferService): Promise<void> {
     offer.totalCapacity = event.returnValues.capacity
     await offer.save()
@@ -113,7 +113,7 @@ const handler: Handler<StorageOfferEvents, StorageServices> = {
     const provider = event.returnValues.provider
 
     // TODO: Ignored until https://github.com/sequelize/sequelize/pull/11924
-    // @ts-ignore
+    // @ts-ignore: issue ^
     const [offer, created] = await Offer.findOrCreate({ where: { provider }, include: [BillingPlan] })
 
     if (created) {

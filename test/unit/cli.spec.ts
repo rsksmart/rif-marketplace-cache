@@ -96,7 +96,7 @@ describe('CLI', function () {
     })
 
     // Launches the Daemon
-    // @ts-ignore
+    // @ts-ignore: not typed
     StartCommand.run([]).then(() => null, (e) => expect.fail(e))
 
     await sleep(3000)
