@@ -17,6 +17,8 @@ import * as stakingEvents from '@rsksmart/rif-marketplace-storage/types/web3-v1-
 import { NotificationService } from './notification'
 import { CommsService } from './communication/service'
 
+export type EmitFn = (...args: any[]) => void
+
 export enum SupportedServices {
   STORAGE = 'storage',
   RNS = 'rns',

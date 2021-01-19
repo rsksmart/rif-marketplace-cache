@@ -3,12 +3,12 @@ import { Event, INVALID_CONFIRMATION_EVENT_NAME, NEW_CONFIRMATION_EVENT_NAME, NE
 import type { BlockHeader, Eth } from 'web3-eth'
 import type { ServiceMethods } from '@feathersjs/feathers'
 import { loggingFactory } from '../logger'
+import type { EmitFn } from '../definitions'
 
 const DEFAULT_DEBOUNCE_TIME = 5000
-type emitFn = (...args: any[]) => void
 
 export class NewBlockEmitterService implements Partial<ServiceMethods<any>> {
-  emit?: emitFn
+  emit?: EmitFn
   events: string[]
 
   constructor () {
@@ -58,7 +58,7 @@ export class ReorgEmitterService implements Partial<ServiceMethods<any>> {
   private lastProcessedBlockNumber = 0
   private timeoutStarted = false
   private logger = loggingFactory('blockchain:reorg-service')
-  emit?: emitFn
+  emit?: EmitFn
   events: string[]
 
   constructor (debounceTime?: number) {

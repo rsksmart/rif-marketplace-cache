@@ -2,11 +2,13 @@ import { Service } from 'feathers-sequelize'
 import config from 'config'
 import { getAvgMinMaxBillingPriceQuery, getMinMaxAvailableCapacityQuery } from './utils'
 import { QueryTypes } from 'sequelize'
-import StakeModel, { getStakesForAccount } from './models/stake.model'
 import BigNumber from 'bignumber.js'
 
+import type { EmitFn } from '../../definitions'
+import StakeModel, { getStakesForAccount } from './models/stake.model'
+
 export class AvgBillingPriceService extends Service {
-  emit?: (...args: any[]) => void
+  emit?: EmitFn
 
   async get (): Promise<{ min: number, max: number }> {
     if (!config.get('storage.tokens')) {
@@ -24,15 +26,15 @@ export class AvgBillingPriceService extends Service {
 }
 
 export class OfferService extends Service {
-  emit?: (...args: any[]) => void
+  emit?: EmitFn
 }
 
 export class AgreementService extends Service {
-  emit?: (...args: any[]) => void
+  emit?: EmitFn
 }
 
 export class StakeService extends Service {
-  emit?: (...args: any[]) => void
+  emit?: EmitFn
 
   async get (account: string): Promise<{ totalStakedFiat: string, stakes: Array<StakeModel> }> {
     const sequelize = this.Model.sequelize
@@ -47,7 +49,7 @@ export class StakeService extends Service {
 }
 
 export class AvailableCapacityService extends Service {
-  emit?: (...args: any[]) => void
+  emit?: EmitFn
 
   async get (): Promise<{ min: number, max: number }> {
     const sequelize = this.Model.sequelize

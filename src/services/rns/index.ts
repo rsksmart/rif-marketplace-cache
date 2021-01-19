@@ -23,7 +23,7 @@ import {
   reportProgress
 } from '../../blockchain/utils'
 import { ServiceAddresses } from '../../definitions'
-import type { Application, CachedService } from '../../definitions'
+import type { Application, CachedService, EmitFn } from '../../definitions'
 import { loggingFactory } from '../../logger'
 import { errorHandler, waitForReadyApp } from '../../utils'
 import domainOfferHooks from './hooks/domain-offer.hooks'
@@ -43,13 +43,13 @@ const logger = loggingFactory('rns')
 const precacheLogger = loggingFactory('rns:precache:processor')
 
 export class RnsBaseService extends Service {
-  emit?: (...args: any[]) => void
+  emit?: EmitFn
 }
 
 export interface RnsServices {
-  domains: RnsBaseService & { emit?: (...args: any[]) => void }
-  sold: RnsBaseService & { emit?: (...args: any[]) => void }
-  offers: RnsBaseService & { emit?: (...args: any[]) => void }
+  domains: RnsBaseService & { emit?: EmitFn }
+  sold: RnsBaseService & { emit?: EmitFn }
+  offers: RnsBaseService & { emit?: EmitFn }
 }
 
 const PLACEMENT = 'rns.placement'

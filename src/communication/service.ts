@@ -2,6 +2,7 @@ import { Service } from 'feathers-sequelize'
 import PeerId from 'peer-id'
 
 import { CommsMessage, CommsPayloads, MessageHandler } from '../definitions'
+import type { EmitFn } from '../definitions'
 import Offer from '../services/storage/models/offer.model'
 import { disallow } from 'feathers-hooks-common'
 import { loggingFactory } from '../logger'
@@ -31,7 +32,7 @@ async function verifyMessage (
 }
 
 export class CommsService extends Service {
-  emit?: (...args: any[]) => void
+  emit?: EmitFn
   messageHandler: MessageHandler
 
   constructor (config: any, messageHandler: MessageHandler) {
