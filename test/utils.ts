@@ -9,8 +9,8 @@ import { getRoomTopic } from '../src/communication'
 import { loggingFactory } from '../src/logger'
 import PeerId from 'peer-id'
 
-export function sleep<T> (ms: number, ...args: T[]): Promise<T> {
-  return new Promise(resolve => setTimeout(() => resolve(...args), ms))
+export function sleep<T> (ms: number, arg?: T): Promise<T | undefined> {
+  return new Promise(resolve => setTimeout(() => resolve(arg), ms))
 }
 
 export function receiptMock (blockNumber?: number, status = true): TransactionReceipt {
