@@ -8,7 +8,7 @@ import { Handler, StorageEvents } from '../../definitions'
 import { StorageServices } from './index'
 import { EventTransformer } from '../../blockchain/event-transformer'
 
-// @ts-ignore: not typed
+// @ts-ignore: Incompatibility between contract events and web3 events
 const HANDLERS: Handler<StorageEvents, StorageServices>[] = [offer, request, stake]
 
 export default function (services: StorageServices, deps: { eth?: Eth, libp2p?: Libp2p, eventParser?: EventTransformer }) {
