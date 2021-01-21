@@ -13,7 +13,7 @@
 * **rns:** adds migration ([ee0cec4](https://github.com/rsksmart/rif-marketplace-cache/commit/ee0cec4))
 * **rns:** adds sort by domain name ([#495](https://github.com/rsksmart/rif-marketplace-cache/issues/495)) ([6a40f46](https://github.com/rsksmart/rif-marketplace-cache/commit/6a40f46))
 * **rns:** reverts adds migration ([97db7e7](https://github.com/rsksmart/rif-marketplace-cache/commit/97db7e7))
-
+* **notification** add ability to receive notification through API
 
 
 <a name="1.2.1"></a>
