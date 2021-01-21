@@ -63,7 +63,7 @@ export async function updater (): Promise<void> {
           throw Error('Unsupported fiat')
         }
 
-        // @ts-ignore
+        // @ts-ignore: wrong coingeco fetch rate typings
         DbRate[fiat] = parseFloat(price)
       }
 

@@ -23,7 +23,7 @@ import {
   reportProgress
 } from '../../blockchain/utils'
 import { ServiceAddresses } from '../../definitions'
-import type { Application, CachedService } from '../../definitions'
+import type { Application, CachedService, EmitFn } from '../../definitions'
 import { loggingFactory } from '../../logger'
 import { errorHandler, waitForReadyApp } from '../../utils'
 import domainOfferHooks from './hooks/domain-offer.hooks'
@@ -43,13 +43,13 @@ const logger = loggingFactory('rns')
 const precacheLogger = loggingFactory('rns:precache:processor')
 
 export class RnsBaseService extends Service {
-  emit?: Function
+  emit?: EmitFn
 }
 
 export interface RnsServices {
-  domains: RnsBaseService & { emit?: Function }
-  sold: RnsBaseService & { emit?: Function }
-  offers: RnsBaseService & { emit?: Function }
+  domains: RnsBaseService & { emit?: EmitFn }
+  sold: RnsBaseService & { emit?: EmitFn }
+  offers: RnsBaseService & { emit?: EmitFn }
 }
 
 const PLACEMENT = 'rns.placement'
@@ -159,7 +159,7 @@ const rns: CachedService = {
     const rnsEventParser = eventTransformerFactory(rnsContractAbi.abi as AbiItem[], rnsReverseContractAbi.abi as AbiItem[], simplePlacementsContractAbi.abi as AbiItem[])
 
     rnsGroupEmitter.on('newEvent', errorHandler(eventProcessor(loggingFactory('rns.owner:processor'), eth, services, rnsEventParser), logger))
-    rnsGroupEmitter.on('error', (e: NamespacedEvent<object>) => {
+    rnsGroupEmitter.on('error', (e) => {
       logger.error(`There was unknown error in Events Emitter for ${e.name}! ${e.data}`)
     })
     rnsGroupEmitter.on('newConfirmation', (data: NamespacedEvent<NewConfirmationEvent>) => confirmationService.emit('newConfirmation', data.data))

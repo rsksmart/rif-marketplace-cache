@@ -17,6 +17,8 @@ import * as stakingEvents from '@rsksmart/rif-marketplace-storage/types/web3-v1-
 import { NotificationService } from './notification'
 import { CommsService } from './communication/service'
 
+export type EmitFn = (...args: any[]) => void
+
 export enum SupportedServices {
   STORAGE = 'storage',
   RNS = 'rns',
@@ -91,6 +93,25 @@ export enum CommsStrategy {
   Libp2p = 'libp2p',
   API = 'api'
 }
+
+/// //////////////////////////////////////////////////////////////////////////////////////////////////
+// RATES
+
+export enum RatesProvider {
+  coingecko = 'coingecko'
+}
+
+export function isRatesProvider (value: any): value is RatesProvider {
+  return Object.values(RatesProvider).includes(value)
+}
+
+export type ToSymbols = 'usd' | 'eur' | 'btc' | 'ars' | 'cny' | 'krw' | 'jpy'
+export const SUPPORTED_TO_SYMBOLS: ToSymbols[] = ['usd', 'eur', 'btc', 'ars', 'cny', 'krw', 'jpy']
+
+export type FromSymbols = 'rbtc' | 'rif'
+export const SUPPORTED_FROM_SYMBOLS: FromSymbols[] = ['rbtc', 'rif']
+
+export type FetchedRates = Record<FromSymbols, Record<ToSymbols, number>>
 
 export interface Config {
   host?: string
@@ -202,22 +223,22 @@ export type Flags<T> = Options<T>['flags']
  */
 export interface Logger {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  critical (message: string | Error | object, ...meta: any[]): never
+  critical (message: string | Error | Record<any, unknown>, ...meta: any[]): never
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  error (message: string | Error | object, ...meta: any[]): void
+  error (message: string | Error | Record<any, unknown>, ...meta: any[]): void
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  warn (message: string | object, ...meta: any[]): void
+  warn (message: string | Record<any, unknown>, ...meta: any[]): void
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  info (message: string | object, ...meta: any[]): void
+  info (message: string | Record<any, unknown>, ...meta: any[]): void
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  verbose (message: string | object, ...meta: any[]): void
+  verbose (message: string | Record<any, unknown>, ...meta: any[]): void
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  debug (message: string | object, ...meta: any[]): void
+  debug (message: string | Record<any, unknown>, ...meta: any[]): void
 
   extend?: (name: string) => Logger
 }
@@ -229,25 +250,6 @@ export interface Handler<E, T> {
   events: string[]
   process: (event: E, services: T, deps: { eth?: Eth, libp2p?: Libp2p }) => Promise<void>
 }
-
-/// //////////////////////////////////////////////////////////////////////////////////////////////////
-// RATES
-
-export enum RatesProvider {
-  coingecko = 'coingecko'
-}
-
-export function isRatesProvider (value: any): value is RatesProvider {
-  return Object.values(RatesProvider).includes(value)
-}
-
-export type ToSymbols = 'usd' | 'eur' | 'btc' | 'ars' | 'cny' | 'krw' | 'jpy'
-export const SUPPORTED_TO_SYMBOLS: ToSymbols[] = ['usd', 'eur', 'btc', 'ars', 'cny', 'krw', 'jpy']
-
-export type FromSymbols = 'rbtc' | 'rif'
-export const SUPPORTED_FROM_SYMBOLS: FromSymbols[] = ['rbtc', 'rif']
-
-export type FetchedRates = Record<FromSymbols, Record<ToSymbols, number>>
 
 /// //////////////////////////////////////////////////////////////////////////////////////////////////
 // STORAGE

@@ -29,7 +29,7 @@ ${formattedServices}`
     disable: flags.string({ char: 'd', multiple: true, description: 'disable specific service' })
   }
 
-  private buildConfigObject (flags: Flags<typeof StartServer>): object {
+  private buildConfigObject (flags: Flags<typeof StartServer>): Record<any, any> {
     const output: Config = {}
 
     if (flags.db) {

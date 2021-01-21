@@ -17,18 +17,18 @@ describe('Comms service', function () {
   let app: TestingApp
 
   before(async () => {
-    // @ts-ignore
+    // @ts-ignore: not typed
     config.rns.enabled = false
-    // @ts-ignore
+    // @ts-ignore: not typed
     config.comms.strategy = 'api'
     app = new TestingApp()
     await app.initAndStart()
   })
   after(async () => {
     await app.stop()
-    // @ts-ignore
+    // @ts-ignore: not typed
     config.rns.enabled = true
-    // @ts-ignore
+    // @ts-ignore: not typed
     config.comms.strategy = 'libp2p'
   })
   describe('Notification', () => {

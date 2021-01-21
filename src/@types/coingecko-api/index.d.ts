@@ -1,3 +1,4 @@
+/* eslint-disable camelcase */
 // Credit to https://github.com/textileio/js-ipfs-lite/
 
 declare module 'coingecko-api' {

@@ -121,7 +121,7 @@ const handler: Handler<StorageAgreementEvents, StorageServices> = {
       return Promise.reject(new Error(`Unknown event ${event.event}`))
     }
 
-    // @ts-ignore
+    // @ts-ignore: we had strict types for each handler(A & B) and one type for all of event StorageAgreementEvents(A | B)
     return handlers[event.event](event, services, eth as Eth)
   }
 }

@@ -4,7 +4,7 @@ import config from 'config'
 import { getEndPromise } from 'sequelize-store'
 import Eth from 'web3-eth'
 import type { AbiItem } from 'web3-utils'
-import { Web3Events, REORG_OUT_OF_RANGE_EVENT_NAME, AutoEventsEmitter, EventsFetcher } from '@rsksmart/web3-events'
+import { Web3Events, REORG_OUT_OF_RANGE_EVENT_NAME, EventsFetcher } from '@rsksmart/web3-events'
 import { Observable } from 'rxjs'
 
 import {
@@ -170,7 +170,7 @@ const storage: CachedService = {
     const storageManagerEventsEmitter = getEventsEmitterForService(STORAGE_MANAGER, web3events, storageManagerContract.abi as AbiItem[])
     const storageEventParser = eventTransformerFactory(storageManagerContract.abi as AbiItem[])
     storageManagerEventsEmitter.on('newEvent', errorHandler(eventProcessor(services, { eth, libp2p, eventParser: storageEventParser }), storageManagerLogger))
-    storageManagerEventsEmitter.on('error', (e: object) => {
+    storageManagerEventsEmitter.on('error', (e) => {
       storageManagerLogger.error(`There was unknown error in Events Emitter for ${STORAGE_MANAGER}! ${e}`)
     })
     storageManagerEventsEmitter.on('newConfirmation', (data) => confirmationService.emit('newConfirmation', data))
@@ -181,7 +181,7 @@ const storage: CachedService = {
     const stakingEventsEmitter = getEventsEmitterForService(STAKING, web3events, stakingContract.abi as AbiItem[])
     const stakingEventParser = eventTransformerFactory(stakingContract.abi as AbiItem[])
     stakingEventsEmitter.on('newEvent', errorHandler(eventProcessor(services, { eth, eventParser: stakingEventParser }), stakingLogger))
-    stakingEventsEmitter.on('error', (e: object) => {
+    stakingEventsEmitter.on('error', (e) => {
       stakingLogger.error(`There was unknown error in Events Emitter for ${STAKING}! ${e}`)
     })
     stakingEventsEmitter.on('newConfirmation', (data) => confirmationService.emit('newConfirmation', data))

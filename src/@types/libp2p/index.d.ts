@@ -60,6 +60,6 @@ declare module 'libp2p' {
       getSubscribers (topic: string): Promise<[]>
     }
 
-    connections: Record<string, Array<{ remoteAddr: { toString: () => {} } }>>
+    connections: Record<string, Array<{ remoteAddr: { toString: () => Record<string, unknown> } }>>
   }
 }

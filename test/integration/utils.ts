@@ -105,9 +105,9 @@ export class TestingApp {
         case SupportedServices.STORAGE:
           await this.deployStorageManager()
           await this.deployStaking()
-          // @ts-ignore
+          // @ts-ignore: not typed
           config.storage.storageManager.contractAddress = this.storageContract?.options.address.toLowerCase()
-          // @ts-ignore
+          // @ts-ignore: not typed
           config.storage.staking.contractAddress = this.stakingContract?.options.address.toLowerCase()
           break
         default:
@@ -264,7 +264,7 @@ export class TestingApp {
       depositData.token || ZERO_ADDRESS,
       0,
       depositData.cid,
-      depositData.provider || this.providerAddress,
+      depositData.provider || this.providerAddress
     )
     return depositCall.send({
       from: this.consumerAddress,
