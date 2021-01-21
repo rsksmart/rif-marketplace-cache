@@ -1,6 +1,6 @@
 {
   "name": "@rsksmart/rif-marketplace-cache",
-  "version": "1.2.1",
+  "version": "1.3.0",
   "description": "Caching server for RIF Marketplace",
   "keywords": [
     "RIF",
@@ -144,12 +144,13 @@
     "Dennis Arslan <dennis@arslan.co.uk>",
     "Julian M. Rodriguez <56316686+julianmrodri@users.noreply.github.com>",
     "Juraj <36888576+jurajpiar@users.noreply.github.com>",
+    "Juraj Piar <juraj.piar@icloud.com>",
     "Juraj Piar <juraj@iovlabs.org>",
     "Leandro Yalet <leandro@iovlabs.org>",
     "Lucas <39061310+lucasvuotto@users.noreply.github.com>",
     "Lucas Gabriel Vuotto <lucas@iovlabs.org>",
-    "Nazar Duchak <41945483+nduchak@users.noreply.github.com>",
     "Nazar Duchak <nazar@iovlabs.org>",
+    "Nazar Duchak <41945483+nduchak@users.noreply.github.com>",
     "Vojtech Simetka <vojtech@simetka.cz>",
     "dependabot-preview[bot] <27856297+dependabot-preview[bot]@users.noreply.github.com>"
   ],
