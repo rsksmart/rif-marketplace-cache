@@ -1,3 +1,21 @@
+<a name="1.3.0"></a>
+# [1.3.0](https://github.com/rsksmart/rif-marketplace-cache/compare/v1.2.1...v1.3.0) (2021-01-21)
+
+
+### Bug Fixes
+
+* **storage:** calculates availableCapacity ignoring inactive agreements ([#481](https://github.com/rsksmart/rif-marketplace-cache/issues/481)) ([05d83fe](https://github.com/rsksmart/rif-marketplace-cache/commit/05d83fe))
+* release command ([eb7358e](https://github.com/rsksmart/rif-marketplace-cache/commit/eb7358e))
+
+
+### Features
+
+* **rns:** adds migration ([ee0cec4](https://github.com/rsksmart/rif-marketplace-cache/commit/ee0cec4))
+* **rns:** adds sort by domain name ([#495](https://github.com/rsksmart/rif-marketplace-cache/issues/495)) ([6a40f46](https://github.com/rsksmart/rif-marketplace-cache/commit/6a40f46))
+* **rns:** reverts adds migration ([97db7e7](https://github.com/rsksmart/rif-marketplace-cache/commit/97db7e7))
+
+
+
 <a name="1.2.1"></a>
 ## [1.2.1](https://github.com/rsksmart/rif-marketplace-cache/compare/v1.2.0...v1.2.1) (2020-12-21)
 
