@@ -1,6 +1,6 @@
 {
   "name": "@rsksmart/rif-marketplace-cache",
-  "version": "1.2.1",
+  "version": "1.3.0",
   "description": "Caching server for RIF Marketplace",
   "keywords": [
     "RIF",
@@ -44,7 +44,7 @@
     "docs": "typedoc --mode modules --excludeNotExported --readme none --excludePrivate  --tsconfig ./node_modules/tasegir/src/config/tsconfig.json --exclude 'src/providers/*,test/**/*' --out docs src",
     "types-check": "tasegir types-check",
     "lint": "tasegir lint",
-    "release": "tasegir release --no-build --no-docs --target=node",
+    "release": "cross-env ALLOW_CONFIG_MUTATIONS=true tasegir release --no-build --no-docs --target=node",
     "test": "npm run test:unit && npm run test:integration",
     "test:integration": "cross-env ALLOW_CONFIG_MUTATIONS=true tasegir test --target node --files ./test/integration/**/*.spec.ts --files ./test/integration/**/**/*.spec.ts",
     "test:unit": "cross-env ALLOW_CONFIG_MUTATIONS=true tasegir test --target node --files ./test/unit/*.spec.ts --files ./test/unit/**/*.spec.ts --files ./test/unit/**/**/*.spec.ts",
@@ -144,12 +144,13 @@
     "Dennis Arslan <dennis@arslan.co.uk>",
     "Julian M. Rodriguez <56316686+julianmrodri@users.noreply.github.com>",
     "Juraj <36888576+jurajpiar@users.noreply.github.com>",
+    "Juraj Piar <juraj.piar@icloud.com>",
     "Juraj Piar <juraj@iovlabs.org>",
     "Leandro Yalet <leandro@iovlabs.org>",
     "Lucas <39061310+lucasvuotto@users.noreply.github.com>",
     "Lucas Gabriel Vuotto <lucas@iovlabs.org>",
-    "Nazar Duchak <41945483+nduchak@users.noreply.github.com>",
     "Nazar Duchak <nazar@iovlabs.org>",
+    "Nazar Duchak <41945483+nduchak@users.noreply.github.com>",
     "Vojtech Simetka <vojtech@simetka.cz>",
     "dependabot-preview[bot] <27856297+dependabot-preview[bot]@users.noreply.github.com>"
   ],
