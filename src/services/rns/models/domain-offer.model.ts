@@ -2,6 +2,8 @@ import { Table, DataType, Column, Model, ForeignKey, BelongsTo, Scopes } from 's
 import { Op } from 'sequelize'
 
 import Domain from './domain.model'
+import Rate from '../../../rates/rates.model'
+import { SupportedTokens } from '../../../definitions'
 
 @Scopes(() => ({
   approved: {
@@ -45,4 +47,8 @@ export default class DomainOffer extends Model {
 
   @Column(DataType.DATE)
   creationDate!: number
+
+  @ForeignKey(() => Rate)
+  @Column({ allowNull: false })
+  rateId!: SupportedTokens
 }
