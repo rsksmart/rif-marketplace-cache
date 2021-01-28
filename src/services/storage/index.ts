@@ -170,7 +170,7 @@ const storage: CachedService = {
     const storageManagerEventsEmitter = getEventsEmitterForService(STORAGE_MANAGER, web3events, storageManagerContract.abi as AbiItem[])
     const storageEventParser = eventTransformerFactory(storageManagerContract.abi as AbiItem[])
     storageManagerEventsEmitter.on('newEvent', (data) => {
-      storageLogger.debug('Receive event: ', data)
+      storageLogger.info('Receive event: ', data)
       errorHandler(eventProcessor(services, { eth, libp2p, eventParser: storageEventParser }), storageManagerLogger)(data)
     })
     storageManagerEventsEmitter.on('error', (e) => {
