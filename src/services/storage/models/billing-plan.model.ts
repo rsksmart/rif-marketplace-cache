@@ -6,7 +6,7 @@ import { SupportedTokens } from '../../../definitions'
 import Offer from './offer.model'
 import Rate from '../../../rates/rates.model'
 
-@Table({ freezeTableName: true, tableName: 'storage_billing-plan' })
+@Table({ freezeTableName: true, tableName: 'storage_billing_plan' })
 export default class BillingPlan extends Model {
   @Column({ ...BigNumberStringType('period'), allowNull: false })
   period!: BigNumber
