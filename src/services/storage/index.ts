@@ -169,7 +169,10 @@ const storage: CachedService = {
     // Storage Manager watcher
     const storageManagerEventsEmitter = getEventsEmitterForService(STORAGE_MANAGER, web3events, storageManagerContract.abi as AbiItem[])
     const storageEventParser = eventTransformerFactory(storageManagerContract.abi as AbiItem[])
-    storageManagerEventsEmitter.on('newEvent', errorHandler(eventProcessor(services, { eth, libp2p, eventParser: storageEventParser }), storageManagerLogger))
+    storageManagerEventsEmitter.on('newEvent', (data) => {
+      storageLogger.debug('Receive event: ', data)
+      errorHandler(eventProcessor(services, { eth, libp2p, eventParser: storageEventParser }), storageManagerLogger)(data)
+    })
     storageManagerEventsEmitter.on('error', (e) => {
       storageManagerLogger.error(`There was unknown error in Events Emitter for ${STORAGE_MANAGER}! ${e}`)
     })
