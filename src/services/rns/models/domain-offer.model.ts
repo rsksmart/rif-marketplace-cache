@@ -10,7 +10,7 @@ import Domain from './domain.model'
     }
   }
 }))
-@Table({ freezeTableName: true, tableName: 'rns_domain-offer', timestamps: false })
+@Table({ freezeTableName: true, tableName: 'rns_domain_offer', timestamps: false })
 export default class DomainOffer extends Model {
   @Column({ primaryKey: true, autoIncrement: true, type: DataType.INTEGER })
   id!: number

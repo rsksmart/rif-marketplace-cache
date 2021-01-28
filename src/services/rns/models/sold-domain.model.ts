@@ -13,7 +13,7 @@ import Transfer from './transfer.model'
     ]
   }
 }))
-@Table({ freezeTableName: true, tableName: 'rns_sold-domain', timestamps: false })
+@Table({ freezeTableName: true, tableName: 'rns_domain_sold', timestamps: false })
 export default class SoldDomain extends Model {
   @Column({ primaryKey: true, autoIncrement: true, type: DataType.INTEGER })
   id!: number

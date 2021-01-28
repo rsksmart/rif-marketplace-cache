@@ -95,13 +95,13 @@ export function getBillingPriceAvgQuery (
       CAST(
         SUM(
           (cast(price as REAL) / ${WEI}) * coalesce("rates".${sequelize.escape(currency)}, 0) * 1024 / period * (3600 * 24 * 30)
-        ) / COUNT("storage_billing-plan"."id")
+        ) / COUNT("storage_billing_plan"."id")
         as INTEGER
       )
     FROM
-      "storage_billing-plan"
+      "storage_billing_plan"
     LEFT OUTER JOIN
-      "rates" AS "rates" ON "storage_billing-plan"."rateId" = "rates"."token"
+      "rates" AS "rates" ON "storage_billing_plan"."rateId" = "rates"."token"
     WHERE
       offerId = provider
   )
