@@ -24,14 +24,14 @@
       contractAddress: "0xEaEff4a8A8622B7520eE34f4CC2e50f1e58411C0",
       eventsEmitter: {
         startingBlock: 1333889,
-        confirmations: 3
+        confirmations: 8
       }
     },
     staking: {
       contractAddress: "0xB45BbC3B983E9d60c131F177831e911043a36b6f",
       eventsEmitter: {
         startingBlock: 1333904,
-        confirmations: 3
+        confirmations: 8
       }
     },
   },
@@ -41,21 +41,21 @@
       contractAddress: "0xca0a477e19bac7e0e172ccfd2e3c28a7200bdb71",
       eventsEmitter: {
         startingBlock: 385433,
-        confirmations: 3
+        confirmations: 8
       }
     },
     reverse: {
       contractAddress: "0x8587385ad60038bB181aFfDF687c4D1B80C4787e",
       eventsEmitter: {
         startingBlock: 419976,
-        confirmations: 3
+        confirmations: 8
       }
     },
     placement: {
       contractAddress: "0x978908db72E43DB49A80c74A1383Bd5b3e832c46",
       eventsEmitter: {
         startingBlock: 1299473,
-        confirmations: 3
+        confirmations: 8
       }
     },
     registrar: {
