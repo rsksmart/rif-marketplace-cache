@@ -14,8 +14,8 @@ import DomainOwner from './models/owner.model'
 import Transfer from './models/transfer.model'
 import SoldDomain from './models/sold-domain.model'
 import { EventTransformer } from '../../blockchain/event-transformer'
-import RLP = require('rlp')
 import { getTokenSymbol } from '../storage/utils'
+import RLP = require('rlp')
 
 type RLPDecoded = Array<Array<number[]>>
 
@@ -272,7 +272,7 @@ async function tokenPlacedHandler (logger: Logger, eventData: EventLog, eth: Eth
     logger.info(`TokenPlaced event: ${tokenId} no previous placement`)
   }
   const { address } = owner
-    const tokenSymbol = getTokenSymbol(paymentToken).toLowerCase()
+  const tokenSymbol = getTokenSymbol(paymentToken).toLowerCase()
 
   await offersService.create({
     txHash: transactionHash,

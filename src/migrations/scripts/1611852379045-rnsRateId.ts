@@ -1,12 +1,11 @@
 import Sequelize, { QueryInterface } from 'sequelize'
-import DomainOffer from '../../services/rns/models/domain-offer.model';
-import { getTokenSymbol } from '../../services/storage/utils';
+import DomainOffer from '../../services/rns/models/domain-offer.model'
+import { getTokenSymbol } from '../../services/storage/utils'
 
 export default {
   // eslint-disable-next-line require-await
   async up (queryInterface: QueryInterface): Promise<void> {
-    
-    queryInterface.addColumn(
+    await queryInterface.addColumn(
       'rns_domain_offer',
       'rateId',
       {
@@ -17,14 +16,13 @@ export default {
           model: 'rates',
           key: 'token'
         },
-        field: 'rateId',
+        field: 'rateId'
       }
     )
-    
+
     const domains = await DomainOffer.findAll()
 
     domains.forEach((domain) => {
-      
       queryInterface.sequelize.query(`
         UPDATE "rns_domain_offer"
         SET "rateId" = ${getTokenSymbol(domain.paymentToken)}
@@ -32,12 +30,17 @@ export default {
       `)
     })
 
-    queryInterface.changeColumn(
+    await queryInterface.addConstraint(
       'rns_domain_offer',
-      'rateId',
       {
-        type: Sequelize.STRING,
-        allowNull: false
+        type: 'foreign key',
+        onUpdate: 'CASCADE',
+        onDelete: 'NO ACTION',
+        references: {
+          table: 'rates',
+          field: 'token'
+        },
+        fields: ['rateId']
       }
     )
   },
