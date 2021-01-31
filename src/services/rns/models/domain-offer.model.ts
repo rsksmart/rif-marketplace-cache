@@ -1,9 +1,11 @@
 import { Table, DataType, Column, Model, ForeignKey, BelongsTo, Scopes } from 'sequelize-typescript'
-import { Op } from 'sequelize'
+import { literal, Op, Sequelize } from 'sequelize'
 
 import Domain from './domain.model'
 import Rate from '../../../rates/rates.model'
 import { SupportedTokens } from '../../../definitions'
+import { Literal } from 'sequelize/types/lib/utils'
+import { WEI } from '../../storage/utils'
 
 @Scopes(() => ({
   approved: {
@@ -51,4 +53,32 @@ export default class DomainOffer extends Model {
   @ForeignKey(() => Rate)
   @Column({ allowNull: false })
   rateId!: SupportedTokens
+}
+
+/**
+ * This function generate a query that calculates the domain price in fiat for a specific currency
+ * @param sequelize
+ * @param currency
+ */
+export function getDomainPriceFiat (
+  sequelize: Sequelize,
+  currency: 'usd' | 'eur' | 'btc' = 'usd'
+): Literal {
+  return literal(`
+    (
+      SELECT
+        CAST(
+          SUM(
+            (cast(priceString as REAL) / ${WEI}) * coalesce("rates".${sequelize.escape(currency)}, 0)
+          )
+          as REAL
+        )
+      FROM
+        "rns_domain_offer"
+      LEFT OUTER JOIN
+        "rates" AS "rates" ON "rns_domain_offer"."rateId" = "rates"."token"
+      WHERE
+        id = "DomainOffer"."id"
+    )
+  `)
 }

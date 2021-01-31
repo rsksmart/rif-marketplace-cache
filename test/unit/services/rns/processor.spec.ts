@@ -21,6 +21,7 @@ import DomainOffer from '../../../../src/services/rns/models/domain-offer.model'
 import SoldDomain from '../../../../src/services/rns/models/sold-domain.model'
 
 import { eventMock, transactionMock } from '../../../utils'
+import { ZERO_ADDRESS } from '../../../integration/utils'
 
 chai.use(sinonChai)
 chai.use(chaiAsPromised)
@@ -302,7 +303,7 @@ describe('Offer events', function () {
   const from = 'from_addr'
   const placement = 'placement_addr'
   const other = 'other_addr'
-  const paymentToken = 'default_payment'
+  const paymentToken = ZERO_ADDRESS
   const cost = 10000
 
   before(() => {
@@ -364,7 +365,7 @@ describe('Offer events', function () {
     expect(createdEvent?.priceString).to.be.eql(event.returnValues.cost.toString())
 
     // Update offer
-    const newPaymentToken = 'OTHER_PAYMENT'
+    const newPaymentToken = ZERO_ADDRESS
     const newCost = 50000
     const newEvent = eventMock({
       event: 'TokenPlaced',
@@ -446,7 +447,8 @@ describe('Offer events', function () {
       price: cost,
       priceString: cost.toString(),
       approved: true,
-      creationDate: (new Date()).getTime().toString()
+      creationDate: (new Date()).getTime().toString(),
+      rateId: 'rif'
     })
 
     expect(domain).to.be.instanceOf(Domain)
@@ -485,7 +487,8 @@ describe('Offer events', function () {
       price: cost,
       priceString: cost.toString(),
       approved: true,
-      creationDate: (new Date()).getTime().toString()
+      creationDate: (new Date()).getTime().toString(),
+      rateId: 'rif'
     })
 
     // Process Approval for other address
@@ -561,7 +564,8 @@ describe('Sold events', () => {
       price: cost,
       priceString: cost.toString(),
       approved: true,
-      creationDate: (new Date()).getTime().toString()
+      creationDate: (new Date()).getTime().toString(),
+      rateId: 'rif'
     })
 
     // Sell Domain
@@ -604,7 +608,8 @@ describe('Sold events', () => {
       price: cost,
       priceString: cost.toString(),
       approved: true,
-      creationDate: (new Date()).getTime().toString()
+      creationDate: (new Date()).getTime().toString(),
+      rateId: 'rif'
     })
 
     await Domain.create({ tokenId: Utils.numberToHex(otherTokenId) })
@@ -617,7 +622,8 @@ describe('Sold events', () => {
       price: cost,
       priceString: cost.toString(),
       approved: true,
-      creationDate: (new Date()).getTime().toString()
+      creationDate: (new Date()).getTime().toString(),
+      rateId: 'rif'
     })
 
     // Sell Domain
