@@ -89,7 +89,7 @@
     "sequelize": "^6.3.5",
     "sequelize-store": "^0.4.2",
     "sequelize-typescript": "^2.0.0-beta.0",
-    "sql-formatter": "^2.3.3",
+    "sql-formatter": "^4.0.0",
     "sqlite3": "^5.0.0",
     "tasegir": "^1.9.2",
     "umzug": "^2.3.0",
