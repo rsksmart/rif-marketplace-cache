@@ -288,7 +288,8 @@ describe('Domain events', () => {
   })
 })
 
-describe('Offer events', () => {
+describe('Offer events', function () {
+  this.timeout(5000)
   let sequelize: Sequelize
   let eth: SubstituteOf<Eth>
   let processor: (event: EventData) => Promise<void>
