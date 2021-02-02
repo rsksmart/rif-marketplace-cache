@@ -1,3 +1,11 @@
+<a name="1.3.2"></a>
+## [1.3.2](https://github.com/rsksmart/rif-marketplace-cache/compare/v1.3.0...v1.3.2) (2021-02-02)
+
+### Refactor
+ - change tables name from dash to underscore
+ - disable order processing of events for RNS
+
+
 <a name="1.3.1"></a>
 ## [1.3.1](https://github.com/rsksmart/rif-marketplace-cache/compare/v1.3.0...v1.3.1) (2021-02-01)
 
