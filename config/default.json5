@@ -154,8 +154,8 @@
       // Will process one event at a time
       serialProcessing: true,
 
-      // Will order events in the groupped batches from all the Emitters
-      orderedProcessing: true,
+      // Will not order events in grouped batches from all the Emitters
+      orderedProcessing: false,
 
       name: 'rns'
     },
