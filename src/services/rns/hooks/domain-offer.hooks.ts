@@ -4,7 +4,7 @@ import { hooks } from 'feathers-sequelize'
 import { literal, Op, Sequelize } from 'sequelize'
 import { numberToHex, sha3 } from 'web3-utils'
 import { WEI } from '../../storage/utils'
-import { getDomainPriceFiat } from '../models/domain-offer.model'
+import DomainOffer, { getDomainPriceFiat } from '../models/domain-offer.model'
 import Domain from '../models/domain.model'
 import DomainExpiration from '../models/expiration.model'
 import { getSortDirection } from './utils'
@@ -151,7 +151,23 @@ export default {
 
   after: {
     all: [],
-    find: [],
+    find: [
+      async (context: HookContext): Promise<HookContext> => {
+        const total = await DomainOffer.count()
+        const result = context.result as { dataValues: any }[]
+
+        if (context.params.query?.$limit > 1) {
+          context.result = {
+            total,
+            limit: context.params.query?.$limit as number || 0,
+            skip: context.params.query?.$skip as number || 0,
+            data: [...result]
+          }
+        }
+
+        return context
+      }
+    ],
     get: [],
     create: [],
     update: [],
