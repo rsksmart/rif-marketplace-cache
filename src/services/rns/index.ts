@@ -136,7 +136,7 @@ const rns: CachedService = {
     const sold = app.service(ServiceAddresses.RNS_SOLD)
     sold.hooks(soldDomainHooks)
 
-    app.use(ServiceAddresses.RNS_OFFERS, new RnsBaseService({ Model: DomainOffer, paginate }))
+    app.use(ServiceAddresses.RNS_OFFERS, new RnsBaseService({ Model: DomainOffer }))
     const offers = app.service(ServiceAddresses.RNS_OFFERS)
     offers.hooks(domainOfferHooks)
 
