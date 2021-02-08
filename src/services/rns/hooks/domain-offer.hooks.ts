@@ -153,8 +153,8 @@ export default {
     all: [],
     find: [
       async (context: HookContext): Promise<HookContext> => {
-        const total = await DomainOffer.count()
         const result = context.result as { dataValues: any }[]
+        const total = (await DomainOffer.findAll(context.params.sequelize)).length // TODO: optimise by implmenting custom count query
 
         if (context.params.query?.$limit > 1) {
           context.result = {
