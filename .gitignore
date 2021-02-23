@@ -31,5 +31,3 @@ oclif.manifest.json
 # Default data dir
 /data
 /data-test
-
-.eslintrc.js
