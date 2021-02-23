@@ -1,7 +1,9 @@
 {
   port: 'RIFM_PORT',
   db: 'RIFM_DB',
-
+  auth: {
+    secret: 'RIFM_JWT_SECRET'
+  },
   dataDir: 'RIFM_DATA_DIR',
 
   comms: {

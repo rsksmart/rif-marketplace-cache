@@ -2,6 +2,9 @@
   port: 3030,
   dataDir: 'data-test',
   dbBackUp: { blocks: 10, path:  'db-backups' },
+  auth: {
+    secret: '8a58b86565c23c9ea90'
+  },
   comms: {
     strategy: 'libp2p',
     libp2p: {

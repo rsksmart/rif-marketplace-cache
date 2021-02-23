@@ -1,5 +1,7 @@
+import config from 'config'
 import { ServiceAddons, Params } from '@feathersjs/feathers'
 import { AuthenticationService, AuthenticationBaseStrategy, AuthenticationRequest } from '@feathersjs/authentication'
+
 import { Application } from '../definitions'
 
 declare module '../definitions' {
@@ -25,7 +27,7 @@ export default function (app: Application) {
   const authentication = new AuthenticationService(app as any)
 
   app.set('authentication', {
-    secret: '8a58b86565c23c9ea90',
+    secret: config.get<string>('auth.secret'),
     entity: null,
     authStrategies: ['anonymous']
   })
