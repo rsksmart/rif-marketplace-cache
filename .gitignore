@@ -32,4 +32,8 @@ oclif.manifest.json
 /data
 /data-test
 
-.eslintrc.js
+.eslintrc.j
+
+# idea IDE
+.idea/*
+s
