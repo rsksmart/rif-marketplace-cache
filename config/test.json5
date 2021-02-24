@@ -3,7 +3,7 @@
   dataDir: 'data-test',
   dbBackUp: { blocks: 10, path:  'db-backups' },
   auth: {
-    secret: '8a58b86565c23c9ea90'
+    secret: '8a58b86565c23c9ea90' // not used for auth purpose
   },
   comms: {
     strategy: 'libp2p',

@@ -23,6 +23,9 @@ class AnonymousStrategy extends AuthenticationBaseStrategy {
   }
 }
 
+/**
+ * This is not used for auth purpose. Instead we use this for filtering of data
+ */
 export default function (app: Application) {
   const authentication = new AuthenticationService(app as any)
 

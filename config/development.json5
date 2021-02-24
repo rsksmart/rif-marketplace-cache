@@ -1,7 +1,7 @@
 {
   port: 3030,
   auth: {
-    secret: '8a58b86565c23c9ea90'
+    secret: '8a58b86565c23c9ea90' // not used for auth purpose
   },
   comms: {
     libp2p: {
