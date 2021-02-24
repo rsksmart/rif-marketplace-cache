@@ -79,6 +79,8 @@ jobs:
         command: ganache-cli -i 8545 -e 100000000000 -l 100000000000
     environment:
       ALLOW_CONFIG_MUTATIONS: true
+      # secret not used for auth purpose
+      RIFM_JWT_SECRET: '8a58b86565c23c9ea90'
     steps:
       - checkout
       - when:

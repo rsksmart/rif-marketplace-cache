@@ -30,7 +30,8 @@ const expect = chai.expect
 
 const logger = loggingFactory('rns')
 
-describe('Domain events', () => {
+describe('Domain events', function () {
+  this.timeout(5000)
   let sequelize: Sequelize
   let eth: SubstituteOf<Eth>
   let processor: (event: EventData) => Promise<void>
@@ -509,7 +510,8 @@ describe('Offer events', function () {
   })
 })
 
-describe('Sold events', () => {
+describe('Sold events', function () {
+  this.timeout(5000)
   let sequelize: Sequelize
   let eth: SubstituteOf<Eth>
   let processor: (event: EventData) => Promise<void>

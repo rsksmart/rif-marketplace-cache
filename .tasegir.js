@@ -6,5 +6,10 @@ module.exports = {
     ignore: [
       'cross-env', 'tasegir', 'reflect-metadata', 'libp2p', '@types/*', 'sqlite3', '@oclif/*', 'cids', 'multicodec'
     ]
+  },
+  tsconfig: {
+    compilerOptions: {
+      skipLibCheck: true
+    }
   }
 }
