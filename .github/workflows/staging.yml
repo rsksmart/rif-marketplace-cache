@@ -36,7 +36,7 @@ jobs:
       uses: aws-actions/amazon-ecr-login@v1
    
     - name: Extract Git Tag      
-      run: echo "GIT_TAG=${GITHUB_REF/refs\/tags\//} >> $GITHUB_ENV 
+      run: echo "GIT_TAG=${GITHUB_REF/refs\/tags\//}" >> $GITHUB_ENV 
     
     - name: Echo git tag
       run:  echo "${{ env.GIT_TAG }}
