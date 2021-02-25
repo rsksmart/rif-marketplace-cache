@@ -12,6 +12,8 @@ jobs:
   deploy-staging:
     name: RIF Marketplace CACHE - Staging
     runs-on: ubuntu-latest
+    environment:
+      name: staging
 
     steps:
     - name: Checkout
