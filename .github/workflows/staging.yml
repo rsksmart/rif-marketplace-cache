@@ -39,7 +39,7 @@ jobs:
       run: echo "GIT_TAG=${GITHUB_REF/refs\/tags\//}" >> $GITHUB_ENV 
     
     - name: Echo git tag
-      run:  echo "${{ env.GIT_TAG }}
+      run:  echo "${{ env.GIT_TAG }}"
       
     - name: Build, tag, and push image to Amazon ECR
       env:
