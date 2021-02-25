@@ -6,7 +6,7 @@ on:
       - 'v[0-9]+.[0-9]+.[0-9]+-**'
       - 'v[0-9]+.[0-9]+.[0-9]+'
     branches:
-      - features/devops 
+      - features/devops
 
 jobs:
   deploy-staging:
@@ -21,32 +21,6 @@ jobs:
       uses: actions/setup-node@v1
       with:
         node-version: '14'
-
-    - uses: actions/cache@v2
-      id: cache
-      with:
-        path: ~/.npm
-        key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
-        restore-keys: |
-          ${{ runner.os }}-node-
-
-    - name: Install dependencies
-      if: steps.cache.outputs.cache-hit != 'true'
-      run: |
-        npm ci --only=production
-
-    - name: "Dependency check"
-      run:
-
-        command: npx tasegir dep-check
-
-    - name: "Code linting"
-      run:
-        command: npx tasegir lint
-
-    - name: "Types check"
-      run:
-        command: npx tasegir types-check
 
     - name: Configure AWS credentials
       uses: aws-actions/configure-aws-credentials@v1
@@ -68,8 +42,8 @@ jobs:
         docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
         docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
 
-    - name: Login to EC2 instance
-      run: |
+    #- name: Login to EC2 instance
+    #  run: |
         # aws cloudfront create-invalidation --distribution-id ${{ secrets.STAGING_CLOUDFRONT_DISTRIBUTION }} --paths "/*"
         # cd to repo
         # git checkout
