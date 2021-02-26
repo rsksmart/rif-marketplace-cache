@@ -52,7 +52,7 @@ jobs:
 
     - name: Login to EC2 instance
       run: |
-        AWS_PROFILE=RIF aws ssm send-command \
+        aws ssm send-command \
             --instance-ids "i-03882e46fb18eb0a8" \
             --document-name "AWS-RunShellScript" \
             --comment "IP config" \
