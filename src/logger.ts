@@ -143,11 +143,12 @@ function initLogging (): void {
   })
 }
 
-export function formatLogMessage(info: any): string {
+export function formatLogMessage (info: any): string {
   let message: string
   const { service, ...rest } = info.metadata
 
   const sanitizedMessage = info.message.replace(/\n/g, '\\n')
+
   if (service) {
     message = `[${info.level}] ${colors.grey(info.timestamp)} (${service}): ${sanitizedMessage}`
   } else {
