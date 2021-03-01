@@ -61,8 +61,8 @@ jobs:
 
     - name: Backup rif-marketplace-cache DB
       run: |
-        aws ssm send-command \
-            --document-name "AWS-RunShellScript" \
-            --targets '[{"Key":"InstanceIds","Values":["i-03882e46fb18eb0a8"]}]' \
-	        --parameters '{"commands":["./test.sh"]}' \
-            --region=${{ secrets.STAGING_AWS_REGION }}
+      aws ssm send-command \
+      --document-name "AWS-RunShellScript" \
+      --targets '[{"Key":"InstanceIds","Values":["i-03882e46fb18eb0a8"]}]' \
+      --parameters '{"commands":["./test.sh"]}' \
+      --region=${{ secrets.STAGING_AWS_REGION }}
