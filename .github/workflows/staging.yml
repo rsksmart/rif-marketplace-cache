@@ -63,6 +63,6 @@ jobs:
       run: |
         aws ssm send-command \
             --targets '[{"Key":"InstanceIds","Values":["i-03882e46fb18eb0a8"]}]' \
-	    --document-name "AWS-RunShellScript" \
 	    --parameters '{"commands":["#!/bin/bash","cd rif-marketplace-cache/","dbdir=$(sudo docker volume inspect -f '{{.Mountpoint}}' "rif-marketplace-cache_cache-db")","sudo cp "$dbdir/db.sqlite" ~/db.sqlite-backup-$(date +%Y%m%d%H%M%S)"]}' \
+	    --document-name "AWS-RunShellScript" \
             --region=${{ secrets.STAGING_AWS_REGION }}
