@@ -65,5 +65,5 @@ jobs:
             aws ssm send-command \
                 --document-name "AWS-RunShellScript" \
                 --targets '[{"Key":"InstanceIds","Values":["i-03882e46fb18eb0a8"]}]' \
-                --parameters '{"commands":["#!/bin/bash","cd /home/ubuntu/rif-marketplace-cache && ./deploy.sh"]}' \
+                --parameters '{"commands":["#!/bin/bash","cd /home/ubuntu/rif-marketplace-cache","./deploy.sh"]}' \
                 --region=${{ secrets.STAGING_AWS_REGION }}
