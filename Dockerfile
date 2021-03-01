@@ -31,5 +31,4 @@ ENV LOG_NO_COLORS 'true'
 
 ENTRYPOINT [ "./bin/entrypoint" ]
 
-LABEL maintainer="adam@iovlabs.org"
 LABEL description="Blockchain caching server for RIF Marketplace"
