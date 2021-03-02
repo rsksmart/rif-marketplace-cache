@@ -65,5 +65,5 @@ jobs:
             aws ssm send-command \
                 --document-name "AWS-RunShellScript" \
                 --targets '[{"Key":"InstanceIds","Values":["i-03882e46fb18eb0a8"]}]' \
-                --parameters '{"commands":["#!/bin/bash","cd /home/ubuntu/rif-marketplace-cache","sudo cp /var/lib/docker/volumes/rif-marketplace-cache_cache-db/_data/db.sqlite ~/db.sqlite-backup-test"]}' \
+                --parameters '{"commands":["#!/bin/bash","cd /home/ubuntu/rif-marketplace-cache","cp /var/lib/docker/volumes/rif-marketplace-cache_cache-db/_data/db.sqlite ~/db.sqlite-backup-test"]}' \
                 --region=${{ secrets.STAGING_AWS_REGION }}
