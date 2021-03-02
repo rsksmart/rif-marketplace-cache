@@ -33,3 +33,4 @@ oclif.manifest.json
 /data-test
 
 .eslintrc.js
+tsconfig.json
