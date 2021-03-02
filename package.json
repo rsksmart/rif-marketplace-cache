@@ -48,7 +48,8 @@
     "test": "npm run test:unit && npm run test:integration",
     "test:integration": "cross-env ALLOW_CONFIG_MUTATIONS=true tasegir test --target node --files ./test/integration/**/*.spec.ts --files ./test/integration/**/**/*.spec.ts",
     "test:unit": "cross-env ALLOW_CONFIG_MUTATIONS=true tasegir test --target node --files ./test/unit/*.spec.ts --files ./test/unit/**/*.spec.ts --files ./test/unit/**/**/*.spec.ts",
-    "start": "tasegir run --watch ./src/index.ts"
+    "start": "tasegir run --watch ./src/index.ts",
+    "tasegir:link": "ln -s ./node_modules/tasegir/src/config/tsconfig.json ./tsconfig.json && ln -s ./node_modules/tasegir/src/config/eslintrc.js ./.eslintrc.js"
   },
   "dependencies": {
     "@feathersjs/authentication": "^4.5.6",
