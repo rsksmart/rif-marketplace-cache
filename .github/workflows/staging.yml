@@ -52,6 +52,7 @@ jobs:
       #     docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
 
       - name: Send a command to EC2 instance(s)
+        # This is needed basically to test if ssm is responding correctly
         run: |
            aws ssm send-command \
                --instance-ids "i-03882e46fb18eb0a8" \
@@ -64,6 +65,7 @@ jobs:
         run: |
             aws ssm send-command \
                 --document-name "AWS-RunShellScript" \
+                --comment "Deploy RIF-marketplace Cache" \
                 --targets '[{"Key":"InstanceIds","Values":["i-03882e46fb18eb0a8"]}]' \
                 --parameters '{"commands":["sudo cp /var/lib/docker/volumes/rif-marketplace-cache_cache-db/_data/db.sqlite /home/ubuntu/db.sqlite-backup-$(date +%Y%m%d%H%M%S)"]}' \
                 --region=${{ secrets.STAGING_AWS_REGION }}
