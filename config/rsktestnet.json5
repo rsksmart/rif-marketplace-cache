@@ -20,6 +20,9 @@
   },
   storage: {
     enabled: true,
+    tokens: {
+      '0x19f64674D8a5b4e652319F5e239EFd3bc969a1FE': 'rif'
+    },
     storageManager: {
       contractAddress: "0x2647F2e5C2E6A05487708CBCBd72900Dc339af1b",
       eventsEmitter: {

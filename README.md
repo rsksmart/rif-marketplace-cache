@@ -321,6 +321,7 @@ file and load that either using the `--config` CLI parameter or using environmen
 ### Environment variables overview
 
  - `RIFM_DATA_DIR` (string/path): directory where all the persistent data will be placed by default
+ - `RIFM_JWT_SECRET` (string): Secret using for JTW tokens (not used for auth purpose)
  - `RIFM_PORT` (number): port on which the server should listen to
  - `RIFM_DB` (string): database connection URI
  - `RIFM_PROVIDER` (string): blockchain connection URI
