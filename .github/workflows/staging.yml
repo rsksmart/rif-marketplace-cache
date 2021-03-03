@@ -63,9 +63,10 @@ jobs:
 
       - name: Deploy rif-marketplace-cache staging
         run: |
-            aws ssm send-command \
-                --document-name "AWS-RunShellScript" \
-                --comment "Deploy RIF-marketplace Cache" \
-                --targets '[{"Key":"InstanceIds","Values":["i-03882e46fb18eb0a8"]}]' \
-                --parameters '{"commands":["sudo cp /var/lib/docker/volumes/rif-marketplace-cache_cache-db/_data/db.sqlite /home/ubuntu/db.sqlite-backup-$(date +%Y%m%d%H%M%S)"]}' \
-                --region=${{ secrets.STAGING_AWS_REGION }}
+          aws ssm send-command \
+              --document-name "AWS-RunRemoteScript" \
+              --instance-ids "i-03882e46fb18eb0a8" \
+              --region=${{ secrets.STAGING_AWS_REGION }} \
+              --comment "github interaction-rif-marketcache" \
+              --parameters '{"sourceType":["GitHub"],"sourceInfo":["{\"owner\":\"rootstock\", \"repository\":\"ask-devops\", \"path\": \"rif-marketplace/\",\"tokenInfo\":\"{{ssm-secure:github-token}}\"}"],"commandLine":["deploy-marketplace-cache.sh"]}'
+
