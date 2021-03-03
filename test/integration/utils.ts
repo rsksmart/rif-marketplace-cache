@@ -11,6 +11,7 @@ import BigNumber from 'bignumber.js'
 import { promisify } from 'util'
 import storageManagerContract from '@rsksmart/rif-marketplace-storage/build/contracts/StorageManager.json'
 import stakingContract from '@rsksmart/rif-marketplace-storage/build/contracts/Staking.json'
+import RNSSimplePlacementsV1 from '@rsksmart/rif-marketplace-nfts/RNSSimplePlacementsV1Data.json'
 import feathers from '@feathersjs/feathers'
 import socketio from '@feathersjs/socketio-client'
 import io from 'socket.io-client'
@@ -26,6 +27,8 @@ import { sleep } from '../utils'
 import DbMigration from '../../src/migrations'
 import { resolvePath } from '../../src/utils'
 import * as http from 'http'
+// @ts-ignore not typed
+import RNSSuite from '@rsksmart/rns-suite'
 
 export const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000'
 export const ZERO_BYTES_32 = '0x0000000000000000000000000000000000000000000000000000000000000000'
@@ -76,6 +79,8 @@ export class TestingApp {
   private app: { stop: () => void, app: Application } | undefined
   public storageContract: Contract | undefined
   public stakingContract: Contract | undefined
+  public marketplaceContract: Contract | undefined
+  public rnsSuite: any
   public eth: Eth | undefined
   public server: http.Server | undefined
   public sequelize: Sequelize | undefined
@@ -101,6 +106,17 @@ export class TestingApp {
       switch (service) {
         case SupportedServices.RNS:
           // TODO: Deploy and configure RNS contracts
+          await this.deployRns()
+          // @ts-ignore: not typed
+          config.rns.registrar.contractAddress = this.rnsSuite.auctionRegistrar.options.address
+          // @ts-ignore: not typed
+          config.rns.fifsAddrRegistrar.contractAddress = this.rnsSuite.fifsAddrRegistrar.options.address
+          // @ts-ignore: not typed
+          config.rns.owner.contractAddress = this.rnsSuite.rskOwner.options.address
+          // @ts-ignore: not typed
+          config.rns.reverse.contractAddress = this.rnsSuite.nameResolver.options.address
+          // @ts-ignore: not typed
+          config.rns.placement.contractAddress = this.marketplaceContract.options.address
           break
         case SupportedServices.STORAGE:
           await this.deployStorageManager()
@@ -202,6 +218,41 @@ export class TestingApp {
     }
     this.nextAccountIndex += 1
     return acc
+  }
+
+  private async deployRns () {
+    if (!this.eth || !this.providerAddress) {
+      throw new Error('Provider should be initialized and has at least 2 accounts')
+    }
+
+    this.logger.info('Deploying RNS Suite')
+    this.rnsSuite = await RNSSuite(
+      this.eth.currentProvider,
+      [],
+      []
+    )
+    const simplePlacementsV1 = new this.eth.Contract(RNSSimplePlacementsV1.abi as AbiItem[])
+    const deploy = await simplePlacementsV1.deploy({ data: RNSSimplePlacementsV1.bytecode })
+    this.marketplaceContract = await deploy.send({ from: this.contractOwner, gas: await deploy.estimateGas() })
+    const initializeTx = await this.marketplaceContract.methods
+      .initialize(
+        this.rnsSuite.rskOwner.options.address,
+        this.contractOwner,
+        this.rnsSuite.rns.options.address,
+        this.rnsSuite.defintiveResolver.options.address
+      )
+    await initializeTx.send({ from: this.contractOwner, gas: await initializeTx.estimateGas() })
+
+    this.logger.info('Enabling RIF Payments')
+    await this.marketplaceContract?.methods.setWhitelistedPaymentToken(
+      this.rnsSuite.rif.options.address,
+      true,
+      true,
+      false
+    ).send({ from: this.contractOwner })
+
+    this.logger.info('Enabling RBTC(gas) Payments')
+    await this.marketplaceContract?.methods?.allowGasPayments(true).send({ from: this.contractOwner })
   }
 
   private async deployStorageManager (): Promise<void> {

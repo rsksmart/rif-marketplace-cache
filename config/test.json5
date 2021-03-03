@@ -17,6 +17,9 @@
       }
     }
   },
+  rates: {
+    refresh: 36000
+  },
   blockchain: {
     provider: 'ws://localhost:8545',
     networkId: 420,
