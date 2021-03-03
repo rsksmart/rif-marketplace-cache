@@ -53,16 +53,18 @@ jobs:
           command: |
             git config --global user.email "you@example.com"
             git config --global user.name "Your Name"
-#            npx tasegir commitlint --circleci
+            echo 'export COMMIT_MESSAGE=$(git log -1 --pretty=format:"%s")' >> $BASH_ENV
+            source $BASH_ENV
+            echo "$COMMIT_MESSAGE" | npx commitlint --extends @commitlint/config-conventional
 #      - run:
 #          name: "Dependency check"
 #          command: npx tasegir dep-check
       - run:
           name: "Code linting"
-          command: npm run lint
-#      - run:
-#          name: "Types check"
-#          command: npx tasegir types-check
+          command: npx eslint --ext .ts src/ test/
+      - run:
+          name: "Types check"
+          command: npx tsc --noEmit
 
 
   # Run test on top of Ganache
@@ -101,7 +103,7 @@ jobs:
       - install-sqlite
       - run:
           name: "Unit tests"
-          command: npm run test:unit --reporter lcovonly -- --bail
+          command: cross-env ALLOW_CONFIG_MUTATIONS=true NODE_ENV=test npx nyc --nycrc-path=./.nycrc mocha --compilers ts-node/register --require source-map-support/register --full-trace --colors --exit npm run-test --files ./test/unit/*.spec.ts --files ./test/unit/**/*.spec.ts --files ./test/unit/**/**/*.spec.ts --reporter lcovonly -- --bail
       - run:
           name: "Integration tests"
           command: npm run test:integration --reporter lcovonly -- --bail
