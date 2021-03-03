@@ -44,12 +44,13 @@
     "types-check": "tsc --noEmit",
     "docs": "typedoc --mode modules --excludeNotExported --readme none --excludePrivate  --tsconfig ./tsconfig.json --exclude 'src/providers/*,test/**/*' --out docs src",
     "lint": "eslint --ext .ts src/ test/",
-    "release": "npm run compile && npm publish",
+    "release": "npm run generate-changelog && npm run compile && npm publish",
     "test": "npm run test:unit && npm run test:integration",
     "test:integration": "npm run run-test \"./test/integration/**/*.spec.ts\"",
     "test:unit": "npm run run-test \"./test/unit/**/*.spec.ts\"",
     "run-test": "cross-env ALLOW_CONFIG_MUTATIONS=true NODE_ENV=test nyc --nycrc-path=./.nycrc mocha --compilers ts-node/register --require source-map-support/register --full-trace --colors --exit",
-    "start": "ts-node-dev --watch -- ./src/index.ts"
+    "start": "ts-node-dev --watch -- ./src/index.ts",
+    "generate-changelog": "conventional-changelog -p angular -i CHANGELOG.md -s"
   },
   "dependencies": {
     "@feathersjs/authentication": "^4.5.6",
@@ -131,6 +132,7 @@
     "bignumber.js": "^9.0.0",
     "chai": "^4.2.0",
     "chai-as-promised": "^7.1.1",
+    "conventional-changelog-cli": "^2.1.1",
     "cross-env": "^7.0.2",
     "dirty-chai": "^2.0.1",
     "eslint": "^7.20.0",
