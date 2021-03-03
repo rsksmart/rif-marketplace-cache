@@ -20,6 +20,7 @@ WORKDIR /srv/app
 COPY --from=compiler /usr/src/app/lib ./lib/
 COPY --from=compiler /usr/src/app/node_modules ./node_modules/
 COPY package*.json ./
+COPY tsconfig.json ./
 COPY bin ./bin/
 COPY config ./config/
 

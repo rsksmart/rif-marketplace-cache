@@ -46,8 +46,8 @@
     "lint": "eslint --ext .ts src/ test/",
     "release": "npm run compile && npm publish",
     "test": "npm run test:unit && npm run test:integration",
-    "test:integration": "npm run-test --files ./test/integration/**/*.spec.ts --files ./test/integration/**/**/*.spec.ts",
-    "test:unit": "npm run-test --files ./test/unit/*.spec.ts --files ./test/unit/**/*.spec.ts --files ./test/unit/**/**/*.spec.ts",
+    "test:integration": "npm run run-test \"./test/integration/**/*.spec.ts\"",
+    "test:unit": "npm run run-test \"./test/unit/**/*.spec.ts\"",
     "run-test": "cross-env ALLOW_CONFIG_MUTATIONS=true NODE_ENV=test nyc --nycrc-path=./.nycrc mocha --compilers ts-node/register --require source-map-support/register --full-trace --colors --exit",
     "start": "ts-node-dev --watch -- ./src/index.ts"
   },

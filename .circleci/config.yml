@@ -103,10 +103,10 @@ jobs:
       - install-sqlite
       - run:
           name: "Unit tests"
-          command: npx cross-env ALLOW_CONFIG_MUTATIONS=true NODE_ENV=test npx nyc --nycrc-path=./.nycrc npx mocha --compilers ts-node/register --require source-map-support/register --full-trace --colors --exit --files ./test/unit/*.spec.ts --files ./test/unit/**/*.spec.ts --files ./test/unit/**/**/*.spec.ts --bail
+          command: npx cross-env ALLOW_CONFIG_MUTATIONS=true NODE_ENV=test npx nyc --nycrc-path=./.nycrc npx mocha --compilers ts-node/register --require source-map-support/register --full-trace --colors --exit "./test/unit/**/*.spec.ts" --bail
       - run:
           name: "Integration tests"
-          command: npx cross-env ALLOW_CONFIG_MUTATIONS=true NODE_ENV=test npx nyc --nycrc-path=./.nycrc npx mocha --compilers ts-node/register --require source-map-support/register --full-trace --colors --exit --files ./test/integration/**/*.spec.ts --files ./test/integration/**/**/*.spec.ts --bail
+          command: npx cross-env ALLOW_CONFIG_MUTATIONS=true NODE_ENV=test npx nyc --nycrc-path=./.nycrc npx mocha --compilers ts-node/register --require source-map-support/register --full-trace --colors --exit "./test/integration/**/*.spec.ts" --bail
 
 
 workflows:
