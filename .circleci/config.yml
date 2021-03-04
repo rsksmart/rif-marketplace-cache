@@ -53,16 +53,18 @@ jobs:
           command: |
             git config --global user.email "you@example.com"
             git config --global user.name "Your Name"
-            npx tasegir commitlint --circleci
-      - run:
-          name: "Dependency check"
-          command: npx tasegir dep-check
+            echo 'export COMMIT_MESSAGE=$(git log -1 --pretty=format:"%s")' >> $BASH_ENV
+            source $BASH_ENV
+            echo "$COMMIT_MESSAGE" | npx commitlint --extends @commitlint/config-conventional
+#      - run:
+#          name: "Dependency check"
+#          command: npx tasegir dep-check
       - run:
           name: "Code linting"
-          command: npx tasegir lint
+          command: npx eslint --ext .ts src/ test/
       - run:
           name: "Types check"
-          command: npx tasegir types-check
+          command: npx tsc --noEmit
 
 
   # Run test on top of Ganache
@@ -103,51 +105,11 @@ jobs:
       - install-sqlite
       - run:
           name: "Unit tests"
-          command: npx tasegir test --target node --files ./test/unit/*.spec.ts --files ./test/unit/**/*.spec.ts --files ./test/unit/**/**/*.spec.ts --reporter lcovonly -- --bail
+          command: npx cross-env ALLOW_CONFIG_MUTATIONS=true NODE_ENV=test npx nyc --nycrc-path=./.nycrc npx mocha --compilers ts-node/register --require source-map-support/register --full-trace --colors --exit "./test/unit/**/*.spec.ts" --bail
       - run:
           name: "Integration tests"
-          command: npx tasegir test --target node --files ./test/integration/**/*.spec.ts --files ./test/integration/**/**/*.spec.ts --reporter lcovonly -- --bail
+          command: npx cross-env ALLOW_CONFIG_MUTATIONS=true NODE_ENV=test npx nyc --nycrc-path=./.nycrc npx mocha --compilers ts-node/register --require source-map-support/register --full-trace --colors --exit "./test/integration/**/*.spec.ts" --bail
 
-
-  # Run test on top of PSK node
-  node-tests-rsk:
-    parameters:
-      cache:
-        type: boolean
-        default: true
-      version:
-        type: string
-    docker:
-      - image: circleci/node:<< parameters.version >>
-
-    steps:
-      - setup_remote_docker
-      - checkout
-      - when:
-          condition: <<parameters.cache>>
-          steps:
-            - restore_cache:
-                keys:
-                  # when lock file changes, use increasingly general patterns to restore cache
-                  - node-<< parameters.version >>-{{ .Branch }}-{{ checksum "package-lock.json" }}
-                  - node-<< parameters.version >>-{{ .Branch }}-
-                  - node-<< parameters.version >>-
-      - install-deps
-      - when:
-          condition: <<parameters.cache>>
-          steps:
-            - save_cache:
-                paths:
-                  - ./node_modules
-                key: node-<< parameters.version >>-{{ .Branch }}-{{ checksum "package-lock.json" }}
-      - install-sqlite
-      - run-rsk
-      - run:
-          name: "Unit tests"
-          command: npx tasegir test --target node --files ./test/unit/*.spec.ts --files ./test/unit/**/*.spec.ts --files ./test/unit/**/**/*.spec.ts --reporter lcovonly -- --bail
-      - run:
-          name: "Integration tests"
-          command: npx tasegir test --target node --files ./test/integration/**/*.spec.ts --files ./test/integration/**/**/*.spec.ts --reporter lcovonly -- --bail
 
 workflows:
   test:
@@ -168,9 +130,4 @@ workflows:
           name: node-14
           requires:
             - check
-#      - node-tests-rsk:
-#          version: '10'
-#          name: node-rsk
-#          requires:
-#            - check
 

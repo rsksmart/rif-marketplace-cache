@@ -5,9 +5,9 @@ RUN apk add --no-cache build-base git python
 
 WORKDIR /usr/src/app
 COPY package*.json ./
-RUN npm ci --only=production && npm install tasegir
+RUN npm ci --only=production && npm i typescript
 COPY . ./
-RUN npx tasegir compile
+RUN npx tsc --declaration --declarationDir types
 
 # Runtime container
 FROM node:10-alpine
@@ -20,6 +20,7 @@ WORKDIR /srv/app
 COPY --from=compiler /usr/src/app/lib ./lib/
 COPY --from=compiler /usr/src/app/node_modules ./node_modules/
 COPY package*.json ./
+COPY tsconfig.json ./
 COPY bin ./bin/
 COPY config ./config/
 
