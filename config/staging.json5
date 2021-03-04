@@ -26,14 +26,14 @@
     storageManager: {
       contractAddress: "0xaF37117a4907331DC49b05bDC1DE920F12dBF715",
       eventsEmitter: {
-        startingBlock: 1333889,
+        startingBlock: 1656755,
         confirmations: 3
       }
     },
     staking: {
       contractAddress: "0xF1573D262924abE24334FDDD62c6Ba58288d2f8c",
       eventsEmitter: {
-        startingBlock: 1333904,
+        startingBlock: 1656733,
         confirmations: 3
       }
     },
