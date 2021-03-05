@@ -1,3 +1,9 @@
+## [1.3.4](https://github.com/rsksmart/rif-marketplace-cache/compare/v1.3.3...v1.3.4) (2021-03-05)
+
+### Bug Fixes
+* **build:** fix typescript compilation ([#560](https://github.com/rsksmart/rif-marketplace-cache/pull/560))
+
+
 <a name="1.3.3"></a>
 ## [1.3.3](https://github.com/rsksmart/rif-marketplace-cache/compare/v1.3.0...v1.3.3) (2021-03-04)
 
