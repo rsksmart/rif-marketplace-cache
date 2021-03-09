@@ -31,9 +31,8 @@ oclif.manifest.json
 # Default data dir
 /data
 /data-test
-
-.eslintrc.j
+.eslintrc.js
 
 # idea IDE
 .idea/*
-s
+

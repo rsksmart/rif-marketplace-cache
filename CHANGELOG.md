@@ -1,3 +1,27 @@
+## [1.3.4](https://github.com/rsksmart/rif-marketplace-cache/compare/v1.3.3...v1.3.4) (2021-03-05)
+
+### Bug Fixes
+* **build:** fix typescript compilation ([#560](https://github.com/rsksmart/rif-marketplace-cache/pull/560))
+
+
+<a name="1.3.3"></a>
+## [1.3.3](https://github.com/rsksmart/rif-marketplace-cache/compare/v1.3.0...v1.3.3) (2021-03-04)
+
+
+### Bug Fixes
+
+* **rns:** adds post find pagination hook ([#529](https://github.com/rsksmart/rif-marketplace-cache/issues/529)) ([4f72426](https://github.com/rsksmart/rif-marketplace-cache/commit/4f72426b9acf538b57077999caf1eb0db23594fa))
+* **rns:** removes pagination ([759ad55](https://github.com/rsksmart/rif-marketplace-cache/commit/759ad55f6200a093457b4bfce909813413d135fd))
+* do not expose error stack trace to client ([#556](https://github.com/rsksmart/rif-marketplace-cache/issues/556)) ([6ae31d4](https://github.com/rsksmart/rif-marketplace-cache/commit/6ae31d4b43262d181ca1f946ae1218e5dfea36f8))
+
+
+### Features
+
+* **rns:** adds filter by fiat to offers ([58cca7c](https://github.com/rsksmart/rif-marketplace-cache/commit/58cca7cdbec1cf13843dab00273c72843a410449))
+* **rns:** copies and adapts usdPrice calc ([2bef1cb](https://github.com/rsksmart/rif-marketplace-cache/commit/2bef1cb98f0b442daf6fed3396fec4810a74c5c8))
+
+
+
 <a name="1.3.2"></a>
 ## [1.3.2](https://github.com/rsksmart/rif-marketplace-cache/compare/v1.3.0...v1.3.2) (2021-02-02)
 

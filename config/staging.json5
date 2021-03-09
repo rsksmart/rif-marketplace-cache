@@ -20,17 +20,20 @@
   },
   storage: {
     enabled: true,
+    tokens: {
+      '0x19f64674D8a5b4e652319F5e239EFd3bc969a1FE': 'rif'
+    },
     storageManager: {
-      contractAddress: "0xEaEff4a8A8622B7520eE34f4CC2e50f1e58411C0",
+      contractAddress: "0xaF37117a4907331DC49b05bDC1DE920F12dBF715",
       eventsEmitter: {
-        startingBlock: 1333889,
+        startingBlock: 1656755,
         confirmations: 3
       }
     },
     staking: {
-      contractAddress: "0xB45BbC3B983E9d60c131F177831e911043a36b6f",
+      contractAddress: "0xF1573D262924abE24334FDDD62c6Ba58288d2f8c",
       eventsEmitter: {
-        startingBlock: 1333904,
+        startingBlock: 1656733,
         confirmations: 3
       }
     },

@@ -114,6 +114,8 @@ export async function appFactory (options: AppOptions): Promise<AppReturns> {
   app.hooks({
     error (context) {
       logger.error(`Error in '${context.path}' service method '${context.method}'`, { stack: context.error.stack })
+      delete context.error.stack
+      delete context.error.hook
     }
   })
 

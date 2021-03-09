@@ -136,26 +136,30 @@ function initLogging (): void {
       // format.padLevels(),
       format.timestamp({ format: 'DD/MM hh:mm:ss' }),
       format.colorize(),
-      format.printf(info => {
-        let message: string
-        const { service, ...rest } = info.metadata
-
-        if (service) {
-          message = `[${info.level}] ${colors.grey(info.timestamp)} (${service}): ${info.message}`
-        } else {
-          message = `[${info.level}] ${colors.grey(info.timestamp)}: ${info.message}`
-        }
-
-        if (Object.keys(rest).length > 0) {
-          message += '\n' + inspect(rest, false, 5, true)
-        }
-
-        return message
-      }),
+      format.printf(formatLogMessage),
       COLORS_ENABLED ? format(i => i)() : format.uncolorize()
     ),
     transports: transportsSet
   })
+}
+
+export function formatLogMessage (info: any): string {
+  let message: string
+  const { service, ...rest } = info.metadata
+
+  const sanitizedMessage = info.message.replace(/\n/g, '\\n')
+
+  if (service) {
+    message = `[${info.level}] ${colors.grey(info.timestamp)} (${service}): ${sanitizedMessage}`
+  } else {
+    message = `[${info.level}] ${colors.grey(info.timestamp)}: ${sanitizedMessage}`
+  }
+
+  if (Object.keys(rest).length > 0) {
+    message += '\n' + inspect(rest, false, 5, true)
+  }
+
+  return message
 }
 
 function delayedLoggingMethod (level: SupportedLevels, name?: string) {

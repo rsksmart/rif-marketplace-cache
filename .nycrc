@@ -1,0 +1,30 @@
+{
+    "include": [
+      "src/**/*.ts",
+      "src/**/*.tsx"
+    ],
+    "cache": false,
+    "exclude": [
+            "**/*.d.ts",
+            "coverage/**",
+            "packages/*/test/**",
+            "test/**",
+            "test{,-*}.ts",
+            "**/*{.,-}{test,spec}.ts",
+            "**/__tests__/**",
+            "**/node_modules/**"
+        ],
+    "extension": [
+      ".ts",
+      ".tsx"
+    ],
+    "require": [
+      "ts-node/register"
+    ],
+    "reporter": [
+      "text-summary",
+      "html"
+    ],
+    "sourceMap": true,
+    "instrument": true
+ }
