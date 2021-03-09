@@ -29,11 +29,6 @@ jobs:
         with:
             version: ${{ steps.previoustag.outputs.tag }}
 
-      - name: Setup Node 14
-        uses: actions/setup-node@v1
-        with:
-          node-version: '14'
-
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v1
         with:
@@ -46,6 +41,7 @@ jobs:
         uses: aws-actions/amazon-ecr-login@v1
 
       - name: Echo git tag
+        uses: "WyriHaximus/github-action-get-previous-tag@v1"
         run: echo ${{ steps.previoustag.outputs.tag }}
 
       #- name: Build, tag, and push image to Amazon ECR
