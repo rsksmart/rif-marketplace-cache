@@ -26,6 +26,11 @@ jobs:
             git fetch --tags
             echo $?
             git tag --list
+      - name: 'Get Latest tag'
+        id: latesttag
+        uses: "WyriHaximus/github-action-get-previous-tag@v1"
+        with:
+            version: ${{ steps.previoustag.outputs.tag }}
 
       - name: Setup Node 14
         uses: actions/setup-node@v1
