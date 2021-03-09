@@ -59,12 +59,11 @@ jobs:
                --parameters commands=ifconfig \
                --output text --region=${{ secrets.STAGING_AWS_REGION }}
 
-#      - name: Deploy rif-marketplace-cache staging
-#        run: |
-#          aws ssm send-command \
-#              --document-name "AWS-RunRemoteScript" \
-#              --instance-ids "i-03882e46fb18eb0a8" \
-#              --region=${{ secrets.STAGING_AWS_REGION }} \
-#              --comment "github interaction-rif-marketplace-cache" \
-#              --parameters '{"sourceType":["GitHub"],"sourceInfo":["{\"owner\":\"rootstock\", \"repository\":\"ask-devops\", \"path\": \"rif-marketplace/\",\"tokenInfo\":\"{{ssm-secure:github-token}}\"}"],"commandLine":["deploy-marketplace-cache.sh"]}'
-
+      - name: Deploy rif-marketplace-cache staging
+        run: |
+          aws ssm send-command \
+              --document-name "AWS-RunRemoteScript" \
+              --instance-ids "i-03882e46fb18eb0a8" \
+              --region=${{ secrets.STAGING_AWS_REGION }} \
+              --comment "github interaction-rif-marketplace-cache" \
+              --parameters '{"sourceType":["GitHub"],"sourceInfo":["{\"owner\":\"rootstock\", \"repository\":\"ask-devops\", \"path\": \"rif-marketplace/\",\"tokenInfo\":\"{{ssm-secure:github-token}}\"}"],"commandLine":["deploy-marketplace-cache.sh"]}'
