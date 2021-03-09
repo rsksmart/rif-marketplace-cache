@@ -40,12 +40,14 @@ jobs:
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v1
 
-      - name: Echo git tag
+      - name: Echo LATEST git tag
         uses: "WyriHaximus/github-action-get-previous-tag@v1"
         with:
           version: ${{ steps.previoustag.outputs.tag }}
 
       - name: Build, tag, and push image to Amazon ECR
+        with:
+          IMAGE_TAG: ${{ steps.previoustag.outputs.tag }}
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           ECR_REPOSITORY: rif-marketplace-cache
@@ -55,7 +57,7 @@ jobs:
            docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
 
       - name: Send a command to EC2 instance(s)
-        # This is needed basically to test if ssm is responding correctly
+        # This is needed basically to TEST if ssm is responding correctly
         run: |
            aws ssm send-command \
                --instance-ids "i-03882e46fb18eb0a8" \
