@@ -42,7 +42,8 @@ jobs:
 
       - name: Echo git tag
         uses: "WyriHaximus/github-action-get-previous-tag@v1"
-        run: echo ${{ steps.previoustag.outputs.tag }}
+        with:
+          version: ${{ steps.previoustag.outputs.tag }}
 
       #- name: Build, tag, and push image to Amazon ECR
       #  env:
