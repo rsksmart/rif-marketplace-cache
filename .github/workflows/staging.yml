@@ -22,11 +22,12 @@ jobs:
       - uses: "WyriHaximus/github-action-get-previous-tag@v1"
 
       - name: Checkout
-
+        uses: actions/checkout@v2
         with:
           fetch-depth: 0
 
       - name: 'GET Latest TAG'
+        uses: "WyriHaximus/github-action-get-previous-tag@v1"
         id: latesttag
         with:
             version: ${{ steps.previoustag.outputs.tag }}
