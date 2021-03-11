@@ -14,7 +14,7 @@ import DomainOwner from './models/owner.model'
 import Transfer from './models/transfer.model'
 import SoldDomain from './models/sold-domain.model'
 import { EventTransformer } from '../../blockchain/event-transformer'
-import { getTokenSymbol } from '../storage/utils'
+import { getTokenSymbol } from '../utils'
 import RLP = require('rlp')
 
 type RLPDecoded = Array<Array<number[]>>

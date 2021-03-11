@@ -2,7 +2,7 @@ import { HookContext } from '@feathersjs/feathers'
 import { disallow } from 'feathers-hooks-common'
 import { lowerCaseAddressesQueryParamsHook } from '../../utils'
 
-const ADDRESSES_FIELDS = ['token', 'account']
+// const ADDRESSES_FIELDS = ['token', 'account']
 
 export default {
   before: {
@@ -12,7 +12,7 @@ export default {
           raw: false
         }
       },
-      lowerCaseAddressesQueryParamsHook(ADDRESSES_FIELDS)
+      // lowerCaseAddressesQueryParamsHook(ADDRESSES_FIELDS)
     ],
     find: [],
     get: [],

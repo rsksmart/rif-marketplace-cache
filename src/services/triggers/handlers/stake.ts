@@ -1,13 +1,13 @@
 import BigNumber from 'bignumber.js'
-import { Staked, Unstaked } from '@rsksmart/rif-marketplace-storage/types/web3-v1-contracts/Staking'
+import { Staked, Unstaked } from '@rsksmart/rif-marketplace-notifications/types/web3-v1-contracts/Staking'
 
 import { loggingFactory } from '../../../logger'
 import { Handler, StakeEvents } from '../../../definitions'
-import { StorageServices } from '../index'
+import { TriggersServices } from '../index'
 import StakeModel from '../models/stake.model'
 import { getTokenSymbol } from '../../utils'
 
-const logger = loggingFactory('storage:handler:stake')
+const logger = loggingFactory('triggers:handler:stake')
 
 /**
  * Find or create stake
@@ -26,7 +26,7 @@ async function findOrCreateStake (account: string, token: string): Promise<Stake
 }
 
 const handlers = {
-  async Staked (event: Staked, { stakeService }: StorageServices): Promise<void> {
+  async Staked (event: Staked, { stakeService }: TriggersServices): Promise<void> {
     const { user: account, total, token, amount } = event.returnValues
 
     const stake = await findOrCreateStake(account, token)
@@ -40,7 +40,7 @@ const handlers = {
     }
   },
 
-  async Unstaked (event: Unstaked, { stakeService }: StorageServices): Promise<void> {
+  async Unstaked (event: Unstaked, { stakeService }: TriggersServices): Promise<void> {
     const { user: account, total, token, amount } = event.returnValues
 
     const stake = await StakeModel.findOne({ where: { token, account } })
@@ -63,9 +63,9 @@ function isValidEvent (value: string): value is keyof typeof handlers {
   return value in handlers
 }
 
-const handler: Handler<StakeEvents, StorageServices> = {
+const handler: Handler<StakeEvents, TriggersServices> = {
   events: ['Staked', 'Unstaked'],
-  process (event: StakeEvents, services: StorageServices): Promise<void> {
+  process (event: StakeEvents, services: TriggersServices): Promise<void> {
     if (!isValidEvent(event.event)) {
       return Promise.reject(new Error(`Unknown event ${event.event}`))
     }

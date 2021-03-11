@@ -9,7 +9,7 @@ import { Handler, StorageOfferEvents } from '../../../definitions'
 import { StorageServices } from '../index'
 import { decodeByteArray, wrapEvent } from '../../../utils'
 import { EventError } from '../../../errors'
-import { getTokenSymbol } from '../utils'
+import { getTokenSymbol } from '../../utils'
 import { OfferService } from '../services'
 import { subscribeForOffer } from '../../../communication'
 
