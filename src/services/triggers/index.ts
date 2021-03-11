@@ -26,7 +26,7 @@ import {
 import { loggingFactory } from '../../logger'
 import { errorHandler, waitForReadyApp } from '../../utils'
 import ProviderModel from './models/provider.model'
-import StakeModel from './models/stake.model'
+import TriggersStakeModel from './models/triggersStake.model'
 import providerHooks from './hooks/providers.hook'
 import stakeHooks from './hooks/stakes.hook'
 import eventProcessor from './processor'
@@ -76,7 +76,7 @@ function precache (eth: Eth, web3events: Web3Events): Observable<string> {
       const stakingEventParser = eventTransformerFactory(stakingContract.abi as AbiItem[])
 
       const services: TriggersServices = {
-        stakeService: new StakeService({ Model: StakeModel }),
+        stakeService: new StakeService({ Model: TriggersStakeModel }),
         providerService: new ProviderService({ Model: ProviderModel })
       }
 
@@ -130,7 +130,7 @@ const storage: CachedService = {
     providerService.hooks(providerHooks)
 
     // Initialize Staking service
-    app.use(ServiceAddresses.TRIGGERS_STAKES, new StakeService({ Model: StakeModel }))
+    app.use(ServiceAddresses.TRIGGERS_STAKES, new StakeService({ Model: TriggersStakeModel }))
     const stakeService = app.service(ServiceAddresses.STORAGE_STAKES)
     stakeService.hooks(stakeHooks)
 
@@ -175,7 +175,7 @@ const storage: CachedService = {
 
   async purge (): Promise<void> {
     const providerCount = await ProviderModel.destroy({ where: {}, truncate: true, cascade: true })
-    const stakeCount = await StakeModel.destroy({ where: {}, truncate: true, cascade: true })
+    const stakeCount = await TriggersStakeModel.destroy({ where: {}, truncate: true, cascade: true })
     triggersLogger.info(`Removed ${providerCount} provider entries, ${stakeCount} stakes`)
 
     purgeBlockTrackerData(NOTIFICATIONS_MANAGER)

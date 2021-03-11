@@ -4,7 +4,7 @@ import { Staked, Unstaked } from '@rsksmart/rif-marketplace-notifications/types/
 import { loggingFactory } from '../../../logger'
 import { Handler, StakeEvents } from '../../../definitions'
 import { TriggersServices } from '../index'
-import StakeModel from '../models/stake.model'
+import TriggersStakeModel from '../models/triggersStake.model'
 import { getTokenSymbol } from '../../utils'
 
 const logger = loggingFactory('triggers:handler:stake')
@@ -13,16 +13,16 @@ const logger = loggingFactory('triggers:handler:stake')
  * Find or create stake
  * @param account
  * @param token
- * @returns {Promise<StakeModel>} stake
+ * @returns {Promise<TriggersStakeModel>} stake
  */
-async function findOrCreateStake (account: string, token: string): Promise<StakeModel> {
-  const stake = await StakeModel.findOne({ where: { account, token } })
+async function findOrCreateStake (account: string, token: string): Promise<TriggersStakeModel> {
+  const stake = await TriggersStakeModel.findOne({ where: { account, token } })
 
   if (stake) {
     return stake
   }
   const symbol = getTokenSymbol(token).toLowerCase()
-  return StakeModel.create({ account, token, symbol, total: 0 })
+  return TriggersStakeModel.create({ account, token, symbol, total: 0 })
 }
 
 const handlers = {
@@ -43,7 +43,7 @@ const handlers = {
   async Unstaked (event: Unstaked, { stakeService }: TriggersServices): Promise<void> {
     const { user: account, total, token, amount } = event.returnValues
 
-    const stake = await StakeModel.findOne({ where: { token, account } })
+    const stake = await TriggersStakeModel.findOne({ where: { token, account } })
 
     if (!stake) {
       throw new Error(`Stake for account ${account}, token ${token} not exist`)

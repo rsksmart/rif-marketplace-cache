@@ -8,7 +8,7 @@ import { BigNumberStringType } from '../../../sequelize'
 import { WEI } from '../../utils'
 
 @Table({ freezeTableName: true, tableName: 'triggers_stakes' })
-export default class StakeModel extends Model {
+export default class TriggersStakeModel extends Model {
   @Column({ ...BigNumberStringType('total') })
   total!: BigNumber
 
