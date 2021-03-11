@@ -24,6 +24,9 @@
       pollingInterval: 500
     }
   },
+  triggers: {
+    enabled: false
+  },
   storage: {
     tokens: {
       '0x12345': 'rif'

@@ -131,7 +131,7 @@ const storage: CachedService = {
 
     // Initialize Staking service
     app.use(ServiceAddresses.TRIGGERS_STAKES, new StakeService({ Model: TriggersStakeModel }))
-    const stakeService = app.service(ServiceAddresses.STORAGE_STAKES)
+    const stakeService = app.service(ServiceAddresses.TRIGGERS_STAKES)
     stakeService.hooks(stakeHooks)
 
     app.configure(triggersChannels)
