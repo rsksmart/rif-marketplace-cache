@@ -11,7 +11,7 @@ export default {
         context.params.sequelize = {
           raw: false
         }
-      },
+      }
       // lowerCaseAddressesQueryParamsHook(ADDRESSES_FIELDS)
     ],
     find: [],

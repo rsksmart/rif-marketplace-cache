@@ -178,6 +178,24 @@ export interface Config {
   }
 
   // Settings for Storage service related function
+  triggers?: {
+
+    // Sets if Storage service should be enabled
+    enabled?: boolean
+
+    // Supported tokens and their addresses
+    tokens?: {
+      [key: string]: SupportedTokens
+    }
+
+    // Staking contract options
+    staking?: BlockchainServiceOptions
+
+    // Storage Manager contract options
+    notificationsManager?: BlockchainServiceOptions
+  }
+
+  // Settings for Storage service related function
   storage?: {
 
     // Sets if Storage service should be enabled

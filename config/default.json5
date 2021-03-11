@@ -144,6 +144,85 @@
     }
   },
 
+  // Settings for Triggers service related function
+  triggers: {
+    // Sets if Storage service should be enabled
+    enabled: true,
+
+    // supported tokens
+    tokens: {
+      // Native token use zero address
+      '0x0000000000000000000000000000000000000000': 'rbtc',
+    },
+
+    // Storage Manager Contract
+    notificationsManager: {
+      // Specify behavior of EventsEmitter, that retrieves events from blockchain and pass them onwards for further processing.
+      eventsEmitter: {
+        // Will process one event at a time
+        serialProcessing: true,
+
+        // Topics that will be listened to
+        topics: [
+          [ // It needs to be a "double array" because that represents an "or" of the topics and not "and"
+            'ProviderRegistered(address,string)',
+          ]
+        ],
+
+        // If to use polling strategy, if false then listening is used.
+        polling: true,
+
+        // Interval in milliseconds, how often is blockchain checked.
+        pollingInterval: 5000,
+
+        // Starting block that upon first start of the service, will the blockchain be crawled for the past events.
+        startingBlock: 0,
+
+        // Number of blocks that will be waited before passing an event for further processing.
+        confirmations: 6,
+
+        // Number of blocks that is waited AFTER the event is confirmed before it is removed from database.
+        // Such parameter is needed for a REST API where a host could miss that an event has
+        // full confirmations as it could be removed from the DB before the endpoint is queried.
+        waitingBlockCount: 20
+      }
+    },
+
+    // Staking Contract
+    staking: {
+      // Specify behavior of EventsEmitter, that retrieves events from blockchain and pass them onwards for further processing.
+      eventsEmitter: {
+        // Will process one event at a time
+        serialProcessing: true,
+
+        // Topics that will be listened to
+        topics: [
+          [ // It needs to be a "double array" because that represents an "or" of the topics and not "and"
+            'Staked(address,uint256,uint256,address,bytes)',
+            'Unstaked(address,uint256,uint256,address,bytes)',
+          ]
+        ],
+
+        // If to use polling strategy, if false then listening is used.
+        polling: true,
+
+        // Interval in milliseconds, how often is blockchain checked.
+        pollingInterval: 5000,
+
+        // Starting block that upon first start of the service, will the blockchain be crawled for the past events.
+        startingBlock: 0,
+
+        // Number of blocks that will be waited before passing an event for further processing.
+        confirmations: 6,
+
+        // Number of blocks that is waited AFTER the event is confirmed before it is removed from database.
+        // Such parameter is needed for a REST API where a host could miss that an event has
+        // full confirmations as it could be removed from the DB before the endpoint is queried.
+        waitingBlockCount: 20
+      }
+    }
+  },
+
   // Settings for RNS service related function
   rns: {
     tld: 'rsk',

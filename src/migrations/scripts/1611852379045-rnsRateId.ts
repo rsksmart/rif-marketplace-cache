@@ -1,6 +1,6 @@
 import Sequelize, { QueryInterface } from 'sequelize'
 import DomainOffer from '../../services/rns/models/domain-offer.model'
-import { getTokenSymbol } from '../../services/storage/utils'
+import { getTokenSymbol } from '../../services/utils'
 
 export default {
   // eslint-disable-next-line require-await
