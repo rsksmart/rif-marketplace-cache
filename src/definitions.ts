@@ -370,7 +370,6 @@ export type CommsPayloads = ResendMessagesPayload | MultiaddrAnnouncementPayload
 export type MessageHandler = (message: CommsMessage<CommsPayloads>) => Promise<void>
 
 // NOTIFICATION
-
 export enum NotificationType {
   STORAGE = 'storage'
 }
