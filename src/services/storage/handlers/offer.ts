@@ -5,7 +5,7 @@ import Offer from '../models/offer.model'
 import BillingPlan from '../models/billing-plan.model'
 import { EventLog } from 'web3-core'
 import { loggingFactory } from '../../../logger'
-import { Handler, StorageOfferEvents } from '../../../definitions'
+import { Handler, StorageOfferEvents, SupportedServices } from '../../../definitions'
 import { StorageServices } from '../index'
 import { decodeByteArray, wrapEvent } from '../../../utils'
 import { EventError } from '../../../errors'
@@ -34,7 +34,7 @@ async function updatePrices (offer: Offer, period: number, price: number, tokenA
     billingPlan.price = new BigNumber(price)
     await billingPlan.save()
   } else {
-    const tokenSymbol = getTokenSymbol(tokenAddress).toLowerCase()
+    const tokenSymbol = getTokenSymbol(tokenAddress, SupportedServices.STORAGE).toLowerCase()
     const newBillingPlanEntity = new BillingPlan({
       period,
       price,

@@ -229,6 +229,12 @@
     // Sets if RNS service should be enabled
     enabled: true,
 
+    // supported tokens
+    tokens: {
+      // Native token use zero address
+      '0x0000000000000000000000000000000000000000': 'rbtc',
+    },
+
     groupEmitter: {
       // Will process one event at a time
       serialProcessing: true,

@@ -1,7 +1,7 @@
 import { HookContext } from '@feathersjs/feathers'
 import config from 'config'
 
-import { SupportedTokens } from '../definitions'
+import { SupportedServices, SupportedTokens } from '../definitions'
 
 export const WEI = 1e18
 
@@ -37,7 +37,7 @@ export function lowerCaseAddressesQueryParamsHook (props: Array<string>): (conte
  * @param tokenContractAddress
  * @returns {SupportedTokens} token symbol
  */
-export function getTokenSymbol (tokenContractAddress: string): SupportedTokens {
+export function getTokenSymbol (tokenContractAddress: string, service: SupportedServices): SupportedTokens {
   const supportedTokens = config.get<Record<string, SupportedTokens>>('storage.tokens')
   const token = Object
     .keys(supportedTokens)
@@ -47,5 +47,5 @@ export function getTokenSymbol (tokenContractAddress: string): SupportedTokens {
     throw new Error(`Token on address ${tokenContractAddress} is not supported`)
   }
 
-  return config.get<SupportedTokens>(`storage.tokens.${token}`)
+  return config.get<SupportedTokens>(`${service}.tokens.${token}`)
 }

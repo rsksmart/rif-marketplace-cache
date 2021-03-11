@@ -2,7 +2,7 @@ import BigNumber from 'bignumber.js'
 import { Staked, Unstaked } from '@rsksmart/rif-marketplace-notifications/types/web3-v1-contracts/Staking'
 
 import { loggingFactory } from '../../../logger'
-import { Handler, StakeEvents } from '../../../definitions'
+import { Handler, StakeEvents, SupportedServices } from '../../../definitions'
 import { TriggersServices } from '../index'
 import TriggersStakeModel from '../models/triggersStake.model'
 import { getTokenSymbol } from '../../utils'
@@ -21,7 +21,7 @@ async function findOrCreateStake (account: string, token: string): Promise<Trigg
   if (stake) {
     return stake
   }
-  const symbol = getTokenSymbol(token).toLowerCase()
+  const symbol = getTokenSymbol(token, SupportedServices.TRIGGERS).toLowerCase()
   return TriggersStakeModel.create({ account, token, symbol, total: 0 })
 }
 

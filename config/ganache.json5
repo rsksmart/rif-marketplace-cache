@@ -26,7 +26,7 @@
     },
   },
   storage: {
-    enabled: false,
+    enabled: true,
     tokens: {
       '0x67b5656d60a809915323bf2c40a8bef15a152e3e': 'rif'
     },
@@ -44,7 +44,10 @@
     },
   },
   rns: {
-    enabled: false,
+    enabled: true,
+    tokens: {
+      '0x67b5656d60a809915323bf2c40a8bef15a152e3e': 'rif'
+    },
     batchContractAddress: "0xc0b3B62DD0400E4baa721DdEc9B8A384147b23fF",
     owner: {
       contractAddress: "0x26b4AFb60d6C903165150C6F0AA14F8016bE4aec",

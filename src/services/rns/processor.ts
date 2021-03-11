@@ -6,7 +6,7 @@ import { EventLog } from 'web3-core'
 
 import { RnsBaseService, RnsServices } from '.'
 import { getBlockDate } from '../../blockchain/utils'
-import { Logger } from '../../definitions'
+import { Logger, SupportedServices } from '../../definitions'
 import DomainOffer from './models/domain-offer.model'
 import Domain from './models/domain.model'
 import DomainExpiration from './models/expiration.model'
@@ -272,7 +272,7 @@ async function tokenPlacedHandler (logger: Logger, eventData: EventLog, eth: Eth
     logger.info(`TokenPlaced event: ${tokenId} no previous placement`)
   }
   const { address } = owner
-  const tokenSymbol = getTokenSymbol(paymentToken).toLowerCase()
+  const tokenSymbol = getTokenSymbol(paymentToken, SupportedServices.RNS).toLowerCase()
 
   await offersService.create({
     txHash: transactionHash,

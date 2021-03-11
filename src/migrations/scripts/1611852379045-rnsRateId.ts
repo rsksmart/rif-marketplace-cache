@@ -1,6 +1,7 @@
 import Sequelize, { QueryInterface } from 'sequelize'
 import DomainOffer from '../../services/rns/models/domain-offer.model'
 import { getTokenSymbol } from '../../services/utils'
+import { SupportedServices } from '../../definitions'
 
 export default {
   // eslint-disable-next-line require-await
@@ -25,7 +26,7 @@ export default {
     domains.forEach((domain) => {
       queryInterface.sequelize.query(`
         UPDATE "rns_domain_offer"
-        SET "rateId" = ${getTokenSymbol(domain.paymentToken)}
+        SET "rateId" = ${getTokenSymbol(domain.paymentToken, SupportedServices.RNS)}
         WHERE "id" = ${domain.id}
       `)
     })
