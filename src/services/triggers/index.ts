@@ -81,14 +81,14 @@ function precache (eth: Eth, web3events: Web3Events): Observable<string> {
       }
 
       // TODO: Can be processed in parallel
-      // Precache Storage Manager
+      // Precache Notifications Manager
       await precacheContract(
         notificationMangerEventsEmitter,
         services,
         eth,
         notificationsManagerLogger,
         progressCb,
-        'NotificationManager',
+        'NotificationsManager',
         notificationMangerEventParser
       )
 
@@ -109,7 +109,7 @@ function precache (eth: Eth, web3events: Web3Events): Observable<string> {
   )
 }
 
-const storage: CachedService = {
+const triggers: CachedService = {
   async initialize (app: Application): Promise<{ stop: () => void }> {
     if (!config.get<boolean>('triggers.enabled')) {
       triggersLogger.info('Triggers service: disabled')
@@ -143,15 +143,15 @@ const storage: CachedService = {
     const services = { providerService, stakeService }
 
     // Notification Manager watcher
-    const storageManagerEventsEmitter = getEventsEmitterForService(NOTIFICATIONS_MANAGER, web3events, notificationManagerContract.abi as AbiItem[])
-    const storageEventParser = eventTransformerFactory(notificationManagerContract.abi as AbiItem[])
-    storageManagerEventsEmitter.on('newEvent', errorHandler(eventProcessor(services, { eth, eventParser: storageEventParser }), notificationsManagerLogger))
-    storageManagerEventsEmitter.on('error', (e) => {
+    const notificationsManagerEventsEmitter = getEventsEmitterForService(NOTIFICATIONS_MANAGER, web3events, notificationManagerContract.abi as AbiItem[])
+    const notificationsEventParser = eventTransformerFactory(notificationManagerContract.abi as AbiItem[])
+    notificationsManagerEventsEmitter.on('newEvent', errorHandler(eventProcessor(services, { eth, eventParser: notificationsEventParser }), notificationsManagerLogger))
+    notificationsManagerEventsEmitter.on('error', (e) => {
       notificationsManagerLogger.error(`There was unknown error in Events Emitter for ${NOTIFICATIONS_MANAGER}! ${e}`)
     })
-    storageManagerEventsEmitter.on('newConfirmation', (data) => confirmationService.emit('newConfirmation', data))
-    storageManagerEventsEmitter.on('invalidConfirmation', (data) => confirmationService.emit('invalidConfirmation', data))
-    storageManagerEventsEmitter.on(REORG_OUT_OF_RANGE_EVENT_NAME, (blockNumber: number) => reorgEmitterService.emitReorg(blockNumber, 'storage'))
+    notificationsManagerEventsEmitter.on('newConfirmation', (data) => confirmationService.emit('newConfirmation', data))
+    notificationsManagerEventsEmitter.on('invalidConfirmation', (data) => confirmationService.emit('invalidConfirmation', data))
+    notificationsManagerEventsEmitter.on(REORG_OUT_OF_RANGE_EVENT_NAME, (blockNumber: number) => reorgEmitterService.emitReorg(blockNumber, 'notificationsManager'))
 
     // Staking watcher
     const stakingEventsEmitter = getEventsEmitterForService(STAKING, web3events, stakingContract.abi as AbiItem[])
@@ -168,7 +168,7 @@ const storage: CachedService = {
       stop: () => {
         confirmationService.removeAllListeners()
         stakingEventsEmitter.stop()
-        storageManagerEventsEmitter.stop()
+        notificationsManagerEventsEmitter.stop()
       }
     }
   },
@@ -187,4 +187,4 @@ const storage: CachedService = {
   precache
 }
 
-export default storage
+export default triggers

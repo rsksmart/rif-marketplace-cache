@@ -35,10 +35,11 @@ export function lowerCaseAddressesQueryParamsHook (props: Array<string>): (conte
 /**
  * get token symbol by token address from config
  * @param tokenContractAddress
+ * @param service
  * @returns {SupportedTokens} token symbol
  */
 export function getTokenSymbol (tokenContractAddress: string, service: SupportedServices): SupportedTokens {
-  const supportedTokens = config.get<Record<string, SupportedTokens>>('storage.tokens')
+  const supportedTokens = config.get<Record<string, SupportedTokens>>(`${service}.tokens`)
   const token = Object
     .keys(supportedTokens)
     .find(t => t.toLowerCase() === tokenContractAddress.toLowerCase())

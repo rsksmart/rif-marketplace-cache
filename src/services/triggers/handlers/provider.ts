@@ -28,8 +28,8 @@ const handlers = {
   }
 }
 
-function isValidEvent (value: string): value is keyof typeof handlers {
-  return value in handlers
+function isValidEvent (eventName: string): eventName is keyof typeof handlers {
+  return eventName in handlers
 }
 
 const handler: Handler<NotificationManagerEvents, TriggersServices> = {
