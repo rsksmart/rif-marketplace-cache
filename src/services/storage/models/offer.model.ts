@@ -6,7 +6,7 @@ import { Literal } from 'sequelize/types/lib/utils'
 import BillingPlan from './billing-plan.model'
 import { SupportedTokens } from '../../../definitions'
 import Agreement from './agreement.model'
-import { WEI } from '../utils'
+import { WEI } from '../../utils'
 import { BigNumberBigIntType } from '../../../sequelize'
 
 @Scopes(() => ({
@@ -118,7 +118,7 @@ export function getAvailableCapacityQuery (): Literal {
         (SELECT
             SUM(
               "storage_agreement"."size"
-              ) 
+              )
           as availableCapacity
         FROM
           "storage_agreement"
@@ -128,6 +128,6 @@ export function getAvailableCapacityQuery (): Literal {
           "storage_agreement"."isActive"
           )
     , 0) as STRING
-  ) 
+  )
   `)
 }
