@@ -39,6 +39,9 @@
     },
   },
   rns: {
+    tokens: {
+      '0x19f64674D8a5b4e652319F5e239EFd3bc969a1FE': 'rif'
+    },
     batchContractAddress: "0x380a47e2a1cec8a21cf00374ea5d092166a702fc",
     owner: {
       contractAddress: "0xca0a477e19bac7e0e172ccfd2e3c28a7200bdb71",

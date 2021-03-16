@@ -3,12 +3,10 @@ import { disallow, discardQuery } from 'feathers-hooks-common'
 import { hooks } from 'feathers-sequelize'
 import { literal, Op, Sequelize } from 'sequelize'
 import { numberToHex, sha3 } from 'web3-utils'
-import { WEI } from '../../storage/utils'
 import DomainOffer, { getDomainPriceFiat } from '../models/domain-offer.model'
 import Domain from '../models/domain.model'
 import DomainExpiration from '../models/expiration.model'
 import { getSortDirection } from './utils'
-import dehydrate = hooks.dehydrate
 
 /**
  * Price in fiat filter query
