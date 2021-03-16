@@ -1,7 +1,7 @@
 import { HookContext } from '@feathersjs/feathers'
 import { disallow } from 'feathers-hooks-common'
 
-import { lowerCaseAddressesQueryParamsHook } from '../utils'
+import { lowerCaseAddressesQueryParamsHook } from '../../utils'
 
 const ADDRESSES_FIELDS = ['consumer', 'tokenAddress', 'offerId']
 

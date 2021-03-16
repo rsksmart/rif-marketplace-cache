@@ -7,8 +7,8 @@ import { SupportedTokens } from '../../../definitions'
 import { BigNumberStringType } from '../../../sequelize'
 import { WEI } from '../../utils'
 
-@Table({ freezeTableName: true, tableName: 'storage_stakes' })
-export default class StakeModel extends Model {
+@Table({ freezeTableName: true, tableName: 'triggers_stakes' })
+export default class TriggersStakeModel extends Model {
   @Column({ ...BigNumberStringType('total') })
   total!: BigNumber
 
@@ -33,9 +33,9 @@ export function getStakesForAccount (
         SUM((cast(total as real) / ${WEI}) * coalesce("rates".${sequelize.escape(currency)}, 0)) as REAL
       ) as totalStakedFiat
     FROM
-      storage_stakes
+      triggers_stakes
     LEFT OUTER JOIN
-      "rates" AS "rates" ON "storage_stakes"."symbol" = "rates"."token"
+      "rates" AS "rates" ON "triggers_stakes"."symbol" = "rates"."token"
     WHERE
       account = ${sequelize.escape(account)}
   `

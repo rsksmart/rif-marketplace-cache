@@ -5,7 +5,7 @@ import Domain from './domain.model'
 import Rate from '../../../rates/rates.model'
 import { SupportedTokens } from '../../../definitions'
 import { Literal } from 'sequelize/types/lib/utils'
-import { WEI } from '../../storage/utils'
+import { WEI } from '../../utils'
 
 @Scopes(() => ({
   approved: {

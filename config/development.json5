@@ -33,6 +33,18 @@
       }
     }
   },
+  triggers: {
+    notificationsManager: {
+      eventsEmitter: {
+        confirmations: 1
+      }
+    },
+    staking: {
+      eventsEmitter: {
+        confirmations: 1
+      }
+    }
+  },
   rates: {
     refresh: 10
   },
