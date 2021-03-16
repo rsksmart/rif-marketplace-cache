@@ -146,7 +146,7 @@
 
   // Settings for Triggers service related function
   triggers: {
-    // Sets if Storage service should be enabled
+    // Sets if Triggers service should be enabled
     enabled: true,
 
     // supported tokens
@@ -155,7 +155,7 @@
       '0x0000000000000000000000000000000000000000': 'rbtc',
     },
 
-    // Storage Manager Contract
+    // Notifications Manager Contract
     notificationsManager: {
       // Specify behavior of EventsEmitter, that retrieves events from blockchain and pass them onwards for further processing.
       eventsEmitter: {
