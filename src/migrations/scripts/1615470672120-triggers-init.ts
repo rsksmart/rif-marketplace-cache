@@ -97,6 +97,94 @@ const migrationCommands = function (transaction: any): Commands {
           transaction: transaction
         }
       ]
+    },
+    {
+      fn: 'createTable',
+      params: [
+        'triggers_plan',
+        {
+          id: {
+            type: Sequelize.INTEGER,
+            field: 'id',
+            primaryKey: true,
+            allowNull: false
+          },
+          name: {
+            type: Sequelize.STRING,
+            field: 'name',
+            allowNull: false
+          },
+          planStatus: {
+            type: Sequelize.STRING,
+            field: 'planStatus',
+            allowNull: false
+          },
+          daysLeft: {
+            type: Sequelize.INTEGER,
+            field: 'daysLeft',
+            allowNull: false
+          },
+          quantity: {
+            type: Sequelize.INTEGER,
+            field: 'quantity',
+            allowNull: false
+          }
+        },
+        {
+          transaction: transaction
+        }
+      ]
+    },
+    {
+      fn: 'createTable',
+      params: [
+        'triggers_channel',
+        {
+          id: {
+            type: Sequelize.INTEGER,
+            field: 'id',
+            primaryKey: true,
+            allowNull: false
+          },
+          name: {
+            type: Sequelize.STRING,
+            field: 'name',
+            allowNull: false
+          }
+        },
+        {
+          transaction: transaction
+        }
+      ]
+    },
+    {
+      fn: 'createTable',
+      params: [
+        'triggers_price',
+        {
+          price: {
+            type: Sequelize.STRING,
+            field: 'price',
+            allowNull: false
+          },
+          rateId: {
+            primaryKey: true,
+            type: Sequelize.STRING,
+            onUpdate: 'CASCADE',
+            onDelete: 'NO ACTION',
+            references: {
+              model: 'rates',
+              key: 'token'
+            },
+            name: 'rateId',
+            field: 'rateId',
+            allowNull: false
+          }
+        },
+        {
+          transaction: transaction
+        }
+      ]
     }
   ]
 }
@@ -114,6 +202,30 @@ const rollbackCommands = function (transaction: any): Commands {
       fn: 'dropTable',
       params: [
         'triggers_stakes', {
+          transaction: transaction
+        }
+      ]
+    },
+    {
+      fn: 'dropTable',
+      params: [
+        'triggers_plan', {
+          transaction: transaction
+        }
+      ]
+    },
+    {
+      fn: 'dropTable',
+      params: [
+        'triggers_channel', {
+          transaction: transaction
+        }
+      ]
+    },
+    {
+      fn: 'dropTable',
+      params: [
+        'triggers_price', {
           transaction: transaction
         }
       ]
