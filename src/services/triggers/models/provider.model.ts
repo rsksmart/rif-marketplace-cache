@@ -1,4 +1,5 @@
-import { Table, Column, Model, DataType } from 'sequelize-typescript'
+import { Table, Column, Model, DataType, HasMany } from 'sequelize-typescript'
+import PlanModel from './plan.model'
 
 @Table({ freezeTableName: true, tableName: 'triggers_provider' })
 export default class ProviderModel extends Model {
@@ -7,4 +8,7 @@ export default class ProviderModel extends Model {
 
   @Column({ allowNull: false })
   url!: string
+
+  @HasMany(() => PlanModel)
+  plans!: PlanModel[]
 }
