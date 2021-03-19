@@ -143,6 +143,7 @@ const migrationCommands = function (transaction: any): Commands {
           id: {
             type: Sequelize.INTEGER,
             field: 'id',
+            autoIncrement: true,
             primaryKey: true,
             allowNull: false
           },
@@ -162,13 +163,19 @@ const migrationCommands = function (transaction: any): Commands {
       params: [
         'triggers_price',
         {
+          id: {
+            type: Sequelize.INTEGER,
+            field: 'id',
+            autoIncrement: true,
+            primaryKey: true,
+            allowNull: false
+          },
           price: {
             type: Sequelize.STRING,
             field: 'price',
             allowNull: false
           },
           rateId: {
-            primaryKey: true,
             type: Sequelize.STRING,
             onUpdate: 'CASCADE',
             onDelete: 'NO ACTION',

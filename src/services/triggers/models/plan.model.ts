@@ -3,7 +3,7 @@ import TriggersChannelModel from './triggersChannel.model'
 import PriceModel from './price.model'
 import ProviderModel from './provider.model'
 
-@Table({ freezeTableName: true, tableName: 'triggers_plan' })
+@Table({ freezeTableName: true, tableName: 'triggers_plan', timestamps: false })
 export default class PlanModel extends Model {
     @Column({ primaryKey: true, type: DataType.INTEGER })
     id!: string
@@ -20,16 +20,12 @@ export default class PlanModel extends Model {
     @Column({ allowNull: false, type: DataType.INTEGER })
     quantity!: number
 
-    @HasMany(() => TriggersChannelModel)
+    @HasMany(() => TriggersChannelModel, 'id')
     channels!: TriggersChannelModel[]
 
-    @HasMany(() => PriceModel)
+    @HasMany(() => PriceModel, 'id')
     prices!: PriceModel[]
 
-    @ForeignKey(() => ProviderModel)
-    @Column(DataType.STRING)
-    providerId!: string
-
-    @BelongsTo(() => ProviderModel)
+    @BelongsTo(() => ProviderModel, 'id')
     provider!: ProviderModel
 }

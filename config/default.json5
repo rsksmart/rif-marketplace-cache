@@ -148,6 +148,7 @@
   triggers: {
     // Sets if Triggers service should be enabled
     enabled: true,
+    refresh: 300, // 5 minutes
 
     // supported tokens
     tokens: {

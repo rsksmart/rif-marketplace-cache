@@ -1,6 +1,7 @@
 import { ServiceProvider } from '../serviceProvider'
 import { FetchError } from 'node-fetch'
 import { NotifierProviderError } from '../../errors'
+import { ClientRequestArgs } from 'http'
 
 type PlanStatusDTO =
     | 'ACTIVE'
@@ -36,10 +37,10 @@ interface NotifierServiceProvider {
 }
 
 export class NotifierSvcProvider extends ServiceProvider<NotifierResult> implements NotifierServiceProvider {
-  constructor (host: string) {
+  constructor ({ host, port = '8080' }: Partial<ClientRequestArgs>) {
     super()
 
-    this.defaultOptions = { host }
+    this.defaultOptions = { host, port }
   }
 
   async getSubscriptionPlans () {
