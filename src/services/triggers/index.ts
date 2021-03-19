@@ -1,41 +1,34 @@
 import notificationManagerContract from '@rsksmart/rif-marketplace-notifications/build/contracts/NotificationsManager.json'
 import stakingContract from '@rsksmart/rif-marketplace-notifications/build/contracts/Staking.json'
+import { REORG_OUT_OF_RANGE_EVENT_NAME, Web3Events } from '@rsksmart/web3-events'
 import config from 'config'
 import { getEndPromise } from 'sequelize-store'
 import Eth from 'web3-eth'
 import type { AbiItem } from 'web3-utils'
-import { Web3Events, REORG_OUT_OF_RANGE_EVENT_NAME, EventsFetcher } from '@rsksmart/web3-events'
-import { Observable } from 'rxjs'
-
+import { eventTransformerFactory } from '../../blockchain/event-transformer'
 import {
   getEventsEmitterForService,
   isServiceInitialized,
-  ProgressCb,
-  purgeBlockTrackerData,
-  reportProgress
+  purgeBlockTrackerData
 } from '../../blockchain/utils'
 import {
   Application,
   CachedService,
-  Logger,
-  ServiceAddresses,
-  TriggersStakeEvents,
-  TriggersEvents,
-  NotificationManagerEvents
+  ServiceAddresses
 } from '../../definitions'
 import { loggingFactory } from '../../logger'
 import { errorHandler, waitForReadyApp } from '../../utils'
-import ProviderModel from './models/provider.model'
-import TriggersStakeModel from './models/triggersStake.model'
+import triggersChannels from './channels'
 import providerHooks from './hooks/providers.hook'
 import stakeHooks from './hooks/stakes.hook'
+import ProviderModel from './models/provider.model'
+import TriggersStakeModel from './models/triggersStake.model'
 import eventProcessor from './processor'
-import triggersChannels from './channels'
 import {
-  TriggersStakeService as StakeService,
-  ProviderService
+  ProviderService, TriggersStakeService as StakeService
 } from './services'
-import { EventTransformer, eventTransformerFactory } from '../../blockchain/event-transformer'
+import { updater } from './update'
+import precache from './precache'
 
 export interface TriggersServices {
   providerService: ProviderService
@@ -43,71 +36,13 @@ export interface TriggersServices {
 }
 
 export const NOTIFICATIONS_MANAGER = 'triggers.notificationsManager'
-const STAKING = 'triggers.staking'
+export const STAKING = 'triggers.staking'
 
-const triggersLogger = loggingFactory('triggers')
-const notificationsManagerLogger = loggingFactory(NOTIFICATIONS_MANAGER)
-const stakingLogger = loggingFactory(STAKING)
+export const triggersLogger = loggingFactory('triggers')
+export const notificationsManagerLogger = loggingFactory(NOTIFICATIONS_MANAGER)
+export const stakingLogger = loggingFactory(STAKING)
 
-async function precacheContract (
-  eventsEmitter: EventsFetcher<TriggersEvents>,
-  services: TriggersServices,
-  eth: Eth,
-  logger: Logger,
-  progressCb: ProgressCb,
-  contractName: string,
-  eventParser: EventTransformer
-): Promise<void> {
-  const processor = eventProcessor(services, { eth, eventParser })
-  for await (const batch of eventsEmitter.fetch()) {
-    for (const event of batch.events) {
-      await processor(event)
-    }
-    progressCb(batch, contractName)
-  }
-}
-
-function precache (eth: Eth, web3events: Web3Events): Observable<string> {
-  return reportProgress(triggersLogger,
-    async (progressCb): Promise<void> => {
-      const notificationMangerEventsEmitter = getEventsEmitterForService<NotificationManagerEvents>(NOTIFICATIONS_MANAGER, web3events, notificationManagerContract.abi as AbiItem[])
-      const notificationMangerEventParser = eventTransformerFactory(notificationManagerContract.abi as AbiItem[])
-      const stakingEventsEmitter = getEventsEmitterForService<TriggersStakeEvents>(STAKING, web3events, stakingContract.abi as AbiItem[])
-      const stakingEventParser = eventTransformerFactory(stakingContract.abi as AbiItem[])
-
-      const services: TriggersServices = {
-        stakeService: new StakeService({ Model: TriggersStakeModel }),
-        providerService: new ProviderService({ Model: ProviderModel })
-      }
-
-      // TODO: Can be processed in parallel
-      // Precache Notifications Manager
-      await precacheContract(
-        notificationMangerEventsEmitter,
-        services,
-        eth,
-        notificationsManagerLogger,
-        progressCb,
-        'NotificationsManager',
-        notificationMangerEventParser
-      )
-
-      // Precache Staking
-      await precacheContract(
-        stakingEventsEmitter,
-        services,
-        eth,
-        stakingLogger,
-        progressCb,
-        'Staking',
-        stakingEventParser
-      )
-
-      web3events.removeEventsEmitter(notificationMangerEventsEmitter)
-      web3events.removeEventsEmitter(stakingEventsEmitter)
-    }
-  )
-}
+const CONFIG_UPDATE_PERIOD = 'triggers.refresh'
 
 const triggers: CachedService = {
   async initialize (app: Application): Promise<{ stop: () => void }> {
@@ -128,6 +63,8 @@ const triggers: CachedService = {
     app.use(ServiceAddresses.TRIGGERS_PROVIDERS, new ProviderService({ Model: ProviderModel }))
     const providerService = app.service(ServiceAddresses.TRIGGERS_PROVIDERS)
     providerService.hooks(providerHooks)
+
+    await updater(app).catch(triggersLogger.error)
 
     // Initialize Staking service
     app.use(ServiceAddresses.TRIGGERS_STAKES, new StakeService({ Model: TriggersStakeModel }))
@@ -164,11 +101,16 @@ const triggers: CachedService = {
     stakingEventsEmitter.on('invalidConfirmation', (data) => confirmationService.emit('invalidConfirmation', data))
     stakingEventsEmitter.on(REORG_OUT_OF_RANGE_EVENT_NAME, (blockNumber: number) => reorgEmitterService.emitReorg(blockNumber, 'staking'))
 
+    // Start periodical refresh
+    const updatePeriod = (config.get<number>(CONFIG_UPDATE_PERIOD) ?? 3600) * 1000 // Converting seconds to ms
+    const intervalId = setInterval(() => updater(app).catch(triggersLogger.error), updatePeriod)
+
     return {
       stop: () => {
         confirmationService.removeAllListeners()
         stakingEventsEmitter.stop()
         notificationsManagerEventsEmitter.stop()
+        clearInterval(intervalId)
       }
     }
   },
