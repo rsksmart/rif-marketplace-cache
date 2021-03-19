@@ -51,3 +51,24 @@ export class RatesProviderError extends Error {
     this.name = 'RatesProviderError'
   }
 }
+
+/**
+ * Error for when interaction with the notifier service does not go as planned
+ */
+export class NotifierProviderError extends Error {
+  static code = 'NOTIFIER_ERR'
+
+  static buildMessage (...message: string[]) {
+    return message.join(' ')
+  }
+
+  constructor (message: string, error?: Error) {
+    super(message)
+    this.name = 'NotifierProviderError'
+
+    if (error) {
+      this.stack = `${this.stack}; Inner stack: ${error.stack}`
+      this.message = `${this.message}; Inner message: ${error.message}`
+    }
+  }
+}
