@@ -10,17 +10,16 @@ import ProviderModel from '../models/provider.model'
 
 const logger = loggingFactory('triggers:handler:provider')
 
-const handlers = {
+export const handlers = {
   async ProviderRegistered (event: ProviderRegistered, { providerService }: TriggersServices): Promise<void> {
     const { provider, url } = event.returnValues
 
     const providerIns = await ProviderModel.findOne({ where: { provider } })
 
     if (providerIns) {
-      providerIns.url = url
-      await providerIns.save()
+      await providerService.update(provider, { provider, url })
     } else {
-      await ProviderModel.create({ provider, url })
+      await providerService.create({ provider, url })
     }
 
     if (providerService.emit) providerService.emit('created', wrapEvent('ProviderRegistered', { provider, url }))
