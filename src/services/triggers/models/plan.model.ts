@@ -1,4 +1,4 @@
-import { BelongsTo, Column, DataType, ForeignKey, HasMany, Model, Table } from 'sequelize-typescript'
+import { BelongsTo, Column, DataType, HasMany, Model, Table } from 'sequelize-typescript'
 import TriggersChannelModel from './triggersChannel.model'
 import PriceModel from './price.model'
 import ProviderModel from './provider.model'
