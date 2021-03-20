@@ -1,6 +1,6 @@
-import { ServiceProvider } from '../serviceProvider'
+import { ServiceProvider } from '../../../httpClient'
 import { FetchError } from 'node-fetch'
-import { NotifierProviderError } from '../../errors'
+import { NotifierProviderError } from '../../../errors'
 import { ClientRequestArgs } from 'http'
 
 type PlanStatusDTO =
