@@ -64,7 +64,8 @@ const triggers: CachedService = {
     const providerService = app.service(ServiceAddresses.TRIGGERS_PROVIDERS)
     providerService.hooks(providerHooks)
 
-    await updater(app).catch(triggersLogger.error)
+    const sequelize = app.get('sequelize')
+    await updater(sequelize).catch(triggersLogger.error)
 
     // Initialize Staking service
     app.use(ServiceAddresses.TRIGGERS_STAKES, new StakeService({ Model: TriggersStakeModel }))
@@ -103,7 +104,7 @@ const triggers: CachedService = {
 
     // Start periodical refresh
     const updatePeriod = (config.get<number>(CONFIG_UPDATE_PERIOD) ?? 3600) * 1000 // Converting seconds to ms
-    const intervalId = setInterval(() => updater(app).catch(triggersLogger.error), updatePeriod)
+    const intervalId = setInterval(() => updater(sequelize).catch(triggersLogger.error), updatePeriod)
 
     return {
       stop: () => {
