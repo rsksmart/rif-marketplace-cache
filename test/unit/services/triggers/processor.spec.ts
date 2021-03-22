@@ -22,6 +22,7 @@ import {
 import { Staked, Unstaked } from '@rsksmart/rif-marketplace-notifications/types/web3-v1-contracts/Staking'
 import Rate from '../../../../src/rates/rates.model'
 import { wrapEvent } from '../../../../src/utils'
+import { NotifierSvcProvider } from '../../../../src/services/triggers/notifierService/provider'
 
 chai.use(sinonChai)
 chai.use(chaiAsPromised)
@@ -33,10 +34,16 @@ describe('Triggers services: Events Processor', () => {
   const url = 'triggers.com'
   let sequelize: Sequelize
   let eth: SubstituteOf<Eth>
+  let getPlansStub: sinon.SinonStub
 
   before(() => {
     sequelize = sequelizeFactory()
     eth = Substitute.for<Eth>()
+    getPlansStub = sinon.stub(NotifierSvcProvider.prototype, 'getSubscriptionPlans')
+  })
+
+  after(() => {
+    getPlansStub.restore()
   })
 
   describe('Provider events', () => {
