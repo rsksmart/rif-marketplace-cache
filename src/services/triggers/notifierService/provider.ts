@@ -3,10 +3,10 @@ import { FetchError } from 'node-fetch'
 import { NotifierProviderError } from '../../../errors'
 import { ClientRequestArgs } from 'http'
 
-type PlanStatusDTO =
+export type PlanStatusDTO =
     | 'ACTIVE'
 
-type PlanPriceDTO = {
+export type PlanPriceDTO = {
     price: string
     currency: {
         name: string
