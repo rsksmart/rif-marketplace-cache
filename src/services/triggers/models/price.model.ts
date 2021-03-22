@@ -18,6 +18,10 @@ export default class PriceModel extends Model {
     @Column({ allowNull: false })
     rateId!: SupportedTokens
 
-    @BelongsTo(() => PlanModel, 'id')
+    @ForeignKey(() => PlanModel)
+    @Column({ allowNull: false })
+    planId!: number
+
+    @BelongsTo(() => PlanModel)
     plan!: PlanModel
 }

@@ -9,6 +9,6 @@ export default class ProviderModel extends Model {
   @Column({ allowNull: false })
   url!: string
 
-  @HasMany(() => PlanModel, 'id')
+  @HasMany(() => PlanModel, 'providerId')
   plans!: PlanModel[]
 }
