@@ -14,6 +14,7 @@ const SERVICES = {
   storage: STORAGE_CONTRACTS,
   triggers: TRIGGERS_CONTRACTS
 }
+
 const configFileName = `${NODE_ENV}.json5`
 const pathToConfigFile = path.resolve(__dirname, '../config', configFileName)
 
