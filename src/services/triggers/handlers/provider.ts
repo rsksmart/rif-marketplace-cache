@@ -7,6 +7,7 @@ import { wrapEvent } from '../../../utils'
 
 import { TriggersServices } from '../index'
 import ProviderModel from '../models/provider.model'
+import { updater } from '../update'
 
 const logger = loggingFactory('triggers:handler:provider')
 
@@ -24,6 +25,15 @@ export const handlers = {
 
     if (providerService.emit) providerService.emit('created', wrapEvent('ProviderRegistered', { provider, url }))
     logger.info(`Created new Provider with address ${provider} and url  ${url}`)
+
+    const sequelize = providerIns?.sequelize
+
+    if (sequelize) {
+      logger.info(`Updating ${provider}'s plans from url...`)
+      updater(sequelize, url).catch(logger.error)
+    } else {
+      logger.error(`Sequelize instance not found. Cannot update ${provider}'s plans.`)
+    }
   }
 }
 

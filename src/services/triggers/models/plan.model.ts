@@ -1,4 +1,4 @@
-import { BelongsTo, Column, DataType, HasMany, Model, Table } from 'sequelize-typescript'
+import { BelongsTo, Column, DataType, ForeignKey, HasMany, Model, Table } from 'sequelize-typescript'
 import TriggersChannelModel from './triggersChannel.model'
 import PriceModel from './price.model'
 import ProviderModel from './provider.model'
@@ -6,7 +6,7 @@ import ProviderModel from './provider.model'
 @Table({ freezeTableName: true, tableName: 'triggers_plan', timestamps: false })
 export default class PlanModel extends Model {
     @Column({ primaryKey: true, type: DataType.INTEGER })
-    id!: string
+    id!: number
 
     @Column({ type: DataType.STRING })
     name!: string
@@ -20,12 +20,16 @@ export default class PlanModel extends Model {
     @Column({ allowNull: false, type: DataType.INTEGER })
     quantity!: number
 
-    @HasMany(() => TriggersChannelModel, 'id')
+    @HasMany(() => TriggersChannelModel, 'planId')
     channels!: TriggersChannelModel[]
 
-    @HasMany(() => PriceModel, 'id')
+    @HasMany(() => PriceModel, 'planId')
     prices!: PriceModel[]
 
-    @BelongsTo(() => ProviderModel, 'id')
+    @ForeignKey(() => ProviderModel)
+    @Column({ allowNull: false })
+    providerId!: string
+
+    @BelongsTo(() => ProviderModel)
     provider!: ProviderModel
 }
