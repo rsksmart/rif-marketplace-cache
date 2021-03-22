@@ -142,6 +142,7 @@
     "eslint-plugin-no-only-tests": "^2.4.0",
     "eslint-plugin-node": "^11.1.0",
     "eslint-plugin-promise": "^4.2.1",
+    "json5": "^2.2.0",
     "nyc": "^15.1.0",
     "sinon": "^9.0.3",
     "sinon-chai": "^3.5.0",
