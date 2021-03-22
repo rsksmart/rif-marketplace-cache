@@ -65,7 +65,6 @@ const triggers: CachedService = {
     providerService.hooks(providerHooks)
 
     const sequelize = app.get('sequelize')
-    await updater(sequelize).catch(triggersLogger.error)
 
     // Initialize Staking service
     app.use(ServiceAddresses.TRIGGERS_STAKES, new StakeService({ Model: TriggersStakeModel }))

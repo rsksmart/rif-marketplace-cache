@@ -128,6 +128,18 @@ const migrationCommands = function (transaction: any): Commands {
             type: Sequelize.INTEGER,
             field: 'quantity',
             allowNull: false
+          },
+          providerId: {
+            type: Sequelize.STRING,
+            onUpdate: 'CASCADE',
+            onDelete: 'CASCADE',
+            references: {
+              model: 'triggers_provider',
+              key: 'provider'
+            },
+            name: 'providerId',
+            field: 'providerId',
+            allowNull: false
           }
         },
         {
@@ -150,6 +162,18 @@ const migrationCommands = function (transaction: any): Commands {
           name: {
             type: Sequelize.STRING,
             field: 'name',
+            allowNull: false
+          },
+          planId: {
+            type: Sequelize.INTEGER,
+            onUpdate: 'CASCADE',
+            onDelete: 'NO ACTION',
+            references: {
+              model: 'triggers_plan',
+              key: 'id'
+            },
+            name: 'planId',
+            field: 'planId',
             allowNull: false
           }
         },
@@ -185,6 +209,18 @@ const migrationCommands = function (transaction: any): Commands {
             },
             name: 'rateId',
             field: 'rateId',
+            allowNull: false
+          },
+          planId: {
+            type: Sequelize.INTEGER,
+            onUpdate: 'CASCADE',
+            onDelete: 'CASCADE',
+            references: {
+              model: 'triggers_plan',
+              key: 'id'
+            },
+            name: 'planId',
+            field: 'planId',
             allowNull: false
           }
         },
