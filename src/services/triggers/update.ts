@@ -129,7 +129,7 @@ export async function updateProvider (provider: ProviderModel, sequelize: Sequel
 }
 
 export async function updater (sequelize: Sequelize, url?: string): Promise<void> {
-  logger.debug('Acquiring lock for update')
+  logger.info('Acquiring lock for update')
   await semaphore.acquire()
 
   try {

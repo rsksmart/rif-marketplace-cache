@@ -30,7 +30,7 @@ export const handlers = {
 
     if (sequelize) {
       logger.info(`Updating ${provider}'s plans from url...`)
-      updater(sequelize, url).catch(logger.error)
+      await updater(sequelize, url).catch(logger.error)
     } else {
       logger.error(`Sequelize instance not found. Cannot update ${provider}'s plans.`)
     }
