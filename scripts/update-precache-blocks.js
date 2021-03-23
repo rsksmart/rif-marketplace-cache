@@ -38,7 +38,7 @@ async function ethFactory () {
 
 (async () => {
   const eth = await ethFactory()
-  const startingBlock = process.env['PRECACHE_STARTING_BLOCK'] || await eth.getBlockNumber() - 50 // minus 50 blocks just to be sure
+  // const startingBlock = process.env['PRECACHE_STARTING_BLOCK'] || await eth.getBlockNumber() - 50 // minus 50 blocks just to be sure
   console.log(`Starting block is: ${startingBlock}`)
 
   Object
@@ -46,6 +46,7 @@ async function ethFactory () {
     .forEach(([service, contracts]) => {
       contracts.forEach(contract => {
         if (configObject[service] && configObject[service][contract])
+          const contractAddress = configObject[service][contract].contractAddress
           configObject[service][contract].eventsEmitter = {
             startingBlock,
             ...configObject[service][contract].eventsEmitter || {}
