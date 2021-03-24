@@ -22,8 +22,8 @@ const SERVICES = {
 const configFileName = `${NODE_ENV}.json5`
 const pathToConfigFile = path.resolve(__dirname, '../config', configFileName)
 
-const isExist = fs.existsSync(pathToConfigFile)
-if (!isExist) {
+const doesExist = fs.existsSync(pathToConfigFile)
+if (!doesExist) {
   throw new Error(`Config file not found on path = ${pathToConfigFile}`)
 }
 const fileAsString = fs.readFileSync(pathToConfigFile).toString()
