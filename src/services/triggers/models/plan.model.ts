@@ -1,8 +1,19 @@
-import { BelongsTo, Column, DataType, ForeignKey, HasMany, Model, Table } from 'sequelize-typescript'
+import { BelongsTo, Column, DataType, ForeignKey, HasMany, Model, Scopes, Table } from 'sequelize-typescript'
 import TriggersChannelModel from './triggersChannel.model'
 import PriceModel from './price.model'
 import ProviderModel from './provider.model'
+import { Op } from 'sequelize'
 
+export const scopes = {
+  active: 'active'
+}
+@Scopes(() => ({
+  active: {
+    where: {
+      planStatus: { [Op.eq]: 'ACTIVE' }
+    }
+  }
+}))
 @Table({ freezeTableName: true, tableName: 'triggers_plan', timestamps: false })
 export default class PlanModel extends Model {
     @Column({ primaryKey: true, type: DataType.INTEGER })

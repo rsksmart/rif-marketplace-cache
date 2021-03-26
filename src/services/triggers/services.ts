@@ -8,6 +8,9 @@ import TriggersStakeModel, { getStakesForAccount } from './models/triggersStake.
 export class ProviderService extends Service {
   emit?: EmitFn
 }
+export class PlansService extends Service {
+  emit?: EmitFn
+}
 
 export class TriggersStakeService extends Service {
   emit?: EmitFn
