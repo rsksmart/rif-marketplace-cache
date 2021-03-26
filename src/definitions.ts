@@ -8,7 +8,7 @@ import Libp2p from 'libp2p'
 import type { Options as Libp2pOptions } from 'libp2p'
 
 import type { AvgBillingPriceService, AgreementService, OfferService, StakeService as StorageStakeService, AvailableCapacityService } from './services/storage/services'
-import { ProviderService, TriggersStakeService } from './services/triggers/services'
+import { ProviderService, TriggersStakeService, PlansService as TriggersPlansService } from './services/triggers/services'
 import type { RatesService } from './rates'
 import type { RnsBaseService } from './services/rns'
 import type { ReorgEmitterService, NewBlockEmitterService, ConfirmatorService } from './blockchain/services'
@@ -47,6 +47,7 @@ export enum ServiceAddresses {
   STORAGE_AVAILABLE_CAPACITY = '/storage/v0/availableCapacity',
   TRIGGERS_STAKES = '/triggers/v0/stakes',
   TRIGGERS_PROVIDERS = '/triggers/v0/providers',
+  TRIGGERS_OFFERS = '/triggers/v0/offers',
   XR = '/rates/v0/',
   CONFIRMATIONS = '/confirmations',
   NEW_BLOCK_EMITTER = '/new-block',
@@ -61,6 +62,7 @@ interface ServiceTypes {
   [ServiceAddresses.STORAGE_STAKES]: StorageStakeService & ServiceAddons<any>
   [ServiceAddresses.STORAGE_AVAILABLE_CAPACITY]: AvailableCapacityService & ServiceAddons<any>
   [ServiceAddresses.TRIGGERS_PROVIDERS]: ProviderService & ServiceAddons<any>
+  [ServiceAddresses.TRIGGERS_OFFERS]: TriggersPlansService & ServiceAddons<any>
   [ServiceAddresses.TRIGGERS_STAKES]: TriggersStakeService & ServiceAddons<any>
   [ServiceAddresses.XR]: RatesService & ServiceAddons<any>
   [ServiceAddresses.RNS_DOMAINS]: RnsBaseService & ServiceAddons<any>

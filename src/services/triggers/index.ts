@@ -25,10 +25,13 @@ import ProviderModel from './models/provider.model'
 import TriggersStakeModel from './models/triggersStake.model'
 import eventProcessor from './processor'
 import {
+  PlansService,
   ProviderService, TriggersStakeService as StakeService
 } from './services'
 import { updater } from './update'
 import precache from './precache'
+import plansHook from './hooks/plans.hook'
+import PlanModel from './models/plan.model'
 
 export interface TriggersServices {
   providerService: ProviderService
@@ -63,6 +66,11 @@ const triggers: CachedService = {
     app.use(ServiceAddresses.TRIGGERS_PROVIDERS, new ProviderService({ Model: ProviderModel }))
     const providerService = app.service(ServiceAddresses.TRIGGERS_PROVIDERS)
     providerService.hooks(providerHooks)
+
+    // Initialize Plans service
+    app.use(ServiceAddresses.TRIGGERS_OFFERS, new PlansService({ Model: PlanModel }))
+    const plansService = app.service(ServiceAddresses.TRIGGERS_OFFERS)
+    plansService.hooks(plansHook)
 
     const sequelize = app.get('sequelize')
 

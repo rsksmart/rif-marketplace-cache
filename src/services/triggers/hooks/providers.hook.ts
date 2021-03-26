@@ -3,9 +3,6 @@ import { disallow } from 'feathers-hooks-common'
 import PlanModel from '../models/plan.model'
 import TriggersChannelModel from '../models/triggersChannel.model'
 import PriceModel from '../models/price.model'
-// import { lowerCaseAddressesQueryParamsHook } from '../../utils'
-
-// const ADDRESSES_FIELDS = ['token', 'account']
 
 export default {
   before: {
@@ -15,7 +12,6 @@ export default {
           raw: false
         }
       }
-      // lowerCaseAddressesQueryParamsHook(ADDRESSES_FIELDS)
     ],
     find: [
       (context: HookContext) => {

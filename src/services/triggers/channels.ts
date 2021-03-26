@@ -10,7 +10,9 @@ export default function (app: Application) {
   app.on('connection', (connection: any) => {
     app.channel('triggers_providers').join(connection)
     app.channel('triggers_stake').join(connection)
+    app.channel('triggers_offers').join(connection)
   })
   app.service(ServiceAddresses.TRIGGERS_PROVIDERS).publish(() => app.channel('triggers_providers'))
+  app.service(ServiceAddresses.TRIGGERS_OFFERS).publish(() => app.channel('triggers_offers'))
   app.service(ServiceAddresses.TRIGGERS_STAKES).publish(() => app.channel('triggers_stake'))
 }
