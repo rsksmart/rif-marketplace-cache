@@ -48,16 +48,6 @@ jobs:
            docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
            docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
 
-      - name: Send a command to EC2 instance(s)
-        # This is needed basically to TEST if ssm is responding correctly
-        run: |
-           aws ssm send-command \
-               --instance-ids "i-03882e46fb18eb0a8" \
-               --document-name "AWS-RunShellScript" \
-               --comment "IP config" \
-               --parameters commands=ifconfig \
-               --output text --region=${{ secrets.STAGING_AWS_REGION }}
-
       - name: Deploy rif-marketplace-cache staging
         run: |
           aws ssm send-command \
