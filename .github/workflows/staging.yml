@@ -34,11 +34,6 @@ jobs:
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v1
 
-      - name: Extract Git Tag
-        run: echo "GIT_TAG="$(git describe --abbrev=0 --tags)"" >> $GITHUB_ENV
-      - name: Echo Git tag
-        run: echo "${{ env.GIT_TAG }}"
-
       - name: Build, tag, and push image to Amazon ECR
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
