@@ -1,0 +1,69 @@
+---
+name: RIF Marketplace CACHE deploy
+
+on:
+  push:
+    tags:
+      - 'v[0-9]+.[0-9]+.[0-9]+-**'
+      - 'v[0-9]+.[0-9]+.[0-9]+'
+    branches:
+      - staging
+
+jobs:
+  deploy-staging:
+    name: RIF Marketplace CACHE - Staging
+    runs-on: ubuntu-latest
+    environment:
+      name: staging
+
+    steps:
+
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.STAGING_AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.STAGING_AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.STAGING_AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v1
+
+      - name: Extract Git Tag
+        run: echo "GIT_TAG="$(git describe --abbrev=0 --tags)"" >> $GITHUB_ENV
+      - name: Echo Git tag
+        run: echo "${{ env.GIT_TAG }}"
+
+      - name: Build, tag, and push image to Amazon ECR
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          ECR_REPOSITORY: rif-marketplace-cache
+          IMAGE_TAG: ${{ env.GIT_TAG }}
+        run: |
+           docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
+           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+
+      - name: Send a command to EC2 instance(s)
+        # This is needed basically to TEST if ssm is responding correctly
+        run: |
+           aws ssm send-command \
+               --instance-ids "i-03882e46fb18eb0a8" \
+               --document-name "AWS-RunShellScript" \
+               --comment "IP config" \
+               --parameters commands=ifconfig \
+               --output text --region=${{ secrets.STAGING_AWS_REGION }}
+
+      - name: Deploy rif-marketplace-cache staging
+        run: |
+          aws ssm send-command \
+              --document-name "AWS-RunRemoteScript" \
+              --instance-ids "i-03882e46fb18eb0a8" \
+              --region=${{ secrets.STAGING_AWS_REGION }} \
+              --comment "github interaction-rif-marketplace-cache" \
+              --parameters '{"sourceType":["GitHub"],"sourceInfo":["{\"owner\":\"rootstock\", \"repository\":\"ask-devops\", \"path\": \"rif-marketplace/\",\"tokenInfo\":\"{{ssm-secure:github-token}}\"}"],"commandLine":["deploy-marketplace-cache.sh"]}'
+
