@@ -51,7 +51,7 @@ jobs:
         run: |
           aws ssm send-command \
               --document-name "AWS-RunRemoteScript" \
-              --instance-ids "i-0072a6b7c7e53fe67" \
+              --instance-ids "${{ secrets.TESTNET_EC2_ID }}" \
               --region=${{ secrets.TESTNET_AWS_REGION }} \
               --comment "github interaction-rif-marketplace-cache" \
               --parameters '{"sourceType":["GitHub"],"sourceInfo":["{\"owner\":\"rootstock\", \"repository\":\"ask-devops\", \"path\": \"rif-marketplace/\",\"tokenInfo\":\"{{ssm-secure:github-token}}\"}"],"commandLine":["deploy-marketplace-cache.sh"]}'
