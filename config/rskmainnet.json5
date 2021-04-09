@@ -3,7 +3,24 @@
     networkId: 30
   },
   storage: {
-    enabled: false,
+    enabled: true,
+    tokens: {
+      '0x2acc95758f8b5f583470ba265eb685a8f45fc9d5': 'rif'
+    },
+    storageManager: {
+      contractAddress: "0xa18c181229F374b00f126fC952775d41A4F4c40e",
+      eventsEmitter: {
+        startingBlock: 3226686,
+        confirmations: 4
+      }
+    },
+    staking: {
+      contractAddress: "0xe82Eb1C0D40D555b8030116132EdA0B9f1032263",
+      eventsEmitter: {
+        startingBlock: 3226688,
+        confirmations: 4
+      }
+    },
   },
   rns: {
     batchContractAddress: "0x2beb2819e110b34c802c761e737470760af2057f",
