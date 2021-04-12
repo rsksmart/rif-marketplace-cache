@@ -55,7 +55,8 @@ export default {
           currency,
           size,
           channels,
-          price
+          price,
+          provider
         } = query
 
         if (channels?.length) {
@@ -112,6 +113,13 @@ export default {
           paramsSeq.where[Op.and] = [
             ...paramsSeq.where[Op.and] || [],
             literal(`CAST(CAST(prices.price as REAL) / 1000000000000000000 * COALESCE("prices.rate", 0) as REAL) BETWEEN ${minLimit} AND ${maxLimit}`)
+          ]
+        }
+
+        if (provider) {
+          paramsSeq.where[Op.and] = [
+            ...paramsSeq.where[Op.and] || [],
+            literal(`providerId LIKE "${provider}"`)
           ]
         }
 
