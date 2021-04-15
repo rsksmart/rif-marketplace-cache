@@ -340,7 +340,7 @@ describe('Storage service', function () {
         const { min, max } = await avgBillingPlanService.get(1)
         const rate = await Rate.findOne({ where: { token: 'rbtc' }, raw: true })
         expect(min).to.be.eql(Math.floor(rate?.usd as number * 30))
-        expect(max).to.be.eql(Math.floor(rate?.usd as number * 30))
+        expect(max).to.be.eql(Math.floor(rate?.usd as number * 30) + 1)
       })
     })
     describe('Notification', () => {

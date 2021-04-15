@@ -96,7 +96,7 @@ export function getBillingPriceAvgQuery (
         SUM(
           (cast(price as REAL) / ${WEI}) * coalesce("rates".${sequelize.escape(currency)}, 0) * 1024 / period * (3600 * 24 * 30)
         ) / COUNT("storage_billing_plan"."id")
-        as INTEGER
+        as REAL
       )
     FROM
       "storage_billing_plan"
