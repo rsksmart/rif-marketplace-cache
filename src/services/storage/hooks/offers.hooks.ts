@@ -43,27 +43,6 @@ function averagePriceFilter (
 }
 
 /**
- * total capacity filter query
- * @param sequelize
- * @param context
- * @param totalCapacity
- */
-function totalCapacityFilter (
-  sequelize: Sequelize,
-  context: HookContext,
-  totalCapacity: { min: number | string, max: number | string }
-): void {
-  const minCap = sequelize.escape(totalCapacity.min)
-  const maxCap = sequelize.escape(totalCapacity.max)
-  const rawQ = `cast(totalCapacity as integer) BETWEEN ${minCap} AND ${maxCap}`
-  // We should use Op.and to prevent overwriting the scope values
-  context.params.sequelize.where[Op.and] = [
-    ...context.params.sequelize.where[Op.and] || [],
-    literal(rawQ)
-  ]
-}
-
-/**
  * available capacity filter query
  * @param sequelize
  * @param context
@@ -148,10 +127,6 @@ export default {
 
           if (averagePrice) {
             averagePriceFilter(sequelize, context, averagePrice)
-          }
-
-          if (totalCapacity) {
-            totalCapacityFilter(sequelize, context, totalCapacity)
           }
 
           if (periods?.length) {
