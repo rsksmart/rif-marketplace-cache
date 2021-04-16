@@ -1,5 +1,5 @@
 import { Eth } from 'web3-eth'
-import { ProviderRegistered } from '@rsksmart/rif-marketplace-notifications/types/web3-v1-contracts/NotificationsManager'
+import { ProviderRegistered, SubscriptionCreated } from '@rsksmart/rif-marketplace-notifications/types/web3-v1-contracts/NotificationsManager'
 
 import { loggingFactory } from '../../../logger'
 import { Handler, NotificationManagerEvents } from '../../../definitions'
@@ -8,6 +8,8 @@ import { wrapEvent } from '../../../utils'
 import { TriggersServices } from '../index'
 import ProviderModel from '../models/provider.model'
 import { updater } from '../update'
+import { NotifierSvcProvider } from '../notifierService/provider'
+import SubscriptionModel from '../models/subscription.model'
 
 const logger = loggingFactory('triggers:handler:provider')
 
@@ -34,6 +36,28 @@ export const handlers = {
     } else {
       logger.error(`Sequelize instance not found. Cannot update ${provider}'s plans.`)
     }
+  },
+  async SubscriptionCreated (event: SubscriptionCreated, { providerService }: TriggersServices): Promise<void> {
+    const { provider, hash, consumer } = event.returnValues
+
+    const providerIns = await ProviderModel.findOne({ where: { provider } })
+
+    if (!providerIns) throw new Error(`Provider ${provider} not found`)
+
+    const [host, port] = providerIns.url.split(/(?::)(\d*)$/, 2)
+    const notifierService = new NotifierSvcProvider({ host, port })
+
+    const subscriptionInfo = await notifierService.getSubscriptions([hash])
+
+    await SubscriptionModel.create({
+      hash,
+      providerId: provider,
+      consumer,
+      ...subscriptionInfo
+    })
+
+    if (providerService.emit) providerService.emit('created', wrapEvent('SubscriptionCreated', { provider, consumer, hash }))
+    logger.info(`Created new subscription ${hash} by Consumer ${consumer} for Provider ${provider}`)
   }
 }
 
@@ -42,7 +66,7 @@ function isValidEvent (eventName: string): eventName is keyof typeof handlers {
 }
 
 const handler: Handler<NotificationManagerEvents, TriggersServices> = {
-  events: ['ProviderRegistered'],
+  events: ['ProviderRegistered', 'SubscriptionCreated'],
   process (event: NotificationManagerEvents, services: TriggersServices, { eth }): Promise<void> {
     if (!isValidEvent(event.event)) {
       return Promise.reject(new Error(`Unknown event ${event.event}`))

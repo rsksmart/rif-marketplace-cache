@@ -43,6 +43,31 @@ export class NotifierSvcProvider extends ServiceProvider<NotifierResult> impleme
     this.defaultOptions = { host, port }
   }
 
+  async getSubscriptions (hashes: string[]) {
+    const {
+      success,
+      message,
+      code,
+      data
+    } = await this._fetch({
+      path: `/getSubscriptions?hashes=[${hashes.toString()}]`
+    })
+      .catch((error: FetchError) => {
+        throw new NotifierProviderError('Notifier failed to fetch subscriptions', error)
+      })
+
+    if (!success) {
+      throw new NotifierProviderError(
+        NotifierProviderError.buildMessage(
+          'Notifier failed to fetch subscriptions',
+          code?.toString() ?? '',
+          message ?? ''
+        ))
+    }
+
+    return data
+  }
+
   async getSubscriptionPlans () {
     const {
       success,

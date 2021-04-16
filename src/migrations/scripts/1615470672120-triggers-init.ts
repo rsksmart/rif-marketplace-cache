@@ -150,6 +150,40 @@ const migrationCommands = function (transaction: any): Commands {
     {
       fn: 'createTable',
       params: [
+        'triggers_subscription',
+        {
+          hash: {
+            type: Sequelize.STRING,
+            field: 'hash',
+            primaryKey: true,
+            allowNull: false
+          },
+          expiredAt: {
+            type: Sequelize.DATE,
+            field: 'expiredAt',
+            allowNull: false
+          },
+          provider: {
+            type: Sequelize.STRING,
+            onUpdate: 'CASCADE',
+            onDelete: 'CASCADE',
+            references: {
+              model: 'triggers_provider',
+              key: 'provider'
+            },
+            name: 'providerId',
+            field: 'providerId',
+            allowNull: false
+          }
+        },
+        {
+          transaction: transaction
+        }
+      ]
+    },
+    {
+      fn: 'createTable',
+      params: [
         'triggers_channel',
         {
           id: {

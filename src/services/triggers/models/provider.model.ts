@@ -1,5 +1,7 @@
 import { Table, Column, Model, DataType, HasMany } from 'sequelize-typescript'
 import PlanModel from './plan.model'
+import Agreement from '../../storage/models/agreement.model'
+import SubscriptionModel from './subscription.model'
 
 @Table({ freezeTableName: true, tableName: 'triggers_provider' })
 export default class ProviderModel extends Model {
@@ -11,4 +13,7 @@ export default class ProviderModel extends Model {
 
   @HasMany(() => PlanModel, 'providerId')
   plans!: PlanModel[]
+
+  @HasMany(() => SubscriptionModel)
+  subscriptions!: SubscriptionModel[]
 }
