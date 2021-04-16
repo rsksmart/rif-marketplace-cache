@@ -27,14 +27,14 @@
       contractAddress: "0x839856c0eC1aA2AeD25D47Fd3DDB7A14Dac3e76d",
       eventsEmitter: {
         startingBlock: 1656800,
-        confirmations: 8
+        confirmations: 4
       }
     },
     staking: {
       contractAddress: "0x11bE792f8fcfC84897b88e149dD3fb66b422256f",
       eventsEmitter: {
         startingBlock: 1656787,
-        confirmations: 8
+        confirmations: 4
       }
     },
   },
