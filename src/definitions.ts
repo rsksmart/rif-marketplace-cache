@@ -298,7 +298,7 @@ export type StorageEvents = StorageOfferEvents | StorageAgreementEvents | StakeE
 
 /// //////////////////////////////////////////////////////////////////////////////////////////////////
 // TRIGGERS
-export type NotificationManagerEvents = triggersEvents.ProviderRegistered
+export type NotificationManagerEvents = triggersEvents.ProviderRegistered | triggersEvents.SubscriptionCreated
 
 export type TriggersStakeEvents = triggersStakingEvents.Staked | triggersStakingEvents.Unstaked
 
