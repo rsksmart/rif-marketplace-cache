@@ -3,7 +3,7 @@ import { disallow } from 'feathers-hooks-common'
 import { literal, Op, Sequelize } from 'sequelize'
 import { scopes } from '../models/plan.model'
 import PriceModel from '../models/price.model'
-import TriggersChannelModel from '../models/triggersChannel.model'
+import NotifierChannelModel from '../models/notifierChannel.model'
 import { findLimits } from '../utils/plansHookUtils'
 
 export default {
@@ -17,7 +17,7 @@ export default {
           scope: scopes.active,
           include: [
             {
-              model: TriggersChannelModel,
+              model: NotifierChannelModel,
               as: 'channels',
               attributes: ['name'],
               required: true
@@ -32,7 +32,7 @@ export default {
           attributes: {
             include: [
               [
-                literal('(SELECT url FROM triggers_provider AS provider WHERE PlanModel.providerId = provider.provider)'),
+                literal('(SELECT url FROM notifier_provider AS provider WHERE PlanModel.providerId = provider.provider)'),
                 'url'
               ]
             ]
@@ -63,7 +63,7 @@ export default {
           paramsSeq.include = [
             ...paramsSeq.include,
             {
-              model: TriggersChannelModel,
+              model: NotifierChannelModel,
               as: 'channels',
               required: true,
               attributes: ['name'],

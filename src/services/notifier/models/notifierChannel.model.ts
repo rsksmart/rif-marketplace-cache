@@ -1,8 +1,8 @@
 import { BelongsTo, Column, DataType, ForeignKey, Model, Table } from 'sequelize-typescript'
 import PlanModel from './plan.model'
 
-@Table({ freezeTableName: true, tableName: 'triggers_channel', timestamps: false })
-export default class TriggersChannelModel extends Model {
+@Table({ freezeTableName: true, tableName: 'notifier_channel', timestamps: false })
+export default class NotifierChannelModel extends Model {
     @Column({ primaryKey: true, autoIncrement: true, type: DataType.INTEGER })
     id!: number
 

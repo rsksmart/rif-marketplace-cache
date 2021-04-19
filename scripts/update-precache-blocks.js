@@ -12,11 +12,11 @@ const TESTNET_EXPLORER = 'https://backend.explorer.testnet.rsk.co'
 const MAINNET_EXPLORER = 'https://backend.explorer.rsk.co'
 const RNS_CONTRACTS = ['owner', 'reverse', 'placement', 'registrar', 'fifsAddrRegistrar']
 const STORAGE_CONTRACTS = ['storageManager', 'staking']
-const TRIGGERS_CONTRACTS = ['notificationsManager', 'staking']
+const TRIGGERS_CONTRACTS = ['notifierManager', 'staking']
 const SERVICES = {
   rns: RNS_CONTRACTS,
   storage: STORAGE_CONTRACTS,
-  triggers: TRIGGERS_CONTRACTS
+  notifier: TRIGGERS_CONTRACTS
 }
 
 const configFileName = `${NODE_ENV}.json5`

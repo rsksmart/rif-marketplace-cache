@@ -5,13 +5,13 @@ import { loggingFactory } from '../../logger'
 import { NotifierSvcProvider, PlanPriceDTO } from './notifierService/provider'
 import PlanModel from './models/plan.model'
 import ProviderModel from './models/provider.model'
-import TriggersChannelModel from './models/triggersChannel.model'
+import NotifierChannelModel from './models/notifierChannel.model'
 import PriceModel from './models/price.model'
 import { getTokenSymbol } from '../utils'
 import { SupportedServices } from '../../definitions'
 import { Sequelize, Transaction } from 'sequelize'
 
-const logger = loggingFactory('triggers:updater')
+const logger = loggingFactory('notifier:updater')
 
 const semaphore = new Sema(1)
 
@@ -40,7 +40,7 @@ function updatePrices (prices: PlanPriceDTO[], planId: number, dbTx: Transaction
 
 function updateChannels (channels: string[], planId: number, dbTx: Transaction) {
   return Promise.all(channels.map(async (name) => {
-    const [channel, created] = await TriggersChannelModel.findOrCreate({
+    const [channel, created] = await NotifierChannelModel.findOrCreate({
       where: { name, planId },
       transaction: dbTx
     })

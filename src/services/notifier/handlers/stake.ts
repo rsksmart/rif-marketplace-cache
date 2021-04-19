@@ -1,32 +1,32 @@
 import BigNumber from 'bignumber.js'
-import { Staked, Unstaked } from '@rsksmart/rif-marketplace-notifications/types/web3-v1-contracts/Staking'
+import { Staked, Unstaked } from '@rsksmart/rif-marketplace-notifier/types/web3-v1-contracts/Staking'
 
 import { loggingFactory } from '../../../logger'
 import { Handler, StakeEvents, SupportedServices } from '../../../definitions'
-import { TriggersServices } from '../index'
-import TriggersStakeModel from '../models/triggersStake.model'
+import { NotifierServices } from '../index'
+import NotifierStakeModel from '../models/notifierStake.model'
 import { getTokenSymbol } from '../../utils'
 
-const logger = loggingFactory('triggers:handler:stake')
+const logger = loggingFactory('notifier:handler:stake')
 
 /**
  * Find or create stake
  * @param account
  * @param token
- * @returns {Promise<TriggersStakeModel>} stake
+ * @returns {Promise<NotifierStakeModel>} stake
  */
-async function findOrCreateStake (account: string, token: string): Promise<TriggersStakeModel> {
-  const stake = await TriggersStakeModel.findOne({ where: { account, token } })
+async function findOrCreateStake (account: string, token: string): Promise<NotifierStakeModel> {
+  const stake = await NotifierStakeModel.findOne({ where: { account, token } })
 
   if (stake) {
     return stake
   }
   const symbol = getTokenSymbol(token, SupportedServices.TRIGGERS).toLowerCase()
-  return TriggersStakeModel.create({ account, token, symbol, total: 0 })
+  return NotifierStakeModel.create({ account, token, symbol, total: 0 })
 }
 
 const handlers = {
-  async Staked (event: Staked, { stakeService }: TriggersServices): Promise<void> {
+  async Staked (event: Staked, { stakeService }: NotifierServices): Promise<void> {
     const { user: account, total, token, amount } = event.returnValues
 
     const stake = await findOrCreateStake(account, token)
@@ -40,10 +40,10 @@ const handlers = {
     }
   },
 
-  async Unstaked (event: Unstaked, { stakeService }: TriggersServices): Promise<void> {
+  async Unstaked (event: Unstaked, { stakeService }: NotifierServices): Promise<void> {
     const { user: account, total, token, amount } = event.returnValues
 
-    const stake = await TriggersStakeModel.findOne({ where: { token, account } })
+    const stake = await NotifierStakeModel.findOne({ where: { token, account } })
 
     if (!stake) {
       throw new Error(`Stake for account ${account}, token ${token} not exist`)
@@ -63,9 +63,9 @@ function isValidEvent (value: string): value is keyof typeof handlers {
   return value in handlers
 }
 
-const handler: Handler<StakeEvents, TriggersServices> = {
+const handler: Handler<StakeEvents, NotifierServices> = {
   events: ['Staked', 'Unstaked'],
-  process (event: StakeEvents, services: TriggersServices): Promise<void> {
+  process (event: StakeEvents, services: NotifierServices): Promise<void> {
     if (!isValidEvent(event.event)) {
       return Promise.reject(new Error(`Unknown event ${event.event}`))
     }

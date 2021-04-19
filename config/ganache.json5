@@ -7,12 +7,12 @@
     provider: "ws://127.0.0.1:8545/",
     networkId: 8545
   },
-  triggers: {
+  notifier: {
     enabled: true,
     tokens: {
       '0x67b5656d60a809915323bf2c40a8bef15a152e3e': 'rif'
     },
-    notificationsManager: {
+    notifierManager: {
       contractAddress: "0x8014E07473F23fd8b20BdC035557Fc5924cFd1af",
       eventsEmitter: {
         confirmations: 2
