@@ -37,7 +37,7 @@ export const handlers = {
       logger.error(`Sequelize instance not found. Cannot update ${provider}'s plans.`)
     }
   },
-  async SubscriptionCreated (event: SubscriptionCreated, { providerService }: TriggersServices): Promise<void> {
+  async SubscriptionCreated (event: SubscriptionCreated, { subscriptionService }: TriggersServices): Promise<void> {
     const { provider, hash, consumer } = event.returnValues
 
     const providerIns = await ProviderModel.findOne({ where: { provider } })
@@ -49,6 +49,7 @@ export const handlers = {
 
     const subscriptionInfo = await notifierService.getSubscriptions([hash])
 
+    logger.info('Subscriptions from notifier: ', subscriptionInfo)
     await SubscriptionModel.create({
       hash,
       providerId: provider,
@@ -56,8 +57,8 @@ export const handlers = {
       ...subscriptionInfo
     })
 
-    if (providerService.emit) providerService.emit('created', wrapEvent('SubscriptionCreated', { provider, consumer, hash }))
-    logger.info(`Created new subscription ${hash} by Consumer ${consumer} for Provider ${provider}`)
+    if (subscriptionService.emit) subscriptionService.emit('created', wrapEvent('SubscriptionCreated', { provider, consumer, hash }))
+    logger.info(`Created new Subscription ${hash} by Consumer ${consumer} for Provider ${provider}`)
   }
 }
 

@@ -12,6 +12,10 @@ export class PlansService extends Service {
   emit?: EmitFn
 }
 
+export class SubscriptionsService extends Service {
+  emit?: EmitFn
+}
+
 export class TriggersStakeService extends Service {
   emit?: EmitFn
 
