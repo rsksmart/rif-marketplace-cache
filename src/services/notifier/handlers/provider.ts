@@ -46,23 +46,21 @@ export const handlers = {
 
     const [host, port] = providerIns.url.split(/(?::)(\d*)$/, 2)
     const notifierService = new NotifierSvcProvider({ host, port })
-
-    const subscriptionResponse = await notifierService.getSubscriptions(consumer, [hash])
-
-    const [subscription] = subscriptionResponse
-    await SubscriptionModel.create({
+    const [subscriptionFromNotifier] = await notifierService.getSubscriptions(consumer, [hash])
+    const subscription = {
       hash,
       providerId: provider,
       consumer,
-      subscriptionId: subscription.id,
-      status: subscription.status,
-      subscriptionPlanId: subscription.subscriptionPlanId,
-      previousSubscription: subscription.previousSubscription,
-      expirationDate: new Date(subscription.expirationDate),
-      topics: subscription.topics
-    })
+      subscriptionId: subscriptionFromNotifier.id,
+      status: subscriptionFromNotifier.status,
+      subscriptionPlanId: subscriptionFromNotifier.subscriptionPlanId,
+      previousSubscription: subscriptionFromNotifier.previousSubscription,
+      expirationDate: new Date(subscriptionFromNotifier.expirationDate),
+      topics: subscriptionFromNotifier.topics
+    }
+    await SubscriptionModel.create(subscription)
 
-    if (subscriptionService.emit) subscriptionService.emit('created', wrapEvent('SubscriptionCreated', { provider, consumer, hash }))
+    if (subscriptionService.emit) subscriptionService.emit('created', wrapEvent('SubscriptionCreated', subscription))
     logger.info(`Created new Subscription ${hash} by Consumer ${consumer} for Provider ${provider}`)
   }
 }

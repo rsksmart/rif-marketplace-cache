@@ -140,10 +140,29 @@ describe('Notifier services: Events Processor', () => {
       await processor(event)
 
       const createdSubscription = await SubscriptionModel.findOne({ where: { hash } })
+      const subscriptionEmitted = {
+        hash,
+        providerId: provider,
+        consumer,
+        subscriptionId: subscriptionMock.id,
+        status: subscriptionMock.status,
+        subscriptionPlanId: subscriptionMock.subscriptionPlanId,
+        previousSubscription: undefined,
+        expirationDate: new Date(subscriptionMock.expirationDate),
+        topics: subscriptionMock.topics
+      }
 
       sandbox.assert.calledOnce(getSubscriptionsSpy)
       expect(createdSubscription).to.be.instanceOf(SubscriptionModel)
-      expect(subscriptionsServiceEmitSpy).to.have.been.calledOnceWith('created', wrapEvent('SubscriptionCreated', { consumer, provider, hash }))
+      expect(createdSubscription?.consumer).to.be.eql(subscriptionMock.userAddress)
+      expect(createdSubscription?.hash).to.be.eql(subscriptionMock.hash)
+      expect(createdSubscription?.status).to.be.eql(subscriptionMock.status)
+      expect(createdSubscription?.topics).to.be.eql(subscriptionMock.topics)
+      expect(createdSubscription?.subscriptionId).to.be.eql(subscriptionMock.id)
+      expect(createdSubscription?.subscriptionPlanId).to.be.eql(subscriptionMock.subscriptionPlanId)
+      expect(createdSubscription?.expirationDate).to.be.eql(new Date(subscriptionMock.expirationDate))
+      expect(createdSubscription?.providerId).to.be.eql(subscriptionMock.providerAddress.value)
+      expect(subscriptionsServiceEmitSpy).to.have.been.calledOnceWith('created', wrapEvent('SubscriptionCreated', subscriptionEmitted))
       sandbox.reset()
     })
   })
