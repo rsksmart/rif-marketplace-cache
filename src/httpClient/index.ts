@@ -18,9 +18,11 @@ export abstract class ServiceProvider<ResultType> {
     }
 
     set defaultOptions (options: ClientRequestArgs) {
+      const url = new URL(options.host as string)
       this._defaultOptions = {
         ...this.defaultOptions,
-        ...options
+        ...options,
+        host: url.hostname
       }
     }
 
@@ -43,7 +45,7 @@ export abstract class ServiceProvider<ResultType> {
               const body = Buffer.concat(chunks).toString()
 
               // Check if page is returned instead of JSON
-              if (body.startsWith('<!DOCTYPE html>')) {
+              if (body.startsWith('<!DOCTYPE html>') || body.startsWith('<!doctype html>')) {
                 throw new FetchError('There was a problem with your request. The parameter(s) you gave are missing or incorrect.', 'Invalid request')
               }
 

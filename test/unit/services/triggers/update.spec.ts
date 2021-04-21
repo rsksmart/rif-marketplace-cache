@@ -10,7 +10,7 @@ import ProviderModel from '../../../../src/services/notifier/models/provider.mod
 import { NotifierSvcProvider, SubscriptionPlanDTO } from '../../../../src/services/notifier/notifierService/provider'
 import { updater } from '../../../../src/services/notifier/update'
 import PlanModel from '../../../../src/services/notifier/models/plan.model'
-import NotifierChannelModel from '../../../../src/services/notifier/models/notifierChannel.model'
+import NotifierChannelModel from '../../../../src/services/notifier/models/notifier-channel.model'
 import PriceModel from '../../../../src/services/notifier/models/price.model'
 import { BigNumber } from 'bignumber.js'
 
@@ -58,11 +58,11 @@ describe('Notifier services: Periodic Update', () => {
   describe('Update providers', () => {
     const provider1 = {
       provider: '0xPROVIDER_1',
-      url: 'provider1.url'
+      url: 'http://provider1.url'
     }
     const provider2 = {
       provider: '0xPROVIDER_2',
-      url: 'provider2.url'
+      url: 'http://provider2.url'
     }
 
     let getSubscriptionPlansSpy: sinon.SinonSpy
@@ -75,7 +75,8 @@ describe('Notifier services: Periodic Update', () => {
           planDTO.id += 1
           return Promise.resolve({
             message: 'OK',
-            content: [planDTO]
+            content: [planDTO],
+            status: 'OK'
           })
         })
     })

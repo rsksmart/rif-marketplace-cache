@@ -16,11 +16,12 @@ import {
   NotificationManagerEvents, NotifierEvents, NotifierStakeEvents
 } from '../../definitions'
 import ProviderModel from './models/provider.model'
-import NotifierStakeModel from './models/notifierStake.model'
+import NotifierStakeModel from './models/notifier-stake.model'
 import eventProcessor from './processor'
 import {
-  ProviderService, NotifierStakeService as StakeService
+  ProviderService, NotifierStakeService as StakeService, SubscriptionsService
 } from './services'
+import SubscriptionModel from './models/subscription.model'
 
 async function precacheContract (
   eventsEmitter: EventsFetcher<NotifierEvents>,
@@ -50,7 +51,8 @@ export default function precache (eth: Eth, web3events: Web3Events): Observable<
 
       const services: NotifierServices = {
         stakeService: new StakeService({ Model: NotifierStakeModel }),
-        providerService: new ProviderService({ Model: ProviderModel })
+        providerService: new ProviderService({ Model: ProviderModel }),
+        subscriptionService: new SubscriptionsService({ Model: SubscriptionModel })
       }
 
       // TODO: Can be processed in parallel

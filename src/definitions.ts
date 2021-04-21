@@ -8,7 +8,7 @@ import Libp2p from 'libp2p'
 import type { Options as Libp2pOptions } from 'libp2p'
 
 import type { AvgBillingPriceService, AgreementService, OfferService, StakeService as StorageStakeService, AvailableCapacityService } from './services/storage/services'
-import { ProviderService, NotifierStakeService, PlansService as NotifierPlansService } from './services/notifier/services'
+import { ProviderService, NotifierStakeService, PlansService as NotifierPlansService, SubscriptionsService as NotifierSubscriptionsService } from './services/notifier/services'
 import type { RatesService } from './rates'
 import type { RnsBaseService } from './services/rns'
 import type { ReorgEmitterService, NewBlockEmitterService, ConfirmatorService } from './blockchain/services'
@@ -48,6 +48,7 @@ export enum ServiceAddresses {
   TRIGGERS_STAKES = '/notifier/v0/stakes',
   TRIGGERS_PROVIDERS = '/notifier/v0/providers',
   TRIGGERS_OFFERS = '/notifier/v0/offers',
+  TRIGGERS_SUBSCRIPTIONS = '/notifier/v0/subscriptions',
   XR = '/rates/v0/',
   CONFIRMATIONS = '/confirmations',
   NEW_BLOCK_EMITTER = '/new-block',
@@ -63,6 +64,7 @@ interface ServiceTypes {
   [ServiceAddresses.STORAGE_AVAILABLE_CAPACITY]: AvailableCapacityService & ServiceAddons<any>
   [ServiceAddresses.TRIGGERS_PROVIDERS]: ProviderService & ServiceAddons<any>
   [ServiceAddresses.TRIGGERS_OFFERS]: NotifierPlansService & ServiceAddons<any>
+  [ServiceAddresses.TRIGGERS_SUBSCRIPTIONS]: NotifierSubscriptionsService & ServiceAddons<any>
   [ServiceAddresses.TRIGGERS_STAKES]: NotifierStakeService & ServiceAddons<any>
   [ServiceAddresses.XR]: RatesService & ServiceAddons<any>
   [ServiceAddresses.RNS_DOMAINS]: RnsBaseService & ServiceAddons<any>
@@ -298,7 +300,7 @@ export type StorageEvents = StorageOfferEvents | StorageAgreementEvents | StakeE
 
 /// //////////////////////////////////////////////////////////////////////////////////////////////////
 // TRIGGERS
-export type NotificationManagerEvents = notifierEvents.ProviderRegistered
+export type NotificationManagerEvents = notifierEvents.ProviderRegistered | notifierEvents.SubscriptionCreated
 
 export type NotifierStakeEvents = notifierStakingEvents.Staked | notifierStakingEvents.Unstaked
 

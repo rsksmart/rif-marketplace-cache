@@ -3,12 +3,16 @@ import { QueryTypes } from 'sequelize'
 import BigNumber from 'bignumber.js'
 
 import type { EmitFn } from '../../definitions'
-import NotifierStakeModel, { getStakesForAccount } from './models/notifierStake.model'
+import NotifierStakeModel, { getStakesForAccount } from './models/notifier-stake.model'
 
 export class ProviderService extends Service {
   emit?: EmitFn
 }
 export class PlansService extends Service {
+  emit?: EmitFn
+}
+
+export class SubscriptionsService extends Service {
   emit?: EmitFn
 }
 
