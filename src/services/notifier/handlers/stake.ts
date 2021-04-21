@@ -4,7 +4,7 @@ import { Staked, Unstaked } from '@rsksmart/rif-marketplace-notifier/types/web3-
 import { loggingFactory } from '../../../logger'
 import { Handler, StakeEvents, SupportedServices } from '../../../definitions'
 import { NotifierServices } from '../index'
-import NotifierStakeModel from '../models/notifierStake.model'
+import NotifierStakeModel from '../models/notifier-stake.model'
 import { getTokenSymbol } from '../../utils'
 
 const logger = loggingFactory('notifier:handler:stake')

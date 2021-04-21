@@ -21,21 +21,26 @@ import { errorHandler, waitForReadyApp } from '../../utils'
 import notifierChannels from './channels'
 import providerHooks from './hooks/providers.hook'
 import stakeHooks from './hooks/stakes.hook'
+import subscriptionsHook from './hooks/subscriptions.hook'
 import ProviderModel from './models/provider.model'
-import NotifierStakeModel from './models/notifierStake.model'
+import NotifierStakeModel from './models/notifier-stake.model'
 import eventProcessor from './processor'
 import {
   PlansService,
-  ProviderService, NotifierStakeService as StakeService
+  ProviderService,
+  SubscriptionsService,
+  NotifierStakeService as StakeService
 } from './services'
 import { updater } from './update'
 import precache from './precache'
 import plansHook from './hooks/plans.hook'
 import PlanModel from './models/plan.model'
+import SubscriptionModel from './models/subscription.model'
 
 export interface NotifierServices {
   providerService: ProviderService
   stakeService: StakeService
+  subscriptionService: SubscriptionsService
 }
 
 export const NOTIFICATIONS_MANAGER = 'notifier.notifierManager'
@@ -72,6 +77,11 @@ const notifier: CachedService = {
     const plansService = app.service(ServiceAddresses.TRIGGERS_OFFERS)
     plansService.hooks(plansHook)
 
+    // Initialize Subscriptions service
+    app.use(ServiceAddresses.TRIGGERS_SUBSCRIPTIONS, new SubscriptionsService({ Model: SubscriptionModel }))
+    const subscriptionService = app.service(ServiceAddresses.TRIGGERS_SUBSCRIPTIONS)
+    subscriptionService.hooks(subscriptionsHook)
+
     const sequelize = app.get('sequelize')
 
     // Initialize Staking service
@@ -85,7 +95,7 @@ const notifier: CachedService = {
     const web3events = app.get('web3events') as Web3Events
     const confirmationService = app.service(ServiceAddresses.CONFIRMATIONS)
     const reorgEmitterService = app.service(ServiceAddresses.REORG_EMITTER)
-    const services = { providerService, stakeService }
+    const services = { providerService, stakeService, subscriptionService }
 
     // Notification Manager watcher
     const notifierManagerEventsEmitter = getEventsEmitterForService(NOTIFICATIONS_MANAGER, web3events, notifierManagerContract.abi as AbiItem[])

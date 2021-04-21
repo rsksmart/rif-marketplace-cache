@@ -167,6 +167,7 @@
         topics: [
           [ // It needs to be a "double array" because that represents an "or" of the topics and not "and"
             'ProviderRegistered(address,string)',
+            'SubscriptionCreated(bytes32,address,address,uint256,address)'
           ]
         ],
 

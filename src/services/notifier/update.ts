@@ -1,11 +1,10 @@
-
 import { Sema } from 'async-sema/lib'
 
 import { loggingFactory } from '../../logger'
 import { NotifierSvcProvider, PlanPriceDTO } from './notifierService/provider'
 import PlanModel from './models/plan.model'
 import ProviderModel from './models/provider.model'
-import NotifierChannelModel from './models/notifierChannel.model'
+import NotifierChannelModel from './models/notifier-channel.model'
 import PriceModel from './models/price.model'
 import { getTokenSymbol } from '../utils'
 import { SupportedServices } from '../../definitions'
