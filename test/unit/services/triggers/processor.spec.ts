@@ -14,7 +14,7 @@ import { ProviderService, NotifierStakeService } from '../../../../src/services/
 import { sequelizeFactory } from '../../../../src/sequelize'
 import { eventMock } from '../../../utils'
 import ProviderModel from '../../../../src/services/notifier/models/provider.model'
-import StakeModel from '../../../../src/services/notifier/models/notifierStake.model'
+import StakeModel from '../../../../src/services/notifier/models/notifier-stake.model'
 import { NotifierStakeEvents, NotifierEvents } from '../../../../src/definitions'
 import {
   ProviderRegistered

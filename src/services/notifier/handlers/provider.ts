@@ -37,7 +37,7 @@ export const handlers = {
       logger.error(`Sequelize instance not found. Cannot update ${provider}'s plans.`)
     }
   },
-  async SubscriptionCreated (event: SubscriptionCreated, { subscriptionService }: TriggersServices): Promise<void> {
+  async SubscriptionCreated (event: SubscriptionCreated, { subscriptionService }: NotifierServices): Promise<void> {
     const { provider, hash, consumer } = event.returnValues
 
     const providerIns = await ProviderModel.findOne({ where: { provider } })
@@ -77,4 +77,5 @@ const handler: Handler<NotificationManagerEvents, NotifierServices> = {
     return handlers[event.event](event, services, eth as Eth)
   }
 }
+
 export default handler

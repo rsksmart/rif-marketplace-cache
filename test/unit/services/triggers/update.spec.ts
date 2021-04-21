@@ -10,7 +10,7 @@ import ProviderModel from '../../../../src/services/notifier/models/provider.mod
 import { NotifierSvcProvider, SubscriptionPlanDTO } from '../../../../src/services/notifier/notifierService/provider'
 import { updater } from '../../../../src/services/notifier/update'
 import PlanModel from '../../../../src/services/notifier/models/plan.model'
-import NotifierChannelModel from '../../../../src/services/notifier/models/notifierChannel.model'
+import NotifierChannelModel from '../../../../src/services/notifier/models/notifier-channel.model'
 import PriceModel from '../../../../src/services/notifier/models/price.model'
 import { BigNumber } from 'bignumber.js'
 

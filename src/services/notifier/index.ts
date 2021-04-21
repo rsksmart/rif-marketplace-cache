@@ -23,12 +23,12 @@ import providerHooks from './hooks/providers.hook'
 import stakeHooks from './hooks/stakes.hook'
 import subscriptionsHook from './hooks/subscriptions.hook'
 import ProviderModel from './models/provider.model'
-import NotifierStakeModel from './models/notifierStake.model'
+import NotifierStakeModel from './models/notifier-stake.model'
 import eventProcessor from './processor'
 import {
   PlansService,
   ProviderService,
-  SubscriptionsService
+  SubscriptionsService,
   NotifierStakeService as StakeService
 } from './services'
 import { updater } from './update'
