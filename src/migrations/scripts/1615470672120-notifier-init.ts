@@ -162,12 +162,42 @@ const migrationCommands = function (transaction: any): Commands {
             primaryKey: true,
             allowNull: false
           },
-          expiredAt: {
-            type: Sequelize.DATE,
-            field: 'expiredAt',
+          subscriptionId: {
+            type: Sequelize.NUMBER,
+            field: 'subscriptionId',
             allowNull: false
           },
-          provider: {
+          status: {
+            type: Sequelize.STRING,
+            field: 'status',
+            allowNull: false
+          },
+          subscriptionPlanId: {
+            type: Sequelize.NUMBER,
+            field: 'subscriptionPlanId',
+            allowNull: false
+          },
+          previousSubscription: {
+            type: Sequelize.STRING,
+            field: 'previousSubscription',
+            allowNull: true
+          },
+          expirationDate: {
+            type: Sequelize.DATE,
+            field: 'expirationDate',
+            allowNull: false
+          },
+          consumer: {
+            type: Sequelize.STRING,
+            field: 'consumer',
+            allowNull: false
+          },
+          topics: {
+            type: Sequelize.JSON,
+            field: 'topics',
+            allowNull: false
+          },
+          providerId: {
             type: Sequelize.STRING,
             onUpdate: 'CASCADE',
             onDelete: 'CASCADE',
@@ -318,7 +348,7 @@ const rollbackCommands = function (transaction: any): Commands {
           transaction: transaction
         }
       ]
-    },
+    }
   ]
 }
 
