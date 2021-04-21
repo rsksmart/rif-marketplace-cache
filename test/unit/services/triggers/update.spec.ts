@@ -75,7 +75,8 @@ describe('Notifier services: Periodic Update', () => {
           planDTO.id += 1
           return Promise.resolve({
             message: 'OK',
-            content: [planDTO]
+            content: [planDTO],
+            status: 'OK'
           })
         })
     })

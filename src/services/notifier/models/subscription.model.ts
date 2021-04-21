@@ -1,4 +1,4 @@
-import { Table, Column, Model, ForeignKey, BelongsTo } from 'sequelize-typescript'
+import { Table, Column, Model, ForeignKey, BelongsTo, DataType } from 'sequelize-typescript'
 import ProviderModel from './provider.model'
 
 @Table({ freezeTableName: true, tableName: 'notifier_subscription' })
@@ -7,7 +7,25 @@ export default class SubscriptionModel extends Model {
   hash!: string
 
   @Column({ allowNull: false })
-  url!: string
+  subscriptionId!: number
+
+  @Column({ allowNull: false })
+  status!: string
+
+  @Column({ allowNull: false })
+  subscriptionPlanId!: number
+
+  @Column({ allowNull: true })
+  previousSubscription!: string
+
+  @Column({ allowNull: false })
+  expirationDate!: Date
+
+  @Column({ allowNull: false })
+  consumer!: string
+
+  @Column({ type: DataType.JSON, allowNull: false })
+  topics!: Record<any, any>[]
 
   @ForeignKey(() => ProviderModel)
   @Column

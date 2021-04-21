@@ -10,7 +10,7 @@ import { Sequelize } from 'sequelize'
 
 import eventProcessor from '../../../../src/services/notifier/processor'
 import { NotifierServices } from '../../../../src/services/notifier'
-import { ProviderService, NotifierStakeService } from '../../../../src/services/notifier/services'
+import { ProviderService, NotifierStakeService, SubscriptionsService } from '../../../../src/services/notifier/services'
 import { sequelizeFactory } from '../../../../src/sequelize'
 import { eventMock } from '../../../utils'
 import ProviderModel from '../../../../src/services/notifier/models/provider.model'
@@ -23,11 +23,40 @@ import { Staked, Unstaked } from '@rsksmart/rif-marketplace-notifier/types/web3-
 import Rate from '../../../../src/rates/rates.model'
 import { wrapEvent } from '../../../../src/utils'
 import { NotifierSvcProvider } from '../../../../src/services/notifier/notifierService/provider'
+import SubscriptionModel from '../../../../src/services/notifier/models/subscription.model'
 
 chai.use(sinonChai)
 chai.use(chaiAsPromised)
 chai.use(dirtyChai)
 const expect = chai.expect
+
+const subscriptionMock = {
+  id: 4,
+  hash:
+    '0x889a36f68d9a498fba3cdf29e14452d2ec48b2040f4c0be0970be1e5102cfc48',
+  notificationBalance: 100,
+  status: 'PENDING',
+  expirationDate: '2021-05-01T00:00:00.000+00:00',
+  paid: false,
+  subscriptionPayments: [],
+  subscriptionPlanId: 1,
+  price: '10',
+  currency: 'RBTC',
+  topics:
+    [
+      {
+        notificationPreferences: 'API',
+        type: 'NEW_BLOCK',
+        topicParams: []
+      }
+    ],
+  userAddress: '0x9E0bA64907411ae6245e76b08Fda1C716aa98De7',
+  providerAddress:
+    {
+      value: '0xc0246e727ecc35b961102dc03839e5306d2b5b21',
+      typeAsString: 'address'
+    }
+}
 
 describe('Notifier services: Events Processor', () => {
   const provider = 'TestAddress'
@@ -49,17 +78,23 @@ describe('Notifier services: Events Processor', () => {
   describe('Provider events', () => {
     let processor: (event: NotifierEvents) => Promise<void>
     let providerService: ProviderService
+    let subscriptionService: SubscriptionsService
     let providerServiceEmitSpy: sinon.SinonSpy
+    let subscriptionsServiceEmitSpy: sinon.SinonSpy
 
     before(() => {
       providerService = new ProviderService({ Model: ProviderModel })
-      processor = eventProcessor({ providerService } as NotifierServices, { eth })
+      subscriptionService = new SubscriptionsService({ Model: SubscriptionModel })
+      processor = eventProcessor({ providerService, subscriptionService } as NotifierServices, { eth })
       providerServiceEmitSpy = sinon.spy()
+      subscriptionsServiceEmitSpy = sinon.spy()
       providerService.emit = providerServiceEmitSpy
+      subscriptionService.emit = subscriptionsServiceEmitSpy
     })
     beforeEach(async () => {
       await sequelize.sync({ force: true })
       providerServiceEmitSpy.resetHistory()
+      subscriptionsServiceEmitSpy.resetHistory()
     })
 
     it('should create new Provider', async () => {
@@ -87,6 +122,29 @@ describe('Notifier services: Events Processor', () => {
       expect(updatedProvider).to.be.instanceOf(ProviderModel)
       expect(updatedProvider?.url).to.be.eql(url)
       expect(providerServiceEmitSpy).to.have.been.calledOnceWith('created', wrapEvent('ProviderRegistered', { provider, url }))
+    })
+    it('should create subscriptions', async () => {
+      const provider = subscriptionMock.providerAddress.value
+      const consumer = subscriptionMock.userAddress
+      const hash = subscriptionMock.hash
+      const sandbox = sinon.createSandbox()
+      const getSubscriptionsSpy = sandbox.stub(NotifierSvcProvider.prototype, 'getSubscriptions')
+        .callsFake(() => {
+          return Promise.resolve([subscriptionMock])
+        })
+      await ProviderModel.create({ provider, url: 'http://localhost:8080' })
+      const event = eventMock<ProviderRegistered>({
+        event: 'SubscriptionCreated',
+        returnValues: { consumer, provider, hash }
+      })
+      await processor(event)
+
+      const createdSubscription = await SubscriptionModel.findOne({ where: { hash } })
+
+      sandbox.assert.calledOnce(getSubscriptionsSpy)
+      expect(createdSubscription).to.be.instanceOf(SubscriptionModel)
+      expect(subscriptionsServiceEmitSpy).to.have.been.calledOnceWith('created', wrapEvent('SubscriptionCreated', { consumer, provider, hash }))
+      sandbox.reset()
     })
   })
 
