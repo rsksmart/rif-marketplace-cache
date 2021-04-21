@@ -1,5 +1,5 @@
 import { BelongsTo, Column, DataType, ForeignKey, HasMany, Model, Scopes, Table } from 'sequelize-typescript'
-import TriggersChannelModel from './triggersChannel.model'
+import NotifierChannelModel from './notifierChannel.model'
 import PriceModel from './price.model'
 import ProviderModel from './provider.model'
 import { Op } from 'sequelize'
@@ -14,7 +14,7 @@ export const scopes = {
     }
   }
 }))
-@Table({ freezeTableName: true, tableName: 'triggers_plan', timestamps: false })
+@Table({ freezeTableName: true, tableName: 'notifier_plan', timestamps: false })
 export default class PlanModel extends Model {
     @Column({ primaryKey: true, type: DataType.INTEGER })
     id!: number
@@ -31,8 +31,8 @@ export default class PlanModel extends Model {
     @Column({ allowNull: false, type: DataType.INTEGER })
     quantity!: number
 
-    @HasMany(() => TriggersChannelModel, 'planId')
-    channels!: TriggersChannelModel[]
+    @HasMany(() => NotifierChannelModel, 'planId')
+    channels!: NotifierChannelModel[]
 
     @HasMany(() => PriceModel, 'planId')
     prices!: PriceModel[]

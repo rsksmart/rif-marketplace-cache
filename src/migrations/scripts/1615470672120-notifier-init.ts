@@ -4,18 +4,18 @@ import { Sequelize as SequelizeTs } from 'sequelize-typescript'
 /**
  * Actions summary:
  *
- * createTable "triggers_provider", deps: []
- * createTable "triggers_stakes", deps: []
+ * createTable "notifier_provider", deps: []
+ * createTable "notifier_stakes", deps: []
  *
  **/
 type Commands = { fn: keyof QueryInterface, [key: string]: any }[]
 const migrationCommands = function (transaction: any): Commands {
   return [
-    // Triggers
+    // Notifier
     {
       fn: 'createTable',
       params: [
-        'triggers_provider',
+        'notifier_provider',
         {
           provider: {
             type: Sequelize.STRING(64),
@@ -46,7 +46,7 @@ const migrationCommands = function (transaction: any): Commands {
     {
       fn: 'createTable',
       params: [
-        'triggers_stakes',
+        'notifier_stakes',
         {
           id: {
             type: Sequelize.INTEGER,
@@ -101,7 +101,7 @@ const migrationCommands = function (transaction: any): Commands {
     {
       fn: 'createTable',
       params: [
-        'triggers_plan',
+        'notifier_plan',
         {
           id: {
             type: Sequelize.INTEGER,
@@ -134,7 +134,7 @@ const migrationCommands = function (transaction: any): Commands {
             onUpdate: 'CASCADE',
             onDelete: 'CASCADE',
             references: {
-              model: 'triggers_provider',
+              model: 'notifier_provider',
               key: 'provider'
             },
             name: 'providerId',
@@ -150,7 +150,7 @@ const migrationCommands = function (transaction: any): Commands {
     {
       fn: 'createTable',
       params: [
-        'triggers_subscription',
+        'notifier_subscription',
         {
           hash: {
             type: Sequelize.STRING,
@@ -168,7 +168,7 @@ const migrationCommands = function (transaction: any): Commands {
             onUpdate: 'CASCADE',
             onDelete: 'CASCADE',
             references: {
-              model: 'triggers_provider',
+              model: 'motifier_provider',
               key: 'provider'
             },
             name: 'providerId',
@@ -184,7 +184,7 @@ const migrationCommands = function (transaction: any): Commands {
     {
       fn: 'createTable',
       params: [
-        'triggers_channel',
+        'notifier_channel',
         {
           id: {
             type: Sequelize.INTEGER,
@@ -203,7 +203,7 @@ const migrationCommands = function (transaction: any): Commands {
             onUpdate: 'CASCADE',
             onDelete: 'NO ACTION',
             references: {
-              model: 'triggers_plan',
+              model: 'notifier_plan',
               key: 'id'
             },
             name: 'planId',
@@ -219,7 +219,7 @@ const migrationCommands = function (transaction: any): Commands {
     {
       fn: 'createTable',
       params: [
-        'triggers_price',
+        'notifier_price',
         {
           id: {
             type: Sequelize.INTEGER,
@@ -250,7 +250,7 @@ const migrationCommands = function (transaction: any): Commands {
             onUpdate: 'CASCADE',
             onDelete: 'CASCADE',
             references: {
-              model: 'triggers_plan',
+              model: 'notifier_plan',
               key: 'id'
             },
             name: 'planId',
@@ -270,7 +270,7 @@ const rollbackCommands = function (transaction: any): Commands {
     {
       fn: 'dropTable',
       params: [
-        'triggers_provider', {
+        'notifier_provider', {
           transaction: transaction
         }
       ]
@@ -278,7 +278,7 @@ const rollbackCommands = function (transaction: any): Commands {
     {
       fn: 'dropTable',
       params: [
-        'triggers_stakes', {
+        'notifier_stakes', {
           transaction: transaction
         }
       ]
@@ -286,7 +286,7 @@ const rollbackCommands = function (transaction: any): Commands {
     {
       fn: 'dropTable',
       params: [
-        'triggers_plan', {
+        'notifier_plan', {
           transaction: transaction
         }
       ]
@@ -294,7 +294,7 @@ const rollbackCommands = function (transaction: any): Commands {
     {
       fn: 'dropTable',
       params: [
-        'triggers_channel', {
+        'notifier_channel', {
           transaction: transaction
         }
       ]
@@ -302,7 +302,7 @@ const rollbackCommands = function (transaction: any): Commands {
     {
       fn: 'dropTable',
       params: [
-        'triggers_price', {
+        'notifier_price', {
           transaction: transaction
         }
       ]

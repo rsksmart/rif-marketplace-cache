@@ -3,7 +3,7 @@ import PlanModel from './plan.model'
 import Agreement from '../../storage/models/agreement.model'
 import SubscriptionModel from './subscription.model'
 
-@Table({ freezeTableName: true, tableName: 'triggers_provider' })
+@Table({ freezeTableName: true, tableName: 'notifier_provider' })
 export default class ProviderModel extends Model {
   @Column({ primaryKey: true, type: DataType.STRING(64) })
   provider!: string

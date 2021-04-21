@@ -1,20 +1,20 @@
 import { Eth } from 'web3-eth'
-import { ProviderRegistered, SubscriptionCreated } from '@rsksmart/rif-marketplace-notifications/types/web3-v1-contracts/NotificationsManager'
+import { ProviderRegistered, SubscriptionCreated } from '@rsksmart/rif-marketplace-notifier/types/web3-v1-contracts/NotifierManager'
 
 import { loggingFactory } from '../../../logger'
 import { Handler, NotificationManagerEvents } from '../../../definitions'
 import { wrapEvent } from '../../../utils'
 
-import { TriggersServices } from '../index'
+import { NotifierServices } from '../index'
 import ProviderModel from '../models/provider.model'
 import { updater } from '../update'
 import { NotifierSvcProvider } from '../notifierService/provider'
 import SubscriptionModel from '../models/subscription.model'
 
-const logger = loggingFactory('triggers:handler:provider')
+const logger = loggingFactory('notifier:handler:provider')
 
 export const handlers = {
-  async ProviderRegistered (event: ProviderRegistered, { providerService }: TriggersServices): Promise<void> {
+  async ProviderRegistered (event: ProviderRegistered, { providerService }: NotifierServices): Promise<void> {
     const { provider, url } = event.returnValues
 
     const providerIns = await ProviderModel.findOne({ where: { provider } })
@@ -66,14 +66,14 @@ function isValidEvent (eventName: string): eventName is keyof typeof handlers {
   return eventName in handlers
 }
 
-const handler: Handler<NotificationManagerEvents, TriggersServices> = {
+const handler: Handler<NotificationManagerEvents, NotifierServices> = {
   events: ['ProviderRegistered', 'SubscriptionCreated'],
-  process (event: NotificationManagerEvents, services: TriggersServices, { eth }): Promise<void> {
+  process (event: NotificationManagerEvents, services: NotifierServices, { eth }): Promise<void> {
     if (!isValidEvent(event.event)) {
       return Promise.reject(new Error(`Unknown event ${event.event}`))
     }
 
-    // @ts-ignore: we had strict types for each handler(A & B) and one type for all of event TriggersEvents(A | B)
+    // @ts-ignore: we had strict types for each handler(A & B) and one type for all of event NotifierEvents(A | B)
     return handlers[event.event](event, services, eth as Eth)
   }
 }
