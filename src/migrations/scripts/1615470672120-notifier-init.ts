@@ -5,6 +5,10 @@ import { Sequelize as SequelizeTs } from 'sequelize-typescript'
  * Actions summary:
  *
  * createTable "notifier_provider", deps: []
+ * createTable "notifier_plan", deps: []
+ * createTable "notifier_subscription", deps: []
+ * createTable "notifier_channel", deps: []
+ * createTable "notifier_price", deps: []
  * createTable "notifier_stakes", deps: []
  *
  **/
@@ -168,7 +172,7 @@ const migrationCommands = function (transaction: any): Commands {
             onUpdate: 'CASCADE',
             onDelete: 'CASCADE',
             references: {
-              model: 'motifier_provider',
+              model: 'notifier_provider',
               key: 'provider'
             },
             name: 'providerId',
@@ -306,7 +310,15 @@ const rollbackCommands = function (transaction: any): Commands {
           transaction: transaction
         }
       ]
-    }
+    },
+    {
+      fn: 'dropTable',
+      params: [
+        'notifier_subscription', {
+          transaction: transaction
+        }
+      ]
+    },
   ]
 }
 
