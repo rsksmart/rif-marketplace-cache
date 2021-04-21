@@ -1,7 +1,7 @@
 import { HookContext } from '@feathersjs/feathers'
 import { disallow } from 'feathers-hooks-common'
 import PlanModel from '../models/plan.model'
-import TriggersChannelModel from '../models/triggersChannel.model'
+import NotifierChannelModel from '../models/notifierChannel.model'
 import PriceModel from '../models/price.model'
 
 export default {
@@ -24,7 +24,7 @@ export default {
               as: 'plans',
               include: [
                 {
-                  model: TriggersChannelModel,
+                  model: NotifierChannelModel,
                   as: 'channels'
                 },
                 {

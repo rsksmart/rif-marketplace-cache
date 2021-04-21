@@ -24,7 +24,7 @@ ${formattedServices}`
 
   static examples = [
     '$ rif-marketplace-cache precache all',
-    '$ rif-marketplace-cache precache storage rns triggers'
+    '$ rif-marketplace-cache precache storage rns notifier'
   ]
 
   static flags = BaseCLICommand.flags

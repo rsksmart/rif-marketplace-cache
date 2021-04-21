@@ -144,9 +144,9 @@
     }
   },
 
-  // Settings for Triggers service related function
-  triggers: {
-    // Sets if Triggers service should be enabled
+  // Settings for Notifier service related function
+  notifier: {
+    // Sets if Notifier service should be enabled
     enabled: false,
     refresh: 300, // 5 minutes
 
@@ -156,8 +156,8 @@
       '0x0000000000000000000000000000000000000000': 'rbtc',
     },
 
-    // Notifications Manager Contract
-    notificationsManager: {
+    // Notifier Manager Contract
+    notifierManager: {
       // Specify behavior of EventsEmitter, that retrieves events from blockchain and pass them onwards for further processing.
       eventsEmitter: {
         // Will process one event at a time

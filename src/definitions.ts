@@ -8,15 +8,15 @@ import Libp2p from 'libp2p'
 import type { Options as Libp2pOptions } from 'libp2p'
 
 import type { AvgBillingPriceService, AgreementService, OfferService, StakeService as StorageStakeService, AvailableCapacityService } from './services/storage/services'
-import { ProviderService, TriggersStakeService, PlansService as TriggersPlansService } from './services/triggers/services'
+import { ProviderService, NotifierStakeService, PlansService as NotifierPlansService } from './services/notifier/services'
 import type { RatesService } from './rates'
 import type { RnsBaseService } from './services/rns'
 import type { ReorgEmitterService, NewBlockEmitterService, ConfirmatorService } from './blockchain/services'
 
 import * as storageEvents from '@rsksmart/rif-marketplace-storage/types/web3-v1-contracts/StorageManager'
 import * as stakingEvents from '@rsksmart/rif-marketplace-storage/types/web3-v1-contracts/Staking'
-import * as triggersStakingEvents from '@rsksmart/rif-marketplace-notifications/types/web3-v1-contracts/Staking'
-import * as triggersEvents from '@rsksmart/rif-marketplace-notifications/types/web3-v1-contracts/NotificationsManager'
+import * as notifierStakingEvents from '@rsksmart/rif-marketplace-notifier/types/web3-v1-contracts/Staking'
+import * as notifierEvents from '@rsksmart/rif-marketplace-notifier/types/web3-v1-contracts/NotifierManager'
 import { NotificationService } from './notification'
 import { CommsService } from './communication/service'
 
@@ -25,7 +25,7 @@ export type EmitFn = (...args: any[]) => void
 export enum SupportedServices {
   STORAGE = 'storage',
   RNS = 'rns',
-  TRIGGERS = 'triggers'
+  TRIGGERS = 'notifier'
 }
 
 export type SupportedTokens = 'rif' | 'rbtc'
@@ -45,9 +45,9 @@ export enum ServiceAddresses {
   STORAGE_AGREEMENTS = '/storage/v0/agreements',
   STORAGE_STAKES = '/storage/v0/stakes',
   STORAGE_AVAILABLE_CAPACITY = '/storage/v0/availableCapacity',
-  TRIGGERS_STAKES = '/triggers/v0/stakes',
-  TRIGGERS_PROVIDERS = '/triggers/v0/providers',
-  TRIGGERS_OFFERS = '/triggers/v0/offers',
+  TRIGGERS_STAKES = '/notifier/v0/stakes',
+  TRIGGERS_PROVIDERS = '/notifier/v0/providers',
+  TRIGGERS_OFFERS = '/notifier/v0/offers',
   XR = '/rates/v0/',
   CONFIRMATIONS = '/confirmations',
   NEW_BLOCK_EMITTER = '/new-block',
@@ -62,8 +62,8 @@ interface ServiceTypes {
   [ServiceAddresses.STORAGE_STAKES]: StorageStakeService & ServiceAddons<any>
   [ServiceAddresses.STORAGE_AVAILABLE_CAPACITY]: AvailableCapacityService & ServiceAddons<any>
   [ServiceAddresses.TRIGGERS_PROVIDERS]: ProviderService & ServiceAddons<any>
-  [ServiceAddresses.TRIGGERS_OFFERS]: TriggersPlansService & ServiceAddons<any>
-  [ServiceAddresses.TRIGGERS_STAKES]: TriggersStakeService & ServiceAddons<any>
+  [ServiceAddresses.TRIGGERS_OFFERS]: NotifierPlansService & ServiceAddons<any>
+  [ServiceAddresses.TRIGGERS_STAKES]: NotifierStakeService & ServiceAddons<any>
   [ServiceAddresses.XR]: RatesService & ServiceAddons<any>
   [ServiceAddresses.RNS_DOMAINS]: RnsBaseService & ServiceAddons<any>
   [ServiceAddresses.RNS_SOLD]: RnsBaseService & ServiceAddons<any>
@@ -180,7 +180,7 @@ export interface Config {
   }
 
   // Settings for Storage service related function
-  triggers?: {
+  notifier?: {
 
     // Sets if Storage service should be enabled
     enabled?: boolean
@@ -194,7 +194,7 @@ export interface Config {
     staking?: BlockchainServiceOptions
 
     // Storage Manager contract options
-    notificationsManager?: BlockchainServiceOptions
+    notifierManager?: BlockchainServiceOptions
   }
 
   // Settings for Storage service related function
@@ -298,11 +298,11 @@ export type StorageEvents = StorageOfferEvents | StorageAgreementEvents | StakeE
 
 /// //////////////////////////////////////////////////////////////////////////////////////////////////
 // TRIGGERS
-export type NotificationManagerEvents = triggersEvents.ProviderRegistered
+export type NotificationManagerEvents = notifierEvents.ProviderRegistered
 
-export type TriggersStakeEvents = triggersStakingEvents.Staked | triggersStakingEvents.Unstaked
+export type NotifierStakeEvents = notifierStakingEvents.Staked | notifierStakingEvents.Unstaked
 
-export type TriggersEvents = NotificationManagerEvents | TriggersStakeEvents
+export type NotifierEvents = NotificationManagerEvents | NotifierStakeEvents
 
 /****************************************************************************************
  * Communications

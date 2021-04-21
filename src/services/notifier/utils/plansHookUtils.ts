@@ -13,8 +13,8 @@ function queryPriceLimits (sequelize: Sequelize, fiatSymbol: any): Promise<{pMin
       CAST(
         CAST(prices.price as REAL) / 1000000000000000000 * COALESCE(rates.${sequelize.escape(fiatSymbol)}, 0) as REAL
       ) AS fiat
-      FROM triggers_plan
-      INNER JOIN triggers_price AS prices ON triggers_plan.id = prices.planId
+      FROM notifier_plan
+      INNER JOIN notifier_price AS prices ON notifier_plan.id = prices.planId
       INNER JOIN rates AS rates ON prices.rateId = rates.token
       ORDER BY fiat
     )
