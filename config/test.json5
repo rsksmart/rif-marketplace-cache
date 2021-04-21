@@ -24,7 +24,7 @@
       pollingInterval: 500
     }
   },
-  triggers: {
+  notifier: {
     enabled: false
   },
   storage: {
