@@ -1,5 +1,5 @@
 import { BelongsTo, Column, DataType, ForeignKey, HasMany, Model, Scopes, Table } from 'sequelize-typescript'
-import NotifierChannelModel from './notifierChannel.model'
+import NotifierChannelModel from './notifier-channel.model'
 import PriceModel from './price.model'
 import ProviderModel from './provider.model'
 import { Op } from 'sequelize'

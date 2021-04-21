@@ -27,20 +27,65 @@ export type SubscriptionPlanDTO = {
     subscriptionPriceList: PlanPriceDTO[]
 }
 
-export type NotifierResult = {
+export type NotifierResult<T> = {
     message: | 'OK'
-    content: SubscriptionPlanDTO[]
+    status: | 'OK'
+    content: T
 }
 
 interface NotifierServiceProvider {
-    getSubscriptionPlans: () => Promise<NotifierResult>
+  getSubscriptionPlans: () => Promise<NotifierResult<any>>
+  getSubscriptions: (address: string, hashes: string[]) => Promise<NotifierResult<SubscriptionPlanDTO[]>>
 }
 
-export class NotifierSvcProvider extends ServiceProvider<NotifierResult> implements NotifierServiceProvider {
+export class NotifierSvcProvider extends ServiceProvider<NotifierResult<any>> implements NotifierServiceProvider {
   constructor ({ host, port = '8080' }: Partial<ClientRequestArgs>) {
     super()
 
     this.defaultOptions = { host, port }
+  }
+
+  async getSubscriptions (address: string, hashes: string[]) {
+    const {
+      success,
+      message,
+      code,
+      data
+    } = await this._fetch({
+      path: `/getSubscriptions/${hashes.toString()}`,
+      headers: {
+        userAddress: address
+      }
+    })
+      .catch((error: FetchError) => {
+        throw new NotifierProviderError('Notifier failed to fetch subscriptions', error)
+      })
+
+    if (!success) {
+      throw new NotifierProviderError(
+        NotifierProviderError.buildMessage(
+          'Notifier failed to fetch subscriptions:',
+          code?.toString() ?? '',
+          message ?? ''
+        ))
+    }
+
+    const {
+      content,
+      status,
+      message: nMessage
+    } = data
+
+    if (nMessage !== 'OK' || status !== 'OK') {
+      throw new NotifierProviderError(
+        NotifierProviderError.buildMessage(
+          'Notifier failed to fetch subscriptions:',
+          status?.toString() ?? '',
+          nMessage ?? ''
+        ))
+    }
+
+    return content
   }
 
   async getSubscriptionPlans () {
@@ -65,6 +110,6 @@ export class NotifierSvcProvider extends ServiceProvider<NotifierResult> impleme
         ))
     }
 
-    return data
+    return data as NotifierResult<SubscriptionPlanDTO[]>
   }
 }

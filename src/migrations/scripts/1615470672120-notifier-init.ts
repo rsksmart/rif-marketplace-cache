@@ -5,6 +5,10 @@ import { Sequelize as SequelizeTs } from 'sequelize-typescript'
  * Actions summary:
  *
  * createTable "notifier_provider", deps: []
+ * createTable "notifier_plan", deps: []
+ * createTable "notifier_subscription", deps: []
+ * createTable "notifier_channel", deps: []
+ * createTable "notifier_price", deps: []
  * createTable "notifier_stakes", deps: []
  *
  **/
@@ -150,6 +154,70 @@ const migrationCommands = function (transaction: any): Commands {
     {
       fn: 'createTable',
       params: [
+        'notifier_subscription',
+        {
+          hash: {
+            type: Sequelize.STRING,
+            field: 'hash',
+            primaryKey: true,
+            allowNull: false
+          },
+          subscriptionId: {
+            type: Sequelize.NUMBER,
+            field: 'subscriptionId',
+            allowNull: false
+          },
+          status: {
+            type: Sequelize.STRING,
+            field: 'status',
+            allowNull: false
+          },
+          subscriptionPlanId: {
+            type: Sequelize.NUMBER,
+            field: 'subscriptionPlanId',
+            allowNull: false
+          },
+          previousSubscription: {
+            type: Sequelize.STRING,
+            field: 'previousSubscription',
+            allowNull: true
+          },
+          expirationDate: {
+            type: Sequelize.DATE,
+            field: 'expirationDate',
+            allowNull: false
+          },
+          consumer: {
+            type: Sequelize.STRING,
+            field: 'consumer',
+            allowNull: false
+          },
+          topics: {
+            type: Sequelize.JSON,
+            field: 'topics',
+            allowNull: false
+          },
+          providerId: {
+            type: Sequelize.STRING,
+            onUpdate: 'CASCADE',
+            onDelete: 'CASCADE',
+            references: {
+              model: 'notifier_provider',
+              key: 'provider'
+            },
+            name: 'providerId',
+            field: 'providerId',
+            allowNull: false
+          }
+        },
+        {
+          transaction: transaction
+        }
+      ]
+    },
+    {
+      fn: 'createTable',
+      params: [
         'notifier_channel',
         {
           id: {
@@ -269,6 +337,14 @@ const rollbackCommands = function (transaction: any): Commands {
       fn: 'dropTable',
       params: [
         'notifier_price', {
+          transaction: transaction
+        }
+      ]
+    },
+    {
+      fn: 'dropTable',
+      params: [
+        'notifier_subscription', {
           transaction: transaction
         }
       ]

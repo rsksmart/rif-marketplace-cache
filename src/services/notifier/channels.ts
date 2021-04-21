@@ -11,8 +11,10 @@ export default function (app: Application) {
     app.channel('notifier_providers').join(connection)
     app.channel('notifier_stake').join(connection)
     app.channel('notifier_offers').join(connection)
+    app.channel('notifier_subscriptions').join(connection)
   })
   app.service(ServiceAddresses.TRIGGERS_PROVIDERS).publish(() => app.channel('notifier_providers'))
   app.service(ServiceAddresses.TRIGGERS_OFFERS).publish(() => app.channel('notifier_offers'))
   app.service(ServiceAddresses.TRIGGERS_STAKES).publish(() => app.channel('notifier_stake'))
+  app.service(ServiceAddresses.TRIGGERS_SUBSCRIPTIONS).publish(() => app.channel('notifier_subscriptions'))
 }

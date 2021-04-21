@@ -3,7 +3,7 @@ import { disallow } from 'feathers-hooks-common'
 import { literal, Op, Sequelize } from 'sequelize'
 import { scopes } from '../models/plan.model'
 import PriceModel from '../models/price.model'
-import NotifierChannelModel from '../models/notifierChannel.model'
+import NotifierChannelModel from '../models/notifier-channel.model'
 import { findLimits } from '../utils/plansHookUtils'
 
 export default {
