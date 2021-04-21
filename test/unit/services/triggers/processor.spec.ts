@@ -60,7 +60,7 @@ const subscriptionMock = {
 
 describe('Notifier services: Events Processor', () => {
   const provider = 'TestAddress'
-  const url = 'notifier.com'
+  const url = 'http://notifier.com'
   let sequelize: Sequelize
   let eth: SubstituteOf<Eth>
   let getPlansStub: sinon.SinonStub
@@ -132,7 +132,7 @@ describe('Notifier services: Events Processor', () => {
         .callsFake(() => {
           return Promise.resolve([subscriptionMock])
         })
-      await ProviderModel.create({ provider, url: 'http://localhost:8080' })
+      await ProviderModel.create({ provider, url })
       const event = eventMock<ProviderRegistered>({
         event: 'SubscriptionCreated',
         returnValues: { consumer, provider, hash }

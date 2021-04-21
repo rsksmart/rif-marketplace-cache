@@ -58,11 +58,11 @@ describe('Notifier services: Periodic Update', () => {
   describe('Update providers', () => {
     const provider1 = {
       provider: '0xPROVIDER_1',
-      url: 'provider1.url'
+      url: 'http://provider1.url'
     }
     const provider2 = {
       provider: '0xPROVIDER_2',
-      url: 'provider2.url'
+      url: 'http://provider2.url'
     }
 
     let getSubscriptionPlansSpy: sinon.SinonSpy
