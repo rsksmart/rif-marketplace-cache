@@ -8,30 +8,30 @@ import Eth from 'web3-eth'
 import { Substitute, SubstituteOf } from '@fluffy-spoon/substitute'
 import { Sequelize } from 'sequelize'
 
-import eventProcessor from '../../../../src/services/triggers/processor'
-import { TriggersServices } from '../../../../src/services/triggers'
-import { ProviderService, TriggersStakeService } from '../../../../src/services/triggers/services'
+import eventProcessor from '../../../../src/services/notifier/processor'
+import { NotifierServices } from '../../../../src/services/notifier'
+import { ProviderService, NotifierStakeService } from '../../../../src/services/notifier/services'
 import { sequelizeFactory } from '../../../../src/sequelize'
 import { eventMock } from '../../../utils'
-import ProviderModel from '../../../../src/services/triggers/models/provider.model'
-import StakeModel from '../../../../src/services/triggers/models/triggersStake.model'
-import { TriggersStakeEvents, TriggersEvents } from '../../../../src/definitions'
+import ProviderModel from '../../../../src/services/notifier/models/provider.model'
+import StakeModel from '../../../../src/services/notifier/models/notifierStake.model'
+import { NotifierStakeEvents, NotifierEvents } from '../../../../src/definitions'
 import {
   ProviderRegistered
-} from '@rsksmart/rif-marketplace-notifications/types/web3-v1-contracts/NotificationsManager'
-import { Staked, Unstaked } from '@rsksmart/rif-marketplace-notifications/types/web3-v1-contracts/Staking'
+} from '@rsksmart/rif-marketplace-notifier/types/web3-v1-contracts/NotifierManager'
+import { Staked, Unstaked } from '@rsksmart/rif-marketplace-notifier/types/web3-v1-contracts/Staking'
 import Rate from '../../../../src/rates/rates.model'
 import { wrapEvent } from '../../../../src/utils'
-import { NotifierSvcProvider } from '../../../../src/services/triggers/notifierService/provider'
+import { NotifierSvcProvider } from '../../../../src/services/notifier/notifierService/provider'
 
 chai.use(sinonChai)
 chai.use(chaiAsPromised)
 chai.use(dirtyChai)
 const expect = chai.expect
 
-describe('Triggers services: Events Processor', () => {
+describe('Notifier services: Events Processor', () => {
   const provider = 'TestAddress'
-  const url = 'triggers.com'
+  const url = 'notifier.com'
   let sequelize: Sequelize
   let eth: SubstituteOf<Eth>
   let getPlansStub: sinon.SinonStub
@@ -47,13 +47,13 @@ describe('Triggers services: Events Processor', () => {
   })
 
   describe('Provider events', () => {
-    let processor: (event: TriggersEvents) => Promise<void>
+    let processor: (event: NotifierEvents) => Promise<void>
     let providerService: ProviderService
     let providerServiceEmitSpy: sinon.SinonSpy
 
     before(() => {
       providerService = new ProviderService({ Model: ProviderModel })
-      processor = eventProcessor({ providerService } as TriggersServices, { eth })
+      processor = eventProcessor({ providerService } as NotifierServices, { eth })
       providerServiceEmitSpy = sinon.spy()
       providerService.emit = providerServiceEmitSpy
     })
@@ -93,13 +93,13 @@ describe('Triggers services: Events Processor', () => {
   describe('Staking events', () => {
     const token = '0x0000000000000000000000000000000000000000'
     const account = provider.toLowerCase()
-    let processor: (event: TriggersStakeEvents) => Promise<void>
-    let stakeService: TriggersStakeService
+    let processor: (event: NotifierStakeEvents) => Promise<void>
+    let stakeService: NotifierStakeService
     let stakeServiceEmitSpy: sinon.SinonSpy
 
     before(() => {
-      stakeService = new TriggersStakeService({ Model: StakeModel })
-      processor = eventProcessor({ stakeService } as TriggersServices, { eth })
+      stakeService = new NotifierStakeService({ Model: StakeModel })
+      processor = eventProcessor({ stakeService } as NotifierServices, { eth })
       stakeServiceEmitSpy = sinon.spy()
       stakeService.emit = stakeServiceEmitSpy
     })

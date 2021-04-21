@@ -6,7 +6,7 @@ import Rate from '../../../rates/rates.model'
 import { BigNumberStringType } from '../../../sequelize'
 import PlanModel from './plan.model'
 
-@Table({ freezeTableName: true, tableName: 'triggers_price', timestamps: false })
+@Table({ freezeTableName: true, tableName: 'notifier_price', timestamps: false })
 export default class PriceModel extends Model {
     @Column({ primaryKey: true, autoIncrement: true, type: DataType.INTEGER })
     id!: number

@@ -65,7 +65,7 @@
     "@oclif/plugin-help": "^3.2.0",
     "@rsksmart/rif-communications-pubsub": "0.1.0-dev.11",
     "@rsksmart/rif-marketplace-nfts": "~0.1.4",
-    "@rsksmart/rif-marketplace-notifications": "0.0.1-dev.1",
+    "@rsksmart/rif-marketplace-notifier": "0.0.1-dev.2",
     "@rsksmart/rif-marketplace-storage": "^0.1.0",
     "@rsksmart/rns-auction-registrar": "1.0.2",
     "@rsksmart/rns-reverse": "^1.0.2",
