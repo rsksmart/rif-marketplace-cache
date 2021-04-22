@@ -39,7 +39,7 @@ interface NotifierServiceProvider {
 }
 
 export class NotifierSvcProvider extends ServiceProvider<NotifierResult<any>> implements NotifierServiceProvider {
-  constructor ({ host, port = '8080' }: Partial<ClientRequestArgs>) {
+  constructor ({ host, port }: Partial<ClientRequestArgs>) {
     super()
 
     this.defaultOptions = { host, port }
