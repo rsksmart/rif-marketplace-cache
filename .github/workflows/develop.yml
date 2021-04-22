@@ -8,7 +8,7 @@ on:
       - develop
 
 jobs:
-  deploy-staging:
+  deploy-develop:
     name: RIF Marketplace CACHE - Develop
     runs-on: ubuntu-latest
     environment:
