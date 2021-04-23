@@ -4,7 +4,7 @@ import { EventsFetcher, Web3Events } from '@rsksmart/web3-events'
 import { Observable } from 'rxjs'
 import Eth from 'web3-eth'
 import type { AbiItem } from 'web3-utils'
-import { notifierManagerLogger, NOTIFICATIONS_MANAGER, STAKING, stakingLogger, notifierLogger, NotifierServices } from '.'
+import { notifierManagerLogger, NOTIFIER_MANAGER, STAKING, stakingLogger, notifierLogger, NotifierServices } from '.'
 import { EventTransformer, eventTransformerFactory } from '../../blockchain/event-transformer'
 import {
   getEventsEmitterForService,
@@ -44,7 +44,7 @@ async function precacheContract (
 export default function precache (eth: Eth, web3events: Web3Events): Observable<string> {
   return reportProgress(notifierLogger,
     async (progressCb): Promise<void> => {
-      const notifierMangerEventsEmitter = getEventsEmitterForService<NotificationManagerEvents>(NOTIFICATIONS_MANAGER, web3events, notifierManagerContract.abi as AbiItem[])
+      const notifierMangerEventsEmitter = getEventsEmitterForService<NotificationManagerEvents>(NOTIFIER_MANAGER, web3events, notifierManagerContract.abi as AbiItem[])
       const notifierMangerEventParser = eventTransformerFactory(notifierManagerContract.abi as AbiItem[])
       const stakingEventsEmitter = getEventsEmitterForService<NotifierStakeEvents>(STAKING, web3events, stakingContract.abi as AbiItem[])
       const stakingEventParser = eventTransformerFactory(stakingContract.abi as AbiItem[])

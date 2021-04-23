@@ -53,6 +53,7 @@ export const handlers = {
       consumer,
       subscriptionId: subscriptionFromNotifier.id,
       status: subscriptionFromNotifier.status,
+      notificationBalance: subscriptionFromNotifier.notificationBalance,
       subscriptionPlanId: subscriptionFromNotifier.subscriptionPlanId,
       previousSubscription: subscriptionFromNotifier.previousSubscription,
       expirationDate: new Date(subscriptionFromNotifier.expirationDate),

@@ -145,6 +145,7 @@ describe('Notifier services: Events Processor', () => {
         providerId: provider,
         consumer,
         subscriptionId: subscriptionMock.id,
+        notificationBalance: subscriptionMock.notificationBalance,
         status: subscriptionMock.status,
         subscriptionPlanId: subscriptionMock.subscriptionPlanId,
         previousSubscription: undefined,
@@ -160,6 +161,7 @@ describe('Notifier services: Events Processor', () => {
       expect(createdSubscription?.topics).to.be.eql(subscriptionMock.topics)
       expect(createdSubscription?.subscriptionId).to.be.eql(subscriptionMock.id)
       expect(createdSubscription?.subscriptionPlanId).to.be.eql(subscriptionMock.subscriptionPlanId)
+      expect(createdSubscription?.notificationBalance).to.be.eql(subscriptionMock.notificationBalance)
       expect(createdSubscription?.expirationDate).to.be.eql(new Date(subscriptionMock.expirationDate))
       expect(createdSubscription?.providerId).to.be.eql(subscriptionMock.providerAddress.value)
       expect(subscriptionsServiceEmitSpy).to.have.been.calledOnceWith('created', wrapEvent('SubscriptionCreated', subscriptionEmitted))
