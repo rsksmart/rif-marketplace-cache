@@ -43,11 +43,11 @@ export interface NotifierServices {
   subscriptionService: SubscriptionsService
 }
 
-export const NOTIFICATIONS_MANAGER = 'notifier.notifierManager'
+export const NOTIFIER_MANAGER = 'notifier.notifierManager'
 export const STAKING = 'notifier.staking'
 
 export const notifierLogger = loggingFactory('notifier')
-export const notifierManagerLogger = loggingFactory(NOTIFICATIONS_MANAGER)
+export const notifierManagerLogger = loggingFactory(NOTIFIER_MANAGER)
 export const stakingLogger = loggingFactory(STAKING)
 
 const CONFIG_UPDATE_PERIOD = 'notifier.refresh'
@@ -63,7 +63,7 @@ const notifier: CachedService = {
     await waitForReadyApp(app)
 
     // We require services to be precached before running server
-    if (!isServiceInitialized(NOTIFICATIONS_MANAGER) || !isServiceInitialized(STAKING)) {
+    if (!isServiceInitialized(NOTIFIER_MANAGER) || !isServiceInitialized(STAKING)) {
       return notifierLogger.critical('Notifier service is not initialized! Run precache command.')
     }
 
@@ -98,11 +98,11 @@ const notifier: CachedService = {
     const services = { providerService, stakeService, subscriptionService }
 
     // Notification Manager watcher
-    const notifierManagerEventsEmitter = getEventsEmitterForService(NOTIFICATIONS_MANAGER, web3events, notifierManagerContract.abi as AbiItem[])
+    const notifierManagerEventsEmitter = getEventsEmitterForService(NOTIFIER_MANAGER, web3events, notifierManagerContract.abi as AbiItem[])
     const notificationsEventParser = eventTransformerFactory(notifierManagerContract.abi as AbiItem[])
     notifierManagerEventsEmitter.on('newEvent', errorHandler(eventProcessor(services, { eth, eventParser: notificationsEventParser }), notifierManagerLogger))
     notifierManagerEventsEmitter.on('error', (e) => {
-      notifierManagerLogger.error(`There was unknown error in Events Emitter for ${NOTIFICATIONS_MANAGER}! ${e}`)
+      notifierManagerLogger.error(`There was unknown error in Events Emitter for ${NOTIFIER_MANAGER}! ${e}`)
     })
     notifierManagerEventsEmitter.on('newConfirmation', (data) => confirmationService.emit('newConfirmation', data))
     notifierManagerEventsEmitter.on('invalidConfirmation', (data) => confirmationService.emit('invalidConfirmation', data))
@@ -138,7 +138,7 @@ const notifier: CachedService = {
     const stakeCount = await NotifierStakeModel.destroy({ where: {}, truncate: true, cascade: true })
     notifierLogger.info(`Removed ${providerCount} provider entries, ${stakeCount} stakes`)
 
-    purgeBlockTrackerData(NOTIFICATIONS_MANAGER)
+    purgeBlockTrackerData(NOTIFIER_MANAGER)
     purgeBlockTrackerData(STAKING)
 
     await getEndPromise()
