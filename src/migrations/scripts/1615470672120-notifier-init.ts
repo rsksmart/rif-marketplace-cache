@@ -177,6 +177,11 @@ const migrationCommands = function (transaction: any): Commands {
             field: 'subscriptionPlanId',
             allowNull: false
           },
+          notificationBalance: {
+            type: Sequelize.NUMBER,
+            field: 'notificationBalance',
+            allowNull: false
+          },
           previousSubscription: {
             type: Sequelize.STRING,
             field: 'previousSubscription',

@@ -1,7 +1,7 @@
 import { Table, Column, Model, ForeignKey, BelongsTo, DataType } from 'sequelize-typescript'
 import ProviderModel from './provider.model'
 
-@Table({ freezeTableName: true, tableName: 'notifier_subscription' })
+@Table({ freezeTableName: true, tableName: 'notifier_subscription', timestamps: false })
 export default class SubscriptionModel extends Model {
   @Column({ primaryKey: true })
   hash!: string
@@ -14,6 +14,9 @@ export default class SubscriptionModel extends Model {
 
   @Column({ allowNull: false })
   subscriptionPlanId!: number
+
+  @Column({ allowNull: false })
+  notificationBalance!: number
 
   @Column({ allowNull: true })
   previousSubscription!: string
