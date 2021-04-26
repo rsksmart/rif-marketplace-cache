@@ -34,7 +34,7 @@ const logger = loggingFactory()
 export const services = {
   [SupportedServices.STORAGE]: storage,
   [SupportedServices.RNS]: rns,
-  [SupportedServices.TRIGGERS]: notifier
+  [SupportedServices.NOTIFIER]: notifier
 }
 
 export interface AppOptions {

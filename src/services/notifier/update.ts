@@ -19,7 +19,7 @@ function updatePrices (prices: PlanPriceDTO[], planId: number, dbTx: Transaction
     currency: { address: { value: tokenAddress } },
     price
   }) => {
-    const rateId = getTokenSymbol(tokenAddress, SupportedServices.TRIGGERS).toLowerCase()
+    const rateId = getTokenSymbol(tokenAddress, SupportedServices.NOTIFIER).toLowerCase()
     const [priceModel] = await PriceModel.findOrCreate({
       where: { rateId, price, planId },
       transaction: dbTx

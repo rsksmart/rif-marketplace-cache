@@ -21,7 +21,7 @@ async function findOrCreateStake (account: string, token: string): Promise<Notif
   if (stake) {
     return stake
   }
-  const symbol = getTokenSymbol(token, SupportedServices.TRIGGERS).toLowerCase()
+  const symbol = getTokenSymbol(token, SupportedServices.NOTIFIER).toLowerCase()
   return NotifierStakeModel.create({ account, token, symbol, total: 0 })
 }
 

@@ -25,7 +25,7 @@ export type EmitFn = (...args: any[]) => void
 export enum SupportedServices {
   STORAGE = 'storage',
   RNS = 'rns',
-  TRIGGERS = 'notifier'
+  NOTIFIER = 'notifier'
 }
 
 export type SupportedTokens = 'rif' | 'rbtc'
@@ -45,10 +45,10 @@ export enum ServiceAddresses {
   STORAGE_AGREEMENTS = '/storage/v0/agreements',
   STORAGE_STAKES = '/storage/v0/stakes',
   STORAGE_AVAILABLE_CAPACITY = '/storage/v0/availableCapacity',
-  TRIGGERS_STAKES = '/notifier/v0/stakes',
-  TRIGGERS_PROVIDERS = '/notifier/v0/providers',
-  TRIGGERS_OFFERS = '/notifier/v0/offers',
-  TRIGGERS_SUBSCRIPTIONS = '/notifier/v0/subscriptions',
+  NOTIFIER_STAKES = '/notifier/v0/stakes',
+  NOTIFIER_PROVIDERS = '/notifier/v0/providers',
+  NOTIFIER_OFFERS = '/notifier/v0/offers',
+  NOTIFIER_SUBSCRIPTIONS = '/notifier/v0/subscriptions',
   XR = '/rates/v0/',
   CONFIRMATIONS = '/confirmations',
   NEW_BLOCK_EMITTER = '/new-block',
@@ -62,10 +62,10 @@ interface ServiceTypes {
   [ServiceAddresses.STORAGE_AGREEMENTS]: AgreementService & ServiceAddons<any>
   [ServiceAddresses.STORAGE_STAKES]: StorageStakeService & ServiceAddons<any>
   [ServiceAddresses.STORAGE_AVAILABLE_CAPACITY]: AvailableCapacityService & ServiceAddons<any>
-  [ServiceAddresses.TRIGGERS_PROVIDERS]: ProviderService & ServiceAddons<any>
-  [ServiceAddresses.TRIGGERS_OFFERS]: NotifierPlansService & ServiceAddons<any>
-  [ServiceAddresses.TRIGGERS_SUBSCRIPTIONS]: NotifierSubscriptionsService & ServiceAddons<any>
-  [ServiceAddresses.TRIGGERS_STAKES]: NotifierStakeService & ServiceAddons<any>
+  [ServiceAddresses.NOTIFIER_PROVIDERS]: ProviderService & ServiceAddons<any>
+  [ServiceAddresses.NOTIFIER_OFFERS]: NotifierPlansService & ServiceAddons<any>
+  [ServiceAddresses.NOTIFIER_SUBSCRIPTIONS]: NotifierSubscriptionsService & ServiceAddons<any>
+  [ServiceAddresses.NOTIFIER_STAKES]: NotifierStakeService & ServiceAddons<any>
   [ServiceAddresses.XR]: RatesService & ServiceAddons<any>
   [ServiceAddresses.RNS_DOMAINS]: RnsBaseService & ServiceAddons<any>
   [ServiceAddresses.RNS_SOLD]: RnsBaseService & ServiceAddons<any>
@@ -299,7 +299,7 @@ export type StakeEvents = stakingEvents.Staked | stakingEvents.Unstaked
 export type StorageEvents = StorageOfferEvents | StorageAgreementEvents | StakeEvents
 
 /// //////////////////////////////////////////////////////////////////////////////////////////////////
-// TRIGGERS
+// NOTIFIER
 export type NotificationManagerEvents = notifierEvents.ProviderRegistered | notifierEvents.SubscriptionCreated
 
 export type NotifierStakeEvents = notifierStakingEvents.Staked | notifierStakingEvents.Unstaked
