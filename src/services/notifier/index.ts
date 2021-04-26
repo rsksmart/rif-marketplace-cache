@@ -68,25 +68,25 @@ const notifier: CachedService = {
     }
 
     // Initialize Provider service
-    app.use(ServiceAddresses.TRIGGERS_PROVIDERS, new ProviderService({ Model: ProviderModel }))
-    const providerService = app.service(ServiceAddresses.TRIGGERS_PROVIDERS)
+    app.use(ServiceAddresses.NOTIFIER_PROVIDERS, new ProviderService({ Model: ProviderModel }))
+    const providerService = app.service(ServiceAddresses.NOTIFIER_PROVIDERS)
     providerService.hooks(providerHooks)
 
     // Initialize Plans service
-    app.use(ServiceAddresses.TRIGGERS_OFFERS, new PlansService({ Model: PlanModel }))
-    const plansService = app.service(ServiceAddresses.TRIGGERS_OFFERS)
+    app.use(ServiceAddresses.NOTIFIER_OFFERS, new PlansService({ Model: PlanModel }))
+    const plansService = app.service(ServiceAddresses.NOTIFIER_OFFERS)
     plansService.hooks(plansHook)
 
     // Initialize Subscriptions service
-    app.use(ServiceAddresses.TRIGGERS_SUBSCRIPTIONS, new SubscriptionsService({ Model: SubscriptionModel }))
-    const subscriptionService = app.service(ServiceAddresses.TRIGGERS_SUBSCRIPTIONS)
+    app.use(ServiceAddresses.NOTIFIER_SUBSCRIPTIONS, new SubscriptionsService({ Model: SubscriptionModel }))
+    const subscriptionService = app.service(ServiceAddresses.NOTIFIER_SUBSCRIPTIONS)
     subscriptionService.hooks(subscriptionsHook)
 
     const sequelize = app.get('sequelize')
 
     // Initialize Staking service
-    app.use(ServiceAddresses.TRIGGERS_STAKES, new StakeService({ Model: NotifierStakeModel }))
-    const stakeService = app.service(ServiceAddresses.TRIGGERS_STAKES)
+    app.use(ServiceAddresses.NOTIFIER_STAKES, new StakeService({ Model: NotifierStakeModel }))
+    const stakeService = app.service(ServiceAddresses.NOTIFIER_STAKES)
     stakeService.hooks(stakeHooks)
 
     app.configure(notifierChannels)
