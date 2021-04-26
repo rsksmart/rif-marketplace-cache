@@ -15,7 +15,7 @@ import { sequelizeFactory } from '../../../../src/sequelize'
 import { eventMock } from '../../../utils'
 import ProviderModel from '../../../../src/services/notifier/models/provider.model'
 import StakeModel from '../../../../src/services/notifier/models/notifier-stake.model'
-import { NotifierStakeEvents, NotifierEvents } from '../../../../src/definitions'
+import { NotifierStakeEvents, NotifierEvents, SupportedServices } from '../../../../src/definitions'
 import {
   ProviderRegistered
 } from '@rsksmart/rif-marketplace-notifier/types/web3-v1-contracts/NotifierManager'
@@ -24,6 +24,7 @@ import Rate from '../../../../src/rates/rates.model'
 import { wrapEvent } from '../../../../src/utils'
 import { NotifierSvcProvider } from '../../../../src/services/notifier/notifierService/provider'
 import SubscriptionModel from '../../../../src/services/notifier/models/subscription.model'
+import { getTokenSymbol } from '../../../../src/services/utils'
 
 chai.use(sinonChai)
 chai.use(chaiAsPromised)
@@ -41,7 +42,7 @@ const subscriptionMock = {
   subscriptionPayments: [],
   subscriptionPlanId: 1,
   price: '10',
-  currency: 'RBTC',
+  currency: '0x0000000000000000000000000000000000000000',
   topics:
     [
       {
@@ -140,17 +141,24 @@ describe('Notifier services: Events Processor', () => {
       await processor(event)
 
       const createdSubscription = await SubscriptionModel.findOne({ where: { hash } })
+      const expectedDate = new Date(subscriptionMock.expirationDate)
+      const expectedPrice = new BigNumber(subscriptionMock.price)
+      const expectedCurrency = getTokenSymbol(subscriptionMock.currency, SupportedServices.NOTIFIER).toLowerCase()
+
       const subscriptionEmitted = {
         hash,
         providerId: provider,
         consumer,
         subscriptionId: subscriptionMock.id,
+        previousSubscription: undefined,
+        expirationDate: expectedDate,
+        price: expectedPrice,
+        rateId: expectedCurrency,
         notificationBalance: subscriptionMock.notificationBalance,
         status: subscriptionMock.status,
-        subscriptionPlanId: subscriptionMock.subscriptionPlanId,
-        previousSubscription: undefined,
-        expirationDate: new Date(subscriptionMock.expirationDate),
-        topics: subscriptionMock.topics
+        paid: subscriptionMock.paid,
+        topics: subscriptionMock.topics,
+        subscriptionPlanId: subscriptionMock.subscriptionPlanId
       }
 
       sandbox.assert.calledOnce(getSubscriptionsSpy)
@@ -162,7 +170,10 @@ describe('Notifier services: Events Processor', () => {
       expect(createdSubscription?.subscriptionId).to.be.eql(subscriptionMock.id)
       expect(createdSubscription?.subscriptionPlanId).to.be.eql(subscriptionMock.subscriptionPlanId)
       expect(createdSubscription?.notificationBalance).to.be.eql(subscriptionMock.notificationBalance)
-      expect(createdSubscription?.expirationDate).to.be.eql(new Date(subscriptionMock.expirationDate))
+      expect(createdSubscription?.expirationDate).to.be.eql(expectedDate)
+      expect(createdSubscription?.paid).to.be.eql(subscriptionMock.paid)
+      expect(createdSubscription?.price).to.be.eql(expectedPrice)
+      expect(createdSubscription?.rateId).to.be.eql(expectedCurrency)
       expect(createdSubscription?.providerId).to.be.eql(subscriptionMock.providerAddress.value)
       expect(subscriptionsServiceEmitSpy).to.have.been.calledOnceWith('created', wrapEvent('SubscriptionCreated', subscriptionEmitted))
       sandbox.reset()

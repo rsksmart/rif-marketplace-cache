@@ -2,7 +2,7 @@ import { Eth } from 'web3-eth'
 import { ProviderRegistered, SubscriptionCreated } from '@rsksmart/rif-marketplace-notifier/types/web3-v1-contracts/NotifierManager'
 
 import { loggingFactory } from '../../../logger'
-import { Handler, NotificationManagerEvents } from '../../../definitions'
+import { Handler, NotificationManagerEvents, SupportedServices } from '../../../definitions'
 import { wrapEvent } from '../../../utils'
 
 import { NotifierServices } from '../index'
@@ -10,6 +10,8 @@ import ProviderModel from '../models/provider.model'
 import { updater } from '../update'
 import { NotifierSvcProvider } from '../notifierService/provider'
 import SubscriptionModel from '../models/subscription.model'
+import { getTokenSymbol } from '../../utils'
+import BigNumber from 'bignumber.js'
 
 const logger = loggingFactory('notifier:handler:provider')
 
@@ -46,18 +48,35 @@ export const handlers = {
 
     const [host, port] = providerIns.url.split(/(?::)(\d*)$/, 2)
     const notifierService = new NotifierSvcProvider({ host, port })
-    const [subscriptionFromNotifier] = await notifierService.getSubscriptions(consumer, [hash])
+    const [
+      {
+        currency: tokenAddress,
+        paid,
+        price,
+        status,
+        id: subscriptionId,
+        notificationBalance,
+        subscriptionPlanId,
+        previousSubscription,
+        expirationDate,
+        topics
+      }
+    ] = await notifierService.getSubscriptions(consumer, [hash])
+    const tokenSymbol = getTokenSymbol(tokenAddress, SupportedServices.NOTIFIER).toLowerCase()
     const subscription = {
       hash,
       providerId: provider,
       consumer,
-      subscriptionId: subscriptionFromNotifier.id,
-      status: subscriptionFromNotifier.status,
-      notificationBalance: subscriptionFromNotifier.notificationBalance,
-      subscriptionPlanId: subscriptionFromNotifier.subscriptionPlanId,
-      previousSubscription: subscriptionFromNotifier.previousSubscription,
-      expirationDate: new Date(subscriptionFromNotifier.expirationDate),
-      topics: subscriptionFromNotifier.topics
+      paid,
+      price: new BigNumber(price),
+      rateId: tokenSymbol,
+      subscriptionId,
+      status,
+      notificationBalance,
+      subscriptionPlanId,
+      previousSubscription,
+      expirationDate: new Date(expirationDate),
+      topics
     }
     await SubscriptionModel.create(subscription)
 
