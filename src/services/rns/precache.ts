@@ -2,7 +2,7 @@ import abiDecoder from 'abi-decoder'
 import config from 'config'
 import { Eth } from 'web3-eth'
 import Utils from 'web3-utils'
-import { Logger } from '../../definitions'
+import { Logger, ZERO_ADDRESS } from '../../definitions'
 import Domain from './models/domain.model'
 import DomainExpiration from './models/expiration.model'
 import DomainOwner from './models/owner.model'
@@ -77,7 +77,7 @@ export async function processAuctionRegistrar (eth: Eth, logger: Logger, contrac
   const startingBlock = config.get<string | number>('rns.registrar.startingBlock')
   const auctionRegistrar = new eth.Contract(contractAbi, config.get<string>('rns.registrar.contractAddress'))
   const auctionRegistrarEvents = await auctionRegistrar.getPastEvents('HashRegistered', {
-    filter: { from: '0x0000000000000000000000000000000000000000' },
+    filter: { from: ZERO_ADDRESS },
     fromBlock: startingBlock
   })
   for (const event of auctionRegistrarEvents) {

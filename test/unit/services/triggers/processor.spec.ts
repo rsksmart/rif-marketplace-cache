@@ -15,7 +15,7 @@ import { sequelizeFactory } from '../../../../src/sequelize'
 import { eventMock } from '../../../utils'
 import ProviderModel from '../../../../src/services/notifier/models/provider.model'
 import StakeModel from '../../../../src/services/notifier/models/notifier-stake.model'
-import { NotifierStakeEvents, NotifierEvents, SupportedServices } from '../../../../src/definitions'
+import { NotifierStakeEvents, NotifierEvents, ZERO_ADDRESS, SupportedServices } from '../../../../src/definitions'
 import {
   ProviderRegistered
 } from '@rsksmart/rif-marketplace-notifier/types/web3-v1-contracts/NotifierManager'
@@ -41,8 +41,8 @@ const subscriptionMock = {
   paid: false,
   subscriptionPayments: [],
   subscriptionPlanId: 1,
-  price: '10',
-  currency: '0x0000000000000000000000000000000000000000',
+  price: '10000000000000000000',
+  currency: ZERO_ADDRESS,
   topics:
     [
       {
@@ -181,7 +181,7 @@ describe('Notifier services: Events Processor', () => {
   })
 
   describe('Staking events', () => {
-    const token = '0x0000000000000000000000000000000000000000'
+    const token = ZERO_ADDRESS
     const account = provider.toLowerCase()
     let processor: (event: NotifierStakeEvents) => Promise<void>
     let stakeService: NotifierStakeService

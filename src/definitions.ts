@@ -30,6 +30,9 @@ export enum SupportedServices {
 
 export type SupportedTokens = 'rif' | 'rbtc'
 
+export const ZERO_ADDRESS = '0x'.padEnd(42, '0')
+export const ZERO_BYTES_32 = '0x'.padEnd(64, '0')
+
 export function isSupportedServices (value: any): value is SupportedServices {
   return Object.values(SupportedServices).includes(value)
 }
