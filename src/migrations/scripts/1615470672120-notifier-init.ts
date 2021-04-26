@@ -202,6 +202,28 @@ const migrationCommands = function (transaction: any): Commands {
             field: 'topics',
             allowNull: false
           },
+          paid: {
+            type: Sequelize.BOOLEAN,
+            field: 'paid',
+            allowNull: false
+          },
+          price: {
+            type: Sequelize.STRING,
+            field: 'price',
+            allowNull: false
+          },
+          rateId: {
+            type: Sequelize.STRING,
+            onUpdate: 'CASCADE',
+            onDelete: 'NO ACTION',
+            references: {
+              model: 'rates',
+              key: 'token'
+            },
+            name: 'rateId',
+            field: 'rateId',
+            allowNull: false
+          },
           providerId: {
             type: Sequelize.STRING,
             onUpdate: 'CASCADE',
