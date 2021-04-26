@@ -21,7 +21,7 @@ import DomainOffer from '../../../../src/services/rns/models/domain-offer.model'
 import SoldDomain from '../../../../src/services/rns/models/sold-domain.model'
 
 import { eventMock, transactionMock } from '../../../utils'
-import { ZERO_ADDRESS } from '../../../integration/utils'
+import { ZERO_ADDRESS } from '../../../../src/definitions'
 
 chai.use(sinonChai)
 chai.use(chaiAsPromised)
@@ -48,7 +48,7 @@ describe('Domain events', function () {
   const to = 'to_addr'
   const other = 'other_addr'
   const expirationTime = (new Date()).getTime().toString()
-  const zeroAddress = '0x0000000000000000000000000000000000000000'
+  const zeroAddress = ZERO_ADDRESS
   const transactionHash = 'TX_HASH'
 
   before(() => {

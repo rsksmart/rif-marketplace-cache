@@ -6,7 +6,7 @@ import { EventLog } from 'web3-core'
 
 import { RnsBaseService, RnsServices } from '.'
 import { getBlockDate } from '../../blockchain/utils'
-import { Logger, SupportedServices } from '../../definitions'
+import { Logger, SupportedServices, ZERO_ADDRESS } from '../../definitions'
 import DomainOffer from './models/domain-offer.model'
 import Domain from './models/domain.model'
 import DomainExpiration from './models/expiration.model'
@@ -120,7 +120,7 @@ async function transferHandler (logger: Logger, eventData: EventLog, eth: Eth, s
   const domainsService = services.domains
   const offersService = services.offers
 
-  if (from === '0x0000000000000000000000000000000000000000') {
+  if (from === ZERO_ADDRESS) {
     const transaction = await eth.getTransaction(transactionHash)
     const decodedData: DecodedData = abiDecoder.decodeMethod(transaction.input)
 

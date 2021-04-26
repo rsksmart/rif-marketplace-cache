@@ -21,7 +21,7 @@ import StakeModel from '../../../../src/services/storage/models/stake.model'
 import Agreement from '../../../../src/services/storage/models/agreement.model'
 import { decodeByteArray, wrapEvent } from '../../../../src/utils'
 import { getBlockDate } from '../../../../src/blockchain/utils'
-import { StakeEvents, StorageEvents } from '../../../../src/definitions'
+import { StakeEvents, StorageEvents, ZERO_ADDRESS } from '../../../../src/definitions'
 import {
   AgreementFundsDeposited, AgreementFundsPayout, AgreementFundsWithdrawn,
   AgreementStopped,
@@ -108,7 +108,7 @@ describe('Storage services: Events Processor', () => {
     })
 
     describe('BillingPlanSet', () => {
-      const token = '0x0000000000000000000000000000000000000000'
+      const token = ZERO_ADDRESS
       it('create new BillingPlan if not exist', async () => {
         const event = eventMock<BillingPlanSet>({
           event: 'BillingPlanSet',
@@ -522,7 +522,7 @@ describe('Storage services: Events Processor', () => {
   })
 
   describe('Staking events', () => {
-    const token = '0x0000000000000000000000000000000000000000'
+    const token = ZERO_ADDRESS
     const account = provider.toLowerCase()
     let processor: (event: StakeEvents) => Promise<void>
     let stakeService: StakeService
