@@ -88,7 +88,7 @@
     "peer-id": "^0.14.2",
     "reflect-metadata": "^0.1.13",
     "rlp": "^2.2.6",
-    "rxjs": "^6.6.3",
+    "rxjs": "^7.0.0",
     "sequelize": "^6.3.5",
     "sequelize-store": "^0.4.2",
     "sequelize-typescript": "^2.0.0-beta.0",
