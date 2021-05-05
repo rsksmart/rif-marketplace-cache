@@ -47,7 +47,6 @@ updates:
     - 1.193.0
   - dependency-name: sql-formatter
     versions:
-    - 4.0.0
     - 4.0.2
   - dependency-name: cids
     versions:
