@@ -3,6 +3,7 @@ import NotifierChannelModel from './notifier-channel.model'
 import PriceModel from './price.model'
 import ProviderModel from './provider.model'
 import { Op } from 'sequelize'
+import SubscriptionModel from './subscription.model'
 
 export const scopes = {
   active: 'active'
@@ -43,4 +44,7 @@ export default class PlanModel extends Model {
 
     @BelongsTo(() => ProviderModel)
     provider!: ProviderModel
+
+    @HasMany(() => SubscriptionModel, 'subscriptionPlanId')
+    subscriptions!: SubscriptionModel[]
 }

@@ -25,12 +25,23 @@ import { wrapEvent } from '../../../../src/utils'
 import { NotifierSvcProvider } from '../../../../src/services/notifier/notifierService/provider'
 import SubscriptionModel from '../../../../src/services/notifier/models/subscription.model'
 import { getTokenSymbol } from '../../../../src/services/utils'
+import PlanModel from '../../../../src/services/notifier/models/plan.model'
 
 chai.use(sinonChai)
 chai.use(chaiAsPromised)
 chai.use(dirtyChai)
 const expect = chai.expect
 
+const subscriptionPlanMock = {
+  id: 1,
+  name: 'plan_1',
+  planStatus: 'ACTIVE',
+  daysLeft: 100,
+  quantity: 100,
+  channels: [],
+  prices: [],
+  providerId: '0xc0246e727ecc35b961102dc03839e5306d2b5b21'
+}
 const subscriptionMock = {
   id: 4,
   hash:
@@ -40,7 +51,7 @@ const subscriptionMock = {
   expirationDate: '2021-05-01T00:00:00.000+00:00',
   paid: false,
   subscriptionPayments: [],
-  subscriptionPlanId: 1,
+  subscriptionPlanId: subscriptionPlanMock.id,
   price: '10000000000000000000',
   currency: ZERO_ADDRESS,
   topics:
@@ -126,6 +137,7 @@ describe('Notifier services: Events Processor', () => {
     })
     it('should create subscriptions', async () => {
       const provider = subscriptionMock.providerAddress.value
+      const plan = subscriptionPlanMock
       const consumer = subscriptionMock.userAddress
       const hash = subscriptionMock.hash
       const sandbox = sinon.createSandbox()
@@ -138,6 +150,7 @@ describe('Notifier services: Events Processor', () => {
         event: 'SubscriptionCreated',
         returnValues: { consumer, provider, hash }
       })
+      await PlanModel.create(plan)
       await processor(event)
 
       const createdSubscription = await SubscriptionModel.findOne({ where: { hash } })
