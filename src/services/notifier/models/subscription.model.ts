@@ -3,6 +3,7 @@ import { Table, Column, Model, ForeignKey, BelongsTo, DataType } from 'sequelize
 import { SupportedTokens } from '../../../definitions'
 import Rate from '../../../rates/rates.model'
 import { BigNumberStringType } from '../../../sequelize'
+import PlanModel from './plan.model'
 import ProviderModel from './provider.model'
 
 type Topic = {
@@ -28,6 +29,7 @@ export default class SubscriptionModel extends Model {
   @Column({ allowNull: false })
   status!: Status
 
+  @ForeignKey(() => PlanModel)
   @Column({ allowNull: false })
   subscriptionPlanId!: number
 
@@ -62,4 +64,7 @@ export default class SubscriptionModel extends Model {
 
   @BelongsTo(() => ProviderModel)
   provider!: ProviderModel
+
+  @BelongsTo(() => PlanModel)
+  plan!: PlanModel
 }
