@@ -18,6 +18,24 @@
   blockchain: {
     networkId: 31
   },
+  notifier: {
+    enabled: true,
+    tokens: {
+      '0x09DAf8FEf3cE62f9D2fEB505FeA2113581172550': 'rif'
+    },
+    notifierManager: {
+      contractAddress: "0xd60e913029a6790fb9e5b8c459b451dd6e501139",
+      eventsEmitter: {
+        confirmations: 2
+      }
+    },
+    staking: {
+      contractAddress: "0x19578c5b4f3d382abaa494e221a5e654ee5e6dc6",
+      eventsEmitter: {
+        confirmations: 2
+      }
+    },
+  },
   storage: {
     enabled: true,
     tokens: {
