@@ -10,13 +10,15 @@
     notifierManager: {
       contractAddress: "0x3f1A0Af69F10f8A2a5553Ce93Ed75d466F231e15",
       eventsEmitter: {
-        confirmations: 2
+        startingBlock: 272688,
+        confirmations: 3
       }
     },
     staking: {
       contractAddress: "0x6216f4244a2b1562bF9934C5Bd97c9640706C765",
       eventsEmitter: {
-        confirmations: 2
+        startingBlock: 272691,
+        confirmations: 3
       }
     },
   },
