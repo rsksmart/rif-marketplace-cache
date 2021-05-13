@@ -34,5 +34,5 @@ jobs:
               --instance-ids "${{ secrets.STAGING_EC2_ID }}" \
               --region=${{ secrets.STAGING_AWS_REGION }} \
               --comment "github interaction-rif-marketplace-cache" \
-              --parameters '{"sourceType":["GitHub"],"sourceInfo":["{\"owner\":\"rootstock\", \"repository\":\"ask-devops\", \"path\": \"rif-marketplace/\",\"tokenInfo\":\"{{ssm-secure:github-token}}\"}"],"commandLine":["deploy-marketplace-cache.sh"]}'
+              --parameters '{"sourceType":["GitHub"],"sourceInfo":["{\"owner\":\"rootstock\", \"repository\":\"ask-devops\", \"path\": \"rif-marketplace/\",\"tokenInfo\":\"{{ssm-secure:github-token}}\"}"],"commandLine":["deploy-marketplace-cache-staging.sh"]}'
 
