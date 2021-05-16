@@ -19,18 +19,19 @@ export const handlers = {
   async ProviderRegistered (event: ProviderRegistered, { providerService }: NotifierServices): Promise<void> {
     const { provider, url } = event.returnValues
 
-    const providerIns = await ProviderModel.findOne({ where: { provider } })
-
-    if (providerIns) {
+    try {
       await providerService.update(provider, { provider, url })
-    } else {
+
+      if (providerService.emit) providerService.emit('updated', wrapEvent('ProviderRegistered', { provider, url }))
+      logger.info(`Updated Provider ${provider} with url ${url}`)
+    } catch {
       await providerService.create({ provider, url })
+
+      if (providerService.emit) providerService.emit('created', wrapEvent('ProviderRegistered', { provider, url }))
+      logger.info(`Created new Provider with address ${provider} and url  ${url}`)
     }
 
-    if (providerService.emit) providerService.emit('created', wrapEvent('ProviderRegistered', { provider, url }))
-    logger.info(`Created new Provider with address ${provider} and url  ${url}`)
-
-    const sequelize = providerIns?.sequelize
+    const sequelize = (await ProviderModel.findOne({ where: { provider } }))?.sequelize
 
     if (sequelize) {
       logger.info(`Updating ${provider}'s plans from url...`)
@@ -48,36 +49,45 @@ export const handlers = {
 
     const [host, port] = providerIns.url.split(/(?::)(\d*)$/, 2)
     const notifierService = new NotifierSvcProvider({ host, port })
-    const [
-      {
-        currency: tokenAddress,
-        paid,
-        price,
-        status,
-        id: subscriptionId,
-        notificationBalance,
-        subscriptionPlanId,
-        previousSubscription,
-        expirationDate,
-        topics
-      }
-    ] = await notifierService.getSubscriptions(consumer, [hash])
-    const tokenSymbol = getTokenSymbol(tokenAddress, SupportedServices.NOTIFIER).toLowerCase()
-    const subscription = {
-      hash,
-      providerId: provider,
-      consumer,
+    const [subscriptionDTO] = await notifierService.getSubscriptions(consumer, [hash])
+
+    if (!subscriptionDTO) throw new Error(`Subscription ${hash} not found on provider's service at ${host}:${port} for consumer ${consumer}`)
+
+    const {
+      currency: {
+        address: {
+          value: tokenAddress
+        }
+      },
+      price,
+      expirationDate,
+      id: subscriptionId,
       paid,
-      price: new BigNumber(price),
-      rateId: tokenSymbol,
-      subscriptionId,
       status,
       notificationBalance,
       subscriptionPlanId,
       previousSubscription,
+      topics
+    } = subscriptionDTO
+
+    const tokenSymbol = getTokenSymbol(tokenAddress, SupportedServices.NOTIFIER).toLowerCase()
+
+    const subscription = {
+      providerId: provider,
+      price: new BigNumber(price),
+      rateId: tokenSymbol,
       expirationDate: new Date(expirationDate),
+      hash,
+      consumer,
+      subscriptionId,
+      paid,
+      status,
+      notificationBalance,
+      subscriptionPlanId,
+      previousSubscription,
       topics
     }
+
     await SubscriptionModel.create(subscription)
 
     if (subscriptionService.emit) subscriptionService.emit('created', wrapEvent('SubscriptionCreated', subscription))
