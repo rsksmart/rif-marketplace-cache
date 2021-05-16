@@ -53,7 +53,13 @@ const subscriptionMock = {
   subscriptionPayments: [],
   subscriptionPlanId: subscriptionPlanMock.id,
   price: '10000000000000000000',
-  currency: ZERO_ADDRESS,
+  currency: {
+    name: 'RBTC',
+    address: {
+      value: ZERO_ADDRESS,
+      typeAsString: 'address'
+    }
+  },
   topics:
     [
       {
@@ -133,7 +139,7 @@ describe('Notifier services: Events Processor', () => {
 
       expect(updatedProvider).to.be.instanceOf(ProviderModel)
       expect(updatedProvider?.url).to.be.eql(url)
-      expect(providerServiceEmitSpy).to.have.been.calledOnceWith('created', wrapEvent('ProviderRegistered', { provider, url }))
+      expect(providerServiceEmitSpy).to.have.been.calledOnceWith('updated', wrapEvent('ProviderRegistered', { provider, url }))
     })
     it('should create subscriptions', async () => {
       const provider = subscriptionMock.providerAddress.value
@@ -156,7 +162,7 @@ describe('Notifier services: Events Processor', () => {
       const createdSubscription = await SubscriptionModel.findOne({ where: { hash } })
       const expectedDate = new Date(subscriptionMock.expirationDate)
       const expectedPrice = new BigNumber(subscriptionMock.price)
-      const expectedCurrency = getTokenSymbol(subscriptionMock.currency, SupportedServices.NOTIFIER).toLowerCase()
+      const expectedCurrency = getTokenSymbol(subscriptionMock.currency.address.value, SupportedServices.NOTIFIER).toLowerCase()
 
       const subscriptionEmitted = {
         hash,
