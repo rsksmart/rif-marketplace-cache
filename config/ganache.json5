@@ -37,7 +37,7 @@
       }
     },
     staking: {
-      contractAddress: "0xdAA71FBBA28C946258DD3d5FcC9001401f72270F",
+      contractAddress: "0x22d5C8BdD4346b390014a07109a8F830094d4abf",
       eventsEmitter: {
         confirmations: 2
       }
