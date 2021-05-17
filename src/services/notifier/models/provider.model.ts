@@ -1,6 +1,5 @@
 import { Table, Column, Model, DataType, HasMany } from 'sequelize-typescript'
 import PlanModel from './plan.model'
-import Agreement from '../../storage/models/agreement.model'
 import SubscriptionModel from './subscription.model'
 
 @Table({ freezeTableName: true, tableName: 'notifier_provider' })
