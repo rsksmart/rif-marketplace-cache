@@ -17,6 +17,8 @@ export function initStore (sequelize: Sequelize): Promise<void> {
 
   addBlockTrackerDefinitionFor('storage.storageManager', schema)
   addBlockTrackerDefinitionFor('storage.staking', schema)
+  addBlockTrackerDefinitionFor('notifier.notifierManager', schema)
+  addBlockTrackerDefinitionFor('notifier.staking', schema)
   addBlockTrackerDefinitionFor('rns.owner', schema)
   addBlockTrackerDefinitionFor('rns.reverse', schema)
   addBlockTrackerDefinitionFor('rns.placement', schema)

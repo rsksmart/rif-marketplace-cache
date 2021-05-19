@@ -13,6 +13,7 @@ import Offer, {
 import StakeModel from '../../../../src/services/storage/models/stake.model'
 import BillingPlan from '../../../../src/services/storage/models/billing-plan.model'
 import Rate from '../../../../src/rates/rates.model'
+import { ZERO_ADDRESS } from '../../../../src/definitions'
 
 chai.use(sinonChai)
 const expect = chai.expect
@@ -295,15 +296,15 @@ describe('Models', () => {
       const wei = 1000000000000000000
       const pricePerDayPerGb = wei / 1024
       await BillingPlan.bulkCreate([
-        { period: '86400', price: `${pricePerDayPerGb}`, tokenAddress: '0x0000000000000000000000000000000000000000', offerId: 'abc', rateId: 'rbtc' },
+        { period: '86400', price: `${pricePerDayPerGb}`, tokenAddress: ZERO_ADDRESS, offerId: 'abc', rateId: 'rbtc' },
         { period: '604800', price: `${7 * pricePerDayPerGb}`, tokenAddress: '0x12345', offerId: 'abc', rateId: 'rif' },
-        { period: '2592000', price: `${30 * pricePerDayPerGb}`, tokenAddress: '0x0000000000000000000000000000000000000000', offerId: 'abc', rateId: 'rbtc' },
-        { period: '86400', price: `${2 * pricePerDayPerGb}`, tokenAddress: '0x0000000000000000000000000000000000000000', offerId: 'abc2', rateId: 'rbtc' },
+        { period: '2592000', price: `${30 * pricePerDayPerGb}`, tokenAddress: ZERO_ADDRESS, offerId: 'abc', rateId: 'rbtc' },
+        { period: '86400', price: `${2 * pricePerDayPerGb}`, tokenAddress: ZERO_ADDRESS, offerId: 'abc2', rateId: 'rbtc' },
         { period: '604800', price: `${2 * 7 * pricePerDayPerGb}`, tokenAddress: '0x12345', offerId: 'abc2', rateId: 'rif' },
-        { period: '2592000', price: `${2 * 30 * pricePerDayPerGb}`, tokenAddress: '0x0000000000000000000000000000000000000000', offerId: 'abc2', rateId: 'rbtc' },
-        { period: '86400', price: `${3 * pricePerDayPerGb}`, tokenAddress: '0x0000000000000000000000000000000000000000', offerId: 'abc3', rateId: 'rbtc' },
+        { period: '2592000', price: `${2 * 30 * pricePerDayPerGb}`, tokenAddress: ZERO_ADDRESS, offerId: 'abc2', rateId: 'rbtc' },
+        { period: '86400', price: `${3 * pricePerDayPerGb}`, tokenAddress: ZERO_ADDRESS, offerId: 'abc3', rateId: 'rbtc' },
         { period: '604800', price: `${3 * 7 * pricePerDayPerGb}`, tokenAddress: '0x12345', offerId: 'abc3', rateId: 'rif' },
-        { period: '2592000', price: `${3 * 30 * pricePerDayPerGb}`, tokenAddress: '0x0000000000000000000000000000000000000000', offerId: 'abc3', rateId: 'rbtc' }
+        { period: '2592000', price: `${3 * 30 * pricePerDayPerGb}`, tokenAddress: ZERO_ADDRESS, offerId: 'abc3', rateId: 'rbtc' }
       ])
 
       expect((await Rate.findAll()).length).to.be.eql(2)
@@ -377,11 +378,11 @@ describe('Models', () => {
         { provider: 'abc3', totalCapacity: 1234, peerId: '2', averagePrice: '1234' }
       ])
       await StakeModel.bulkCreate([
-        { total: '369000000000000000', symbol: 'rbtc', account: 'abc', token: '0x0000000000000000000000000000000000000000' },
+        { total: '369000000000000000', symbol: 'rbtc', account: 'abc', token: ZERO_ADDRESS },
         { total: '369000000000000000123791', symbol: 'rif', account: 'abc', token: '0x12345' },
-        { total: '369000000000000000', symbol: 'rbtc', account: 'abc2', token: '0x0000000000000000000000000000000000000000' },
+        { total: '369000000000000000', symbol: 'rbtc', account: 'abc2', token: ZERO_ADDRESS },
         { total: '36900023748000000000000', symbol: 'rif', account: 'abc2', token: '0x12345' },
-        { total: '1000000000000000000', symbol: 'rbtc', account: 'abc3', token: '0x0000000000000000000000000000000000000000' }
+        { total: '1000000000000000000', symbol: 'rbtc', account: 'abc3', token: ZERO_ADDRESS }
       ])
       await Rate.bulkCreate([
         { token: 'rif', usd: 1 },

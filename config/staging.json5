@@ -18,6 +18,26 @@
   blockchain: {
     networkId: 31
   },
+  notifier: {
+    enabled: true,
+    tokens: {
+      '0x09DAf8FEf3cE62f9D2fEB505FeA2113581172550': 'rif'
+    },
+    notifierManager: {
+      contractAddress: "0xd60e913029a6790fb9e5b8c459b451dd6e501139",
+      eventsEmitter: {
+        startingBlock: 1782066,
+        confirmations: 3
+      }
+    },
+    staking: {
+      contractAddress: "0x19578c5b4f3d382abaa494e221a5e654ee5e6dc6",
+      eventsEmitter: {
+        startingBlock: 1782068,
+        confirmations: 3
+      }
+    },
+  },
   storage: {
     enabled: true,
     tokens: {
@@ -39,6 +59,9 @@
     },
   },
   rns: {
+    tokens: {
+      '0x19f64674D8a5b4e652319F5e239EFd3bc969a1FE': 'rif'
+    },
     batchContractAddress: "0x380a47e2a1cec8a21cf00374ea5d092166a702fc",
     owner: {
       contractAddress: "0xca0a477e19bac7e0e172ccfd2e3c28a7200bdb71",

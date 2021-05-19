@@ -22,7 +22,7 @@ ${formattedServices}`
 
   static examples = [
     '$ rif-marketplace-cache purge all',
-    '$ rif-marketplace-cache purge storage rns'
+    '$ rif-marketplace-cache purge storage rns notifier'
   ]
 
   static flags = BaseCLICommand.flags

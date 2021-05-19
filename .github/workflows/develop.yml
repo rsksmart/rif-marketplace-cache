@@ -1,0 +1,39 @@
+---
+name: RIF Marketplace CACHE deploy
+
+on:
+  push:
+
+    branches:
+      - develop
+
+jobs:
+  deploy-develop:
+    name: RIF Marketplace CACHE - Develop
+    runs-on: ubuntu-latest
+    environment:
+      name: develop
+
+    steps:
+
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.DEVELOP_AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.DEVELOP_AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.DEVELOP_AWS_REGION }}
+
+      - name: Deploy rif-marketplace-cache develop
+        run: |
+          aws ssm send-command \
+              --document-name "AWS-RunRemoteScript" \
+              --instance-ids "${{ secrets.DEVELOP_EC2_ID }}" \
+              --region=${{ secrets.DEVELOP_AWS_REGION }} \
+              --comment "github interaction-rif-marketplace-cache" \
+              --parameters '{"sourceType":["GitHub"],"sourceInfo":["{\"owner\":\"rootstock\", \"repository\":\"ask-devops\", \"path\": \"rif-marketplace/\",\"tokenInfo\":\"{{ssm-secure:github-token}}\"}"],"commandLine":["deploy-marketplace-cache-dev.sh"]}'
+

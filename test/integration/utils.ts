@@ -20,15 +20,13 @@ import { loggingFactory } from '../../src/logger'
 import { appFactory, AppOptions } from '../../src/app'
 import { sequelizeFactory } from '../../src/sequelize'
 import { initStore } from '../../src/store'
-import { Application, SupportedServices } from '../../src/definitions'
+import { Application, SupportedServices, ZERO_ADDRESS, ZERO_BYTES_32 } from '../../src/definitions'
 import { ethFactory } from '../../src/blockchain'
 import { sleep } from '../utils'
 import DbMigration from '../../src/migrations'
 import { resolvePath } from '../../src/utils'
 import * as http from 'http'
 
-export const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000'
-export const ZERO_BYTES_32 = '0x0000000000000000000000000000000000000000000000000000000000000000'
 export const appResetCallbackSpy = sinon.spy()
 
 export function encodeHash (hash: string): string[] {

@@ -11,8 +11,7 @@ import {
   generateCID,
   generateMsg,
   getFeatherClient,
-  TestingApp,
-  ZERO_ADDRESS
+  TestingApp
 } from '../../utils'
 import { createLibp2pRoom, sleep, spawnLibp2p } from '../../../utils'
 import Offer from '../../../../src/services/storage/models/offer.model'
@@ -21,8 +20,8 @@ import Rate from '../../../../src/rates/rates.model'
 import Agreement from '../../../../src/services/storage/models/agreement.model'
 import NotificationModel from '../../../../src/notification/notification.model'
 import StakeModel from '../../../../src/services/storage/models/stake.model'
-import { MessageCodesEnum, NotificationType, ServiceAddresses } from '../../../../src/definitions'
-import { WEI } from '../../../../src/services/storage/utils'
+import { MessageCodesEnum, NotificationType, ServiceAddresses, ZERO_ADDRESS } from '../../../../src/definitions'
+import { WEI } from '../../../../src/services/utils'
 
 chai.use(sinonChai)
 const expect = chai.expect

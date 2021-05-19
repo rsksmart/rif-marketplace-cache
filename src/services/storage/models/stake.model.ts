@@ -5,7 +5,7 @@ import { Sequelize } from 'sequelize'
 import Rate from '../../../rates/rates.model'
 import { SupportedTokens } from '../../../definitions'
 import { BigNumberStringType } from '../../../sequelize'
-import { WEI } from '../utils'
+import { WEI } from '../../utils'
 
 @Table({ freezeTableName: true, tableName: 'storage_stakes' })
 export default class StakeModel extends Model {

@@ -7,13 +7,16 @@ import type { Observable } from 'rxjs'
 import Libp2p from 'libp2p'
 import type { Options as Libp2pOptions } from 'libp2p'
 
-import type { AvgBillingPriceService, AgreementService, OfferService, StakeService, AvailableCapacityService } from './services/storage/services'
+import type { AvgBillingPriceService, AgreementService, OfferService, StakeService as StorageStakeService, AvailableCapacityService } from './services/storage/services'
+import { ProviderService, NotifierStakeService, PlansService as NotifierPlansService, SubscriptionsService as NotifierSubscriptionsService } from './services/notifier/services'
 import type { RatesService } from './rates'
 import type { RnsBaseService } from './services/rns'
 import type { ReorgEmitterService, NewBlockEmitterService, ConfirmatorService } from './blockchain/services'
 
 import * as storageEvents from '@rsksmart/rif-marketplace-storage/types/web3-v1-contracts/StorageManager'
 import * as stakingEvents from '@rsksmart/rif-marketplace-storage/types/web3-v1-contracts/Staking'
+import * as notifierStakingEvents from '@rsksmart/rif-marketplace-notifier/types/web3-v1-contracts/Staking'
+import * as notifierEvents from '@rsksmart/rif-marketplace-notifier/types/web3-v1-contracts/NotifierManager'
 import { NotificationService } from './notification'
 import { CommsService } from './communication/service'
 
@@ -22,9 +25,13 @@ export type EmitFn = (...args: any[]) => void
 export enum SupportedServices {
   STORAGE = 'storage',
   RNS = 'rns',
+  NOTIFIER = 'notifier'
 }
 
 export type SupportedTokens = 'rif' | 'rbtc'
+
+export const ZERO_ADDRESS = '0x'.padEnd(42, '0')
+export const ZERO_BYTES_32 = '0x'.padEnd(64, '0')
 
 export function isSupportedServices (value: any): value is SupportedServices {
   return Object.values(SupportedServices).includes(value)
@@ -41,6 +48,10 @@ export enum ServiceAddresses {
   STORAGE_AGREEMENTS = '/storage/v0/agreements',
   STORAGE_STAKES = '/storage/v0/stakes',
   STORAGE_AVAILABLE_CAPACITY = '/storage/v0/availableCapacity',
+  NOTIFIER_STAKES = '/notifier/v0/stakes',
+  NOTIFIER_PROVIDERS = '/notifier/v0/providers',
+  NOTIFIER_OFFERS = '/notifier/v0/offers',
+  NOTIFIER_SUBSCRIPTIONS = '/notifier/v0/subscriptions',
   XR = '/rates/v0/',
   CONFIRMATIONS = '/confirmations',
   NEW_BLOCK_EMITTER = '/new-block',
@@ -52,8 +63,12 @@ interface ServiceTypes {
   [ServiceAddresses.STORAGE_OFFERS]: OfferService & ServiceAddons<any>
   [ServiceAddresses.AVG_BILLING_PRICE]: AvgBillingPriceService & ServiceAddons<any>
   [ServiceAddresses.STORAGE_AGREEMENTS]: AgreementService & ServiceAddons<any>
-  [ServiceAddresses.STORAGE_STAKES]: StakeService & ServiceAddons<any>
+  [ServiceAddresses.STORAGE_STAKES]: StorageStakeService & ServiceAddons<any>
   [ServiceAddresses.STORAGE_AVAILABLE_CAPACITY]: AvailableCapacityService & ServiceAddons<any>
+  [ServiceAddresses.NOTIFIER_PROVIDERS]: ProviderService & ServiceAddons<any>
+  [ServiceAddresses.NOTIFIER_OFFERS]: NotifierPlansService & ServiceAddons<any>
+  [ServiceAddresses.NOTIFIER_SUBSCRIPTIONS]: NotifierSubscriptionsService & ServiceAddons<any>
+  [ServiceAddresses.NOTIFIER_STAKES]: NotifierStakeService & ServiceAddons<any>
   [ServiceAddresses.XR]: RatesService & ServiceAddons<any>
   [ServiceAddresses.RNS_DOMAINS]: RnsBaseService & ServiceAddons<any>
   [ServiceAddresses.RNS_SOLD]: RnsBaseService & ServiceAddons<any>
@@ -170,6 +185,24 @@ export interface Config {
   }
 
   // Settings for Storage service related function
+  notifier?: {
+
+    // Sets if Storage service should be enabled
+    enabled?: boolean
+
+    // Supported tokens and their addresses
+    tokens?: {
+      [key: string]: SupportedTokens
+    }
+
+    // Staking contract options
+    staking?: BlockchainServiceOptions
+
+    // Storage Manager contract options
+    notifierManager?: BlockchainServiceOptions
+  }
+
+  // Settings for Storage service related function
   storage?: {
 
     // Sets if Storage service should be enabled
@@ -268,6 +301,14 @@ export type StakeEvents = stakingEvents.Staked | stakingEvents.Unstaked
 
 export type StorageEvents = StorageOfferEvents | StorageAgreementEvents | StakeEvents
 
+/// //////////////////////////////////////////////////////////////////////////////////////////////////
+// NOTIFIER
+export type NotificationManagerEvents = notifierEvents.ProviderRegistered | notifierEvents.SubscriptionCreated
+
+export type NotifierStakeEvents = notifierStakingEvents.Staked | notifierStakingEvents.Unstaked
+
+export type NotifierEvents = NotificationManagerEvents | NotifierStakeEvents
+
 /****************************************************************************************
  * Communications
  */
@@ -336,7 +377,6 @@ export type CommsPayloads = ResendMessagesPayload | MultiaddrAnnouncementPayload
 export type MessageHandler = (message: CommsMessage<CommsPayloads>) => Promise<void>
 
 // NOTIFICATION
-
 export enum NotificationType {
   STORAGE = 'storage'
 }

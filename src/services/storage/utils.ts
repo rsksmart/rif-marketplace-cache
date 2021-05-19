@@ -1,27 +1,6 @@
-import { SupportedTokens } from '../../definitions'
-import config from 'config'
-import { HookContext } from '@feathersjs/feathers'
+import { WEI } from '../utils'
 
-export const WEI = 1e18
 export type MinMax = 1 | -1
-
-/**
- * get token symbol by token address from config
- * @param tokenContractAddress
- * @returns {SupportedTokens} token symbol
- */
-export function getTokenSymbol (tokenContractAddress: string): SupportedTokens {
-  const supportedTokens = config.get<Record<string, SupportedTokens>>('storage.tokens')
-  const token = Object
-    .keys(supportedTokens)
-    .find(t => t.toLowerCase() === tokenContractAddress.toLowerCase())
-
-  if (!token) {
-    throw new Error(`Token on address ${tokenContractAddress} is not supported`)
-  }
-
-  return config.get<SupportedTokens>(`storage.tokens.${token}`)
-}
 
 /**
  * Get query for generating average minimum or maximum billing price
@@ -61,7 +40,7 @@ export function getMinMaxAvailableCapacityQuery (minMax: MinMax): string {
       "storage_offer"
     LEFT OUTER JOIN
       "storage_agreement" as "storage_agreement" ON (
-        "storage_offer"."provider" = "storage_agreement"."offerId" 
+        "storage_offer"."provider" = "storage_agreement"."offerId"
         AND
         "storage_agreement".isActive
       )
@@ -69,31 +48,4 @@ export function getMinMaxAvailableCapacityQuery (minMax: MinMax): string {
     ORDER BY availableCapacity ${minMax === 1 ? 'DESC' : 'ASC'}
     LIMIT 1
      `
-}
-
-export function lowerCaseAddressesQueryParamsHook (props: Array<string>): (context: HookContext) => void {
-  return (context: HookContext) => {
-    if (!context.params.query) {
-      return
-    }
-
-    context.params.query = {
-      ...context.params.query,
-      ...props
-        .reduce(
-          (acc, prop) => {
-            const field = context.params.query?.[prop]
-
-            if (!field || typeof field !== 'string') {
-              return acc
-            }
-            return {
-              ...acc,
-              [prop]: field.toLowerCase()
-            }
-          },
-          {}
-        )
-    }
-  }
 }

@@ -2,10 +2,10 @@ import BigNumber from 'bignumber.js'
 import { Staked, Unstaked } from '@rsksmart/rif-marketplace-storage/types/web3-v1-contracts/Staking'
 
 import { loggingFactory } from '../../../logger'
-import { Handler, StakeEvents } from '../../../definitions'
+import { Handler, StakeEvents, SupportedServices } from '../../../definitions'
 import { StorageServices } from '../index'
 import StakeModel from '../models/stake.model'
-import { getTokenSymbol } from '../utils'
+import { getTokenSymbol } from '../../utils'
 
 const logger = loggingFactory('storage:handler:stake')
 
@@ -21,7 +21,7 @@ async function findOrCreateStake (account: string, token: string): Promise<Stake
   if (stake) {
     return stake
   }
-  const symbol = getTokenSymbol(token).toLowerCase()
+  const symbol = getTokenSymbol(token, SupportedServices.STORAGE).toLowerCase()
   return StakeModel.create({ account, token, symbol, total: 0 })
 }
 

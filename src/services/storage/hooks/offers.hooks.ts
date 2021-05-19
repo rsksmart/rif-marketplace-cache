@@ -5,7 +5,7 @@ import { Op, literal, Sequelize } from 'sequelize'
 
 import BillingPlan from '../models/billing-plan.model'
 import Agreement from '../models/agreement.model'
-import { lowerCaseAddressesQueryParamsHook } from '../utils'
+import { lowerCaseAddressesQueryParamsHook } from '../../utils'
 import Offer, { getAvailableCapacityQuery, getBillingPriceAvgQuery, getStakesAggregateQuery } from '../models/offer.model'
 import dehydrate = hooks.dehydrate
 

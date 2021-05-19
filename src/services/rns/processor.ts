@@ -6,7 +6,7 @@ import { EventLog } from 'web3-core'
 
 import { RnsBaseService, RnsServices } from '.'
 import { getBlockDate } from '../../blockchain/utils'
-import { Logger } from '../../definitions'
+import { Logger, SupportedServices, ZERO_ADDRESS } from '../../definitions'
 import DomainOffer from './models/domain-offer.model'
 import Domain from './models/domain.model'
 import DomainExpiration from './models/expiration.model'
@@ -14,7 +14,7 @@ import DomainOwner from './models/owner.model'
 import Transfer from './models/transfer.model'
 import SoldDomain from './models/sold-domain.model'
 import { EventTransformer } from '../../blockchain/event-transformer'
-import { getTokenSymbol } from '../storage/utils'
+import { getTokenSymbol } from '../utils'
 import RLP = require('rlp')
 
 type RLPDecoded = Array<Array<number[]>>
@@ -120,7 +120,7 @@ async function transferHandler (logger: Logger, eventData: EventLog, eth: Eth, s
   const domainsService = services.domains
   const offersService = services.offers
 
-  if (from === '0x0000000000000000000000000000000000000000') {
+  if (from === ZERO_ADDRESS) {
     const transaction = await eth.getTransaction(transactionHash)
     const decodedData: DecodedData = abiDecoder.decodeMethod(transaction.input)
 
@@ -272,7 +272,7 @@ async function tokenPlacedHandler (logger: Logger, eventData: EventLog, eth: Eth
     logger.info(`TokenPlaced event: ${tokenId} no previous placement`)
   }
   const { address } = owner
-  const tokenSymbol = getTokenSymbol(paymentToken).toLowerCase()
+  const tokenSymbol = getTokenSymbol(paymentToken, SupportedServices.RNS).toLowerCase()
 
   await offersService.create({
     txHash: transactionHash,

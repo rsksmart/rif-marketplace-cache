@@ -24,6 +24,7 @@ import authentication from './services/authentication'
 import storage from './services/storage'
 import rates from './rates'
 import rns from './services/rns'
+import notifier from './services/notifier'
 import notification from './notification'
 import { Eth } from 'web3-eth'
 import * as fs from 'fs'
@@ -32,7 +33,8 @@ const logger = loggingFactory()
 
 export const services = {
   [SupportedServices.STORAGE]: storage,
-  [SupportedServices.RNS]: rns
+  [SupportedServices.RNS]: rns,
+  [SupportedServices.NOTIFIER]: notifier
 }
 
 export interface AppOptions {
