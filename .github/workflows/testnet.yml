@@ -7,7 +7,7 @@ on:
       - testnet
 
 jobs:
-  deploy-staging:
+  deploy-testnet:
     name: RIF Marketplace CACHE - TESTNET
     runs-on: ubuntu-latest
     environment:
