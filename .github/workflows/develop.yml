@@ -1,5 +1,5 @@
 ---
-name: RIF Marketplace CACHE deploy
+name: Marketplace CACHE DEVELOP deploy
 
 on:
   push:
