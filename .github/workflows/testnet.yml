@@ -1,5 +1,5 @@
 ---
-name: RIF Marketplace Testnet CACHE deploy
+name: Marketplace CACHE TESTNET deploy
 
 on:
   push:
