@@ -1,6 +1,7 @@
 import { HookContext } from '@feathersjs/feathers'
 import { disallow } from 'feathers-hooks-common'
 import { literal } from 'sequelize'
+import NotifierChannelModel from '../models/notifier-channel.model'
 import PlanModel from '../models/plan.model'
 
 export default {
@@ -22,7 +23,15 @@ export default {
             {
               model: PlanModel,
               as: 'plan',
-              where: literal('plan.id = subscriptionPlanId')
+              where: literal('plan.id = subscriptionPlanId'),
+              include: [
+                {
+                  model: NotifierChannelModel,
+                  as: 'channels',
+                  attributes: ['name'],
+                  required: true
+                }
+              ]
             }
           ],
           attributes: { exclude: ['subscriptionPlanId'] }
