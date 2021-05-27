@@ -13,13 +13,13 @@
       '0x67b5656d60a809915323bf2c40a8bef15a152e3e': 'rif'
     },
     notifierManager: {
-      contractAddress: "0xeea2Fc1D255Fd28aA15c6c2324Ad40B03267f9c5",
+      contractAddress: "0xc34175A79ACca40392bECD22ff10fAeBFE780Ae7",
       eventsEmitter: {
         confirmations: 2
       }
     },
     staking: {
-      contractAddress: "0xc34175A79ACca40392bECD22ff10fAeBFE780Ae7",
+      contractAddress: "0xe97DbD7116D168190F8A6E7beB1092c103c53a12",
       eventsEmitter: {
         confirmations: 2
       }
