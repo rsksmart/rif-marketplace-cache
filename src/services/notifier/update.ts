@@ -83,10 +83,6 @@ export async function updateProvider (provider: ProviderModel, sequelize: Sequel
       const [plan, created] = await PlanModel.findOrCreate({
         where: {
           id: String(id),
-          name,
-          planStatus,
-          daysLeft: validity,
-          quantity: notificationQuantity,
           providerId: provider.provider
         },
         transaction: dbTx
@@ -103,11 +99,15 @@ export async function updateProvider (provider: ProviderModel, sequelize: Sequel
 
       const channels = await updateChannels(notificationPreferences, plan.id, dbTx)
       const prices = await updatePrices(subscriptionPriceList, plan.id, dbTx)
+      logger.info('plan status3 ' + planStatus)
 
       await plan.update({
+        planStatus: planStatus,
+        daysLeft: validity,
+        quantity: notificationQuantity,
         channels,
         prices
-      })
+      }, { transaction: dbTx })
         .catch((error) => {
           logger.error('Plan update error. Rolling back...')
           dbTx.rollback()

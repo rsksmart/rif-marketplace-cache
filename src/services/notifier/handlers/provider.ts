@@ -12,15 +12,35 @@ import { NotifierSvcProvider } from '../notifierService/provider'
 import SubscriptionModel from '../models/subscription.model'
 import { getTokenSymbol } from '../../utils'
 import BigNumber from 'bignumber.js'
+import { NotifierProviderError } from '../../../errors'
+import PlanModel from '../models/plan.model'
+import NotifierChannelModel from '../models/notifier-channel.model'
+import PriceModel from '../models/price.model'
+import { deactivateDeletedPlans } from '../utils/updaterUtils'
 
 const logger = loggingFactory('notifier:handler:provider')
 
 export const handlers = {
+
   async ProviderRegistered (event: ProviderRegistered, { providerService }: NotifierServices): Promise<void> {
     const { provider, url } = event.returnValues
 
     try {
       await providerService.update(provider, { provider, url })
+      logger.info('finding plans for provider ' + provider)
+      try {
+        const currentPlans = await PlanModel.findAll({
+          where: { providerId: provider },
+          include: [{ model: NotifierChannelModel }, { model: PriceModel }]
+        })
+        const [host, port] = url.split(/(?::)(\d*)$/, 2)
+        const svcProvider = new NotifierSvcProvider({ host, port })
+        const { content: incomingPlans } = await svcProvider.getSubscriptionPlans()
+        deactivateDeletedPlans(currentPlans, incomingPlans)
+      } catch (error) {
+        logger.info('error finding plans ' + error)
+        throw new NotifierProviderError(error)
+      }
 
       if (providerService.emit) providerService.emit('updated', wrapEvent('ProviderRegistered', { provider, url }))
       logger.info(`Updated Provider ${provider} with url ${url}`)
