@@ -27,7 +27,6 @@ export const handlers = {
 
     try {
       await providerService.update(provider, { provider, url })
-      logger.info('finding plans for provider ' + provider)
       try {
         const currentPlans = await PlanModel.findAll({
           where: { providerId: provider },
@@ -35,11 +34,10 @@ export const handlers = {
         })
         const [host, port] = url.split(/(?::)(\d*)$/, 2)
         const svcProvider = new NotifierSvcProvider({ host, port })
-        const { content: incomingPlans } = await svcProvider.getSubscriptionPlans()
+        const { content: incomingPlans } = await svcProvider.getSubscriptionPlans() || {}
         deactivateDeletedPlans(currentPlans, incomingPlans)
       } catch (error) {
-        logger.info('error finding plans ' + error)
-        throw new NotifierProviderError(error)
+        logger.error('error finding or deactivating deleted plans ' + error)
       }
 
       if (providerService.emit) providerService.emit('updated', wrapEvent('ProviderRegistered', { provider, url }))
