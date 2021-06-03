@@ -1,7 +1,9 @@
+import NotifierChannelModel from '../models/notifier-channel.model'
 import PlanModel from '../models/plan.model'
-import { SubscriptionPlanDTO } from '../notifierService/provider'
+import PriceModel from '../models/price.model'
+import { NotifierSvcProvider, SubscriptionPlanDTO } from '../notifierService/provider'
 
-export function deactivateDeletedPlans (currentPlans:Array<PlanModel>, incomingPlans:Array<SubscriptionPlanDTO>):void {
+function deactivateDeletedPlans (currentPlans:Array<PlanModel>, incomingPlans:Array<SubscriptionPlanDTO>):void {
   if (currentPlans && incomingPlans) {
     const deletedPlans:Array<PlanModel> = currentPlans.filter(({
       planId: currentId,
@@ -31,4 +33,15 @@ export function deactivateDeletedPlans (currentPlans:Array<PlanModel>, incomingP
       PlanModel.update({ planStatus: 'INACTIVE', id: ids }, { where: { id: ids } })
     }
   }
+}
+
+export async function deactivateDeletedPlansForProvider (provider: string, url: string): Promise<void> {
+  const currentPlans = await PlanModel.findAll({
+    where: { providerId: provider },
+    include: [{ model: NotifierChannelModel }, { model: PriceModel }]
+  })
+  const [host, port] = url.split(/(?::)(\d*)$/, 2)
+  const svcProvider = new NotifierSvcProvider({ host, port })
+  const { content: incomingPlans } = await svcProvider.getSubscriptionPlans() || {}
+  deactivateDeletedPlans(currentPlans, incomingPlans)
 }

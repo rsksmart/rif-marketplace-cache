@@ -12,11 +12,7 @@ import { NotifierSvcProvider } from '../notifierService/provider'
 import SubscriptionModel from '../models/subscription.model'
 import { getTokenSymbol } from '../../utils'
 import BigNumber from 'bignumber.js'
-import { NotifierProviderError } from '../../../errors'
-import PlanModel from '../models/plan.model'
-import NotifierChannelModel from '../models/notifier-channel.model'
-import PriceModel from '../models/price.model'
-import { deactivateDeletedPlans } from '../utils/updaterUtils'
+import { deactivateDeletedPlansForProvider } from '../utils/updaterUtils'
 
 const logger = loggingFactory('notifier:handler:provider')
 
@@ -27,18 +23,7 @@ export const handlers = {
 
     try {
       await providerService.update(provider, { provider, url })
-      try {
-        const currentPlans = await PlanModel.findAll({
-          where: { providerId: provider },
-          include: [{ model: NotifierChannelModel }, { model: PriceModel }]
-        })
-        const [host, port] = url.split(/(?::)(\d*)$/, 2)
-        const svcProvider = new NotifierSvcProvider({ host, port })
-        const { content: incomingPlans } = await svcProvider.getSubscriptionPlans() || {}
-        deactivateDeletedPlans(currentPlans, incomingPlans)
-      } catch (error) {
-        logger.error('error finding or deactivating deleted plans ' + error)
-      }
+      await deactivateDeletedPlansForProvider(provider, url).catch(error => logger.error('error finding or deactivating deleted plans ' + error))
 
       if (providerService.emit) providerService.emit('updated', wrapEvent('ProviderRegistered', { provider, url }))
       logger.info(`Updated Provider ${provider} with url ${url}`)
