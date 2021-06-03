@@ -12,15 +12,18 @@ import { NotifierSvcProvider } from '../notifierService/provider'
 import SubscriptionModel from '../models/subscription.model'
 import { getTokenSymbol } from '../../utils'
 import BigNumber from 'bignumber.js'
+import { deactivateDeletedPlansForProvider } from '../utils/updaterUtils'
 
 const logger = loggingFactory('notifier:handler:provider')
 
 export const handlers = {
+
   async ProviderRegistered (event: ProviderRegistered, { providerService }: NotifierServices): Promise<void> {
     const { provider, url } = event.returnValues
 
     try {
       await providerService.update(provider, { provider, url })
+      await deactivateDeletedPlansForProvider(provider, url).catch(error => logger.error('error finding or deactivating deleted plans ' + error))
 
       if (providerService.emit) providerService.emit('updated', wrapEvent('ProviderRegistered', { provider, url }))
       logger.info(`Updated Provider ${provider} with url ${url}`)

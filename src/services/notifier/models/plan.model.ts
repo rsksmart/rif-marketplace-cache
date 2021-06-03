@@ -17,8 +17,11 @@ export const scopes = {
 }))
 @Table({ freezeTableName: true, tableName: 'notifier_plan', timestamps: false })
 export default class PlanModel extends Model {
-    @Column({ primaryKey: true, type: DataType.INTEGER })
+    @Column({ primaryKey: true, autoIncrement: true, type: DataType.INTEGER })
     id!: number
+
+    @Column({ allowNull: false, type: DataType.INTEGER })
+    planId!: number
 
     @Column({ type: DataType.STRING })
     name!: string

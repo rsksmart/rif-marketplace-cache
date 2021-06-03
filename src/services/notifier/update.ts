@@ -60,7 +60,7 @@ function updateChannels (channels: string[], planId: number, dbTx: Transaction) 
     })
 }
 
-export async function updateProvider (provider: ProviderModel, sequelize: Sequelize) {
+export async function updateProvider (provider: ProviderModel, sequelize: Sequelize):Promise<void> {
   logger.info(`Updating ${provider.provider}'s subscription plans.`)
 
   const [host, port] = provider.url.split(/(?::)(\d*)$/, 2)
@@ -82,7 +82,7 @@ export async function updateProvider (provider: ProviderModel, sequelize: Sequel
 
       const [plan, created] = await PlanModel.findOrCreate({
         where: {
-          id: String(id),
+          planId: String(id),
           name,
           planStatus,
           daysLeft: validity,
@@ -92,7 +92,7 @@ export async function updateProvider (provider: ProviderModel, sequelize: Sequel
         transaction: dbTx
       })
         .catch((error) => {
-          logger.error('Plan update error. Rolling back...')
+          logger.error('Plan update error. Rolling back...' + error)
           dbTx.rollback()
           throw error
         })
@@ -107,7 +107,7 @@ export async function updateProvider (provider: ProviderModel, sequelize: Sequel
       await plan.update({
         channels,
         prices
-      })
+      }, { transaction: dbTx })
         .catch((error) => {
           logger.error('Plan update error. Rolling back...')
           dbTx.rollback()
