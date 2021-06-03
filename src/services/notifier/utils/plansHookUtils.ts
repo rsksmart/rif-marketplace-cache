@@ -9,7 +9,7 @@ function queryPriceLimits (sequelize: Sequelize, fiatSymbol: any): Promise<{pMin
       MAX(fiat) as pMax
     FROM
     ( 
-      SELECT planId,
+      SELECT prices.planId,
       CAST(
         CAST(prices.price as REAL) / 1000000000000000000 * COALESCE(rates.${sequelize.escape(fiatSymbol)}, 0) as REAL
       ) AS fiat

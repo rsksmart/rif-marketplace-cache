@@ -111,6 +111,12 @@ const migrationCommands = function (transaction: any): Commands {
             type: Sequelize.INTEGER,
             field: 'id',
             primaryKey: true,
+            allowNull: false,
+            autoIncrement: true
+          },
+          planId: {
+            type: Sequelize.INTEGER,
+            field: 'planId',
             allowNull: false
           },
           name: {
