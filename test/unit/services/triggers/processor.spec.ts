@@ -34,6 +34,7 @@ const expect = chai.expect
 
 const subscriptionPlanMock = {
   id: 1,
+  planId: 1,
   name: 'plan_1',
   planStatus: 'ACTIVE',
   daysLeft: 100,
