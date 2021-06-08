@@ -30,7 +30,7 @@ function deactivateDeletedPlans (currentPlans:Array<PlanModel>, incomingPlans:Ar
 
     if (deletedPlans.length) {
       const ids:Array<number> = deletedPlans.map(deletedPlan => deletedPlan.id)
-      PlanModel.update({ planStatus: 'INACTIVE', id: ids }, { where: { id: ids } })
+      PlanModel.update({ planStatus: 'INACTIVE' }, { where: { id: ids } })
     }
   }
 }
