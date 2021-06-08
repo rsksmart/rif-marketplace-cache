@@ -4,7 +4,7 @@ import type { Eth } from 'web3-eth'
 
 const HEALTHCHECK_ROUTE = '/healthcheck'
 export default function (app: Application): void {
-  app.use(HEALTHCHECK_ROUTE, async (req, res) => {
+  app.use(HEALTHCHECK_ROUTE, async (_: never, res: any) => {
     const sequelize = app.get('sequelize') as Sequelize
     try {
       await sequelize.authenticate()
