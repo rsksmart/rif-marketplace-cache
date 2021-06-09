@@ -54,7 +54,7 @@ export const handlers = {
     const notifierService = new NotifierSvcProvider({ host, port })
     const [subscriptionDTO] = await notifierService.getSubscriptions(consumer, [hash])
 
-    if (!subscriptionDTO) throw new Error(`Subscription ${hash} not found on provider's service at ${host}:${port} for consumer ${consumer}`)
+    if (!subscriptionDTO) return
 
     const {
       currency: {
