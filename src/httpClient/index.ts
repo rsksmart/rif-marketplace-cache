@@ -1,4 +1,5 @@
 import http, { ClientRequestArgs } from 'http'
+import https from 'https'
 import { FetchError } from 'node-fetch'
 
 export type ReturnObject<T> = {
@@ -22,13 +23,16 @@ export abstract class ServiceProvider<ResultType> {
       this._defaultOptions = {
         ...this.defaultOptions,
         ...options,
-        host: url.hostname
+        host: url.hostname,
+        protocol: url.protocol
       }
     }
 
     protected _fetch (options: ClientRequestArgs = {}) {
+      const { protocol } = this._defaultOptions
+      const service = protocol?.toLowerCase() === 'https:' ? https : http
       return new Promise<ReturnObject<ResultType>>((resolve, reject) => {
-        const request = http.request({
+        const request = service.request({
           ...this._defaultOptions,
           ...options
         }, (response) => {
