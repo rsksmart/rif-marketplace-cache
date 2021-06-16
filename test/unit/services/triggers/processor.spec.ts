@@ -74,7 +74,8 @@ const subscriptionMock = {
     {
       value: '0xc0246e727ecc35b961102dc03839e5306d2b5b21',
       typeAsString: 'address'
-    }
+    },
+  signature: '0x8bcf2775c3b6321cd76e93a608770fe419a2b9407caee5a48179e746e02768d01d634a5c7c2ba0af13aea71ba690c3af91c1b381e2a0e2aa483e2e01fdd85afa1b'
 }
 
 describe('Notifier services: Events Processor', () => {
@@ -178,7 +179,8 @@ describe('Notifier services: Events Processor', () => {
         status: subscriptionMock.status,
         paid: subscriptionMock.paid,
         topics: subscriptionMock.topics,
-        subscriptionPlanId: subscriptionMock.subscriptionPlanId
+        subscriptionPlanId: subscriptionMock.subscriptionPlanId,
+        signature: subscriptionMock.signature
       }
 
       sandbox.assert.calledOnce(getSubscriptionsSpy)
