@@ -70,7 +70,8 @@ export const handlers = {
       notificationBalance,
       subscriptionPlanId,
       previousSubscription,
-      topics
+      topics,
+      signature
     } = subscriptionDTO
 
     const tokenSymbol = getTokenSymbol(tokenAddress, SupportedServices.NOTIFIER).toLowerCase()
@@ -88,7 +89,8 @@ export const handlers = {
       notificationBalance,
       subscriptionPlanId,
       previousSubscription,
-      topics
+      topics,
+      signature
     }
 
     await SubscriptionModel.create(subscription)
