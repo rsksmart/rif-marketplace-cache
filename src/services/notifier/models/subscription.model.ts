@@ -67,4 +67,7 @@ export default class SubscriptionModel extends Model {
 
   @BelongsTo(() => PlanModel)
   plan!: PlanModel
+
+  @Column({ allowNull: false })
+  signature!: string
 }
