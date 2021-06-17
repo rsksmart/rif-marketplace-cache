@@ -80,36 +80,45 @@ export async function updateProvider (provider: ProviderModel, sequelize: Sequel
     }) => {
       const dbTx = await sequelize.transaction({ autocommit: false })
 
-      const [plan, created] = await PlanModel.findOrCreate({
+      let plan = await PlanModel.findOne({
         where: {
           planId: String(id),
           name,
-          planStatus,
           daysLeft: validity,
           quantity: notificationQuantity,
           providerId: provider.provider
-        },
-        transaction: dbTx
+        }
       })
-        .catch((error) => {
-          logger.error('Plan update error. Rolling back...' + error)
-          dbTx.rollback()
-          throw error
-        })
 
-      if (created) {
+      if (!plan) {
+        plan = await PlanModel.create(
+          {
+            planId: String(id),
+            planStatus,
+            name,
+            daysLeft: validity,
+            quantity: notificationQuantity,
+            providerId: provider.provider
+          }, {
+            transaction: dbTx
+          })
+          .catch((error) => {
+            logger.error('Plan creation error. Rolling back...' + error)
+            dbTx.rollback()
+            throw error
+          })
+
         logger.info(`Added new plan "${name}"`)
+      } else {
+        plan.set('planStatus', planStatus)
       }
-
       const channels = await updateChannels(notificationPreferences, plan.id, dbTx)
       const prices = await updatePrices(subscriptionPriceList, plan.id, dbTx)
 
-      await plan.update({
-        channels,
-        prices
-      }, { transaction: dbTx })
+      plan.set({ channels, prices })
+      await plan.save({ transaction: dbTx })
         .catch((error) => {
-          logger.error('Plan update error. Rolling back...')
+          logger.error('Plan channels & prices error. Rolling back...')
           dbTx.rollback()
           throw error
         })
