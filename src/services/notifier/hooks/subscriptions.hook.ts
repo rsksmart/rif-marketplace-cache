@@ -28,13 +28,22 @@ export default {
                 {
                   model: NotifierChannelModel,
                   as: 'channels',
-                  attributes: ['name'],
                   required: true
                 }
-              ]
+              ],
+              attributes: {
+                include: [
+                  [
+                    literal('(SELECT url FROM notifier_provider AS provider WHERE SubscriptionModel.providerId = provider.provider)'),
+                    'url'
+                  ]
+                ]
+              }
             }
           ],
-          attributes: { exclude: ['subscriptionPlanId'] }
+          attributes: {
+            exclude: ['subscriptionPlanId']
+          }
         }
       }
     ],
