@@ -109,7 +109,7 @@ export async function updateProvider (provider: ProviderModel, sequelize: Sequel
           })
 
         logger.info(`Added new plan "${name}"`)
-      } else {
+      } else if (plan.planStatus !== planStatus) {
         plan.set('planStatus', planStatus)
       }
       const channels = await updateChannels(notificationPreferences, plan.id, dbTx)
