@@ -31,3 +31,6 @@ oclif.manifest.json
 # Default data dir
 /data
 /data-test
+
+# misc
+.DS_Store
