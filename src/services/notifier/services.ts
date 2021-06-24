@@ -24,8 +24,6 @@ export class SubscriptionsService extends Service {
   emit?: EmitFn
 
   async find ({ query }: Params): Promise<SubscriptionModel[]> {
-    await new Promise(resolve => setTimeout(resolve, 3000))
-
     // we don't relay on status, notificationBalance and paid properties, they don't mirror their values on the notifier provider
     // so we ignore them in the original query, update them and then run the original query
     const tmpQuery = { ...query }
