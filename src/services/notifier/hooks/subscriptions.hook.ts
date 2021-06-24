@@ -44,7 +44,35 @@ export default {
         }
       }
     ],
-    get: [],
+    get: [
+      (context: HookContext) => {
+        context.params.sequelize = {
+          raw: false,
+          nest: true,
+          include: [
+            {
+              model: PlanModel,
+              as: 'plan',
+              where: literal('plan.id = subscriptionPlanId'),
+              include: [
+                {
+                  model: NotifierChannelModel,
+                  as: 'channels',
+                  attributes: ['name'],
+                  required: true
+                }
+              ]
+            },
+            {
+              model: ProviderModel,
+              as: 'provider',
+              attributes: ['url']
+            }
+          ],
+          attributes: { exclude: ['subscriptionPlanId'] }
+        }
+      }
+    ],
     create: disallow('external'),
     update: disallow('external'),
     patch: disallow('external'),

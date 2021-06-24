@@ -49,12 +49,11 @@ export async function deactivateDeletedPlansForProvider(provider: string, url: s
 }
 
 export const updateSubscriptionsBy = async (
-  providerUrl: string, consumerAddress: string, subscriptions: SubscriptionModel[]
+  providerUrl: string, consumerAddress: string, subsHashesToUpdate: string[]
 ): Promise<any> => {
   const [host, port] = providerUrl.split(/(?::)(\d*)$/, 2)
   const svcProvider = new NotifierSvcProvider({ host, port })
-  const hashes = subscriptions.map(subscription => subscription.hash)
-  const subscriptionsDTO: any[] = await svcProvider.getSubscriptions(consumerAddress, hashes)
+  const subscriptionsDTO: any[] = await svcProvider.getSubscriptions(consumerAddress, subsHashesToUpdate)
 
   const promises: Promise<[number, SubscriptionModel[]]>[] = []
   subscriptionsDTO.forEach(subscriptionDTO => {
