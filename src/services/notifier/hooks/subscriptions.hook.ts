@@ -3,6 +3,7 @@ import { disallow } from 'feathers-hooks-common'
 import { literal } from 'sequelize'
 import NotifierChannelModel from '../models/notifier-channel.model'
 import PlanModel from '../models/plan.model'
+import ProviderModel from '../models/provider.model'
 
 export default {
   before: {
@@ -32,6 +33,11 @@ export default {
                   required: true
                 }
               ]
+            },
+            {
+              model: ProviderModel,
+              as: 'provider',
+              attributes: ['url']
             }
           ],
           attributes: { exclude: ['subscriptionPlanId'] }
