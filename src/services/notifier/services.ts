@@ -1,15 +1,15 @@
 import { Service } from 'feathers-sequelize'
-import { QueryTypes, Op } from 'sequelize'
+import { QueryTypes, Op, literal } from 'sequelize'
 import BigNumber from 'bignumber.js'
 
 import type { EmitFn } from '../../definitions'
 import NotifierStakeModel, { getStakesForAccount } from './models/notifier-stake.model'
 import SubscriptionModel from './models/subscription.model'
 import ProviderModel from './models/provider.model'
-import { loggingFactory } from '../../logger'
 import { updateSubscriptionsBy } from './utils/updaterUtils'
-
-const logger = loggingFactory('notifier:service')
+import PlanModel from './models/plan.model'
+import NotifierChannelModel from './models/notifier-channel.model'
+import { Params } from '@feathersjs/feathers'
 
 export class ProviderService extends Service {
   emit?: EmitFn
@@ -23,21 +23,23 @@ type HashesByProviderAndConsumer = Record<string, Record<string, string[]>>
 export class SubscriptionsService extends Service {
   emit?: EmitFn
 
-  async find(params: any): Promise<SubscriptionModel[]> {
-    console.log('entro!');
+  async find ({ query }: Params): Promise<SubscriptionModel[]> {
+    await new Promise(resolve => setTimeout(resolve, 3000))
 
-    const { query } = params
-    // we don't relay on status, notificationBalance and paid properties as they might be out of date
+    // we don't relay on status, notificationBalance and paid properties, they don't mirror their values on the notifier provider
     // so we ignore them in the original query, update them and then run the original query
     const tmpQuery = { ...query }
-    delete query.status
-    delete query.notificationBalance
-    delete query.paid
 
-    console.log({ tmpQuery })
+    if (tmpQuery) {
+      delete tmpQuery.status
+      delete tmpQuery.notificationBalance
+      delete tmpQuery.paid
+    }
 
-    // run query ignoring outdated fields
+    // run query ignoring non-relayable fields
     const accountSubscriptions = await SubscriptionModel.findAll({
+      raw: false,
+      nest: true,
       where: tmpQuery,
       include: [
         {
@@ -47,8 +49,6 @@ export class SubscriptionsService extends Service {
         }
       ]
     })
-
-    console.log('hashes by provider and consumer')
 
     // provider -> {consumer} -> [hashes]
     const hashesByProviderAndConsumer = accountSubscriptions.reduce(
@@ -65,11 +65,8 @@ export class SubscriptionsService extends Service {
       }, {}
     )
 
-    console.log({ hashesByProviderAndConsumer })
-    console.log('before fetching from svc')
-
-    // updates DB fetching the involved subscriptions directly from notifier service
-    const updateDataPromises: Promise<any>[] = []
+    // updates DB fetching the involved subscriptions directly from the notifier service
+    const updateDataPromises: Promise<void>[] = []
     Object.keys(hashesByProviderAndConsumer).forEach(providerUrl => {
       const providerSubscriptions = hashesByProviderAndConsumer[providerUrl]
       Object.keys(providerSubscriptions).forEach(consumerAddress => {
@@ -79,71 +76,39 @@ export class SubscriptionsService extends Service {
     })
 
     await Promise.all(updateDataPromises)
-    console.log('all svc done')
-    console.log({ query })
+
+    if (query?.status) {
+      const { $ne } = query.status
+      query.status = {
+        [Op.notLike]: `%${$ne}%`
+      }
+    }
 
     return SubscriptionModel.findAll({
+      raw: false,
+      nest: true,
       where: query,
       include: [
         {
-          model: ProviderModel,
-          as: 'provider',
-          attributes: ['url']
-        }
-      ]
-    })
-
-    // return updatedResult
-  }
-
-  async get(consumer: string): Promise<SubscriptionModel[]> {
-    // find all subscriptions by consumer
-    const accountSubscriptions = await SubscriptionModel.findAll({
-      where: {
-        consumer: consumer.toLowerCase()
-      },
-      include: [
+          model: PlanModel,
+          as: 'plan',
+          where: literal('plan.id = subscriptionPlanId'),
+          include: [
+            {
+              model: NotifierChannelModel,
+              as: 'channels',
+              attributes: ['name'],
+              required: true
+            }
+          ]
+        },
         {
           model: ProviderModel,
           as: 'provider',
           attributes: ['url']
         }
-      ]
-    })
-
-    // group them by provider url
-    const subsByProvider = accountSubscriptions.reduce(
-      (acc: Record<string, SubscriptionModel[]>, current: SubscriptionModel) => {
-        const { provider: { url } } = current
-
-        if (!acc[url]) {
-          acc[url] = [current]
-        } else {
-          acc[url] = [...acc[url], current]
-        }
-        return acc
-      }, {}
-    )
-
-    // update all subscriptions with latest provider status
-    const promises: Promise<any>[] = []
-    Object.keys(subsByProvider).forEach(providerUrl => promises.push(
-      updateSubscriptionsBy(providerUrl, consumer, subsByProvider[providerUrl].map(subs => subs.hash))
-    ))
-    await Promise.all(promises)
-    // query DB with updated data
-    return SubscriptionModel.findAll({
-      where: {
-        consumer: consumer.toLowerCase(),
-        status: { [Op.notLike]: 'PENDING' }
-      },
-      include: [
-        {
-          model: ProviderModel,
-          as: 'provider',
-          attributes: ['url']
-        }
-      ]
+      ],
+      attributes: { exclude: ['subscriptionPlanId'] }
     })
   }
 }
@@ -151,7 +116,7 @@ export class SubscriptionsService extends Service {
 export class NotifierStakeService extends Service {
   emit?: EmitFn
 
-  async get(account: string): Promise<{ totalStakedFiat: string, stakes: Array<NotifierStakeModel> }> {
+  async get (account: string): Promise<{ totalStakedFiat: string, stakes: Array<NotifierStakeModel> }> {
     const sequelize = this.Model.sequelize
 
     const query = getStakesForAccount(sequelize, account.toLowerCase())

@@ -1,11 +1,10 @@
-import { where } from 'sequelize'
 import NotifierChannelModel from '../models/notifier-channel.model'
 import PlanModel from '../models/plan.model'
 import PriceModel from '../models/price.model'
 import SubscriptionModel from '../models/subscription.model'
 import { NotifierSvcProvider, SubscriptionPlanDTO } from '../notifierService/provider'
 
-function deactivateDeletedPlans(currentPlans: Array<PlanModel>, incomingPlans: Array<SubscriptionPlanDTO>): void {
+function deactivateDeletedPlans (currentPlans: Array<PlanModel>, incomingPlans: Array<SubscriptionPlanDTO>): void {
   if (currentPlans && incomingPlans) {
     const deletedPlans: Array<PlanModel> = currentPlans.filter(({
       planId: currentId,
@@ -37,7 +36,7 @@ function deactivateDeletedPlans(currentPlans: Array<PlanModel>, incomingPlans: A
   }
 }
 
-export async function deactivateDeletedPlansForProvider(provider: string, url: string): Promise<void> {
+export async function deactivateDeletedPlansForProvider (provider: string, url: string): Promise<void> {
   const currentPlans = await PlanModel.findAll({
     where: { providerId: provider },
     include: [{ model: NotifierChannelModel }, { model: PriceModel }]
@@ -50,7 +49,7 @@ export async function deactivateDeletedPlansForProvider(provider: string, url: s
 
 export const updateSubscriptionsBy = async (
   providerUrl: string, consumerAddress: string, subsHashesToUpdate: string[]
-): Promise<any> => {
+): Promise<void> => {
   const [host, port] = providerUrl.split(/(?::)(\d*)$/, 2)
   const svcProvider = new NotifierSvcProvider({ host, port })
   const subscriptionsDTO: any[] = await svcProvider.getSubscriptions(consumerAddress, subsHashesToUpdate)
@@ -71,6 +70,4 @@ export const updateSubscriptionsBy = async (
       )
     )
   })
-
-  return promises
 }
