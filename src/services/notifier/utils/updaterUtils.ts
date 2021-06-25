@@ -70,4 +70,5 @@ export const updateSubscriptionsBy = async (
       )
     )
   })
+  await Promise.all(promises)
 }
