@@ -32,7 +32,7 @@ export default {
           delete tmpQuery.paid
         }
 
-        // run query ignoring non-relayable fields
+        // run query ignoring non-reliable fields
         const accountSubscriptions = await SubscriptionModel.findAll({
           raw: false,
           nest: true,
@@ -91,9 +91,9 @@ export default {
         }
 
         context.params.sequelize = {
+          ...sequelize,
           raw: false,
           nest: true,
-          where: query,
           include: [
             {
               model: PlanModel,
