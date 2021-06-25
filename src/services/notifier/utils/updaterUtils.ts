@@ -54,21 +54,15 @@ export const updateSubscriptionsBy = async (
   const svcProvider = new NotifierSvcProvider({ host, port })
   const subscriptionsDTO: any[] = await svcProvider.getSubscriptions(consumerAddress, subsHashesToUpdate)
 
-  const promises: Promise<[number, SubscriptionModel[]]>[] = []
-  subscriptionsDTO.forEach(subscriptionDTO => {
-    const {
-      hash,
-      status,
-      paid,
-      notificationBalance
-    } = subscriptionDTO
-
-    promises.push(
-      SubscriptionModel.update(
-        { status, paid, notificationBalance },
-        { where: { hash } }
-      )
+  await Promise.all(subscriptionsDTO.map(({
+    hash,
+    status,
+    paid,
+    notificationBalance
+  }) =>
+    SubscriptionModel.update(
+      { status, paid, notificationBalance },
+      { where: { hash } }
     )
-  })
-  await Promise.all(promises)
+  ))
 }
