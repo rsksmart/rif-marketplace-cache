@@ -1,8 +1,11 @@
+import { loggingFactory } from '../../../logger'
 import NotifierChannelModel from '../models/notifier-channel.model'
 import PlanModel from '../models/plan.model'
 import PriceModel from '../models/price.model'
 import SubscriptionModel from '../models/subscription.model'
 import { NotifierSvcProvider, SubscriptionPlanDTO } from '../notifierService/provider'
+
+const logger = loggingFactory('notifier:updaterUtils')
 
 function deactivateDeletedPlans (currentPlans: Array<PlanModel>, incomingPlans: Array<SubscriptionPlanDTO>): void {
   if (currentPlans && incomingPlans) {
@@ -52,17 +55,21 @@ export const updateSubscriptionsBy = async (
 ): Promise<void> => {
   const [host, port] = providerUrl.split(/(?::)(\d*)$/, 2)
   const svcProvider = new NotifierSvcProvider({ host, port })
-  const subscriptionsDTO: any[] = await svcProvider.getSubscriptions(consumerAddress, subsHashesToUpdate)
+  try {
+    const subscriptionsDTO: any[] = await svcProvider.getSubscriptions(consumerAddress, subsHashesToUpdate)
 
-  await Promise.all(subscriptionsDTO.map(({
-    hash,
-    status,
-    paid,
-    notificationBalance
-  }) =>
-    SubscriptionModel.update(
-      { status, paid, notificationBalance },
-      { where: { hash } }
-    )
-  ))
+    await Promise.all(subscriptionsDTO.map(({
+      hash,
+      status,
+      paid,
+      notificationBalance
+    }) =>
+      SubscriptionModel.update(
+        { status, paid, notificationBalance },
+        { where: { hash } }
+      )
+    ))
+  } catch (error) {
+    logger.error('Unable to update subscriptions from notifier service provider', error)
+  }
 }
