@@ -57,7 +57,6 @@ export const updateSubscriptionsBy = async (
   const svcProvider = new NotifierSvcProvider({ host, port })
   try {
     const subscriptionsDTO: any[] = await svcProvider.getSubscriptions(consumerAddress, subsHashesToUpdate)
-
     await Promise.all(subscriptionsDTO.map(({
       hash,
       status,
@@ -67,9 +66,9 @@ export const updateSubscriptionsBy = async (
       SubscriptionModel.update(
         { status, paid, notificationBalance },
         { where: { hash } }
-      )
+      ).catch(error => logger.warn(`Unable to update subscription with hash ${hash} in the database`, error))
     ))
   } catch (error) {
-    logger.error('Unable to update subscriptions from notifier service provider', error)
+    logger.warn('Unable to update subscriptions from notifier service provider', error)
   }
 }
