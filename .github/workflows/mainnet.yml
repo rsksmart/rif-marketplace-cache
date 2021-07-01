@@ -1,5 +1,5 @@
 ---
-name: RIF Marketplace CACHE deploy
+name: RIF Marketplace CACHE MAINNET deploy
 
 on:
   push:
@@ -7,7 +7,7 @@ on:
       - mainnet
 
 jobs:
-  deploy-staging:
+  deploy-mainnet:
     name: RIF Marketplace CACHE - MAINNET
     runs-on: ubuntu-latest
     environment:
