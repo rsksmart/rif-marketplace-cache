@@ -21,7 +21,7 @@ COPY --from=compiler /usr/src/app/lib ./lib/
 COPY --from=compiler /usr/src/app/node_modules ./node_modules/
 COPY package*.json ./
 COPY bin ./bin/
-COPY config ./config/
+COPY --chown=node:node config ./config/
 COPY scripts ./scripts/
 
 RUN sed -i 's#"./src/cli"#"./lib/cli"#g' package.json
@@ -32,5 +32,5 @@ ENV LOG_NO_COLORS 'true'
 
 ENTRYPOINT [ "./bin/entrypoint" ]
 
-LABEL maintainer="adam@iovlabs.org"
+LABEL maintainer="artem@iovlabs.org"
 LABEL description="Blockchain caching server for RIF Marketplace"

@@ -2,5 +2,7 @@
 
 env
 
+node scripts/update-precache-blocks.js
 ./bin/run db-migration --up
+./bin/run precache all
 ./bin/run start "$@"
