@@ -69,12 +69,13 @@ export const handlers = {
       status,
       notificationBalance,
       subscriptionPlanId,
-      previousSubscription,
+      previousSubscription: previousSubscriptionModel,
       topics,
       signature
     } = subscriptionDTO
 
     const tokenSymbol = getTokenSymbol(tokenAddress, SupportedServices.NOTIFIER).toLowerCase()
+    const previousSubscriptionHash = previousSubscriptionModel?.hash
 
     const subscription = {
       providerId: provider,
@@ -88,7 +89,7 @@ export const handlers = {
       status,
       notificationBalance,
       subscriptionPlanId,
-      previousSubscription,
+      previousSubscription: previousSubscriptionHash,
       topics,
       signature
     }
