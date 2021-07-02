@@ -74,7 +74,7 @@ export default {
         await Promise.all(updateDataPromises)
         return context
       },
-      (context: HookContext): HookContext => {
+      (context: HookContext): void => {
         const { query, sequelize } = context.params
 
         if (query?.status) {
@@ -83,6 +83,7 @@ export default {
           if ($ne) {
             sequelize.where = {
               ...sequelize.where,
+              ...query,
               status: {
                 [Op.notLike]: `%${$ne}%`
               }
@@ -111,12 +112,12 @@ export default {
             {
               model: ProviderModel,
               as: 'provider',
-              attributes: ['url']
+              attributes: ['url'],
+              required: true
             }
           ],
           attributes: { exclude: ['subscriptionPlanId'] }
         }
-        return context
       }
     ],
     get: [],
