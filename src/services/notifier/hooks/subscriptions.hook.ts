@@ -55,7 +55,8 @@ export default {
               acc[url] = {}
               acc[url][consumer] = [hash]
             } else {
-              acc[url][consumer] = [...acc[url][consumer], hash]
+              const currentHashes = acc[url][consumer] || []
+              acc[url][consumer] = [...currentHashes, hash]
             }
             return acc
           }, {}
