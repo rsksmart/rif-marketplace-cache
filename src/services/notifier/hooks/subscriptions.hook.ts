@@ -100,7 +100,7 @@ export default {
             {
               model: PlanModel,
               as: 'plan',
-              where: literal('plan.id = subscriptionPlanId'),
+              where: literal('plan.id = subscriptionPlanId AND plan.planStatus = "ACTIVE" AND plan.providerId = SubscriptionModel.providerId'),
               include: [
                 {
                   model: NotifierChannelModel,
