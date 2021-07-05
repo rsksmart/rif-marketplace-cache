@@ -61,10 +61,11 @@ export const updateSubscriptionsBy = async (
       hash,
       status,
       paid,
-      notificationBalance
+      notificationBalance,
+      expirationDate
     }) =>
       SubscriptionModel.update(
-        { status, paid, notificationBalance },
+        { status, paid, notificationBalance, expirationDate },
         { where: { hash } }
       ).catch(error => logger.warn(`Unable to update subscription with hash ${hash} in the database`, error))
     ))
