@@ -54,7 +54,7 @@ export async function deactivateDeletedPlansForProvider (provider: string, url: 
   deactivateDeletedPlans(currentPlans, incomingPlans)
 }
 
-const findOrCreateSubscription = async (subscriptionDTO:any, url:string) => {
+export const createSubscription = (subscriptionDTO:any, provider:string):Promise<SubscriptionModel> => {
   const {
     hash,
     currency: {
@@ -74,19 +74,8 @@ const findOrCreateSubscription = async (subscriptionDTO:any, url:string) => {
     signature,
     userAddress: consumer
   } = subscriptionDTO
-
-  const found = await SubscriptionModel.findOne({ where: { hash } })
-
-  if (found) {
-    return SubscriptionModel.update(
-      { status, paid, notificationBalance, expirationDate },
-      { where: { hash } })
-  }
-
   const tokenSymbol = getTokenSymbol(tokenAddress, SupportedServices.NOTIFIER).toLowerCase()
   const previousSubscriptionHash = previousSubscriptionModel?.hash
-  const providerModel = await ProviderModel.findOne({ where: { url } })
-  const { provider } = providerModel?.id
 
   const subscription = {
     providerId: provider,
@@ -104,29 +93,29 @@ const findOrCreateSubscription = async (subscriptionDTO:any, url:string) => {
     topics,
     signature
   }
-  SubscriptionModel.create(subscription)
+  return SubscriptionModel.create(subscription)
+}
+
+const findOrCreateSubscription = async (subscriptionDTO:any, url:string) => {
+  const { hash, status, paid, notificationBalance, expirationDate } = subscriptionDTO
+  const found = await SubscriptionModel.findOne({ where: { hash } })
+
+  if (found) {
+    return SubscriptionModel.update(
+      { status, paid, notificationBalance, expirationDate },
+      { where: { hash } })
+  }
+  const providerModel = await ProviderModel.findOne({ where: { url } })
+  const provider:string|undefined = providerModel?.provider
+  return provider ? createSubscription(subscriptionDTO, provider) : null
 }
 
 export const updateSubscriptionsBy = async (
-  providerUrl: string, consumerAddress: string, subsHashesToUpdate: string[]
-): Promise<void> => {
+  providerUrl: string, consumerAddress: string): Promise<void> => {
   const [host, port] = providerUrl.split(/(?::)(\d*)$/, 2)
   const svcProvider = new NotifierSvcProvider({ host, port })
   try {
-    const subscriptionsDTO = await svcProvider.getSubscriptions(consumerAddress, subsHashesToUpdate)
-    /* await Promise.all(subscriptionsDTO.map(({
-      hash,
-      status,
-      paid,
-      notificationBalance,
-      expirationDate
-    }) => {
-      SubscriptionModel.update(
-        { status, paid, notificationBalance, expirationDate },
-        { where: { hash } }
-      ).catch(error => logger.warn(`Unable to update subscription with hash ${hash} in the database`, error))
-    }
-    )) */
+    const subscriptionsDTO = await svcProvider.getSubscriptions(consumerAddress)
     await subscriptionsDTO.forEach((subscriptionDTO:any) => findOrCreateSubscription(subscriptionDTO, providerUrl))
   } catch (error) {
     logger.warn('Unable to update subscriptions from notifier service provider', error)

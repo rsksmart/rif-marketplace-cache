@@ -2,17 +2,14 @@ import { Eth } from 'web3-eth'
 import { ProviderRegistered, SubscriptionCreated } from '@rsksmart/rif-marketplace-notifier/types/web3-v1-contracts/NotifierManager'
 
 import { loggingFactory } from '../../../logger'
-import { Handler, NotificationManagerEvents, SupportedServices } from '../../../definitions'
+import { Handler, NotificationManagerEvents } from '../../../definitions'
 import { wrapEvent } from '../../../utils'
 
 import { NotifierServices } from '../index'
 import ProviderModel from '../models/provider.model'
 import { updater } from '../update'
 import { NotifierSvcProvider } from '../notifierService/provider'
-import SubscriptionModel from '../models/subscription.model'
-import { getTokenSymbol } from '../../utils'
-import BigNumber from 'bignumber.js'
-import { deactivateDeletedPlansForProvider } from '../utils/updaterUtils'
+import { createSubscription, deactivateDeletedPlansForProvider } from '../utils/updaterUtils'
 
 const logger = loggingFactory('notifier:handler:provider')
 
@@ -55,46 +52,7 @@ export const handlers = {
     const [subscriptionDTO] = await notifierService.getSubscriptions(consumer, [hash])
 
     if (!subscriptionDTO) return
-
-    const {
-      currency: {
-        address: {
-          value: tokenAddress
-        }
-      },
-      price,
-      expirationDate,
-      id: subscriptionId,
-      paid,
-      status,
-      notificationBalance,
-      subscriptionPlanId,
-      previousSubscription: previousSubscriptionModel,
-      topics,
-      signature
-    } = subscriptionDTO
-
-    const tokenSymbol = getTokenSymbol(tokenAddress, SupportedServices.NOTIFIER).toLowerCase()
-    const previousSubscriptionHash = previousSubscriptionModel?.hash
-
-    const subscription = {
-      providerId: provider,
-      price: new BigNumber(price),
-      rateId: tokenSymbol,
-      expirationDate: new Date(expirationDate),
-      hash,
-      consumer,
-      subscriptionId,
-      paid,
-      status,
-      notificationBalance,
-      subscriptionPlanId,
-      previousSubscription: previousSubscriptionHash,
-      topics,
-      signature
-    }
-
-    await SubscriptionModel.create(subscription)
+    const subscription = await createSubscription(subscriptionDTO, provider)
 
     if (subscriptionService.emit) subscriptionService.emit('created', wrapEvent('SubscriptionCreated', subscription))
     logger.info(`Created new Subscription ${hash} by Consumer ${consumer} for Provider ${provider}`)

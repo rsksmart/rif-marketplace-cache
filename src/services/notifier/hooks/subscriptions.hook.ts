@@ -67,8 +67,7 @@ export default {
         Object.keys(hashesByProviderAndConsumer).forEach(providerUrl => {
           const providerSubscriptions = hashesByProviderAndConsumer[providerUrl]
           Object.keys(providerSubscriptions).forEach(consumerAddress => {
-            const hashes = providerSubscriptions[consumerAddress]
-            updateDataPromises.push(updateSubscriptionsBy(providerUrl, consumerAddress, hashes))
+            updateDataPromises.push(updateSubscriptionsBy(providerUrl, consumerAddress))
           })
         })
 
