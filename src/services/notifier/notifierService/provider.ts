@@ -45,14 +45,14 @@ export class NotifierSvcProvider extends ServiceProvider<NotifierResult<any>> im
     this.defaultOptions = { host, port }
   }
 
-  async getSubscriptions (address: string, hashes: string[]) {
+  async getSubscriptions (address: string, hashes?: string[]) {
     const {
       success,
       message,
       code,
       data
     } = await this._fetch({
-      path: `/getSubscriptions/${hashes.toString()}`,
+      path: `/getSubscriptions/${hashes ? hashes.toString() : ''}`,
       headers: {
         userAddress: address
       }
