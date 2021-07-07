@@ -54,7 +54,7 @@ export async function deactivateDeletedPlansForProvider (provider: string, url: 
   deactivateDeletedPlans(currentPlans, incomingPlans)
 }
 
-export const createSubscription = (subscriptionDTO:any, provider:string):Promise<SubscriptionModel> => {
+export const buildSubscriptionFromDTO = (subscriptionDTO: any, provider: string): any => {
   const {
     hash,
     currency: {
@@ -93,10 +93,11 @@ export const createSubscription = (subscriptionDTO:any, provider:string):Promise
     topics,
     signature
   }
-  return SubscriptionModel.create(subscription)
+
+  return subscription
 }
 
-const findOrCreateSubscription = async (subscriptionDTO:any, url:string) => {
+const findOrCreateSubscription = async (subscriptionDTO: any, url: string) => {
   const { hash, status, paid, notificationBalance, expirationDate } = subscriptionDTO
   const found = await SubscriptionModel.findOne({ where: { hash } })
 
@@ -106,8 +107,13 @@ const findOrCreateSubscription = async (subscriptionDTO:any, url:string) => {
       { where: { hash } })
   }
   const providerModel = await ProviderModel.findOne({ where: { url } })
-  const provider:string|undefined = providerModel?.provider
-  return provider ? createSubscription(subscriptionDTO, provider) : null
+  const provider: string | undefined = providerModel?.provider
+
+  if (!provider) {
+    throw new Error(`Provider model with url ${url} not found.`)
+  }
+  const subscription = buildSubscriptionFromDTO(subscriptionDTO, provider)
+  return SubscriptionModel.create(subscription)
 }
 
 export const updateSubscriptionsBy = async (
@@ -116,7 +122,7 @@ export const updateSubscriptionsBy = async (
   const svcProvider = new NotifierSvcProvider({ host, port })
   try {
     const subscriptionsDTO = await svcProvider.getSubscriptions(consumerAddress)
-    await subscriptionsDTO.forEach((subscriptionDTO:any) => findOrCreateSubscription(subscriptionDTO, providerUrl))
+    await subscriptionsDTO.forEach((subscriptionDTO: any) => findOrCreateSubscription(subscriptionDTO, providerUrl))
   } catch (error) {
     logger.warn('Unable to update subscriptions from notifier service provider', error)
   }
