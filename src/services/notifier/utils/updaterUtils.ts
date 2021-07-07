@@ -122,7 +122,15 @@ export const updateSubscriptionsBy = async (
   const svcProvider = new NotifierSvcProvider({ host, port })
   try {
     const subscriptionsDTO = await svcProvider.getSubscriptions(consumerAddress)
-    await subscriptionsDTO.forEach((subscriptionDTO: any) => findOrCreateSubscription(subscriptionDTO, providerUrl))
+
+    await Promise.all(
+      subscriptionsDTO.forEach(
+        (subscriptionDTO: any) => {
+          findOrCreateSubscription(
+            subscriptionDTO, providerUrl
+          ).catch(error => logger.warn(`Unable to update or create subscription with hash ${subscriptionDTO.hash} in the database`, error))
+        })
+    )
   } catch (error) {
     logger.warn('Unable to update subscriptions from notifier service provider', error)
   }
