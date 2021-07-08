@@ -46,27 +46,24 @@ export default {
           ]
         })
 
-        // provider -> {consumer} -> [hashes]
-        const hashesByProviderAndConsumer = accountSubscriptions.reduce(
-          (acc: HashesByProviderAndConsumer, current: SubscriptionModel) => {
-            const { consumer, hash, provider: { url } } = current
+        // providerUrl -> [consumerAddress]
+        const consumersByProviders = accountSubscriptions.reduce(
+          (acc: Record<string, string[]>, current: SubscriptionModel) => {
+            const { consumer, provider: { url } } = current
 
             if (!acc[url]) {
-              acc[url] = {}
-              acc[url][consumer] = [hash]
+              acc[url] = [consumer]
             } else {
-              const currentHashes = acc[url][consumer] || []
-              acc[url][consumer] = [...currentHashes, hash]
+              acc[url] = [...acc[url], consumer]
             }
             return acc
           }, {}
         )
 
-        // updates DB fetching the involved subscriptions directly from the notifier service
+        // updates DB fetching subscriptions directly from the notifier service
         const updateDataPromises: Promise<void>[] = []
-        Object.keys(hashesByProviderAndConsumer).forEach(providerUrl => {
-          const providerSubscriptions = hashesByProviderAndConsumer[providerUrl]
-          Object.keys(providerSubscriptions).forEach(consumerAddress => {
+        Object.keys(consumersByProviders).forEach(providerUrl => {
+          consumersByProviders[providerUrl].forEach(consumerAddress => {
             updateDataPromises.push(updateSubscriptionsBy(providerUrl, consumerAddress))
           })
         })
