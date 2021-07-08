@@ -7,7 +7,7 @@ import PlanModel from '../models/plan.model'
 import PriceModel from '../models/price.model'
 import ProviderModel from '../models/provider.model'
 import SubscriptionModel from '../models/subscription.model'
-import { NotifierSvcProvider, SubscriptionPlanDTO } from '../notifierService/provider'
+import { NotifierSvcProvider, SubscriptionDTO, SubscriptionPlanDTO } from '../notifierService/provider'
 
 const logger = loggingFactory('notifier:updaterUtils')
 
@@ -54,7 +54,7 @@ export async function deactivateDeletedPlansForProvider (provider: string, url: 
   deactivateDeletedPlans(currentPlans, incomingPlans)
 }
 
-export const buildSubscriptionFromDTO = (subscriptionDTO: any, provider: string): any => {
+export const buildSubscriptionFromDTO = (subscriptionDTO: SubscriptionDTO, provider: string): any => {
   const {
     hash,
     currency: {
@@ -97,7 +97,7 @@ export const buildSubscriptionFromDTO = (subscriptionDTO: any, provider: string)
   return subscription
 }
 
-const findOrCreateSubscription = async (subscriptionDTO: any, url: string) => {
+const findOrCreateSubscription = async (subscriptionDTO: SubscriptionDTO, url: string) => {
   const { hash, status, paid, notificationBalance, expirationDate } = subscriptionDTO
   const found = await SubscriptionModel.findOne({ where: { hash } })
 
@@ -107,11 +107,12 @@ const findOrCreateSubscription = async (subscriptionDTO: any, url: string) => {
       { where: { hash } })
   }
   const providerModel = await ProviderModel.findOne({ where: { url } })
-  const provider: string | undefined = providerModel?.provider
+  const provider = providerModel?.provider
 
   if (!provider) {
     throw new Error(`Provider model with url ${url} not found.`)
   }
+
   const subscription = buildSubscriptionFromDTO(subscriptionDTO, provider)
   return SubscriptionModel.create(subscription)
 }
@@ -121,15 +122,16 @@ export const updateSubscriptionsBy = async (
   const [host, port] = providerUrl.split(/(?::)(\d*)$/, 2)
   const svcProvider = new NotifierSvcProvider({ host, port })
   try {
-    const subscriptionsDTO = await svcProvider.getSubscriptions(consumerAddress)
+    const subscriptionsDTO: Array<SubscriptionDTO> = await svcProvider.getSubscriptions(consumerAddress)
 
     await Promise.all(
-      subscriptionsDTO.forEach(
-        (subscriptionDTO: any) => {
-          findOrCreateSubscription(
-            subscriptionDTO, providerUrl
-          ).catch(error => logger.warn(`Unable to update or create subscription with hash ${subscriptionDTO.hash} in the database`, error))
-        })
+      subscriptionsDTO.map(
+        (subscription) => findOrCreateSubscription(
+          subscription, providerUrl
+        ).catch(
+          error => logger.warn(`Unable to update or create subscription with hash ${subscription.hash} in the database`, error)
+        )
+      )
     )
   } catch (error) {
     logger.warn('Unable to update subscriptions from notifier service provider', error)

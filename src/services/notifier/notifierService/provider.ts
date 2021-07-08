@@ -2,6 +2,8 @@ import { ServiceProvider } from '../../../httpClient'
 import { FetchError } from 'node-fetch'
 import { NotifierProviderError } from '../../../errors'
 import { ClientRequestArgs } from 'http'
+import BigNumber from 'bignumber.js'
+import { Status, Topic } from '../models/subscription.model'
 
 export type PlanStatusDTO =
     | 'ACTIVE'
@@ -25,6 +27,26 @@ export type SubscriptionPlanDTO = {
     notificationPreferences: string[]
     notificationQuantity: number
     subscriptionPriceList: PlanPriceDTO[]
+}
+
+export type SubscriptionDTO = {
+    hash: string
+    currency: {
+      address: {
+        value: string
+      }
+    }
+    price: BigNumber
+    expirationDate: string
+    id: number
+    paid: boolean
+    status: Status
+    notificationBalance: number
+    subscriptionPlanId: number
+    previousSubscription?: SubscriptionDTO
+    topics: Array<Topic>
+    signature: string
+    userAddress: string
 }
 
 export type NotifierResult<T> = {

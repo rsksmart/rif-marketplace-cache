@@ -6,13 +6,13 @@ import { BigNumberStringType } from '../../../sequelize'
 import PlanModel from './plan.model'
 import ProviderModel from './provider.model'
 
-type Topic = {
+export type Topic = {
   notificationPreferences: string | Array<string>
   type: string
   topicParams: Array<any>
 }
 
-type Status =
+export type Status =
   | 'ACTIVE'
   | 'PENDING'
   | 'EXPIRED'
