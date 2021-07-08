@@ -13,6 +13,7 @@ import SubscriptionModel from '../models/subscription.model'
 import { getTokenSymbol } from '../../utils'
 import BigNumber from 'bignumber.js'
 import { deactivateDeletedPlansForProvider } from '../utils/updaterUtils'
+import PlanModel from '../models/plan.model'
 
 const logger = loggingFactory('notifier:handler:provider')
 
@@ -77,6 +78,16 @@ export const handlers = {
     const tokenSymbol = getTokenSymbol(tokenAddress, SupportedServices.NOTIFIER).toLowerCase()
     const previousSubscriptionHash = previousSubscriptionModel?.hash
 
+    const plan = await PlanModel.findOne({
+      where: {
+        planId: subscriptionPlanId,
+        planStatus: 'ACTIVE',
+        providerId: provider
+      }
+    })
+
+    if (!plan) return
+
     const subscription = {
       providerId: provider,
       price: new BigNumber(price),
@@ -88,7 +99,7 @@ export const handlers = {
       paid,
       status,
       notificationBalance,
-      subscriptionPlanId,
+      subscriptionPlanId: plan.id,
       previousSubscription: previousSubscriptionHash,
       topics,
       signature
