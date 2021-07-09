@@ -65,12 +65,9 @@ export const handlers = {
 
     if (!plan) return
 
-    const subscription = buildSubscriptionFromDTO(subscriptionDTO, provider)
+    const subscription = await buildSubscriptionFromDTO(subscriptionDTO, provider)
 
-    await SubscriptionModel.create({
-      subscriptionPlanId: plan.id, // uses planId from DB
-      ...subscription
-    })
+    await SubscriptionModel.create(subscription)
 
     if (subscriptionService.emit) subscriptionService.emit('created', wrapEvent('SubscriptionCreated', subscription))
     logger.info(`Created new Subscription ${hash} by Consumer ${consumer} for Provider ${provider}`)

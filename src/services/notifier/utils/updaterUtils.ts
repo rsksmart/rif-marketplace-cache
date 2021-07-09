@@ -54,9 +54,8 @@ export async function deactivateDeletedPlansForProvider (provider: string, url: 
   deactivateDeletedPlans(currentPlans, incomingPlans)
 }
 
-export const buildSubscriptionFromDTO = (subscriptionDTO: SubscriptionDTO, provider: string): any => {
+export const buildSubscriptionFromDTO = async (subscriptionDTO: SubscriptionDTO, provider: string): Promise<any> => {
   const {
-    hash,
     currency: {
       address: {
         value: tokenAddress
@@ -65,36 +64,45 @@ export const buildSubscriptionFromDTO = (subscriptionDTO: SubscriptionDTO, provi
     price,
     expirationDate,
     id: subscriptionId,
-    paid,
-    status,
-    notificationBalance,
     subscriptionPlanId,
     previousSubscription: previousSubscriptionModel,
-    topics,
-    signature,
-    userAddress: consumer
-  } = subscriptionDTO
-  const tokenSymbol = getTokenSymbol(tokenAddress, SupportedServices.NOTIFIER).toLowerCase()
-  const previousSubscriptionHash = previousSubscriptionModel?.hash
-
-  const subscription = {
-    providerId: provider,
-    price: new BigNumber(price),
-    rateId: tokenSymbol,
-    expirationDate: new Date(expirationDate),
+    userAddress: consumer,
     hash,
-    consumer,
-    subscriptionId,
-    paid,
-    status,
     notificationBalance,
-    subscriptionPlanId,
-    previousSubscription: previousSubscriptionHash,
-    topics,
-    signature
-  }
+    paid,
+    signature,
+    status,
+    topics
+  } = subscriptionDTO
 
-  return subscription
+  const rateId = getTokenSymbol(tokenAddress, SupportedServices.NOTIFIER).toLowerCase()
+
+  const plan = await PlanModel.findOne({
+    where: {
+      planId: subscriptionPlanId,
+      planStatus: 'ACTIVE',
+      providerId: provider
+    }
+  })
+
+  if (!(plan && rateId)) throw new Error('Bad SubscriptioDTO object')
+
+  return {
+    rateId,
+    providerId: provider,
+    subscriptionId,
+    subscriptionPlanId: plan.id,
+    price: new BigNumber(price),
+    expirationDate: new Date(expirationDate),
+    previousSubscription: previousSubscriptionModel?.hash,
+    consumer,
+    hash,
+    notificationBalance,
+    paid,
+    signature,
+    status,
+    topics
+  }
 }
 
 const findOrCreateSubscription = async (subscriptionDTO: SubscriptionDTO, url: string) => {
@@ -113,7 +121,7 @@ const findOrCreateSubscription = async (subscriptionDTO: SubscriptionDTO, url: s
     throw new Error(`Provider model with url ${url} not found.`)
   }
 
-  const subscription = buildSubscriptionFromDTO(subscriptionDTO, provider)
+  const subscription = await buildSubscriptionFromDTO(subscriptionDTO, provider)
   return SubscriptionModel.create(subscription)
 }
 
