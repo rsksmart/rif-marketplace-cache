@@ -74,7 +74,7 @@ export class NotifierSvcProvider extends ServiceProvider<NotifierResult<any>> im
       code,
       data
     } = await this._fetch({
-      path: `/getSubscriptions/${hashes ? hashes.toString() : ''}`,
+      path: `/getSubscriptions/${hashes?.toString() ?? ''}`,
       headers: {
         userAddress: address
       }

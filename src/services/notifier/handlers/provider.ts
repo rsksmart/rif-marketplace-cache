@@ -51,9 +51,10 @@ export const handlers = {
     const [host, port] = providerIns.url.split(/(?::)(\d*)$/, 2)
     const notifierService = new NotifierSvcProvider({ host, port })
     const [subscriptionDTO] = await notifierService.getSubscriptions(consumer, [hash])
-    const subscription = buildSubscriptionFromDTO(subscriptionDTO, provider)
 
     if (!subscriptionDTO) return
+
+    const subscription = buildSubscriptionFromDTO(subscriptionDTO, provider)
     await SubscriptionModel.create(subscription)
 
     if (subscriptionService.emit) subscriptionService.emit('created', wrapEvent('SubscriptionCreated', subscription))
