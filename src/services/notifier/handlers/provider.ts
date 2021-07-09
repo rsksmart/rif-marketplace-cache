@@ -11,6 +11,7 @@ import { updater } from '../update'
 import { NotifierSvcProvider } from '../notifierService/provider'
 import { buildSubscriptionFromDTO, deactivateDeletedPlansForProvider } from '../utils/updaterUtils'
 import SubscriptionModel from '../models/subscription.model'
+import PlanModel from '../models/plan.model'
 
 const logger = loggingFactory('notifier:handler:provider')
 
@@ -54,8 +55,22 @@ export const handlers = {
 
     if (!subscriptionDTO) return
 
+    const plan = await PlanModel.findOne({
+      where: {
+        planId: subscriptionDTO.subscriptionPlanId,
+        planStatus: 'ACTIVE',
+        providerId: provider
+      }
+    })
+
+    if (!plan) return
+
     const subscription = buildSubscriptionFromDTO(subscriptionDTO, provider)
-    await SubscriptionModel.create(subscription)
+
+    await SubscriptionModel.create({
+      subscriptionPlanId: plan.id, // uses planId from DB
+      ...subscription
+    })
 
     if (subscriptionService.emit) subscriptionService.emit('created', wrapEvent('SubscriptionCreated', subscription))
     logger.info(`Created new Subscription ${hash} by Consumer ${consumer} for Provider ${provider}`)
