@@ -7,8 +7,6 @@ import ProviderModel from '../models/provider.model'
 import SubscriptionModel from '../models/subscription.model'
 import { updateSubscriptionsBy } from '../utils/updaterUtils'
 
-type HashesByProviderAndConsumer = Record<string, Record<string, string[]>>
-
 export default {
   before: {
     all: [
@@ -46,31 +44,33 @@ export default {
           ]
         })
 
-        // provider -> {consumer} -> [hashes]
-        const hashesByProviderAndConsumer = accountSubscriptions.reduce(
-          (acc: HashesByProviderAndConsumer, current: SubscriptionModel) => {
-            const { consumer, hash, provider: { url } } = current
-
-            if (!acc[url]) {
-              acc[url] = {}
-              acc[url][consumer] = [hash]
-            } else {
-              const currentHashes = acc[url][consumer] || []
-              acc[url][consumer] = [...currentHashes, hash]
-            }
-            return acc
-          }, {}
-        )
-
-        // updates DB fetching the involved subscriptions directly from the notifier service
         const updateDataPromises: Promise<void>[] = []
-        Object.keys(hashesByProviderAndConsumer).forEach(providerUrl => {
-          const providerSubscriptions = hashesByProviderAndConsumer[providerUrl]
-          Object.keys(providerSubscriptions).forEach(consumerAddress => {
-            const hashes = providerSubscriptions[consumerAddress]
-            updateDataPromises.push(updateSubscriptionsBy(providerUrl, consumerAddress, hashes))
+
+        if (tmpQuery.consumer) {
+          const providers = new Set(accountSubscriptions.map(({ provider: { url } }) => url))
+          providers.forEach(
+            (provider) => updateDataPromises.push(updateSubscriptionsBy(provider, tmpQuery.consumer))
+          )
+        } else {
+          // providerUrl -> [consumerAddress]
+          const consumersByProviders = accountSubscriptions.reduce(
+            (acc: Record<string, string[]>, current: SubscriptionModel) => {
+              const { consumer, provider: { url } } = current
+
+              if (!acc[url]) {
+                acc[url] = [consumer]
+              } else {
+                acc[url] = [...acc[url], consumer]
+              }
+              return acc
+            }, {}
+          )
+          Object.keys(consumersByProviders).forEach(providerUrl => {
+            consumersByProviders[providerUrl].forEach(consumerAddress => {
+              updateDataPromises.push(updateSubscriptionsBy(providerUrl, consumerAddress))
+            })
           })
-        })
+        }
 
         await Promise.all(updateDataPromises)
         return context
