@@ -2,17 +2,15 @@ import { Eth } from 'web3-eth'
 import { ProviderRegistered, SubscriptionCreated } from '@rsksmart/rif-marketplace-notifier/types/web3-v1-contracts/NotifierManager'
 
 import { loggingFactory } from '../../../logger'
-import { Handler, NotificationManagerEvents, SupportedServices } from '../../../definitions'
+import { Handler, NotificationManagerEvents } from '../../../definitions'
 import { wrapEvent } from '../../../utils'
 
 import { NotifierServices } from '../index'
 import ProviderModel from '../models/provider.model'
 import { updater } from '../update'
 import { NotifierSvcProvider } from '../notifierService/provider'
+import { buildSubscriptionFromDTO, deactivateDeletedPlansForProvider } from '../utils/updaterUtils'
 import SubscriptionModel from '../models/subscription.model'
-import { getTokenSymbol } from '../../utils'
-import BigNumber from 'bignumber.js'
-import { deactivateDeletedPlansForProvider } from '../utils/updaterUtils'
 import PlanModel from '../models/plan.model'
 
 const logger = loggingFactory('notifier:handler:provider')
@@ -57,30 +55,9 @@ export const handlers = {
 
     if (!subscriptionDTO) return
 
-    const {
-      currency: {
-        address: {
-          value: tokenAddress
-        }
-      },
-      price,
-      expirationDate,
-      id: subscriptionId,
-      paid,
-      status,
-      notificationBalance,
-      subscriptionPlanId,
-      previousSubscription: previousSubscriptionModel,
-      topics,
-      signature
-    } = subscriptionDTO
-
-    const tokenSymbol = getTokenSymbol(tokenAddress, SupportedServices.NOTIFIER).toLowerCase()
-    const previousSubscriptionHash = previousSubscriptionModel?.hash
-
     const plan = await PlanModel.findOne({
       where: {
-        planId: subscriptionPlanId,
+        planId: subscriptionDTO.subscriptionPlanId,
         planStatus: 'ACTIVE',
         providerId: provider
       }
@@ -88,22 +65,7 @@ export const handlers = {
 
     if (!plan) return
 
-    const subscription = {
-      providerId: provider,
-      price: new BigNumber(price),
-      rateId: tokenSymbol,
-      expirationDate: new Date(expirationDate),
-      hash,
-      consumer,
-      subscriptionId,
-      paid,
-      status,
-      notificationBalance,
-      subscriptionPlanId: plan.id,
-      previousSubscription: previousSubscriptionHash,
-      topics,
-      signature
-    }
+    const subscription = await buildSubscriptionFromDTO(subscriptionDTO, provider)
 
     await SubscriptionModel.create(subscription)
 

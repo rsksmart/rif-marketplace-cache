@@ -2,6 +2,8 @@ import { ServiceProvider } from '../../../httpClient'
 import { FetchError } from 'node-fetch'
 import { NotifierProviderError } from '../../../errors'
 import { ClientRequestArgs } from 'http'
+import BigNumber from 'bignumber.js'
+import { Status, Topic } from '../models/subscription.model'
 
 export type PlanStatusDTO =
     | 'ACTIVE'
@@ -27,6 +29,26 @@ export type SubscriptionPlanDTO = {
     subscriptionPriceList: PlanPriceDTO[]
 }
 
+export type SubscriptionDTO = {
+    hash: string
+    currency: {
+      address: {
+        value: string
+      }
+    }
+    price: BigNumber
+    expirationDate: string
+    id: number
+    paid: boolean
+    status: Status
+    notificationBalance: number
+    subscriptionPlanId: number
+    previousSubscription?: SubscriptionDTO
+    topics: Array<Topic>
+    signature: string
+    userAddress: string
+}
+
 export type NotifierResult<T> = {
     message: | 'OK'
     status: | 'OK'
@@ -45,14 +67,14 @@ export class NotifierSvcProvider extends ServiceProvider<NotifierResult<any>> im
     this.defaultOptions = { host, port }
   }
 
-  async getSubscriptions (address: string, hashes: string[]) {
+  async getSubscriptions (address: string, hashes?: string[]) {
     const {
       success,
       message,
       code,
       data
     } = await this._fetch({
-      path: `/getSubscriptions/${hashes.toString()}`,
+      path: `/getSubscriptions/${hashes?.toString() ?? ''}`,
       headers: {
         userAddress: address
       }
