@@ -78,16 +78,14 @@ export default {
       (context: HookContext): void => {
         const { query, sequelize } = context.params
 
-        if (query?.status) {
-          const { $ne } = query.status
+        const neParam = query?.status?.$ne
 
-          if ($ne) {
-            sequelize.where = {
-              ...sequelize.where,
-              ...query,
-              status: {
-                [Op.notLike]: `%${$ne}%`
-              }
+        if (neParam) {
+          sequelize.where = {
+            ...sequelize.where,
+            ...query,
+            status: {
+              [Op.notLike]: `%${neParam}%`
             }
           }
         }
@@ -96,6 +94,10 @@ export default {
           ...sequelize,
           raw: false,
           nest: true,
+          where: [
+            ...sequelize.where,
+            literal('row_number() over ( PARTITION BY subscriptionPlanId ORDER BY expirationDate DESC) ')
+          ],
           include: [
             {
               model: PlanModel,
