@@ -120,7 +120,7 @@
     "@types/helmet": "4.0.0",
     "@types/listr": "^0.14.2",
     "@types/mocha": "^8.2.0",
-    "@types/node": "^15.0.1",
+    "@types/node": "^16.3.3",
     "@types/node-fetch": "^2.5.7",
     "@types/serve-favicon": "^2.5.0",
     "@types/sinon": "^10.0.0",
