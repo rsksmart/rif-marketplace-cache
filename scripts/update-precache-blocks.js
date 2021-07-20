@@ -27,9 +27,9 @@ if (!doesExist) {
   throw new Error(`Config file not found on path = ${pathToConfigFile}`)
 }
 const fileAsString = fs.readFileSync(pathToConfigFile).toString()
-const configObject = JSON5.parse(fileAsString)
+export const configObject = JSON5.parse(fileAsString)
 
-async function ethFactory () {
+export async function ethFactory () {
   const provider = config.get('blockchain.provider')
   const eth = new Eth(provider)
   try {
@@ -40,7 +40,7 @@ async function ethFactory () {
   return eth
 }
 
-function getExplorerUrl () {
+export function getExplorerUrl () {
   if (process.env['EXPLORER_URL']) {
     return process.env['EXPLORER_URL']
   }
@@ -56,7 +56,7 @@ function getExplorerUrl () {
   }
 }
 
-async function getContractDeployTxByContractAddress (contractAddress) {
+export async function getContractDeployTxByContractAddress (contractAddress) {
   const url = getExplorerUrl()
   const requestUrl = `${url}/api?module=addresses&action=getAddress&address=${contractAddress}`
   const response = await fetch(requestUrl)
