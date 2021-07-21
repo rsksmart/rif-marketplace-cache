@@ -1,10 +1,10 @@
 /* eslint-disable */
-const Eth = require('web3-eth')
-const config = require('config')
-const fs = require('fs')
-const path = require('path')
-const JSON5 = require('json5')
-const fetch = require('node-fetch');
+import Eth from 'web3-eth'
+import config from 'config'
+import fs from 'fs'
+import path from 'path'
+import JSON5 from 'json5'
+import fetch from 'node-fetch'
 
 const NODE_ENV = process.env['NODE_ENV']
 const FROM_SCRATCH = process.env['FRESH_DEPLOY'] || false
@@ -19,8 +19,10 @@ const SERVICES = {
   notifier: NOTIFIER_CONTRACTS
 }
 
+
+
 const configFileName = `${NODE_ENV}.json5`
-const pathToConfigFile = path.resolve(__dirname, '../config', configFileName)
+export const pathToConfigFile = path.resolve(__dirname, '../config', configFileName)
 
 const doesExist = fs.existsSync(pathToConfigFile)
 if (!doesExist) {
@@ -30,7 +32,7 @@ const fileAsString = fs.readFileSync(pathToConfigFile).toString()
 export const configObject = JSON5.parse(fileAsString)
 
 export async function ethFactory () {
-  const provider = config.get('blockchain.provider')
+  const provider: string = config.get('blockchain.provider')
   const eth = new Eth(provider)
   try {
     await eth.getProtocolVersion()
@@ -56,14 +58,14 @@ export function getExplorerUrl () {
   }
 }
 
-export async function getContractDeployTxByContractAddress (contractAddress) {
+export async function getContractDeployTxByContractAddress (contractAddress: string) {
   const url = getExplorerUrl()
   const requestUrl = `${url}/api?module=addresses&action=getAddress&address=${contractAddress}`
   const response = await fetch(requestUrl)
   return response.json()
 }
 
-async function getStartingBlock (eth, contractAddress) {
+async function getStartingBlock (eth: Eth, contractAddress: string) {
   if (FROM_SCRATCH) {
     const contractCreateTx = await getContractDeployTxByContractAddress(contractAddress)
     return contractCreateTx.data.blockNumber
@@ -72,8 +74,8 @@ async function getStartingBlock (eth, contractAddress) {
   }
 }
 
-(async () => {
-  const eth = await ethFactory()
+export default async function (options: { eth: Eth}) {
+  const eth = options.eth ?? await ethFactory()
 
   for (const [service, contracts] of Object.entries(SERVICES)) {
     for (const contract of contracts) {
@@ -90,9 +92,6 @@ async function getStartingBlock (eth, contractAddress) {
   }
   // Write config
   fs.writeFileSync(pathToConfigFile, JSON5.stringify(configObject, null, 2))
-})().catch(e => {
-  console.error(e)
-  process.exit(1)
-})
+}
 
 

@@ -6,6 +6,7 @@ import { loggingFactory } from '../logger'
 import { Flags, Config, SupportedServices, isSupportedServices } from '../definitions'
 import { BaseCLICommand } from '../utils'
 import { DbBackUpJob } from '../db-backup'
+import { checkSCSync } from './utils/checkSCSync'
 
 const logger = loggingFactory('cli:start')
 
@@ -83,13 +84,17 @@ ${formattedServices}`
     const { flags } = this.parse(StartServer)
 
     const configOverrides = this.buildConfigObject(flags)
+
+    // checkBCSync - check if precache is required and update starting blocks in config
+    await checkSCSync()
+
     config.util.extendDeep(config, configOverrides)
 
     // An infinite loop which you can exit only with SIGINT/SIGKILL
     while (true) {
       let stopCallback: () => Promise<void> = () => Promise.reject(new Error('No stop callback was assigned!'))
       let backUpJob: DbBackUpJob
-      let requirePrecache = false
+      let requirePrecache = Boolean(process.env.REQUIRE_PRECACHE)
 
       // Promise that resolves when reset callback is called
       const resetPromise = new Promise<void>(resolve => {
