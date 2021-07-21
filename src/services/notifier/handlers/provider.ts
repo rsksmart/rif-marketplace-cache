@@ -51,7 +51,13 @@ export const handlers = {
 
     const [host, port] = providerIns.url.split(/(?::)(\d*)$/, 2)
     const notifierService = new NotifierSvcProvider({ host, port })
-    const [subscriptionDTO] = await notifierService.getSubscriptions(consumer, [hash])
+
+    let subscriptionDTO
+    try {
+      [subscriptionDTO] = await notifierService.getSubscriptions(consumer, [hash])
+    } catch (error) {
+      logger.error(`Couldn't get subscriptions from notifier provider ${providerIns.url}`)
+    }
 
     if (!subscriptionDTO) return
 
