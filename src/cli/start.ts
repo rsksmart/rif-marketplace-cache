@@ -6,11 +6,12 @@ import { loggingFactory } from '../logger'
 import { Flags, Config, SupportedServices, isSupportedServices } from '../definitions'
 import { BaseCLICommand } from '../utils'
 import { DbBackUpJob } from '../db-backup'
-import { checkSCSync } from './utils/checkSCSync'
+import preflightCheck from '../utils/preflightCheck'
 
 const logger = loggingFactory('cli:start')
 
 export default class StartServer extends BaseCLICommand {
+  static requirePrecache = false
   static get description () {
     const formattedServices = Object.values(SupportedServices).map(service => ` - ${service}`).join('\n')
     return `start the caching server
@@ -84,22 +85,21 @@ ${formattedServices}`
     const { flags } = this.parse(StartServer)
 
     const configOverrides = this.buildConfigObject(flags)
-
-    // checkBCSync - check if precache is required and update starting blocks in config
-    await checkSCSync()
-
     config.util.extendDeep(config, configOverrides)
+
+    // check system status:
+    // - check if precache is required and update starting blocks in config
+    await preflightCheck()
 
     // An infinite loop which you can exit only with SIGINT/SIGKILL
     while (true) {
       let stopCallback: () => Promise<void> = () => Promise.reject(new Error('No stop callback was assigned!'))
       let backUpJob: DbBackUpJob
-      let requirePrecache = Boolean(process.env.REQUIRE_PRECACHE)
 
       // Promise that resolves when reset callback is called
       const resetPromise = new Promise<void>(resolve => {
         appFactory({
-          requirePrecache,
+          requirePrecache: StartServer.requirePrecache,
           appResetCallBack: () => resolve()
         }).then(({ app, stop, backups }) => {
           // Lets save the function that stops the app
@@ -134,7 +134,7 @@ ${formattedServices}`
         logger.error(e)
       })
 
-      requirePrecache = true
+      StartServer.requirePrecache = true
 
       logger.info('Restarting the app')
     }
