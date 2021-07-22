@@ -190,6 +190,9 @@ export interface Config {
     // Sets if Storage service should be enabled
     enabled?: boolean
 
+    // Toggle to run precache upon start
+    requirePrecache?: boolean
+
     // Supported tokens and their addresses
     tokens?: {
       [key: string]: SupportedTokens
@@ -208,6 +211,9 @@ export interface Config {
     // Sets if Storage service should be enabled
     enabled?: boolean
 
+    // Toggle to run precache upon start
+    requirePrecache?: boolean
+
     // Supported tokens and their addresses
     tokens?: {
       [key: string]: SupportedTokens
@@ -225,6 +231,9 @@ export interface Config {
 
     // Sets if RNS service should be enabled
     enabled?: boolean
+
+    // Toggle to run precache upon start
+    requirePrecache?: boolean
 
     // Auction registrar contract's options
     registrar?: BlockchainServiceOptions

@@ -98,7 +98,7 @@ export async function appFactory (options: AppOptions): Promise<AppReturns> {
     const web3events = app.get('web3events') as Web3Events
 
     const toBePrecache = (Object.keys(services) as Array<keyof typeof services>)
-      .filter(service => config.get<boolean>(`${service}.enabled`))
+      .filter(service => config.get<boolean>(`${service}.enabled`) && config.has(`${service}.requirePrecache`) && config.get<boolean>(`${service}.requirePrecache`))
     await Promise.all(
       toBePrecache.map((service) => services[service].precache(eth, web3events).toPromise())
     )
