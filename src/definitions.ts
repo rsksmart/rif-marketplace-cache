@@ -303,7 +303,9 @@ export type StorageEvents = StorageOfferEvents | StorageAgreementEvents | StakeE
 
 /// //////////////////////////////////////////////////////////////////////////////////////////////////
 // NOTIFIER
-export type NotificationManagerEvents = notifierEvents.ProviderRegistered | notifierEvents.SubscriptionCreated
+export type NotificationManagerEvents = notifierEvents.ProviderRegistered
+  | notifierEvents.SubscriptionCreated
+  | notifierEvents.FundsWithdrawn
 
 export type NotifierStakeEvents = notifierStakingEvents.Staked | notifierStakingEvents.Unstaked
 
