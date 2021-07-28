@@ -45,6 +45,7 @@ export default {
       },
       async (context: HookContext) => {
         if (!context.params.query) return context
+        const sequelize: Sequelize = context.app.get('sequelize')
 
         const { limits, ...query } = context.params.query
 
@@ -97,7 +98,6 @@ export default {
 
         if (price) {
           const { min, max, fiatSymbol } = price
-          const sequelize: Sequelize = context.app.get('sequelize')
           const minLimit = sequelize.escape(min)
           const maxLimit = sequelize.escape(max)
 
@@ -117,9 +117,10 @@ export default {
         }
 
         if (provider) {
+          const escapedProvider = sequelize.escape(provider)
           paramsSeq.where[Op.and] = [
             ...paramsSeq.where[Op.and] || [],
-            literal(`providerId LIKE "${provider}"`)
+            literal(`providerId LIKE "${escapedProvider}"`)
           ]
         }
 
