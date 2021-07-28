@@ -8,7 +8,7 @@ import { loggingFactory } from '../logger'
 import Migration from '../migrations'
 import { sequelizeFactory } from '../sequelize'
 import { initStore } from '../store'
-import { CacheSynchCheck } from './cacheSyncCheck'
+import { CacheSynchCheck, NODE_ENV } from './cacheSyncCheck'
 
 const RNS_SERVICES = ['owner', 'reverse', 'placement', 'registrar', 'fifsAddrRegistrar']
 const STORAGE_SERVICES = ['storageManager', 'staking']
@@ -43,7 +43,7 @@ const preflightCheck = async () => {
   logger.info(`requirePrecache: ${StartServer.requirePrecache &&
     `[${Object.keys(SERVICES).filter(service => config.has(`${service}.requirePrecache`) && config.get(`${service}.requirePrecache`))}]`}`)
 
-  config.util.makeImmutable(config)
+  if (NODE_ENV !== 'test') config.util.makeImmutable(config)
 }
 
 export default preflightCheck
