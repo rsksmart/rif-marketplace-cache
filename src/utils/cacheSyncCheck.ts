@@ -25,7 +25,7 @@ import { capitalizeFirstLetter } from '../utils'
 import { loggingFactory } from '../logger'
 import Listr from 'listr'
 
-const NODE_ENV = process.env.NODE_ENV
+export const NODE_ENV = process.env.NODE_ENV
 const EXPLORER_URL = process.env.EXPLORER_URL
 const FROM_SCRATCH = process.env.FRESH_DEPLOY || false
 const FORCED_START_BLOCK = Number(process.env.PRECACHE_STARTING_BLOCK) || false
@@ -132,7 +132,7 @@ export class CacheSynchCheck {
               })
 
             if (!lastProcessedBlockNumber) {
-              this.logger.warn(`Contract ${contractName} of ${serviceName} service has no records in db. Make sure that the service is enabled and contract configured.`)
+              this.logger.debug(`Contract ${contractName} of ${serviceName} service has no records in db. Make sure that the service is enabled and contract configured.`)
             } else {
               await this.collectUnsynchedEvents(Number(lastProcessedBlockNumber.value) + 1, serviceName, contractName)
             }
