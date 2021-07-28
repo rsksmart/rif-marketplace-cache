@@ -25,9 +25,11 @@
     }
   },
   notifier: {
+    requirePrecache: true,
     enabled: false
   },
   storage: {
+    requirePrecache: true,
     tokens: {
       '0x12345': 'rif'
     },
@@ -48,6 +50,7 @@
     }
   },
   rns: {
+    requirePrecache: true,
     tokens: {
       '0x12345': 'rif'
     },
