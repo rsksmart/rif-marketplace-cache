@@ -11,6 +11,7 @@ import preflightCheck from '../utils/preflightCheck'
 const logger = loggingFactory('cli:start')
 
 export default class StartServer extends BaseCLICommand {
+  private disablePreflightCheck = false
   static requirePrecache = false
   static get description () {
     const formattedServices = Object.values(SupportedServices).map(service => ` - ${service}`).join('\n')
@@ -28,7 +29,8 @@ ${formattedServices}`
     db: flags.string({ description: 'database connection URI' }),
     provider: flags.string({ description: 'blockchain provider connection URI' }),
     enable: flags.string({ char: 'e', multiple: true, description: 'enable specific service' }),
-    disable: flags.string({ char: 'd', multiple: true, description: 'disable specific service' })
+    disable: flags.string({ char: 'd', multiple: true, description: 'disable specific service' }),
+    disablePreflightCheck: flags.boolean({ char: 'C', name: 'disablePreflightCheck', description: 'runs the app without the preflight check (not recommended).' })
   }
 
   private buildConfigObject (flags: Flags<typeof StartServer>): Record<any, any> {
@@ -89,7 +91,7 @@ ${formattedServices}`
 
     // check system status:
     // - check if precache is required and update starting blocks in config
-    await preflightCheck()
+    if (!flags.disablePreflightCheck) await preflightCheck()
 
     // An infinite loop which you can exit only with SIGINT/SIGKILL
     while (true) {
