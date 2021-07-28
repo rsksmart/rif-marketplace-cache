@@ -83,10 +83,6 @@ export const handlers = {
     logger.info(`Created new Subscription ${hash} by Consumer ${consumer} for Provider ${provider}`)
   },
   FundsWithdrawn (event: FundsWithdrawn, { subscriptionService }: NotifierServices): void {
-    console.log('****************************************************************');
-    console.log('🐛 -> withdrawn! <- 🐛');
-    console.log('****************************************************************');
-    // TODO: check the need for storing some of this data
     const { provider, hash, amount, token } = event.returnValues
 
     const withdrawnEvent = {
@@ -109,7 +105,7 @@ function isValidEvent (eventName: string): eventName is keyof typeof handlers {
 
 const handler: Handler<NotificationManagerEvents, NotifierServices> = {
   events: ['ProviderRegistered', 'SubscriptionCreated', 'FundsWithdrawn'],
-  process(event: NotificationManagerEvents, services: NotifierServices, { eth }): Promise<void> {
+  process (event: NotificationManagerEvents, services: NotifierServices, { eth }): Promise<void> {
     if (!isValidEvent(event.event)) {
       return Promise.reject(new Error(`Unknown event ${event.event}`))
     }
