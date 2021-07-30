@@ -11,6 +11,11 @@ import { NotifierSvcProvider, SubscriptionDTO, SubscriptionPlanDTO } from '../no
 
 const logger = loggingFactory('notifier:updaterUtils')
 
+const SUBSCRIPTION_PAYMENT_STATUS = {
+  RECEIVED: 'RECEIVED',
+  WITHDRAWN: 'WITHDRAWN'
+} as const
+
 function deactivateDeletedPlans (currentPlans: Array<PlanModel>, incomingPlans: Array<SubscriptionPlanDTO>): void {
   if (currentPlans && incomingPlans) {
     const deletedPlans: Array<PlanModel> = currentPlans.filter(({
@@ -124,17 +129,15 @@ const findOrCreateSubscription = async (subscriptionDTO: SubscriptionDTO, url: s
     const { status, amount } = curr
     const bnAmount = new BigNumber(amount)
 
-    // TODO: add new type for status
-    if (status === 'RECEIVED') {
+    if (status === SUBSCRIPTION_PAYMENT_STATUS.RECEIVED) {
       acc.paid = acc.paid.plus(bnAmount)
-    } else if (status === 'WHITDRAWN') {
+    } else if (status === SUBSCRIPTION_PAYMENT_STATUS.WITHDRAWN) {
       acc.withdrawn = acc.withdrawn.plus(bnAmount)
     }
     return acc
   }, balance)
 
   const withdrawableFunds = balance.paid.minus(balance.withdrawn)
-
   const found = await SubscriptionModel.findOne({ where: { hash } })
 
   if (found) {
