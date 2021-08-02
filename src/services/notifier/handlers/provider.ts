@@ -1,5 +1,9 @@
 import { Eth } from 'web3-eth'
-import { ProviderRegistered, SubscriptionCreated } from '@rsksmart/rif-marketplace-notifier/types/web3-v1-contracts/NotifierManager'
+import {
+  ProviderRegistered,
+  SubscriptionCreated,
+  FundsWithdrawn
+} from '@rsksmart/rif-marketplace-notifier/types/web3-v1-contracts/NotifierManager'
 
 import { loggingFactory } from '../../../logger'
 import { Handler, NotificationManagerEvents } from '../../../definitions'
@@ -77,6 +81,21 @@ export const handlers = {
 
     if (subscriptionService.emit) subscriptionService.emit('created', wrapEvent('SubscriptionCreated', subscription))
     logger.info(`Created new Subscription ${hash} by Consumer ${consumer} for Provider ${provider}`)
+  },
+  FundsWithdrawn (event: FundsWithdrawn, { subscriptionService }: NotifierServices): void {
+    const { provider, hash, amount, token } = event.returnValues
+
+    const withdrawnEvent = {
+      provider,
+      hash,
+      amount,
+      token
+    }
+
+    if (subscriptionService.emit) {
+      subscriptionService.emit('fundsWithdrawn', wrapEvent('FundsWithdrawn', withdrawnEvent))
+    }
+    logger.info(`Funds withdrawn for Subscription ${hash} by Provider ${provider}.`)
   }
 }
 
@@ -85,7 +104,7 @@ function isValidEvent (eventName: string): eventName is keyof typeof handlers {
 }
 
 const handler: Handler<NotificationManagerEvents, NotifierServices> = {
-  events: ['ProviderRegistered', 'SubscriptionCreated'],
+  events: ['ProviderRegistered', 'SubscriptionCreated', 'FundsWithdrawn'],
   process (event: NotificationManagerEvents, services: NotifierServices, { eth }): Promise<void> {
     if (!isValidEvent(event.event)) {
       return Promise.reject(new Error(`Unknown event ${event.event}`))
