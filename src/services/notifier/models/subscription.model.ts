@@ -70,4 +70,7 @@ export default class SubscriptionModel extends Model {
 
   @Column({ allowNull: false })
   signature!: string
+
+  @Column({ ...BigNumberStringType('withdrawableFunds'), allowNull: true })
+  withdrawableFunds!: BigNumber
 }
