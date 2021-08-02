@@ -11,6 +11,11 @@ import { NotifierSvcProvider, SubscriptionDTO, SubscriptionPlanDTO } from '../no
 
 const logger = loggingFactory('notifier:updaterUtils')
 
+const SUBSCRIPTION_PAYMENT_STATUS = {
+  RECEIVED: 'RECEIVED',
+  WITHDRAWN: 'WITHDRAWN'
+} as const
+
 function deactivateDeletedPlans (currentPlans: Array<PlanModel>, incomingPlans: Array<SubscriptionPlanDTO>): void {
   if (currentPlans && incomingPlans) {
     const deletedPlans: Array<PlanModel> = currentPlans.filter(({
@@ -106,12 +111,38 @@ export const buildSubscriptionFromDTO = async (subscriptionDTO: SubscriptionDTO,
 }
 
 const findOrCreateSubscription = async (subscriptionDTO: SubscriptionDTO, url: string) => {
-  const { hash, status, paid, notificationBalance, expirationDate } = subscriptionDTO
+  const {
+    hash,
+    status,
+    paid,
+    notificationBalance,
+    expirationDate,
+    subscriptionPayments
+  } = subscriptionDTO
+
+  const balance = {
+    paid: new BigNumber(0),
+    withdrawn: new BigNumber(0)
+  }
+
+  subscriptionPayments.reduce((acc, curr) => {
+    const { status, amount } = curr
+    const bnAmount = new BigNumber(amount)
+
+    if (status === SUBSCRIPTION_PAYMENT_STATUS.RECEIVED) {
+      acc.paid = acc.paid.plus(bnAmount)
+    } else if (status === SUBSCRIPTION_PAYMENT_STATUS.WITHDRAWN) {
+      acc.withdrawn = acc.withdrawn.plus(bnAmount)
+    }
+    return acc
+  }, balance)
+
+  const withdrawableFunds = balance.paid.minus(balance.withdrawn)
   const found = await SubscriptionModel.findOne({ where: { hash } })
 
   if (found) {
     return SubscriptionModel.update(
-      { status, paid, notificationBalance, expirationDate },
+      { status, paid, notificationBalance, expirationDate, withdrawableFunds },
       { where: { hash } })
   }
   const providerModel = await ProviderModel.findOne({ where: { url } })
@@ -122,7 +153,7 @@ const findOrCreateSubscription = async (subscriptionDTO: SubscriptionDTO, url: s
   }
 
   const subscription = await buildSubscriptionFromDTO(subscriptionDTO, provider)
-  return SubscriptionModel.create(subscription)
+  return SubscriptionModel.create({ ...subscription, withdrawableFunds })
 }
 
 export const updateSubscriptionsBy = async (

@@ -47,6 +47,7 @@ export type SubscriptionDTO = {
     topics: Array<Topic>
     signature: string
     userAddress: string
+    subscriptionPayments: any[]
 }
 
 export type NotifierResult<T> = {
