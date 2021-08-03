@@ -24,6 +24,17 @@
       pollingInterval: 500
     }
   },
+<<<<<<< HEAD
+=======
+  notifier: {
+    requirePrecache: true,
+    enabled: false,
+    tokens: {
+      '0x12345': 'rif',
+      '0x0000000000000000000000000000000000000000': 'rbtc'
+    },
+  },
+>>>>>>> e21ace6 (feat(notifier): adds source to notifier channels)
   storage: {
     tokens: {
       '0x12345': 'rif'
