@@ -9,7 +9,7 @@ export type ReturnObject<T> = {
     data: T
 }
 
-export abstract class ServiceProvider<ResultType> {
+export abstract class ServiceProvider {
     private _defaultOptions: ClientRequestArgs = {
       method: 'GET'
     }
@@ -28,7 +28,7 @@ export abstract class ServiceProvider<ResultType> {
       }
     }
 
-    protected _fetch (options: ClientRequestArgs = {}) {
+    protected _fetch<ResultType> (options: ClientRequestArgs = {}) {
       const { protocol } = this._defaultOptions
       const service = protocol?.toLowerCase() === 'https:' ? https : http
       return new Promise<ReturnObject<ResultType>>((resolve, reject) => {
