@@ -119,7 +119,11 @@ export default {
         if (provider) {
           paramsSeq.where[Op.and] = [
             ...paramsSeq.where[Op.and] || [],
+<<<<<<< HEAD
             literal(`providerId LIKE "${provider}"`)
+=======
+            literal(`providerId LIKE ${escapedProvider}`)
+>>>>>>> 56e918f (fix(notifier): removes quotes on escaping literal string)
           ]
         }
 
