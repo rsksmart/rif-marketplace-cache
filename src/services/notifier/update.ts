@@ -1,10 +1,9 @@
 import { Sema } from 'async-sema/lib'
 
 import { loggingFactory } from '../../logger'
-import { NotifierSvcProvider, PlanPriceDTO } from './notifierService/provider'
+import NotifierSvcProvider, { NotifierChannel, NOTIFIER_RESOURCES, PlanPriceDTO } from './api/notifierSvcProvider'
 import PlanModel from './models/plan.model'
 import ProviderModel from './models/provider.model'
-import NotifierChannelModel from './models/notifier-channel.model'
 import PriceModel from './models/price.model'
 import { getTokenSymbol } from '../utils'
 import { SupportedServices } from '../../definitions'
@@ -37,29 +36,6 @@ function updatePrices (prices: PlanPriceDTO[], planId: number, dbTx: Transaction
     })
 }
 
-function updateChannels (channels: string[], planId: number, dbTx: Transaction) {
-  return Promise.all(channels.map(async (name) => {
-    const [channel, created] = await NotifierChannelModel.findOrCreate({
-      where: { name, planId },
-      transaction: dbTx
-    })
-      .catch((error) => {
-        throw error
-      })
-
-    if (created) {
-      logger.info(`Added new channel "${name}"`)
-    }
-
-    return channel
-  }))
-    .catch((error) => {
-      logger.error('Channels update error. Rolling back...')
-      dbTx.rollback()
-      throw error
-    })
-}
-
 export async function updateProvider (provider: ProviderModel, sequelize: Sequelize):Promise<void> {
   logger.info(`Updating ${provider.provider}'s subscription plans.`)
 
@@ -67,9 +43,9 @@ export async function updateProvider (provider: ProviderModel, sequelize: Sequel
   const svcProvider = new NotifierSvcProvider({ host, port })
 
   try {
-    const {
-      content: incomingPlans
-    } = await svcProvider.getSubscriptionPlans()
+    const incomingPlans = await svcProvider.getSubscriptionPlans()
+
+    const availableChannels = await svcProvider[NOTIFIER_RESOURCES.availableNotificationPreferences]()
 
     const plans = await Promise.all(incomingPlans.map(async ({
       id, name,
@@ -80,7 +56,13 @@ export async function updateProvider (provider: ProviderModel, sequelize: Sequel
     }) => {
       const dbTx = await sequelize.transaction({ autocommit: false })
 
+<<<<<<< HEAD
       const [plan, created] = await PlanModel.findOrCreate({
+=======
+      const channels = availableChannels.filter(({ type }) => notificationPreferences.includes(type))
+
+      let plan = await PlanModel.findOne({
+>>>>>>> e21ace6 (feat(notifier): adds source to notifier channels)
         where: {
           planId: String(id),
           name,
@@ -97,6 +79,7 @@ export async function updateProvider (provider: ProviderModel, sequelize: Sequel
           throw error
         })
 
+<<<<<<< HEAD
       if (created) {
         logger.info(`Added new plan "${name}"`)
       }
@@ -108,6 +91,37 @@ export async function updateProvider (provider: ProviderModel, sequelize: Sequel
         channels,
         prices
       }, { transaction: dbTx })
+=======
+      if (!plan) {
+        plan = await PlanModel.create(
+          {
+            planId: String(id),
+            planStatus,
+            name,
+            channels,
+            daysLeft: validity,
+            quantity: notificationQuantity,
+            providerId: provider.provider
+
+          }, {
+            transaction: dbTx
+          })
+          .catch((error) => {
+            logger.error('Plan creation error. Rolling back...' + error)
+            dbTx.rollback()
+            throw error
+          })
+
+        logger.info(`Added new plan "${name}"`)
+      } else {
+        plan.set('planStatus', planStatus)
+        plan.set('channels', channels)
+      }
+      const prices = await updatePrices(subscriptionPriceList, plan.id, dbTx)
+
+      plan.set({ prices })
+      await plan.save({ transaction: dbTx })
+>>>>>>> e21ace6 (feat(notifier): adds source to notifier channels)
         .catch((error) => {
           logger.error('Plan update error. Rolling back...')
           dbTx.rollback()

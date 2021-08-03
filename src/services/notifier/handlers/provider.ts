@@ -8,7 +8,12 @@ import { wrapEvent } from '../../../utils'
 import { NotifierServices } from '../index'
 import ProviderModel from '../models/provider.model'
 import { updater } from '../update'
+<<<<<<< HEAD
 import { NotifierSvcProvider } from '../notifierService/provider'
+=======
+import NotifierSvcProvider from '../api/notifierSvcProvider'
+import { buildSubscriptionFromDTO, deactivateDeletedPlansForProvider } from '../utils/updaterUtils'
+>>>>>>> e21ace6 (feat(notifier): adds source to notifier channels)
 import SubscriptionModel from '../models/subscription.model'
 import { getTokenSymbol } from '../../utils'
 import BigNumber from 'bignumber.js'
