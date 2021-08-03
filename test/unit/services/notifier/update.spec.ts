@@ -1,18 +1,17 @@
-import chaiAsPromised from 'chai-as-promised'
+import { BigNumber } from 'bignumber.js'
 import chai from 'chai'
-import config from 'config'
+import chaiAsPromised from 'chai-as-promised'
 import dirtyChai from 'dirty-chai'
 import { Op, Sequelize } from 'sequelize'
-import sinon from 'sinon'
+import sinon, { SinonStub } from 'sinon'
 import sinonChai from 'sinon-chai'
+import { ZERO_ADDRESS } from '../../../../src/definitions'
 import { sequelizeFactory } from '../../../../src/sequelize'
-import ProviderModel from '../../../../src/services/notifier/models/provider.model'
-import { NotifierSvcProvider, SubscriptionPlanDTO } from '../../../../src/services/notifier/notifierService/provider'
-import { updater } from '../../../../src/services/notifier/update'
+import NotifierSvcProvider, { NotifierChannel, NOTIFIER_RESOURCES, SubscriptionPlanDTO } from '../../../../src/services/notifier/api/notifierSvcProvider'
 import PlanModel from '../../../../src/services/notifier/models/plan.model'
-import NotifierChannelModel from '../../../../src/services/notifier/models/notifier-channel.model'
 import PriceModel from '../../../../src/services/notifier/models/price.model'
-import { BigNumber } from 'bignumber.js'
+import ProviderModel from '../../../../src/services/notifier/models/provider.model'
+import { updater } from '../../../../src/services/notifier/update'
 
 chai.use(sinonChai)
 chai.use(chaiAsPromised)
@@ -24,8 +23,13 @@ const sandbox = sinon.createSandbox()
 describe('Notifier services: Periodic Update', () => {
   let sequelize: Sequelize
 
-  const supportedTokenAddress = 'mock_token_address'
-  const supportedTokenSymbol = 'mock_token'
+  const tokenAddress = ZERO_ADDRESS
+  const tokenSymbol = 'rbtc'
+
+  const mockChannel: NotifierChannel = {
+    type: 'API',
+    origin: 'http://nowhere.here'
+  }
 
   const planDTO: SubscriptionPlanDTO = {
     id: 1,
@@ -33,15 +37,15 @@ describe('Notifier services: Periodic Update', () => {
     planStatus: 'ACTIVE',
     validity: 99,
     notificationQuantity: 666,
-    notificationPreferences: ['mock_channel'],
+    notificationPreferences: [mockChannel.type],
     subscriptionPriceList: [
       {
         currency: {
           address: {
-            value: supportedTokenAddress,
+            value: tokenAddress,
             typeAsString: 'address'
           },
-          name: supportedTokenSymbol
+          name: tokenSymbol
         },
         price: '2000'
       }
@@ -49,9 +53,6 @@ describe('Notifier services: Periodic Update', () => {
   }
 
   before(() => {
-    (config as any).notifier.tokens = {
-      [supportedTokenAddress]: supportedTokenSymbol
-    }
     sequelize = sequelizeFactory()
   })
 
@@ -65,19 +66,21 @@ describe('Notifier services: Periodic Update', () => {
       url: 'http://provider2.url'
     }
 
-    let getSubscriptionPlansSpy: sinon.SinonSpy
+    let getSubscriptionPlansSpy: SinonStub
+    let availableNotificationPreferencesSpy: SinonStub
 
     beforeEach(async () => {
       await sequelize.sync({ force: true })
 
-      getSubscriptionPlansSpy = sandbox.stub(NotifierSvcProvider.prototype, 'getSubscriptionPlans')
-        .callsFake(() => {
+      getSubscriptionPlansSpy = sandbox.stub(NotifierSvcProvider.prototype, NOTIFIER_RESOURCES.getSubscriptionPlans)
+        .callsFake((): ReturnType<typeof NotifierSvcProvider.prototype.getSubscriptionPlans> => {
           planDTO.id += 1
-          return Promise.resolve({
-            message: 'OK',
-            content: [planDTO],
-            status: 'OK'
-          })
+          return Promise.resolve([planDTO])
+        })
+
+      availableNotificationPreferencesSpy = sandbox.stub(NotifierSvcProvider.prototype, NOTIFIER_RESOURCES.availableNotificationPreferences)
+        .callsFake((): Promise<NotifierChannel[]> => {
+          return Promise.resolve([mockChannel])
         })
     })
 
@@ -139,24 +142,19 @@ describe('Notifier services: Periodic Update', () => {
       expect(providerPlans.length).to.be.equal(1)
     })
 
-    it('should update channels', async () => {
-      const existingProviders = await ProviderModel.findAll()
-      expect(existingProviders.length).to.be.equal(0)
-      const exitingChannels = await NotifierChannelModel.findAll()
-      expect(exitingChannels.length).to.be.equal(0)
-
+    it('should add channels to new plan', async () => {
       const provider = await ProviderModel.create(provider1)
       expect(provider).to.be.instanceOf(ProviderModel)
+      expect((await PlanModel.findAll({ where: { providerId: provider.provider } })).length).to.be.equal(0)
 
       await updater(sequelize)
+      sandbox.assert.calledOnce(availableNotificationPreferencesSpy)
 
       const plan = await PlanModel.findOne({ where: { providerId: provider1.provider } })
+
       expect(plan).to.be.instanceOf(PlanModel)
-
-      const channel = await NotifierChannelModel.findOne({ where: { planId: plan?.id } })
-
-      expect(channel).to.be.instanceOf(NotifierChannelModel)
-      expect(channel?.name).to.equal(planDTO.notificationPreferences[0])
+      const [actualChannel] = plan?.channels ?? []
+      expect(actualChannel).to.deep.equal(mockChannel)
     })
 
     it('should update prices', async () => {

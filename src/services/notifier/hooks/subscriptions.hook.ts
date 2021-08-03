@@ -1,7 +1,6 @@
 import { HookContext } from '@feathersjs/feathers'
 import { disallow } from 'feathers-hooks-common'
 import { literal, Op } from 'sequelize'
-import NotifierChannelModel from '../models/notifier-channel.model'
 import PlanModel from '../models/plan.model'
 import ProviderModel from '../models/provider.model'
 import SubscriptionModel from '../models/subscription.model'
@@ -100,15 +99,7 @@ export default {
             {
               model: PlanModel,
               as: 'plan',
-              where: literal('plan.id = subscriptionPlanId'),
-              include: [
-                {
-                  model: NotifierChannelModel,
-                  as: 'channels',
-                  attributes: ['name'],
-                  required: true
-                }
-              ]
+              where: literal('plan.id = subscriptionPlanId') // Subscription model references plan.id as subscriptionPlanId
             },
             {
               model: ProviderModel,
