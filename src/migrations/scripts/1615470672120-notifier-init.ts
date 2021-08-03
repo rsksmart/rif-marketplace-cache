@@ -7,7 +7,6 @@ import { Sequelize as SequelizeTs } from 'sequelize-typescript'
  * createTable "notifier_provider", deps: []
  * createTable "notifier_plan", deps: []
  * createTable "notifier_subscription", deps: []
- * createTable "notifier_channel", deps: []
  * createTable "notifier_price", deps: []
  * createTable "notifier_stakes", deps: []
  *
@@ -119,6 +118,11 @@ const migrationCommands = function (transaction: any): Commands {
             field: 'planId',
             allowNull: false
           },
+          channels: {
+            type: Sequelize.JSON,
+            field: 'channels',
+            allowNull: false
+          },
           name: {
             type: Sequelize.STRING,
             field: 'name',
@@ -171,6 +175,11 @@ const migrationCommands = function (transaction: any): Commands {
           subscriptionId: {
             type: Sequelize.NUMBER,
             field: 'subscriptionId',
+            allowNull: false
+          },
+          signature: {
+            type: Sequelize.STRING,
+            field: 'signature',
             allowNull: false
           },
           status: {
@@ -241,41 +250,11 @@ const migrationCommands = function (transaction: any): Commands {
             name: 'providerId',
             field: 'providerId',
             allowNull: false
-          }
-        },
-        {
-          transaction: transaction
-        }
-      ]
-    },
-    {
-      fn: 'createTable',
-      params: [
-        'notifier_channel',
-        {
-          id: {
-            type: Sequelize.INTEGER,
-            field: 'id',
-            autoIncrement: true,
-            primaryKey: true,
-            allowNull: false
           },
-          name: {
+          withdrawableFunds: {
             type: Sequelize.STRING,
-            field: 'name',
-            allowNull: false
-          },
-          planId: {
-            type: Sequelize.INTEGER,
-            onUpdate: 'CASCADE',
-            onDelete: 'NO ACTION',
-            references: {
-              model: 'notifier_plan',
-              key: 'id'
-            },
-            name: 'planId',
-            field: 'planId',
-            allowNull: false
+            field: 'withdrawableFunds',
+            allowNull: true
           }
         },
         {
@@ -354,14 +333,6 @@ const rollbackCommands = function (transaction: any): Commands {
       fn: 'dropTable',
       params: [
         'notifier_plan', {
-          transaction: transaction
-        }
-      ]
-    },
-    {
-      fn: 'dropTable',
-      params: [
-        'notifier_channel', {
           transaction: transaction
         }
       ]

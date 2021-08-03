@@ -1,9 +1,9 @@
 import { BelongsTo, Column, DataType, ForeignKey, HasMany, Model, Scopes, Table } from 'sequelize-typescript'
-import NotifierChannelModel from './notifier-channel.model'
 import PriceModel from './price.model'
 import ProviderModel from './provider.model'
 import { Op } from 'sequelize'
 import SubscriptionModel from './subscription.model'
+import { NotifierChannel } from '../api/notifierSvcProvider'
 
 export const scopes = {
   active: 'active'
@@ -35,8 +35,8 @@ export default class PlanModel extends Model {
     @Column({ allowNull: false, type: DataType.INTEGER })
     quantity!: number
 
-    @HasMany(() => NotifierChannelModel, 'planId')
-    channels!: NotifierChannelModel[]
+    @Column({ allowNull: false, type: DataType.JSON })
+    channels!: NotifierChannel[]
 
     @HasMany(() => PriceModel, 'planId')
     prices!: PriceModel[]

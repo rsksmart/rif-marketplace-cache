@@ -26,7 +26,11 @@
   },
   notifier: {
     requirePrecache: true,
-    enabled: false
+    enabled: false,
+    tokens: {
+      '0x12345': 'rif',
+      '0x0000000000000000000000000000000000000000': 'rbtc'
+    },
   },
   storage: {
     requirePrecache: true,
