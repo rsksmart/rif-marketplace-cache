@@ -120,7 +120,7 @@ export default {
           const escapedProvider = sequelize.escape(provider)
           paramsSeq.where[Op.and] = [
             ...paramsSeq.where[Op.and] || [],
-            literal(`providerId LIKE "${escapedProvider}"`)
+            literal(`providerId LIKE ${escapedProvider}`)
           ]
         }
 
