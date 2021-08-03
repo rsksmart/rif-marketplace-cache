@@ -3,7 +3,6 @@ import { disallow } from 'feathers-hooks-common'
 import { literal, Op, Sequelize } from 'sequelize'
 import { scopes } from '../models/plan.model'
 import PriceModel from '../models/price.model'
-import NotifierChannelModel from '../models/notifier-channel.model'
 import { findLimits } from '../utils/plansHookUtils'
 
 export default {
@@ -16,12 +15,6 @@ export default {
           nest: true,
           scope: scopes.active,
           include: [
-            {
-              model: NotifierChannelModel,
-              as: 'channels',
-              attributes: ['name'],
-              required: true
-            },
             {
               model: PriceModel,
               as: 'prices',
@@ -55,25 +48,9 @@ export default {
         const {
           currency,
           size,
-          channels,
           price,
           provider
         } = query
-
-        if (channels?.length) {
-          paramsSeq.include = [
-            ...paramsSeq.include,
-            {
-              model: NotifierChannelModel,
-              as: 'channels',
-              required: true,
-              attributes: ['name'],
-              where: {
-                name: channels
-              }
-            }
-          ]
-        }
 
         if (size) {
           const { min, max } = size
@@ -120,7 +97,7 @@ export default {
           const escapedProvider = sequelize.escape(provider)
           paramsSeq.where[Op.and] = [
             ...paramsSeq.where[Op.and] || [],
-            literal(`providerId LIKE "${escapedProvider}"`)
+            literal(`providerId LIKE ${escapedProvider}`)
           ]
         }
 
