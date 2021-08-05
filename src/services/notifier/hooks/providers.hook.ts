@@ -39,7 +39,7 @@ export default {
         }
         return context
       },
-      async (context: HookContext) => {
+      (context: HookContext) => {
         if (!context.params.query) return context
         const paramsSeq = context.params.sequelize
         const sequelize: Sequelize = context.app.get('sequelize')
@@ -50,7 +50,7 @@ export default {
           const escapedHost = sequelize.escape(`%${url}%`)
           paramsSeq.where[Op.and] = [
             ...paramsSeq.where[Op.and] || [],
-            literal(`url LIKE ${escapedHost}`)
+            literal(`lower(url) LIKE lower(${escapedHost})`)
           ]
         }
       }
