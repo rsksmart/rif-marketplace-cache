@@ -21,7 +21,7 @@ COPY --from=compiler /usr/src/app/lib ./lib/
 COPY --from=compiler /usr/src/app/node_modules ./node_modules/
 COPY package*.json ./
 COPY bin ./bin/
-COPY config ./config/
+COPY --chown=node:node config ./config/
 
 RUN sed -i 's#"./src/cli"#"./lib/cli"#g' package.json
 
