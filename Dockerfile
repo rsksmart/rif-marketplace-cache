@@ -22,7 +22,10 @@ COPY --from=compiler /usr/src/app/node_modules ./node_modules/
 COPY package*.json ./
 COPY bin ./bin/
 COPY --chown=node:node config ./config/
+<<<<<<< HEAD
 COPY scripts ./scripts/
+=======
+>>>>>>> dc9afd0 (fix(devops): changes config ownership)
 
 RUN sed -i 's#"./src/cli"#"./lib/cli"#g' package.json
 
