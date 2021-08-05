@@ -3,6 +3,7 @@ import { disallow } from 'feathers-hooks-common'
 import PlanModel from '../models/plan.model'
 import NotifierChannelModel from '../models/notifier-channel.model'
 import PriceModel from '../models/price.model'
+import { literal, Op, Sequelize } from 'sequelize'
 
 export default {
   before: {
@@ -33,9 +34,27 @@ export default {
                 }
               ]
             }
+          ],
+          where: {}
+        }
+        return context
+      },
+      async (context: HookContext) => {
+        if (!context.params.query) return context
+        const paramsSeq = context.params.sequelize
+        const sequelize: Sequelize = context.app.get('sequelize')
+        const { ...query } = context.params.query
+        const { url } = query
+
+        if (url) {
+          const escapedHost = sequelize.escape(`%${url}%`)
+          paramsSeq.where[Op.and] = [
+            ...paramsSeq.where[Op.and] || [],
+            literal(`url LIKE ${escapedHost}`)
           ]
         }
       }
+
     ],
     get: [],
     create: disallow('external'),
