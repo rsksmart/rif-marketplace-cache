@@ -43,8 +43,7 @@ export default {
         if (!context.params.query) return context
         const paramsSeq = context.params.sequelize
         const sequelize: Sequelize = context.app.get('sequelize')
-        const { ...query } = context.params.query
-        const { url } = query
+        const { url } = context.params.query
 
         if (url) {
           const escapedHost = sequelize.escape(`%${url}%`)
