@@ -1,57 +1,57 @@
 {
-  blockchain: {
-    networkId: 30
-  },
-  storage: {
-    enabled: true,
-    tokens: {
-      '0x2acc95758f8b5f583470ba265eb685a8f45fc9d5': 'rif'
+    blockchain: {
+        networkId: 30,
     },
-    storageManager: {
-      contractAddress: "0xa18c181229F374b00f126fC952775d41A4F4c40e",
-      eventsEmitter: {
-        startingBlock: 3226686,
-        confirmations: 4
-      }
+    storage: {
+        enabled: true,
+        tokens: {
+            '0x2acc95758f8b5f583470ba265eb685a8f45fc9d5': 'rif',
+        },
+        storageManager: {
+            contractAddress: '0xa18c181229F374b00f126fC952775d41A4F4c40e',
+            eventsEmitter: {
+                startingBlock: 3226686,
+                confirmations: 4,
+            },
+        },
+        staking: {
+            contractAddress: '0xe82Eb1C0D40D555b8030116132EdA0B9f1032263',
+            eventsEmitter: {
+                startingBlock: 3226688,
+                confirmations: 4,
+            },
+        },
     },
-    staking: {
-      contractAddress: "0xe82Eb1C0D40D555b8030116132EdA0B9f1032263",
-      eventsEmitter: {
-        startingBlock: 3226688,
-        confirmations: 4
-      }
+    rns: {
+        batchContractAddress: '0x2beb2819e110b34c802c761e737470760af2057f',
+        owner: {
+            contractAddress: '0x45d3e4fb311982a06ba52359d44cb4f5980e0ef1',
+            eventsEmitter: {
+                startingBlock: 1891388,
+                confirmations: 4,
+            },
+        },
+        reverse: {
+            contractAddress: '0x4b1a11bf6723e60b9d2e02aa3ece34e24bde77d9',
+            eventsEmitter: {
+                startingBlock: 1721969,
+                confirmations: 4,
+            },
+        },
+        placement: {
+            contractAddress: '0xa966Be39A13723d991dFA92B2B0CF6b0c7416eE5',
+            eventsEmitter: {
+                startingBlock: 2670871,
+                confirmations: 4,
+            },
+        },
+        registrar: {
+            startingBlock: 905033,
+            contractAddress: '0x5269f5bc51cdd8aa62755c97229b7eeddd8e69a6',
+        },
+        fifsAddrRegistrar: {
+            startingBlock: 2086382,
+            contractAddress: '0xd9c79ced86ecf49f5e4a973594634c83197c35ab',
+        },
     },
-  },
-  rns: {
-    batchContractAddress: "0x2beb2819e110b34c802c761e737470760af2057f",
-    owner: {
-      contractAddress: "0x45d3e4fb311982a06ba52359d44cb4f5980e0ef1",
-      eventsEmitter: {
-        startingBlock: 1891388,
-        confirmations: 4
-      }
-    },
-    reverse: {
-      contractAddress: "0x4b1a11bf6723e60b9d2e02aa3ece34e24bde77d9",
-      eventsEmitter: {
-        startingBlock: 1721969,
-        confirmations: 4
-      }
-    },
-    placement: {
-      contractAddress: "0xa966Be39A13723d991dFA92B2B0CF6b0c7416eE5",
-      eventsEmitter: {
-        startingBlock: 2670871,
-        confirmations: 4
-      }
-    },
-    registrar: {
-      startingBlock: 905033,
-      contractAddress: "0x5269f5bc51cdd8aa62755c97229b7eeddd8e69a6"
-    },
-    fifsAddrRegistrar: {
-      startingBlock: 2086382,
-      contractAddress: "0xd9c79ced86ecf49f5e4a973594634c83197c35ab"
-    }
-  }
 }

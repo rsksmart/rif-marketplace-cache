@@ -1,95 +1,98 @@
 {
-  port: 3030,
-  auth: {
-    secret: '8a58b86565c23c9ea90' // not used for auth purpose
-  },
-  blockchain: {
-    provider: "ws://127.0.0.1:8545/",
-    networkId: 8545
-  },
-  notifier: {
-    enabled: true,
-    tokens: {
-      '0x67b5656d60a809915323bf2c40a8bef15a152e3e': 'rif'
+    port: 3030,
+    auth: {
+        secret: '8a58b86565c23c9ea90',
     },
-    notifierManager: {
-      contractAddress: "0xc34175A79ACca40392bECD22ff10fAeBFE780Ae7",
-      eventsEmitter: {
-        confirmations: 2
-      }
+    blockchain: {
+        provider: 'ws://127.0.0.1:8545/',
+        networkId: 8545,
     },
-    staking: {
-      contractAddress: "0xe97DbD7116D168190F8A6E7beB1092c103c53a12",
-      eventsEmitter: {
-        confirmations: 2
-      }
+    notifier: {
+        enabled: true,
+        tokens: {
+            '0x67b5656d60a809915323bf2c40a8bef15a152e3e': 'rif',
+        },
+        notifierManager: {
+            contractAddress: '0xc34175A79ACca40392bECD22ff10fAeBFE780Ae7',
+            eventsEmitter: {
+                confirmations: 2,
+            },
+        },
+        staking: {
+            contractAddress: '0xe97DbD7116D168190F8A6E7beB1092c103c53a12',
+            eventsEmitter: {
+                confirmations: 2,
+            },
+        },
     },
-  },
-  storage: {
-    enabled: true,
-    tokens: {
-      '0x67b5656d60a809915323bf2c40a8bef15a152e3e': 'rif'
+    storage: {
+        enabled: true,
+        tokens: {
+            '0x67b5656d60a809915323bf2c40a8bef15a152e3e': 'rif',
+        },
+        storageManager: {
+            contractAddress: '0x1b88Bdb8269A1aB1372459F5a4eC3663D6f5cCc4',
+            eventsEmitter: {
+                confirmations: 2,
+            },
+        },
+        staking: {
+            contractAddress: '0x22d5C8BdD4346b390014a07109a8F830094d4abf',
+            eventsEmitter: {
+                confirmations: 2,
+            },
+        },
     },
-    storageManager: {
-      contractAddress: "0x1b88Bdb8269A1aB1372459F5a4eC3663D6f5cCc4",
-      eventsEmitter: {
-        confirmations: 2
-      }
+    rns: {
+        enabled: true,
+        tokens: {
+            '0x67b5656d60a809915323bf2c40a8bef15a152e3e': 'rif',
+        },
+        batchContractAddress: '0xc0b3B62DD0400E4baa721DdEc9B8A384147b23fF',
+        owner: {
+            contractAddress: '0x26b4AFb60d6C903165150C6F0AA14F8016bE4aec',
+            eventsEmitter: {
+                confirmations: 2,
+            },
+        },
+        reverse: {
+            contractAddress: '0x9561C133DD8580860B6b7E504bC5Aa500f0f06a7',
+            eventsEmitter: {
+                confirmations: 2,
+            },
+        },
+        placement: {
+            contractAddress: '0xeF391648603DCb012e30eF706452b3DfF6466dE8',
+            eventsEmitter: {
+                confirmations: 2,
+            },
+        },
+        registrar: {
+            contractAddress: '0x2612Af3A521c2df9EAF28422Ca335b04AdF3ac66',
+            eventsEmitter: {
+                confirmations: 2,
+            },
+        },
+        fifsAddrRegistrar: {
+            contractAddress: '0x6eD79Aa1c71FD7BdBC515EfdA3Bd4e26394435cC',
+            eventsEmitter: {
+                confirmations: 2,
+            },
+        },
     },
-    staking: {
-      contractAddress: "0x22d5C8BdD4346b390014a07109a8F830094d4abf",
-      eventsEmitter: {
-        confirmations: 2
-      }
+    comms: {
+        libp2p: {
+            config: {
+                peerDiscovery: {
+                    bootstrap: {
+                        enabled: true,
+                        list: [
+                            '/ip4/127.0.0.1/tcp/8998',
+                            '/ip4/127.0.0.1/tcp/8999/ws',
+                        ],
+                    },
+                },
+            },
+        },
     },
-  },
-  rns: {
-    enabled: true,
-    tokens: {
-      '0x67b5656d60a809915323bf2c40a8bef15a152e3e': 'rif'
-    },
-    batchContractAddress: "0xc0b3B62DD0400E4baa721DdEc9B8A384147b23fF",
-    owner: {
-      contractAddress: "0x26b4AFb60d6C903165150C6F0AA14F8016bE4aec",
-      eventsEmitter: {
-        confirmations: 2
-      }
-    },
-    reverse: {
-      contractAddress: "0x9561C133DD8580860B6b7E504bC5Aa500f0f06a7",
-      eventsEmitter: {
-        confirmations: 2
-      }
-    },
-    placement: {
-      contractAddress: "0xeF391648603DCb012e30eF706452b3DfF6466dE8",
-      eventsEmitter: {
-        confirmations: 2
-      }
-    },
-    registrar: {
-      contractAddress: "0x2612Af3A521c2df9EAF28422Ca335b04AdF3ac66",
-      eventsEmitter: {
-        confirmations: 2
-      }
-    },
-    fifsAddrRegistrar: {
-      contractAddress: "0x6eD79Aa1c71FD7BdBC515EfdA3Bd4e26394435cC",
-      eventsEmitter: {
-        confirmations: 2
-      }
-    }
-  },
-  comms: {
-    libp2p: {
-      config: {
-        peerDiscovery: {
-          bootstrap: {
-            enabled: true,
-            list: ['/ip4/127.0.0.1/tcp/8998', '/ip4/127.0.0.1/tcp/8999/ws']
-          }
-        }
-      }
-    }
-  }
 }
