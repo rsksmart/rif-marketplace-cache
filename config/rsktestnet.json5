@@ -1,76 +1,96 @@
 {
-  comms: {
-    libp2p: {
-      config: {
-        peerDiscovery: {
-          bootstrap: {
-            list: [
-              '/dns4/pubsub-01.marketplace.testnet.rifos.org/tcp/8998/p2p/QmRstX1GjxktJhks6Pdu99CQxXMgS499Rw4FqDaqobCupW',
-              '/dns4/pubsub-02.marketplace.testnet.rifos.org/tcp/8998/p2p/QmRS1KbNRQPaQMHRu3pQJG8VxnC3yAr51bHK2hnS5gdeyh',
-              '/dns4/pubsub-01.marketplace.testnet.rifos.org/tcp/8999/ws/p2p/QmRstX1GjxktJhks6Pdu99CQxXMgS499Rw4FqDaqobCupW',
-              '/dns4/pubsub-02.marketplace.testnet.rifos.org/tcp/8999/ws/p2p/QmRS1KbNRQPaQMHRu3pQJG8VxnC3yAr51bHK2hnS5gdeyh',
-            ]
-          }
+    comms: {
+        libp2p: {
+            config: {
+                peerDiscovery: {
+                    bootstrap: {
+                        list: [
+                            '/dns4/pubsub-01.marketplace.testnet.rifos.org/tcp/8998/p2p/QmRstX1GjxktJhks6Pdu99CQxXMgS499Rw4FqDaqobCupW',
+                            '/dns4/pubsub-02.marketplace.testnet.rifos.org/tcp/8998/p2p/QmRS1KbNRQPaQMHRu3pQJG8VxnC3yAr51bHK2hnS5gdeyh',
+                            '/dns4/pubsub-01.marketplace.testnet.rifos.org/tcp/8999/ws/p2p/QmRstX1GjxktJhks6Pdu99CQxXMgS499Rw4FqDaqobCupW',
+                            '/dns4/pubsub-02.marketplace.testnet.rifos.org/tcp/8999/ws/p2p/QmRS1KbNRQPaQMHRu3pQJG8VxnC3yAr51bHK2hnS5gdeyh',
+                        ],
+                    },
+                },
+            },
         },
-      },
     },
-  },
-  blockchain: {
-    networkId: 31
-  },
-  storage: {
-    enabled: true,
-    tokens: {
-      '0x19f64674D8a5b4e652319F5e239EFd3bc969a1FE': 'rif'
+    blockchain: {
+        networkId: 31,
     },
-    storageManager: {
-      contractAddress: "0x839856c0eC1aA2AeD25D47Fd3DDB7A14Dac3e76d",
-      eventsEmitter: {
-        startingBlock: 1656800,
-        confirmations: 8
-      }
+    notifier: {
+        enabled: true,
+        tokens: {
+            '0x19f64674D8a5b4e652319F5e239EFd3bc969a1FE': 'rif',
+        },
+        notifierManager: {
+            contractAddress: '0xcaED0CCbb3d9B9090d848Ea271f0abAa195f03EA',
+            eventsEmitter: {
+                startingBlock: 221,
+                confirmations: 3,
+            },
+        },
+        staking: {
+            contractAddress: '0x315645E455107213c3A35e56a12Aad595F10d922',
+            eventsEmitter: {
+                startingBlock: 227,
+                confirmations: 3,
+            },
+        },
     },
-    staking: {
-      contractAddress: "0x11bE792f8fcfC84897b88e149dD3fb66b422256f",
-      eventsEmitter: {
-        startingBlock: 1656787,
-        confirmations: 8
-      }
+    storage: {
+        enabled: true,
+        tokens: {
+            '0x19f64674D8a5b4e652319F5e239EFd3bc969a1FE': 'rif',
+        },
+        storageManager: {
+            contractAddress: '0x839856c0eC1aA2AeD25D47Fd3DDB7A14Dac3e76d',
+            eventsEmitter: {
+                startingBlock: 1656800,
+                confirmations: 8,
+            },
+        },
+        staking: {
+            contractAddress: '0x11bE792f8fcfC84897b88e149dD3fb66b422256f',
+            eventsEmitter: {
+                startingBlock: 1656787,
+                confirmations: 8,
+            },
+        },
     },
-  },
-  rns: {
-    tokens: {
-      '0x19f64674D8a5b4e652319F5e239EFd3bc969a1FE': 'rif'
+    rns: {
+        tokens: {
+            '0x19f64674D8a5b4e652319F5e239EFd3bc969a1FE': 'rif',
+        },
+        batchContractAddress: '0x380a47e2a1cec8a21cf00374ea5d092166a702fc',
+        owner: {
+            contractAddress: '0xca0a477e19bac7e0e172ccfd2e3c28a7200bdb71',
+            eventsEmitter: {
+                startingBlock: 385433,
+                confirmations: 5,
+            },
+        },
+        reverse: {
+            contractAddress: '0x8587385ad60038bB181aFfDF687c4D1B80C4787e',
+            eventsEmitter: {
+                startingBlock: 419976,
+                confirmations: 5,
+            },
+        },
+        placement: {
+            contractAddress: '0xFa5ade767a422C66cAFd94c3710f5b92467fB85e',
+            eventsEmitter: {
+                startingBlock: 1121204,
+                confirmations: 5,
+            },
+        },
+        registrar: {
+            startingBlock: 385324,
+            contractAddress: '0x3d1a11c623bd21375f2b69f4eec814f4ceeb1d8d',
+        },
+        fifsAddrRegistrar: {
+            startingBlock: 385324,
+            contractAddress: '0x90734bd6bf96250a7b262e2bc34284b0d47c1e8d',
+        },
     },
-    batchContractAddress: "0x380a47e2a1cec8a21cf00374ea5d092166a702fc",
-    owner: {
-      contractAddress: "0xca0a477e19bac7e0e172ccfd2e3c28a7200bdb71",
-      eventsEmitter: {
-        startingBlock: 385433,
-        confirmations: 5
-      }
-    },
-    reverse: {
-      contractAddress: "0x8587385ad60038bB181aFfDF687c4D1B80C4787e",
-      eventsEmitter: {
-        startingBlock: 419976,
-        confirmations: 5
-      }
-    },
-    placement: {
-      contractAddress: "0xFa5ade767a422C66cAFd94c3710f5b92467fB85e",
-      eventsEmitter: {
-        startingBlock: 1121204,
-        confirmations: 5
-      }
-    },
-    registrar: {
-      startingBlock: 385324,
-      contractAddress: "0x3d1a11c623bd21375f2b69f4eec814f4ceeb1d8d"
-    },
-    fifsAddrRegistrar: {
-      startingBlock: 385324,
-      contractAddress: "0x90734bd6bf96250a7b262e2bc34284b0d47c1e8d"
-    }
-  }
 }
