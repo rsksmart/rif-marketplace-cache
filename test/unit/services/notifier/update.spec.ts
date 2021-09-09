@@ -2,7 +2,7 @@ import { BigNumber } from 'bignumber.js'
 import chai from 'chai'
 import chaiAsPromised from 'chai-as-promised'
 import dirtyChai from 'dirty-chai'
-import { Op, Sequelize } from 'sequelize'
+import { Sequelize } from 'sequelize'
 import sinon, { SinonStub } from 'sinon'
 import sinonChai from 'sinon-chai'
 import { ZERO_ADDRESS } from '../../../../src/definitions'
@@ -52,6 +52,27 @@ describe('Notifier services: Periodic Update', () => {
     ]
   }
 
+  const plan2DTO: SubscriptionPlanDTO = {
+    id: 2,
+    name: 'mock_plan_2',
+    planStatus: 'ACTIVE',
+    validity: 33,
+    notificationQuantity: 222,
+    notificationPreferences: [mockChannel.type],
+    subscriptionPriceList: [
+      {
+        currency: {
+          address: {
+            value: tokenAddress,
+            typeAsString: 'address'
+          },
+          name: tokenSymbol
+        },
+        price: '1000'
+      }
+    ]
+  }
+
   before(() => {
     sequelize = sequelizeFactory()
   })
@@ -74,7 +95,6 @@ describe('Notifier services: Periodic Update', () => {
 
       getSubscriptionPlansSpy = sandbox.stub(NotifierSvcProvider.prototype, NOTIFIER_RESOURCES.getSubscriptionPlans)
         .callsFake((): ReturnType<typeof NotifierSvcProvider.prototype.getSubscriptionPlans> => {
-          planDTO.id += 1
           return Promise.resolve([planDTO])
         })
 
@@ -109,10 +129,7 @@ describe('Notifier services: Periodic Update', () => {
 
       const providerPlans = await PlanModel.findAll({
         where: {
-          [Op.or]: [
-            { providerId: provider1.provider },
-            { providerId: provider2.provider }
-          ]
+          providerId: [provider1.provider, provider2.provider]
         }
       })
 
@@ -132,10 +149,7 @@ describe('Notifier services: Periodic Update', () => {
 
       const providerPlans = await PlanModel.findAll({
         where: {
-          [Op.or]: [
-            { providerId: provider1.provider },
-            { providerId: provider2.provider }
-          ]
+          providerId: [provider1.provider, provider2.provider]
         }
       })
 
@@ -176,6 +190,107 @@ describe('Notifier services: Periodic Update', () => {
       expect(prices).to.be.instanceOf(PriceModel)
       expect(prices?.price).to.be.deep.equal(new BigNumber(planDTO.subscriptionPriceList[0].price))
       expect(prices?.rateId).to.equal(planDTO.subscriptionPriceList[0].currency.name)
+    })
+
+    it('should mark plans, that are no longer present on the provider, as inactive', async () => {
+      await ProviderModel.bulkCreate([provider1])
+
+      await updater(sequelize, provider1.url)
+
+      const [prepPlan] = await PlanModel.findAll({
+        where: {
+          providerId: provider1.provider
+        }
+      })
+
+      expect(prepPlan.planId).to.be.equal(planDTO.id)
+      expect(prepPlan.planStatus).to.be.equal('ACTIVE')
+
+      getSubscriptionPlansSpy.callsFake((): ReturnType<typeof NotifierSvcProvider.prototype.getSubscriptionPlans> => {
+        return Promise.resolve([plan2DTO])
+      })
+      await updater(sequelize, provider1.url)
+
+      const plans = await PlanModel.findAll({
+        where: {
+          providerId: provider1.provider,
+          planId: planDTO.id
+        }
+      })
+      expect(plans.length).to.equal(1)
+      const [expectedInactivePlan] = plans
+
+      expect(expectedInactivePlan.planId).to.be.equal(planDTO.id)
+      expect(expectedInactivePlan.planStatus).to.be.equal('INACTIVE')
+    })
+
+    it('should mark all plans of a provider as inactive if plans cannot be retrieved', async () => {
+      await ProviderModel.bulkCreate([provider1])
+
+      await updater(sequelize, provider1.url)
+
+      const [prepPlan] = await PlanModel.findAll({
+        where: {
+          providerId: provider1.provider
+        }
+      })
+
+      expect(prepPlan.planId).to.be.equal(planDTO.id)
+      expect(prepPlan.planStatus).to.be.equal('ACTIVE')
+
+      getSubscriptionPlansSpy.callsFake((): ReturnType<typeof NotifierSvcProvider.prototype.getSubscriptionPlans> => {
+        return Promise.reject(Error('Meh'))
+      })
+      await updater(sequelize, provider1.url)
+
+      const plans = await PlanModel.findAll({
+        where: {
+          providerId: provider1.provider,
+          planId: planDTO.id
+        }
+      })
+      expect(plans.length).to.equal(1)
+      const [expectedInactivePlan] = plans
+
+      expect(expectedInactivePlan.planId).to.be.equal(planDTO.id)
+      expect(expectedInactivePlan.planStatus).to.be.equal('INACTIVE')
+    })
+
+    it('should reactivate plans when provider is back with same plans', async () => {
+      await ProviderModel.bulkCreate([provider1])
+
+      await updater(sequelize, provider1.url)
+
+      const [prepPlan] = await PlanModel.findAll({
+        where: {
+          providerId: provider1.provider
+        }
+      })
+
+      expect(prepPlan.planId).to.be.equal(planDTO.id)
+      expect(prepPlan.planStatus).to.be.equal('ACTIVE')
+
+      getSubscriptionPlansSpy.callsFake((): ReturnType<typeof NotifierSvcProvider.prototype.getSubscriptionPlans> => {
+        return Promise.reject(Error('Meh'))
+      })
+      await updater(sequelize, provider1.url)
+
+      getSubscriptionPlansSpy.callsFake((): ReturnType<typeof NotifierSvcProvider.prototype.getSubscriptionPlans> => {
+        return Promise.resolve([planDTO])
+      })
+      await updater(sequelize, provider1.url)
+
+      const plans = await PlanModel.findAll({
+        where: {
+          providerId: provider1.provider,
+          planId: planDTO.id
+        }
+      })
+      expect(plans.length).to.equal(1)
+      const [expectedInactivePlan] = plans
+
+      expect(expectedInactivePlan.planId).to.be.equal(planDTO.id)
+      expect(expectedInactivePlan.planStatus).to.be.equal('ACTIVE')
     })
   })
 })
