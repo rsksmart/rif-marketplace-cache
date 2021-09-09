@@ -1,13 +1,13 @@
 import { Sema } from 'async-sema/lib'
 
 import { loggingFactory } from '../../logger'
-import NotifierSvcProvider, { NotifierChannel, NOTIFIER_RESOURCES, PlanPriceDTO } from './api/notifierSvcProvider'
+import NotifierSvcProvider, { NOTIFIER_RESOURCES, PlanPriceDTO } from './api/notifierSvcProvider'
 import PlanModel from './models/plan.model'
 import ProviderModel from './models/provider.model'
 import PriceModel from './models/price.model'
 import { getTokenSymbol } from '../utils'
 import { SupportedServices } from '../../definitions'
-import { Sequelize, Transaction, Op } from 'sequelize'
+import { Sequelize, Transaction } from 'sequelize'
 
 const logger = loggingFactory('notifier:updater')
 
@@ -44,7 +44,14 @@ export async function updateProvider (provider: ProviderModel, sequelize: Sequel
   const svcProvider = new NotifierSvcProvider({ host, port })
 
   try {
-    const incomingPlans = await svcProvider.getSubscriptionPlans()
+    const incomingPlans = await svcProvider.getSubscriptionPlans().catch(async (error: Error) => {
+      logger.error(error)
+      await PlanModel.update({
+        planStatus: 'INACTIVE'
+      }, { where: { providerId } })
+    })
+
+    if (!incomingPlans) return
 
     const availableChannels = await svcProvider[NOTIFIER_RESOURCES.availableNotificationPreferences]()
 
