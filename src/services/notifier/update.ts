@@ -7,7 +7,7 @@ import ProviderModel from './models/provider.model'
 import PriceModel from './models/price.model'
 import { getTokenSymbol } from '../utils'
 import { SupportedServices } from '../../definitions'
-import { Sequelize, Transaction } from 'sequelize'
+import { Sequelize, Transaction, Op } from 'sequelize'
 
 const logger = loggingFactory('notifier:updater')
 
@@ -37,7 +37,8 @@ function updatePrices (prices: PlanPriceDTO[], planId: number, dbTx: Transaction
 }
 
 export async function updateProvider (provider: ProviderModel, sequelize: Sequelize):Promise<void> {
-  logger.info(`Updating ${provider.provider}'s subscription plans.`)
+  const { provider: providerId } = provider
+  logger.info(`Updating ${providerId}'s subscription plans.`)
 
   const [host, port] = provider.url.split(/(?::)(\d*)$/, 2)
   const svcProvider = new NotifierSvcProvider({ host, port })
@@ -56,7 +57,8 @@ export async function updateProvider (provider: ProviderModel, sequelize: Sequel
     }) => {
       const dbTx = await sequelize.transaction({ autocommit: false })
 
-      const channels = availableChannels.filter(({ type }) => notificationPreferences.includes(type))
+      const channels = availableChannels
+        .filter(({ type }) => notificationPreferences.includes(type))
 
       let plan = await PlanModel.findOne({
         where: {
@@ -64,7 +66,7 @@ export async function updateProvider (provider: ProviderModel, sequelize: Sequel
           name,
           daysLeft: validity,
           quantity: notificationQuantity,
-          providerId: provider.provider
+          providerId
         }
       })
 
@@ -77,7 +79,7 @@ export async function updateProvider (provider: ProviderModel, sequelize: Sequel
             channels,
             daysLeft: validity,
             quantity: notificationQuantity,
-            providerId: provider.provider
+            providerId
 
           }, {
             transaction: dbTx
@@ -111,6 +113,26 @@ export async function updateProvider (provider: ProviderModel, sequelize: Sequel
       })
 
     if (plans) { await provider.update('plans', plans) }
+
+    const idsToBeDeactivated = (await PlanModel.findAll({ where: { providerId } }))
+      .filter((plan) => !incomingPlans.some(({
+        id, name, validity, notificationQuantity, planStatus
+      }) => {
+        return plan.planId === id &&
+          plan.name === name &&
+          plan.daysLeft === validity &&
+          plan.quantity === notificationQuantity &&
+          plan.planStatus === planStatus
+      }))
+      .map(({ id }) => id)
+
+    await PlanModel.update({
+      planStatus: 'INACTIVE'
+    }, {
+      where: {
+        id: idsToBeDeactivated
+      }
+    })
   } catch (error) {
     logger.error(error)
   }
