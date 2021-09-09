@@ -141,7 +141,7 @@ export async function updateProvider (provider: ProviderModel, sequelize: Sequel
       }
     })
   } catch (error) {
-    logger.error(error)
+    logger.error('Something happened during the plans update:', error)
   }
 }
 
