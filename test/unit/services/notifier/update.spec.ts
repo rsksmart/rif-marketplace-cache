@@ -223,5 +223,74 @@ describe('Notifier services: Periodic Update', () => {
       expect(expectedInactivePlan.planId).to.be.equal(planDTO.id)
       expect(expectedInactivePlan.planStatus).to.be.equal('INACTIVE')
     })
+
+    it('should mark all plans of a provider as inactive if plans cannot be retrieved', async () => {
+      await ProviderModel.bulkCreate([provider1])
+
+      await updater(sequelize, provider1.url)
+
+      const [prepPlan] = await PlanModel.findAll({
+        where: {
+          providerId: provider1.provider
+        }
+      })
+
+      expect(prepPlan.planId).to.be.equal(planDTO.id)
+      expect(prepPlan.planStatus).to.be.equal('ACTIVE')
+
+      getSubscriptionPlansSpy.callsFake((): ReturnType<typeof NotifierSvcProvider.prototype.getSubscriptionPlans> => {
+        return Promise.reject(Error('Meh'))
+      })
+      await updater(sequelize, provider1.url)
+
+      const plans = await PlanModel.findAll({
+        where: {
+          providerId: provider1.provider,
+          planId: planDTO.id
+        }
+      })
+      expect(plans.length).to.equal(1)
+      const [expectedInactivePlan] = plans
+
+      expect(expectedInactivePlan.planId).to.be.equal(planDTO.id)
+      expect(expectedInactivePlan.planStatus).to.be.equal('INACTIVE')
+    })
+
+    it('should reactivate plans when provider is back with same plans', async () => {
+      await ProviderModel.bulkCreate([provider1])
+
+      await updater(sequelize, provider1.url)
+
+      const [prepPlan] = await PlanModel.findAll({
+        where: {
+          providerId: provider1.provider
+        }
+      })
+
+      expect(prepPlan.planId).to.be.equal(planDTO.id)
+      expect(prepPlan.planStatus).to.be.equal('ACTIVE')
+
+      getSubscriptionPlansSpy.callsFake((): ReturnType<typeof NotifierSvcProvider.prototype.getSubscriptionPlans> => {
+        return Promise.reject(Error('Meh'))
+      })
+      await updater(sequelize, provider1.url)
+
+      getSubscriptionPlansSpy.callsFake((): ReturnType<typeof NotifierSvcProvider.prototype.getSubscriptionPlans> => {
+        return Promise.resolve([planDTO])
+      })
+      await updater(sequelize, provider1.url)
+
+      const plans = await PlanModel.findAll({
+        where: {
+          providerId: provider1.provider,
+          planId: planDTO.id
+        }
+      })
+      expect(plans.length).to.equal(1)
+      const [expectedInactivePlan] = plans
+
+      expect(expectedInactivePlan.planId).to.be.equal(planDTO.id)
+      expect(expectedInactivePlan.planStatus).to.be.equal('ACTIVE')
+    })
   })
 })
