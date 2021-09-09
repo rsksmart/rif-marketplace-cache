@@ -5,7 +5,7 @@ RUN apk add --no-cache build-base git python
 
 WORKDIR /usr/src/app
 COPY package*.json ./
-RUN npm ci --only=production && npm i typescript
+RUN npm ci
 COPY . ./
 RUN npx tsc --declaration --declarationDir types
 
