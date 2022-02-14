@@ -103,7 +103,7 @@
     "winston-transport": "^4.3.0"
   },
   "devDependencies": {
-    "@commitlint/cli": "^12.0.1",
+    "@commitlint/cli": "^16.2.1",
     "@commitlint/config-conventional": "^12.0.1",
     "@feathersjs/socketio-client": "^4.5.8",
     "@fluffy-spoon/substitute": "^1.173.0",
